@@ -1,0 +1,11 @@
+{
+  "name": "@ai-news/observability",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

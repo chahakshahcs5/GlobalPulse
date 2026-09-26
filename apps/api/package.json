@@ -1,0 +1,44 @@
+{
+  "name": "@ai-news/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production Fastify and NestJS API Gateway for GlobalPulse",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "@ai-news/auth": "workspace:*",
+    "@ai-news/database": "workspace:*",
+    "@ai-news/entities": "workspace:*",
+    "@ai-news/events": "workspace:*",
+    "@ai-news/graphql": "workspace:*",
+    "@ai-news/jobs": "workspace:*",
+    "@ai-news/media": "workspace:*",
+    "@ai-news/observability": "workspace:*",
+    "@ai-news/schemas": "workspace:*",
+    "@ai-news/search": "workspace:*",
+    "@ai-news/shared": "workspace:*",
+    "@ai-news/sources": "workspace:*",
+    "@ai-news/stories": "workspace:*",
+    "@ai-news/topics": "workspace:*",
+    "@fastify/cors": "^10.0.2",
+    "@nestjs/common": "^12.1.0",
+    "@nestjs/core": "^12.1.0",
+    "@nestjs/graphql": "^14.0.2",
+    "@nestjs/mercurius": "^14.0.2",
+    "@nestjs/platform-fastify": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "graphql": "^16.10.0",
+    "mercurius": "^16.10.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.8.2"
+  }
+}

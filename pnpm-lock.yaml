@@ -216,6 +216,161 @@ importers:
         specifier: ^3.0.7
         version: 3.2.7(@types/node@22.20.4)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  apps/api:
+    dependencies:
+      '@ai-news/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../../libs/database
+      '@ai-news/entities':
+        specifier: workspace:*
+        version: link:../../libs/entities
+      '@ai-news/events':
+        specifier: workspace:*
+        version: link:../../libs/events
+      '@ai-news/graphql':
+        specifier: workspace:*
+        version: link:../../libs/graphql
+      '@ai-news/jobs':
+        specifier: workspace:*
+        version: link:../../libs/jobs
+      '@ai-news/media':
+        specifier: workspace:*
+        version: link:../../libs/media
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../../libs/observability
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../../libs/schemas
+      '@ai-news/search':
+        specifier: workspace:*
+        version: link:../../libs/search
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
+      '@ai-news/sources':
+        specifier: workspace:*
+        version: link:../../libs/sources
+      '@ai-news/stories':
+        specifier: workspace:*
+        version: link:../../libs/stories
+      '@ai-news/topics':
+        specifier: workspace:*
+        version: link:../../libs/topics
+      '@fastify/cors':
+        specifier: ^10.0.2
+        version: 10.1.0
+      '@nestjs/common':
+        specifier: ^12.1.0
+        version: 12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
+      '@nestjs/core':
+        specifier: ^12.1.0
+        version: 12.1.0(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/graphql':
+        specifier: ^14.0.2
+        version: 14.0.2(@fastify/websocket@11.3.1)(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.0(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(reflect-metadata@0.2.2)(rxjs@7.8.2))(graphql@16.14.2)(reflect-metadata@0.2.2)(typescript@5.9.3)
+      '@nestjs/mercurius':
+        specifier: ^14.0.2
+        version: 14.0.2(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/graphql@14.0.2(@fastify/websocket@11.3.1)(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.0(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(reflect-metadata@0.2.2)(rxjs@7.8.2))(graphql@16.14.2)(reflect-metadata@0.2.2)(typescript@5.9.3))(fastify@5.12.5)(graphql@16.14.2)(mercurius@16.10.0(graphql@16.14.2))
+      '@nestjs/platform-fastify':
+        specifier: ^12.1.0
+        version: 12.1.0(@fastify/static@10.1.4)(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.0(@nestjs/common@12.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+      fastify:
+        specifier: ^5.2.1
+        version: 5.12.5
+      graphql:
+        specifier: ^16.10.0
+        version: 16.14.2
+      mercurius:
+        specifier: ^16.10.0
+        version: 16.10.0(graphql@16.14.2)
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.1
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.4
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  apps/mcp-server:
+    dependencies:
+      '@ai-news/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../../libs/database
+      '@ai-news/entities':
+        specifier: workspace:*
+        version: link:../../libs/entities
+      '@ai-news/events':
+        specifier: workspace:*
+        version: link:../../libs/events
+      '@ai-news/jobs':
+        specifier: workspace:*
+        version: link:../../libs/jobs
+      '@ai-news/media':
+        specifier: workspace:*
+        version: link:../../libs/media
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../../libs/observability
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../../libs/schemas
+      '@ai-news/search':
+        specifier: workspace:*
+        version: link:../../libs/search
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
+      '@ai-news/sources':
+        specifier: workspace:*
+        version: link:../../libs/sources
+      '@ai-news/stories':
+        specifier: workspace:*
+        version: link:../../libs/stories
+      '@ai-news/topics':
+        specifier: workspace:*
+        version: link:../../libs/topics
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.6.1
+        version: 1.30.1(supports-color@7.2.0)(zod@3.25.76)
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+      fastify:
+        specifier: ^5.2.1
+        version: 5.12.5
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.4
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
   apps/mobile: {}
 
   apps/web:
@@ -247,6 +402,230 @@ importers:
         version: 5.9.3
 
   apps/worker: {}
+
+  libs/auth:
+    dependencies:
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/content:
+    dependencies:
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/database:
+    dependencies:
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/entities:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/events:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/graphql:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+      graphql:
+        specifier: ^16.10.0
+        version: 16.14.2
+      mercurius:
+        specifier: ^16.10.0
+        version: 16.10.0(graphql@16.14.2)
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/jobs:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/media:
+    dependencies:
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      d3:
+        specifier: ^7.9.0
+        version: 7.9.0
+    devDependencies:
+      '@types/d3':
+        specifier: ^7.4.3
+        version: 7.4.3
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/observability:
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/schemas:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/search:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/shared:
+    dependencies:
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.1
+    devDependencies:
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/sources:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/stories:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/topics:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../database
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
 packages:
 

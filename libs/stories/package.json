@@ -1,0 +1,16 @@
+{
+  "name": "@ai-news/stories",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@ai-news/database": "workspace:*",
+    "@ai-news/schemas": "workspace:*",
+    "@ai-news/shared": "workspace:*",
+    "@ai-news/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
