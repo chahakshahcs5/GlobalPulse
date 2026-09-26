@@ -1,0 +1,40 @@
+{
+  "name": "ai-news-platform",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "build": "nx run-many --target=build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "nx run-many --target=lint",
+    "dev:api": "tsx watch apps/api/src/main.ts",
+    "dev:mcp": "tsx watch apps/mcp-server/src/main.ts",
+    "dev:web": "pnpm --filter @ai-news/web dev"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "@fastify/cors": "^10.0.2",
+    "reflect-metadata": "^0.2.2",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/uuid": "^10.0.0",
+    "nx": "^20.4.6",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "nx"
+    ]
+  }
+}

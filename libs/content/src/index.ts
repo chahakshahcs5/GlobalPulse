@@ -1,0 +1,78 @@
+import { StoryBlockSchema, type StoryBlock } from '@ai-news/schemas';
+import { ValidationError, generateId } from '@ai-news/shared';
+
+export function validateBlock(raw: unknown): StoryBlock {
+  const result = StoryBlockSchema.safeParse(raw);
+  if (!result.success) {
+    const errorDetails = result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    throw new ValidationError(`Invalid block data: ${errorDetails}`, result.error.errors);
+  }
+  return result.data;
+}
+
+export function validateBlocks(rawBlocks: unknown[]): StoryBlock[] {
+  if (!Array.isArray(rawBlocks)) {
+    throw new ValidationError('Blocks must be an array');
+  }
+  return rawBlocks.map((b, idx) => {
+    const block = validateBlock(b);
+    return { ...block, sortOrder: block.sortOrder ?? idx };
+  });
+}
+
+export function sanitizeText(text: string): string {
+  // Strip dangerous script tags while preserving markdown
+  return text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+}
+
+export function sanitizeBlock(block: StoryBlock): StoryBlock {
+  const cloned = JSON.parse(JSON.stringify(block)) as StoryBlock;
+  if ('text' in cloned.data && typeof cloned.data.text === 'string') {
+    cloned.data.text = sanitizeText(cloned.data.text);
+  }
+  return cloned;
+}
+
+export function extractTextContent(blocks: StoryBlock[]): string {
+  const fragments: string[] = [];
+  for (const block of blocks) {
+    switch (block.blockType) {
+      case 'heading':
+        fragments.push(block.data.text);
+        if (block.data.subtext) fragments.push(block.data.subtext);
+        break;
+      case 'paragraph':
+        fragments.push(block.data.text);
+        break;
+      case 'summary':
+        fragments.push(block.data.headline);
+        fragments.push(...block.data.bulletPoints);
+        break;
+      case 'quote':
+        fragments.push(block.data.quote, block.data.attribution);
+        break;
+      case 'chart':
+        fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        break;
+      case 'timeline':
+        if (block.data.title) fragments.push(block.data.title);
+        for (const item of block.data.items) {
+          fragments.push(item.headline, item.body);
+        }
+        break;
+      case 'statistic':
+        fragments.push(block.data.label, block.data.value);
+        if (block.data.context) fragments.push(block.data.context);
+        break;
+      case 'what_changed':
+        for (const item of block.data.items) {
+          fragments.push(item.description);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return fragments.join(' ');
+}

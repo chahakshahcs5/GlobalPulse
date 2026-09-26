@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ai-news/schemas": ["libs/schemas/src/index.ts"],
+      "@ai-news/shared": ["libs/shared/src/index.ts"],
+      "@ai-news/database": ["libs/database/src/index.ts"],
+      "@ai-news/content": ["libs/content/src/index.ts"],
+      "@ai-news/stories": ["libs/stories/src/index.ts"],
+      "@ai-news/events": ["libs/events/src/index.ts"],
+      "@ai-news/topics": ["libs/topics/src/index.ts"],
+      "@ai-news/entities": ["libs/entities/src/index.ts"],
+      "@ai-news/sources": ["libs/sources/src/index.ts"],
+      "@ai-news/search": ["libs/search/src/index.ts"],
+      "@ai-news/auth": ["libs/auth/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "coverage"]
+}

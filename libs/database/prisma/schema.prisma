@@ -1,0 +1,324 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "fullTextSearchPostgres"]
+}
+
+enum StoryStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ArticleType {
+  breaking_news
+  developing_story
+  explainer
+  analysis
+  background
+  deep_dive
+  data_story
+  visual_story
+  timeline
+  technology
+  science
+  business
+  markets
+  sports
+  politics
+  culture
+  local
+  weekly_digest
+  topic_briefing
+}
+
+enum ClientType {
+  gemini
+  gemini_spark
+  chatgpt
+  claude
+  custom_mcp
+  human_web
+  human_mobile
+  internal_service
+}
+
+enum CreatedVia {
+  mcp
+  web
+  mobile
+  api
+  admin
+}
+
+enum EntityType {
+  PERSON
+  ORGANIZATION
+  COUNTRY
+  LOCATION
+  TECHNOLOGY
+  PRODUCT
+  INSTITUTION
+}
+
+enum SourceType {
+  NEWS_ARTICLE
+  OFFICIAL_DOCUMENT
+  PRESS_RELEASE
+  ACADEMIC_PAPER
+  DATASET
+  INTERVIEW
+  TRANSCRIPT
+  OTHER
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users               User[]
+  stories             Story[]
+  events              Event[]
+  topics              Topic[]
+  entities            Entity[]
+  sources             Source[]
+  idempotencyRecords  IdempotencyRecord[]
+  auditLogs           AuditLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  organizationId String
+  email          String       @unique
+  name           String
+  role           String       @default("editor") // admin, editor, author, viewer, ai_agent
+  scopes         String[]     @default(["news:read"])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  storiesAuthored Story[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Event {
+  id             String       @id @default(uuid())
+  organizationId String
+  title          String
+  summary        String
+  status         String       @default("ACTIVE")
+  occurredAt     DateTime     @default(now())
+  location       String?
+  coordinates    Float[]
+  topicIds       String[]     @default([])
+  entityIds      String[]     @default([])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stories        Story[]
+
+  @@index([organizationId, status])
+  @@map("events")
+}
+
+model Story {
+  id                   String        @id @default(uuid())
+  organizationId       String
+  slug                 String
+  title                String
+  summary              String
+  status               StoryStatus   @default(DRAFT)
+  articleType          ArticleType   @default(developing_story)
+  eventId              String?
+  currentVersionNumber Int           @default(1)
+  currentVersionId     String?
+  topicIds             String[]      @default([])
+  entityIds            String[]      @default([])
+  sourceIds            String[]      @default([])
+  heroImageUrl         String?
+  createdVia           CreatedVia    @default(mcp)
+  createdByClient      ClientType    @default(gemini)
+  authorId             String
+  idempotencyKey       String?
+  publishedAt          DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  organization         Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author               User          @relation(fields: [authorId], references: [id])
+  event                Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  versions             StoryVersion[]
+  blocks               StoryBlock[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@index([organizationId, idempotencyKey])
+  @@index([organizationId, publishedAt])
+  @@map("stories")
+}
+
+model StoryVersion {
+  id            String     @id @default(uuid())
+  storyId       String
+  versionNumber Int
+  title         String
+  summary       String
+  blocksJson    Json       // Full structured snapshot of blocks
+  changeSummary String?
+  clientType    ClientType @default(gemini)
+  authorId      String
+  createdAt     DateTime   @default(now())
+
+  story         Story      @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, versionNumber])
+  @@map("story_versions")
+}
+
+model StoryBlock {
+  id          String   @id @default(uuid())
+  storyId     String
+  blockType   String
+  sortOrder   Int
+  data        Json
+  metadata    Json?
+  citationIds String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  story       Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, sortOrder])
+  @@map("story_blocks")
+}
+
+model Topic {
+  id             String       @id @default(uuid())
+  organizationId String
+  slug           String
+  name           String
+  description    String?
+  aliases        String[]     @default([])
+  parentTopicId  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@map("topics")
+}
+
+model Entity {
+  id             String       @id @default(uuid())
+  organizationId String
+  slug           String
+  name           String
+  type           EntityType
+  description    String?
+  aliases        String[]     @default([])
+  avatarUrl      String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, type])
+  @@map("entities")
+}
+
+model Source {
+  id                 String       @id @default(uuid())
+  organizationId     String
+  url                String
+  canonicalUrl       String?
+  title              String
+  publisher          String
+  author             String?
+  publishedAt        DateTime?
+  retrievedAt        DateTime     @default(now())
+  language           String       @default("en")
+  sourceType         SourceType   @default(NEWS_ARTICLE)
+  licenseMetadata    String?
+  permissibleExcerpt String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  citations          Citation[]
+
+  @@unique([organizationId, url])
+  @@index([organizationId, publisher])
+  @@map("sources")
+}
+
+model Citation {
+  id              String       @id @default(uuid())
+  organizationId  String
+  storyId         String
+  blockId         String?
+  sourceId        String
+  claimText       String
+  confidenceScore Float?
+  createdAt       DateTime     @default(now())
+
+  source          Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@index([sourceId])
+  @@map("citations")
+}
+
+model IdempotencyRecord {
+  id             String       @id @default(uuid())
+  organizationId String
+  key            String
+  action         String
+  responseJson   Json
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, key])
+  @@map("idempotency_records")
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  userId         String
+  clientType     ClientType
+  action         String
+  resourceType   String
+  resourceId     String?
+  payloadSummary Json?
+  ipAddress      String?
+  requestId      String?
+  durationMs     Int?
+  status         String
+  errorMessage   String?
+  timestamp      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, timestamp])
+  @@index([organizationId, action])
+  @@map("audit_logs")
+}
