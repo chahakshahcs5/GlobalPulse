@@ -68,10 +68,67 @@ flowchart TD
   * Exposes Streamable HTTP endpoint `POST /mcp` implementing the MCP specification (`2024-11-05`).
   * Uses `AsyncLocalStorage` (`mcpPrincipalStore`) to isolate caller authentication credentials concurrently across asynchronous execution flows.
   * Exposes 18 standardized Section 38 tools (`create_story`, `update_story`, `append_blocks`, `create_source`, etc.).
-* **API Gateway (`apps/api`)**:
-  * Built on high-performance Fastify 5.x and NestJS modular architecture.
-  * Provides OpenAPI 3.1 compliant endpoints under `/api/v1/*`.
-  * Integrates Mercurius GraphQL engine supporting queries, mutations, and real-time subscriptions over WebSocket.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Agent as External AI Agent (Gemini / Claude)
+    participant MCP as Remote MCP Server (Streamable HTTP)
+    participant ALS as AsyncLocalStorage (mcpPrincipalStore)
+    participant Tool as MCP Tool Handler (Section 38)
+    participant Domain as Domain Service (libs/stories)
+    participant DB as Dual-Engine Database (PostgreSQL)
+    participant Audit as Immutable Audit Logger
+
+    Agent->>MCP: POST /mcp (JSON-RPC 2.0 + Bearer Token)
+    MCP->>ALS: run(principalStore.create(token), handler)
+    activate ALS
+    ALS->>Tool: execute(toolName, params)
+    Tool->>ALS: getStore() -> principal (agent identity)
+    Tool->>Domain: createStoryVersion(payload, principal)
+    Domain->>DB: Atomic Transaction (Version + WhatChanged Diff)
+    DB-->>Domain: Success (v2)
+    Domain->>Audit: recordEvent(principal.actorId, "story.version_created")
+    Audit-->>Domain: Audited
+    Domain-->>Tool: StoryVersionSnapshot
+    Tool-->>ALS: ToolResult
+    ALS-->>MCP: Formatted MCP Content
+    deactivate ALS
+    MCP-->>Agent: JSON-RPC 2.0 Response Result
+```
+
+* **NestJS API Gateway (`apps/api`)**:
+  * Built on high-performance Fastify 5.x and pure NestJS dependency injection architecture.
+  * Features dedicated decoupled feature modules, OpenAPI 3.1 controllers, and Mercurius GraphQL resolvers.
+
+```mermaid
+graph TD
+    subgraph NestJSCore["NestJS Application Core (apps/api)"]
+        Root[AppModule]
+        
+        subgraph FeatureModules["Domain Feature Modules"]
+            StoriesMod[StoriesModule\nStoriesController & StoriesResolver]
+            EventsMod[EventsModule\nEventsController]
+            EntitiesMod[EntitiesModule\nEntitiesController]
+            TaxonomyMod[TaxonomyModule\nTopicsController & TaxonomyResolver]
+            SourcesMod[SourcesModule\nSourcesController]
+            SearchMod[SearchModule\nSearchController]
+            MediaMod[MediaModule\nMediaController]
+            AuditMod[AuditModule\nAuditController]
+        end
+        
+        subgraph CrossCutting["Cross-Cutting Infrastructure Modules"]
+            OAuthMod[OAuthModule\nRFC 8414 & Token Controller]
+            RealtimeMod[RealtimeModule\nSSE Broadcast Controller]
+            HealthMod[HealthModule\nLiveness & Readiness Controller]
+            DocsMod[DocsModule\nOpenAPI 3.1 Spec Controller]
+            GqlMod[GraphQLModule\nMercurius Driver with WebSocket]
+        end
+        
+        Root --> FeatureModules
+        Root --> CrossCutting
+    end
+```
 
 ### 2.2 Domain Services Tier (`libs/*`)
 * **`libs/schemas`**: Single source of truth containing Zod schemas for all 22 block types, entities, events, sources, and stories.

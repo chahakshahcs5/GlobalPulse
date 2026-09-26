@@ -72,10 +72,51 @@ pnpm test
 
 ### 3.4 Multi-Agent End-to-End Demonstration Script
 ```bash
-./node_modules/.bin/tsx scripts/demo-e2e.ts
+pnpm demo:e2e
+# or: tsx scripts/demo-e2e.ts
 ```
 
 ### 3.5 Browser End-to-End Tests (Playwright)
 ```bash
 pnpm test:e2e:browser
 ```
+
+---
+
+## 4. Architectural Distinction: Automated CI Tests (`tests/e2e/`) vs. Live Demonstration Script (`scripts/demo-e2e.ts`)
+
+A key design principle of the repository is separating **automated headless machine assertions** from **interactive live stakeholder demonstrations**:
+
+```mermaid
+flowchart LR
+    subgraph CI["Automated CI/CD Pipeline (Machine Feedback)"]
+        direction TB
+        TestRunner["Vitest / Playwright Runner"]
+        E2ETests["tests/e2e/*.test.ts"]
+        Assertions["Headless Assertions\nexpect(res.status).toBe(200)"]
+        ExitCode["Machine Exit Code (0 / 1)\nJUnit / TAP Reports"]
+        TestRunner --> E2ETests --> Assertions --> ExitCode
+    end
+
+    subgraph LiveDemo["Interactive Live Walkthrough (Human Observation)"]
+        direction TB
+        TSX["tsx Engine / pnpm demo:e2e"]
+        DemoScript["scripts/demo-e2e.ts"]
+        VisualSteps["9 Rich Visual Step Outputs\nEmoji Status • ASCII Tables • Payloads"]
+        LiveVerification["Real-time Protocol Inspection\nRFC 8414 • Gemini Spark • MCP • Workers"]
+        TSX --> DemoScript --> VisualSteps --> LiveVerification
+    end
+```
+
+### Detailed Comparison
+
+| Feature | Automated E2E Tests (`tests/e2e/`) | Live Demonstration Script (`scripts/demo-e2e.ts`) |
+|:---|:---|:---|
+| **Location** | `tests/e2e/multi-agent-publishing.e2e.test.ts` | `scripts/demo-e2e.ts` |
+| **Execution Command** | `pnpm test:e2e` / `pnpm test` | `pnpm demo:e2e` |
+| **Target Audience** | Continuous Integration (CI/CD) runners, automated pull request gates | Human developers, architects, conference presentations, stakeholders |
+| **Output Style** | Silent, minimal TAP or dot progress, failure stack traces only | Verbose, colorful step-by-step console logs with emojis, formatted JSON payloads, and ASCII banners |
+| **Assertion Strategy** | Strict programmatic invariants (`expect(...).toBe(...)`) | Stepwise walkthrough displaying protocol lifecycle, background workers, and audit counts |
+| **Lifecycle** | Runs inside Vitest test harness with mock timers and test hooks | Standalone node execution booting ephemeral domain services, workers, and mobile caches |
+| **Failure Handling** | Immediately aborts test runner with non-zero exit code for CI | Clearly logs the exact failure step in human-readable terms for interactive troubleshooting |
+

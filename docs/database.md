@@ -29,7 +29,76 @@ The active engine is governed dynamically by the `DATABASE_ENGINE` environment v
 
 ## 2. PostgreSQL Relational Schema Design (`schema.prisma`)
 
-The database consists of 13 core tables with strict relational integrity, foreign key cascades, and unique constraints:
+The database consists of core entities with strict relational integrity, foreign key cascades, and unique constraints:
+
+```mermaid
+erDiagram
+    Story ||--o{ StoryVersion : "has revisions (1..n)"
+    Story ||--o{ StoryTopic : "categorized by"
+    Story ||--o{ StoryEntity : "mentions"
+    Story ||--o{ StorySource : "cites primary sources"
+    Story ||--o{ AuditLog : "tracks provenance"
+    Story }o--o{ Event : "belongs to"
+    
+    Topic ||--o{ StoryTopic : "classifies"
+    Entity ||--o{ StoryEntity : "participates in"
+    Source ||--o{ StorySource : "provides evidence"
+    
+    StoryVersion ||--o{ Block : "contains 22 block types (JSON)"
+    MediaAsset ||--o{ Job : "dispatches BullMQ jobs"
+
+    Story {
+        string id PK
+        string slug UK
+        string title
+        string summary
+        string status
+        int currentVersionNumber
+        string createdByClient
+        datetime publishedAt
+    }
+
+    StoryVersion {
+        string id PK
+        string storyId FK
+        int versionNumber
+        json blocks
+        json whatChanged
+        datetime createdAt
+    }
+
+    Entity {
+        string id PK
+        string canonicalName
+        string entityType
+        string[] aliases
+    }
+
+    Source {
+        string id PK
+        string name
+        string url
+        string sourceTier
+        float credibilityScore
+    }
+
+    Event {
+        string id PK
+        string title
+        datetime occurredAt
+        float[] coordinates
+        string status
+    }
+
+    AuditLog {
+        string id PK
+        string actorId
+        string clientType
+        string action
+        string targetEntityId
+        datetime timestamp
+    }
+```
 
 ```prisma
 datasource db {

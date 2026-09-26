@@ -25,55 +25,65 @@ A production-grade, modern, interactive, animated multimedia news publishing pla
 
 ## 🌐 System Architecture
 
-```text
-                     EXTERNAL AI AGENTS & CLIENTS
-        ┌───────────────────┬───────────────────┬──────────────────┐
-        │   Google Gemini   │  OpenAI / ChatGPT │  Claude Desk /   │
-        │   (Gemini Spark)  │   Agents & Apps   │  Custom MCP Bots │
-        └─────────┬─────────┴─────────┬─────────┴─────────┬────────┘
-                  │                   │                   │
-                  ▼                   ▼                   ▼
-      ┌────────────────────────────────────────────────────────────┐
-      │          OAuth 2.1 Security & RFC 8414 Discovery           │
-      │   PKCE (S256) • Granular Scopes • Rotating Refresh Tokens  │
-      └───────────────────────────────┬────────────────────────────┘
-                                      │
-                                      ▼
-      ┌────────────────────────────────────────────────────────────┐
-      │          Remote Model Context Protocol (MCP) Server        │
-      │   Streamable HTTP (POST /mcp) • JSON-RPC 2.0 Spec (2024)   │
-      │   AsyncLocalStorage Principal Isolation • 18 Section 38 Tools│
-      └───────────────┬───────────────────────────────┬────────────┘
-                      │                               │
-                      ▼                               ▼
-      ┌───────────────────────────────┐ ┌──────────────────────────┐
-      │   Fastify REST Gateway        │ │  GraphQL Mercurius API   │
-      │   OpenAPI 3.1 • SSE Broadcast │ │  Federated Queries/Mut.  │
-      │   RFC 7807 Problem Details    │ │  Realtime Subscriptions  │
-      └───────────────┬───────────────┘ └─────────────┬────────────┘
-                      │                               │
-                      ▼                               ▼
-      ┌────────────────────────────────────────────────────────────┐
-      │                 Modular Application Services               │
-      │ Stories • Versions • WhatChanged • Entities • Events •     │
-      │ Topics • Sources • Media Assets • Search & Similarity •    │
-      │ Idempotency Gates • Background Workers • Immutable Audit   │
-      └───────────────┬───────────────────────────────┬────────────┘
-                      │                               │
-                      ▼                               ▼
-      ┌───────────────────────────────┐ ┌──────────────────────────┐
-      │   Dual-Engine Database Layer  │ │  Background Job Queue    │
-      │   PostgreSQL + Prisma ORM     │ │  Variant Generation (4K) │
-      │   High-speed In-Memory Engine │ │  Vector Search Indexing  │
-      │   Atomic Multi-Model Txns     │ │  Audio Synthesis Queue   │
-      └───────────────┬───────────────┘ └─────────────┬────────────┘
-                      │                               │
-                      ▼                               ▼
-      ┌────────────────────────────────────────────────────────────┐
-      │                   Multi-Device Delivery                    │
-      │  Next.js 15 Web Portal  │ Expo React Native Mobile/Tablet  │
-      │  Human Editorial CMS    │ 4K / Ultrawide Kiosk Display Wall│
-      └────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph ExternalAgents["External AI Agents & Enterprise Clients"]
+        Gemini["Google Gemini 2.0 Flash / Pro\n(Gemini Spark Wire Reporter)"]
+        OpenAI["ChatGPT / OpenAI Custom GPTs\n& Reasoning Agents"]
+        Claude["Anthropic Claude Desktop\n& Custom MCP Clients"]
+    end
+
+    subgraph SecurityTier["OAuth 2.1 & Security Ingress"]
+        RFC8414["RFC 8414 OAuth Discovery\nPKCE S256 • Scopes: news:write, news:publish"]
+    end
+
+    subgraph IngressTier["Remote Ingress Protocols"]
+        MCP["Remote MCP Server (apps/mcp-server)\nStreamable HTTP (POST /mcp) • JSON-RPC 2.0\nAsyncLocalStorage Principal Isolation"]
+        NestAPI["NestJS API Gateway (apps/api)\nFastifyAdapter • OpenAPI 3.1 • SSE Broker"]
+        GQL["Mercurius GraphQL API\nFederated Resolvers & WebSocket Subscriptions"]
+    end
+
+    subgraph DomainCore["Modular Enterprise Domain Services (libs/*)"]
+        Stories["Story Lifecycle & Versions\nWhatChanged Diff Engine"]
+        Taxonomy["Events, Entities & Topics\nKnowledge Graph Indexing"]
+        Sources["Primary Source Registry\nCitations & Evidence Verification"]
+        Search["Hybrid Search Engine\nFull-Text & Jaccard Deduplication"]
+        MediaLib["Programmatic D3 Renderers (13 Types)\nMapLibre Maps & Timelines"]
+    end
+
+    subgraph AsyncTier["Asynchronous Processing & Telemetry"]
+        BullMQ["BullMQ Job Queue (apps/worker)\n4K Media Variants • Audio Synthesis • Indexing"]
+        Audit["Immutable Audit Log\nActor Attribution & OpenTelemetry"]
+    end
+
+    subgraph DataTier["Dual-Engine Persistence"]
+        Postgres[("PostgreSQL 16 + pgvector\nPrisma ORM & Connection Pooling")]
+        Memory[("High-Speed In-Memory Store\nZero-Dependency Testing & Local Dev")]
+    end
+
+    subgraph PresentationTier["Multi-Device Delivery Surfaces"]
+        WebPortal["Next.js 15 Web Portal & CMS (apps/web)\nServer-Side Rendering & Glassmorphic UI"]
+        DisplayWall["4K / Ultrawide Kiosk Display Wall\nAuto-cycling Breaking News Carousel"]
+        MobileApp["Expo React Native (apps/mobile)\nDual-Pane Tablet & Offline SQLite Cache"]
+    end
+
+    ExternalAgents -->|Bearer Token + PKCE| RFC8414
+    RFC8414 --> MCP
+    ExternalAgents --> NestAPI
+    ExternalAgents --> GQL
+
+    MCP --> DomainCore
+    NestAPI --> DomainCore
+    GQL --> DomainCore
+
+    DomainCore --> Postgres
+    DomainCore --> Memory
+    DomainCore --> BullMQ
+    DomainCore --> Audit
+
+    Postgres --> PresentationTier
+    Memory --> PresentationTier
+    NestAPI -->|SSE Broadcast| PresentationTier
 ```
 
 ---
@@ -127,8 +137,10 @@ pnpm install
 ```
 
 ### 3. Running Services Locally
+
+#### Option A: Running with Native Node.js & pnpm
 ```bash
-# Start Fastify & GraphQL API Server (port 3000)
+# Start NestJS & GraphQL API Server (port 3000)
 pnpm dev:api
 
 # Start Remote MCP Server (port 3001)
@@ -137,11 +149,30 @@ pnpm dev:mcp
 # Start Next.js 15 Web Portal, CMS & 4K Wall (port 3002)
 pnpm dev:web
 
+# Start Asynchronous BullMQ Background Worker
+pnpm dev:worker
+
 # Start Expo Mobile Development Server
 pnpm dev:mobile
 ```
 
-### 4. Running the Test Suite
+#### Option B: Running with Docker Compose (Section 154)
+```bash
+# Launch PostgreSQL (pgvector), Redis 7, MinIO S3, API, MCP Server, Web, and Worker
+pnpm docker:up
+
+# Check container health and running status
+pnpm docker:status
+
+# Stream aggregated container logs
+pnpm docker:logs
+
+# Teardown containers and networks
+pnpm docker:down
+```
+
+### 4. Running the Test Suite & Demonstrations
+
 ```bash
 # Run all 17 unit and integration test suites (158 tests)
 pnpm test
@@ -152,12 +183,38 @@ pnpm test:unit
 # Run subsystem integration tests (API, GraphQL, MCP, DB, Web)
 pnpm test:integration
 
-# Run multi-agent end-to-end publishing demonstration script
-./node_modules/.bin/tsx scripts/demo-e2e.ts
+# Run interactive multi-agent end-to-end publishing demonstration
+pnpm demo:e2e
 
 # Run Playwright browser end-to-end tests
 pnpm test:e2e:browser
 ```
+
+---
+
+## 🎯 Architectural Invariant: Live Walkthrough Script vs. Automated CI Tests
+
+A deliberate architectural decision separates **`scripts/demo-e2e.ts`** from **`tests/e2e/`**:
+
+```mermaid
+flowchart LR
+    subgraph MachineQA["Automated CI Verification (tests/e2e/)"]
+        Runner["Vitest / Playwright Runner"]
+        SilentAssert["Headless Assertions\nexpect(x).toBe(y)"]
+        CIPassFail["CI Machine Exit Code\n(0 = Green, 1 = Red)"]
+        Runner --> SilentAssert --> CIPassFail
+    end
+
+    subgraph HumanDemo["Interactive Live Walkthrough (scripts/demo-e2e.ts)"]
+        LiveScript["pnpm demo:e2e\n(tsx scripts/demo-e2e.ts)"]
+        VisualLogs["Emoji Step Logs • ASCII Banners\nJSON-RPC Payloads • Worker Metrics"]
+        Demonstration["Live Multi-Agent Pipeline\nOAuth Discovery -> MCP -> BullMQ -> Mobile"]
+        LiveScript --> VisualLogs --> Demonstration
+    end
+```
+
+* **`tests/e2e/` (Automated CI Tests)**: Designed for continuous integration and automated GitHub Actions runners. Runs headlessly, evaluates strict boolean assertions, outputs silent TAP/JUnit XML reports, and immediately aborts the pipeline on failure.
+* **`scripts/demo-e2e.ts` (Live Demonstration Script)**: Designed for human observation, executive demos, conference presentations, and terminal walkthroughs. Bootstraps an ephemeral in-memory environment, walks through the 9-step multi-agent publishing lifecycle (Gemini Spark discovering RFC 8414 metadata, MCP tool calls, BullMQ worker processing, and mobile caching), and prints rich formatted step summaries to `stdout`.
 
 ---
 
