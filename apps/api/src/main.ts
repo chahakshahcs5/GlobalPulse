@@ -17,7 +17,7 @@ async function bootstrap() {
 
   const banner = `
 ========================================================================
-🚀 AI-OPERABLE ENTERPRISE NEWS PLATFORM - API GATEWAY (PRODUCTION)
+🚀 AI-OPERABLE ENTERPRISE NEWS PLATFORM - NESTJS API GATEWAY (PRODUCTION)
 ========================================================================
 • Gateway URL:          http://${host}:${port}
 • GraphQL API:          http://${host}:${port}/graphql
