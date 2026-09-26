@@ -76,6 +76,22 @@ export class MapRenderer {
       });
     }
 
+    const paddingRight = 20;
+    let layerBadges = '';
+    if (mapData.layers && mapData.layers.length > 0) {
+      mapData.layers.forEach((layer, idx) => {
+        const lx = width - paddingRight - 130;
+        const ly = 24 + idx * 26;
+        layerBadges += `
+          <g transform="translate(${lx}, ${ly})">
+            <rect width="110" height="22" rx="4" fill="${isDark ? 'rgba(30,41,59,0.8)' : 'rgba(241,245,249,0.9)'}" stroke="${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}" />
+            <circle cx="10" cy="11" r="4" fill="#3b82f6" />
+            <text x="20" y="15" font-size="10" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(layer.id)} (${layer.type})</text>
+          </g>
+        `;
+      });
+    }
+
     const [cx, cy] = project(mapData.center[0], mapData.center[1]);
 
     return `
@@ -89,11 +105,12 @@ export class MapRenderer {
         <circle cx="${cx}" cy="${cy}" r="4" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" />
         
         ${markerSvgs}
+        ${layerBadges}
         
         <!-- Map Title Header -->
         <rect x="20" y="20" width="260" height="48" rx="8" fill="${isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.9)'}" backdrop-filter="blur(8px)" />
         <text x="36" y="44" font-size="14" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(mapData.title || 'Geographic Overview')}</text>
-        <text x="36" y="58" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">Coordinates: ${mapData.center[1].toFixed(2)}°N, ${mapData.center[0].toFixed(2)}°E</text>
+        <text x="36" y="58" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">Coordinates: ${mapData.center[1].toFixed(2)}°N, ${mapData.center[0].toFixed(2)}°E | Zoom: ${mapData.zoom}x</text>
       </svg>
     `;
   }

@@ -47,6 +47,7 @@ export class TimelineRenderer {
 
     const items = this.transformItems(data);
     let elements = '';
+    const effectiveHeight = layout === 'vertical' ? Math.max(height, 70 + items.length * 90 + 30) : height;
 
     if (layout === 'horizontal') {
       const lineY = 80;
@@ -72,10 +73,37 @@ export class TimelineRenderer {
           <text x="${cx}" y="${lineY + 54}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(item.body.slice(0, 35))}${item.body.length > 35 ? '...' : ''}</text>
         `;
       });
+    } else {
+      // Vertical Track Layout
+      const spineX = 50;
+      const startY = 80;
+      const endY = startY + (items.length - 1) * 90;
+
+      if (items.length > 1) {
+        elements += `<line x1="${spineX}" y1="${startY}" x2="${spineX}" y2="${endY}" stroke="${trackColor}" stroke-width="4" stroke-linecap="round" />`;
+      }
+
+      items.forEach((item, idx) => {
+        const cy = startY + idx * 90;
+        elements += `
+          <circle cx="${spineX}" cy="${cy}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
+          <text x="${spineX}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${activeColor}" font-family="system-ui, sans-serif">${item.stepNumber}</text>
+          
+          <!-- Date Badge -->
+          <rect x="76" y="${cy - 24}" width="80" height="20" rx="10" fill="${isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)'}" />
+          <text x="116" y="${cy - 10}" text-anchor="middle" font-size="10" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
+          
+          <!-- Headline -->
+          <text x="166" y="${cy - 10}" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(item.headline)}</text>
+          
+          <!-- Body -->
+          <text x="76" y="${cy + 14}" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(item.body.slice(0, 75))}${item.body.length > 75 ? '...' : ''}</text>
+        `;
+      });
     }
 
     return `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${effectiveHeight}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
         <text x="30" y="32" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(data.title || 'Chronology of Events')}</text>
         ${elements}
       </svg>

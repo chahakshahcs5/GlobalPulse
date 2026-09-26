@@ -116,6 +116,132 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
       expect(svg).toContain('+37.1%');
       expect(svg).toContain('vs prior period');
     });
+
+    it('renders a 2D heatmap matrix with color scale gradient legend', () => {
+      const heatmapData: ChartBlock['data'] = {
+        chartType: 'heatmap',
+        title: 'Geopolitical Risk Index by Quarter',
+        xAxis: { key: 'quarter', label: 'Quarter' },
+        yAxis: { label: 'Risk Factor' },
+        series: [
+          { name: 'Supply Chain', key: 'supply' },
+          { name: 'Cyber Warfare', key: 'cyber' },
+          { name: 'Sanctions', key: 'sanctions' },
+        ],
+        values: [
+          { quarter: 'Q1', supply: 25, cyber: 60, sanctions: 40 },
+          { quarter: 'Q2', supply: 50, cyber: 85, sanctions: 70 },
+          { quarter: 'Q3', supply: 80, cyber: 95, sanctions: 65 },
+        ],
+        sourceAttribution: 'Global Risk Monitor',
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(heatmapData);
+      expect(svg).toContain('Geopolitical Risk Index by Quarter');
+      expect(svg).toContain('Supply Chain');
+      expect(svg).toContain('Cyber Warfare');
+      expect(svg).toContain('linearGradient id="heatmapGrad"');
+      expect(svg).toContain('Source: Global Risk Monitor');
+    });
+
+    it('renders a distribution histogram with frequency bins', () => {
+      const histData: ChartBlock['data'] = {
+        chartType: 'histogram',
+        title: 'Voter Age Distribution',
+        xAxis: { key: 'bin', label: 'Age Group' },
+        yAxis: { label: 'Voters (Thousands)' },
+        series: [{ name: 'Count', key: 'count', color: '#8b5cf6' }],
+        values: [
+          { bin: '18-29', count: 420 },
+          { bin: '30-44', count: 680 },
+          { bin: '45-64', count: 910 },
+          { bin: '65+', count: 750 },
+        ],
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(histData);
+      expect(svg).toContain('Voter Age Distribution');
+      expect(svg).toContain('18-29');
+      expect(svg).toContain('910');
+      expect(svg).toContain('#8b5cf6');
+    });
+
+    it('renders a sequential waterfall bridge with positive, negative, and cumulative bars', () => {
+      const waterfallData: ChartBlock['data'] = {
+        chartType: 'waterfall',
+        title: 'Fiscal Deficit Bridge 2026',
+        xAxis: { key: 'category', label: 'Item' },
+        yAxis: { label: 'Billion USD' },
+        series: [{ name: 'Amount', key: 'val' }],
+        values: [
+          { category: 'Base Revenue', val: 500, isTotal: true },
+          { category: 'Tax Reform', val: 120 },
+          { category: 'Defense Surge', val: -80 },
+          { category: 'Subsidies', val: -40 },
+          { category: 'Net Surplus', val: 500, isTotal: true },
+        ],
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(waterfallData);
+      expect(svg).toContain('Fiscal Deficit Bridge 2026');
+      expect(svg).toContain('Base Revenue');
+      expect(svg).toContain('+120');
+      expect(svg).toContain('-80');
+      expect(svg).toContain('#10b981');
+      expect(svg).toContain('#ef4444');
+    });
+
+    it('renders a diverging comparison chart between two subjects across metrics', () => {
+      const compData: ChartBlock['data'] = {
+        chartType: 'comparison',
+        title: 'Defense Capability Comparison',
+        xAxis: { key: 'metric', label: 'Metric' },
+        yAxis: { label: 'Count' },
+        series: [
+          { name: 'Allied Forces', key: 'allies', color: '#3b82f6' },
+          { name: 'Opposing Coalition', key: 'opposing', color: '#ec4899' },
+        ],
+        values: [
+          { metric: 'Active Aircraft', allies: 1200, opposing: 950 },
+          { metric: 'Naval Carriers', allies: 11, opposing: 4 },
+          { metric: 'Cyber Battalions', allies: 85, opposing: 90 },
+        ],
+        sourceAttribution: 'Strategic Studies Institute',
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(compData);
+      expect(svg).toContain('Defense Capability Comparison');
+      expect(svg).toContain('Allied Forces');
+      expect(svg).toContain('Opposing Coalition');
+      expect(svg).toContain('Active Aircraft');
+      expect(svg).toContain('1,200');
+    });
+
+    it('renders a slope chart showing bilateral shifts between two periods', () => {
+      const slopeData: ChartBlock['data'] = {
+        chartType: 'slope',
+        title: 'Semiconductor Self-Sufficiency Index',
+        xAxis: { key: 'country', label: 'Country' },
+        yAxis: { label: 'Percentage' },
+        series: [
+          { name: '2024', key: 'start' },
+          { name: '2026', key: 'end' },
+        ],
+        values: [
+          { country: 'United States', start: 30, end: 45 },
+          { country: 'European Union', start: 20, end: 28 },
+          { country: 'Japan', start: 25, end: 22 },
+        ],
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(slopeData);
+      expect(svg).toContain('Semiconductor Self-Sufficiency Index');
+      expect(svg).toContain('United States');
+      expect(svg).toContain('2024');
+      expect(svg).toContain('2026');
+      expect(svg).toContain('(+15)');
+      expect(svg).toContain('(-3)');
+    });
   });
 
   describe('MapLibre Geo Engine', () => {
@@ -139,12 +265,22 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
       expect(config.style).toContain('dark-matter');
     });
 
-    it('renders vector SVG map fallback with projected markers', () => {
-      const svg = MapRenderer.renderSvgFallback(mapData);
+    it('renders vector SVG map fallback with projected markers and layer badges', () => {
+      const mapWithLayers: MapBlock['data'] = {
+        ...mapData,
+        layers: [
+          { id: 'evac-zone', type: 'fill', geojson: {} },
+          { id: 'corridor', type: 'line', geojson: {} },
+        ],
+      };
+      const svg = MapRenderer.renderSvgFallback(mapWithLayers);
       expect(svg).toContain('<svg');
       expect(svg).toContain('Main Plenary Hall');
       expect(svg).toContain('Financial Forum');
       expect(svg).toContain('Coordinates: 28.61°N, 77.21°E');
+      expect(svg).toContain('Zoom: 5x');
+      expect(svg).toContain('evac-zone (fill)');
+      expect(svg).toContain('corridor (line)');
     });
   });
 
@@ -172,6 +308,16 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
       expect(svg).toContain('Day 2');
       expect(svg).toContain('Declaration Adopted');
       expect(svg).toContain('stroke-width="4"');
+    });
+
+    it('renders vertical SVG track with numbered node spine and headlines', () => {
+      const svg = TimelineRenderer.renderSvgTrack(timelineData, 'vertical');
+      expect(svg).toContain('Summit Timeline');
+      expect(svg).toContain('Day 1');
+      expect(svg).toContain('Opening Address');
+      expect(svg).toContain('1');
+      expect(svg).toContain('2');
+      expect(svg).toContain('3');
     });
   });
 
