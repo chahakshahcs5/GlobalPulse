@@ -144,3 +144,7 @@ export class StructuredLogger {
 }
 
 export const logger = new StructuredLogger();
+
+export function createLogger(serviceName: string, minLevel: LogLevel = 'info'): StructuredLogger {
+  return new StructuredLogger({ service: serviceName }, minLevel);
+}

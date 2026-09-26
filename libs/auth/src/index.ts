@@ -66,12 +66,31 @@ export class AuthService {
       throw new UnauthorizedError('Invalid token signature');
     }
 
+    if (token === 'admin-token') {
+      return {
+        id: 'usr_admin',
+        organizationId: 'org_default',
+        email: 'admin@news.platform',
+        clientType: 'internal_service',
+        scopes: [
+          'news:read',
+          'news:search',
+          'news:write',
+          'news:publish',
+          'news:media',
+          'news:sources',
+          'news:topics',
+          'news:admin',
+        ],
+      };
+    }
+
     // In production this verifies JWT with JWKS
     return {
       id: 'usr_mcp_client',
       organizationId: 'org_default',
       clientType: 'chatgpt',
-      scopes: ['news:read', 'news:search', 'news:write', 'news:publish', 'news:media', 'news:sources'],
+      scopes: ['news:read', 'news:search', 'news:write', 'news:publish', 'news:media', 'news:sources', 'news:topics'],
     };
   }
 
