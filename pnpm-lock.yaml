@@ -401,7 +401,33 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  apps/worker: {}
+  apps/worker:
+    dependencies:
+      '@ai-news/database':
+        specifier: workspace:*
+        version: link:../../libs/database
+      '@ai-news/jobs':
+        specifier: workspace:*
+        version: link:../../libs/jobs
+      '@ai-news/media':
+        specifier: workspace:*
+        version: link:../../libs/media
+      '@ai-news/observability':
+        specifier: workspace:*
+        version: link:../../libs/observability
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.4
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
   libs/auth:
     dependencies:

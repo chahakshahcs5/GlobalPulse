@@ -15,7 +15,13 @@
     "lint": "nx run-many --target=lint",
     "dev:api": "tsx watch apps/api/src/main.ts",
     "dev:mcp": "tsx watch apps/mcp-server/src/main.ts",
-    "dev:web": "pnpm --filter @ai-news/web dev"
+    "dev:web": "pnpm --filter @ai-news/web dev",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build",
+    "docker:status": "docker compose ps",
+    "demo:e2e": "tsx scripts/demo-e2e.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",

@@ -2,7 +2,22 @@
   "name": "@ai-news/worker",
   "version": "1.0.0",
   "private": true,
+  "description": "Background Queue and Media Processing Worker for GlobalPulse",
   "scripts": {
-    "start": "tsx src/main.ts"
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "@ai-news/database": "workspace:*",
+    "@ai-news/jobs": "workspace:*",
+    "@ai-news/media": "workspace:*",
+    "@ai-news/observability": "workspace:*",
+    "@ai-news/shared": "workspace:*",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.8.2"
   }
 }
+

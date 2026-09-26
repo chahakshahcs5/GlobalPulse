@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL 16 with pgvector extension (Sections 10, 152, 154)
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: globalpulse_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_secure_password
+      POSTGRES_DB: ai_news
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d ai_news']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 7 for high-throughput job queue and SSE broker (Sections 10, 152)
+  redis:
+    image: redis:7-alpine
+    container_name: globalpulse_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. MinIO S3-Compatible Object Storage for media assets and variants (Section 154)
+  minio:
+    image: minio/minio:RELEASE.2024-03-05T04-48-44Z
+    container_name: globalpulse_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 4. Production NestJS API Gateway & Mercurius GraphQL API
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: globalpulse_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_ENGINE: prisma
+      DATABASE_URL: postgresql://postgres:postgres_secure_password@postgres:5432/ai_news?schema=public
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: http://minio:9000
+      JWT_SECRET: production-secret-key-min-32-chars-globalpulse-ai
+      JWT_ISSUER: https://auth.globalpulse.news
+      JWT_AUDIENCE: https://api.globalpulse.news
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 5. Remote Model Context Protocol (MCP) Server (Streamable HTTP / JSON-RPC 2.0)
+  mcp-server:
+    build:
+      context: .
+      dockerfile: apps/mcp-server/Dockerfile
+    container_name: globalpulse_mcp
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      API_BASE_URL: http://api:3000
+      DATABASE_ENGINE: prisma
+      DATABASE_URL: postgresql://postgres:postgres_secure_password@postgres:5432/ai_news?schema=public
+    ports:
+      - '3001:3001'
+    depends_on:
+      - api
+
+  # 6. Flagship Next.js 15 Web Portal, CMS & 4K Display Wall
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: globalpulse_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_MCP_URL: http://localhost:3001/mcp
+    ports:
+      - '3002:3002'
+    depends_on:
+      - api
+
+  # 7. Asynchronous Background Worker Queue (BullMQ, 4K media variants, TTS audio)
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: globalpulse_worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      DATABASE_ENGINE: prisma
+      DATABASE_URL: postgresql://postgres:postgres_secure_password@postgres:5432/ai_news?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
