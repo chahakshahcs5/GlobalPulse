@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { StructuredLogger, MetricsRegistry, SimpleTracer } from '@ai-news/observability';
 import { QueueManager } from '@ai-news/jobs';
-import { WorkerService } from '../apps/worker/src/worker.service';
-import { OfflineStorageService } from '../apps/mobile/src/services/storage';
-import { MobileBlockRenderer } from '../apps/mobile/src/components/MobileBlockRenderer';
-import { runEndToEndScenario } from '../scripts/demo-e2e';
+import { WorkerService } from '../../apps/worker/src/worker.service';
+import { OfflineStorageService } from '../../apps/mobile/src/services/storage';
+import { MobileBlockRenderer } from '../../apps/mobile/src/components/MobileBlockRenderer';
+import { runEndToEndScenario } from '../../scripts/demo-e2e';
 import React from 'react';
 
-describe('Phase 5: Background Jobs, Mobile Client & Observability', () => {
-  describe('Observability Engine', () => {
+describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
+  describe('Observability Engine Integration', () => {
     it('structured logger formats logs with context and child inheritance', () => {
       const logger = new StructuredLogger({ service: 'news-api' }, 'debug');
       const child = logger.child({ traceId: 'tr_123', clientType: 'gemini' });
@@ -62,7 +62,7 @@ describe('Phase 5: Background Jobs, Mobile Client & Observability', () => {
     });
   });
 
-  describe('Background Worker & Queue Manager', () => {
+  describe('Background Worker & Queue Pipeline', () => {
     let queue: QueueManager;
     let workerService: WorkerService;
 

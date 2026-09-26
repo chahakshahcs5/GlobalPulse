@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { validateBlock, validateBlocks, sanitizeText, extractTextContent } from '@ai-news/content';
 import { ValidationError } from '@ai-news/shared';
 
-describe('Block Model & Validation', () => {
+describe('Block Model & Validation (Unit Tests)', () => {
   it('validates a heading block', () => {
     const raw = {
       id: 'blk_1',

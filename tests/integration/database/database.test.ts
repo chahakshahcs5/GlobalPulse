@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DatabaseService, checkDatabaseHealth, TransactionManager } from '@ai-news/database';
-import { seedDatabase } from '../libs/database/prisma/seed';
+import { seedDatabase } from '../../../libs/database/prisma/seed';
 
-describe('Production Database Core (libs/database)', () => {
+describe('Production Database Core Integration Tests', () => {
   let db: DatabaseService;
 
   beforeEach(() => {

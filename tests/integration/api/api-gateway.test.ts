@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { buildServer } from '../apps/api/src/server';
+import { buildServer } from '../../../apps/api/src/server';
 
-describe('Modular Production API Gateway & Multi-Device Endpoints', () => {
+describe('Modular Production API Gateway Integration Tests', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {

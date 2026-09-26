@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { DEMO_STORIES, DEMO_SOURCES } from '../apps/web/src/lib/demo-data.js';
+import { DEMO_STORIES, DEMO_SOURCES } from '../../../apps/web/src/lib/demo-data.js';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer, VisualDiffRenderer } from '@ai-news/media';
 import { StoryBlockSchema } from '@ai-news/schemas';
 
-describe('Phase 4: Web Application, StoryRenderer & Large Display Mode', () => {
+describe('Web Application, StoryRenderer & Large Display Mode Integration Tests', () => {
   describe('Demo Data & Story Schema Integrity', () => {
     it('contains realistic stories with valid structured blocks', () => {
       expect(DEMO_STORIES.length).toBeGreaterThanOrEqual(3);

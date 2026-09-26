@@ -5,7 +5,12 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "build": "nx run-many --target=build",
-    "test": "vitest run",
+    "test": "vitest run tests/unit tests/integration",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:e2e:browser": "playwright test",
+    "test:all": "vitest run && playwright test",
     "test:watch": "vitest",
     "lint": "nx run-many --target=lint",
     "dev:api": "tsx watch apps/api/src/main.ts",
@@ -27,6 +32,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^22.13.9",
     "@types/react": "^19.3.0",

@@ -12,3 +12,5 @@ coverage/
 .turbo/
 .nx/cache/
 *.tsbuildinfo
+test-results/
+playwright-report/

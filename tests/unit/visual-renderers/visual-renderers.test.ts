@@ -8,7 +8,7 @@ import {
 } from '@ai-news/media';
 import type { ChartBlock, MapBlock, TimelineBlock, WhatChangedBlock } from '@ai-news/schemas';
 
-describe('Phase 3: Multimedia & Visual Story Engines', () => {
+describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
   describe('D3 Programmatic Chart Engine', () => {
     it('renders a multi-series line chart SVG with axes and source attribution', () => {
       const chartData: ChartBlock['data'] = {

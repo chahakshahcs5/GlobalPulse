@@ -4,19 +4,19 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { DatabaseService } from '@ai-news/database';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
-import { registerSearchTools } from '../apps/mcp-server/src/tools/search.tools.js';
-import { registerStoryTools } from '../apps/mcp-server/src/tools/story.tools.js';
-import { registerBlockTools } from '../apps/mcp-server/src/tools/block.tools.js';
-import { registerMediaTools } from '../apps/mcp-server/src/tools/media.tools.js';
-import { registerSourceTools } from '../apps/mcp-server/src/tools/source.tools.js';
-import { registerTaxonomyTools } from '../apps/mcp-server/src/tools/taxonomy.tools.js';
-import { registerJobTools } from '../apps/mcp-server/src/tools/job.tools.js';
-import { registerResources } from '../apps/mcp-server/src/resources/index.js';
-import { registerPrompts } from '../apps/mcp-server/src/prompts/index.js';
-import { createMcpApp } from '../apps/mcp-server/src/server.js';
+import { registerSearchTools } from '../../../apps/mcp-server/src/tools/search.tools.js';
+import { registerStoryTools } from '../../../apps/mcp-server/src/tools/story.tools.js';
+import { registerBlockTools } from '../../../apps/mcp-server/src/tools/block.tools.js';
+import { registerMediaTools } from '../../../apps/mcp-server/src/tools/media.tools.js';
+import { registerSourceTools } from '../../../apps/mcp-server/src/tools/source.tools.js';
+import { registerTaxonomyTools } from '../../../apps/mcp-server/src/tools/taxonomy.tools.js';
+import { registerJobTools } from '../../../apps/mcp-server/src/tools/job.tools.js';
+import { registerResources } from '../../../apps/mcp-server/src/resources/index.js';
+import { registerPrompts } from '../../../apps/mcp-server/src/prompts/index.js';
+import { createMcpApp } from '../../../apps/mcp-server/src/server.js';
 import http from 'http';
 
-describe('Remote MCP Server & Protocol Verification', () => {
+describe('Remote MCP Server & Protocol Integration Tests', () => {
   let db: DatabaseService;
   let server: McpServer;
   let client: Client;

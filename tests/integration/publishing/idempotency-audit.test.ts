@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { DatabaseService } from '@ai-news/database';
 import { StoryService } from '@ai-news/stories';
 
-describe('Idempotency & Audit Logging', () => {
+describe('Idempotency & Audit Logging Integration Tests', () => {
   let db: DatabaseService;
   let storyService: StoryService;
 

@@ -5,7 +5,7 @@ import { EventService } from '@ai-news/events';
 import { SourceService } from '@ai-news/sources';
 import { SearchService } from '@ai-news/search';
 
-describe('Search & Domain Model Separation (Event vs Story vs Source)', () => {
+describe('Search & Domain Model Separation (Unit Tests)', () => {
   let db: DatabaseService;
   let storyService: StoryService;
   let eventService: EventService;
