@@ -38,6 +38,9 @@ export const Navigation: React.FC = () => {
             <Link href="/sources" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
               Sources
             </Link>
+            <Link href="/settings/integrations" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+              AI Integrations
+            </Link>
           </nav>
         </div>
 

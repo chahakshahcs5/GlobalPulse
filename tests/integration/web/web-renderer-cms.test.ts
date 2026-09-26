@@ -1,8 +1,8 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { DEMO_STORIES, DEMO_SOURCES } from '../../../apps/web/src/lib/demo-data.js';
+import { DEMO_STORIES, DEMO_SOURCES, DEMO_ENTITIES, DEMO_EVENTS } from '../../../apps/web/src/lib/demo-data.js';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer, VisualDiffRenderer } from '@ai-news/media';
-import { StoryBlockSchema } from '@ai-news/schemas';
+import { StoryBlockSchema, EntitySchema, EventSchema } from '@ai-news/schemas';
 
 describe('Web Application, StoryRenderer & Large Display Mode Integration Tests', () => {
   describe('Demo Data & Story Schema Integrity', () => {
@@ -239,6 +239,83 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
     });
   });
 
+  describe('Entities & Events Knowledge Graph Integrity', () => {
+    it('contains valid structured entities adhering to EntitySchema', () => {
+      const entities = Object.values(DEMO_ENTITIES);
+      expect(entities.length).toBeGreaterThanOrEqual(5);
+
+      entities.forEach((ent) => {
+        expect(ent.id).toMatch(/^ent_/);
+        expect(ent.name).toBeDefined();
+        expect(ent.slug).toBeDefined();
+        const parsed = EntitySchema.safeParse(ent);
+        expect(parsed.success).toBe(true);
+      });
+    });
+
+    it('contains valid structured events adhering to EventSchema', () => {
+      const events = Object.values(DEMO_EVENTS);
+      expect(events.length).toBeGreaterThanOrEqual(3);
+
+      events.forEach((evt) => {
+        expect(evt.id).toMatch(/^evt_/);
+        expect(evt.title).toBeDefined();
+        expect(evt.occurredAt).toBeDefined();
+        const parsed = EventSchema.safeParse(evt);
+        expect(parsed.success).toBe(true);
+      });
+    });
+  });
+
+  describe('Route Views & Explored Experiences', () => {
+    it('renders Entity Dossier Page with profile, stats, and cited dispatches', async () => {
+      const { renderToString } = await import('react-dom/server');
+      const EntityPage = (await import('../../../apps/web/src/app/entities/[id]/page.js')).default;
+
+      const html = renderToString(
+        await EntityPage({ params: Promise.resolve({ id: 'ent_india' }) })
+      );
+
+      expect(html).toContain('Republic of India');
+      expect(html).toContain('COUNTRY');
+      expect(html).toContain('ent_india');
+      expect(html).toContain('Known Aliases');
+      expect(html).toContain('Covered Dispatches');
+      expect(html).toContain('BRICS 2026 Summit');
+    });
+
+    it('renders Event Tracker Page with live status, geo map, and participating entities', async () => {
+      const { renderToString } = await import('react-dom/server');
+      const EventPage = (await import('../../../apps/web/src/app/events/[id]/page.js')).default;
+
+      const html = renderToString(
+        await EventPage({ params: Promise.resolve({ id: 'evt_brics_2026' }) })
+      );
+
+      expect(html).toContain('BRICS 2026 Leaders Summit in New Delhi');
+      expect(html).toContain('ACTIVE EVENT');
+      expect(html).toContain('Bharat Mandapam');
+      expect(html).toContain('MCP FEED ACTIVE');
+      expect(html).toContain('Key Entities Involved');
+      expect(html).toContain('Republic of India');
+    });
+
+    it('renders External AI Integrations Hub with registered agents and MCP specs', async () => {
+      const { renderToString } = await import('react-dom/server');
+      const IntegrationsPage = (await import('../../../apps/web/src/app/settings/integrations/page.js')).default;
+
+      const html = renderToString(React.createElement(IntegrationsPage));
+
+      expect(html).toContain('External AI Integrations &amp; MCP Hub');
+      expect(html).toContain('Google Gemini Spark');
+      expect(html).toContain('ChatGPT / OpenAI Newsroom Agent');
+      expect(html).toContain('Claude 3.7 Sonnet Desk');
+      expect(html).toContain('The Application Is Not The AI');
+      expect(html).toContain('AsyncLocalStorage Principal Isolation');
+      expect(html).toContain('18 Complete Section 38 Tools');
+    });
+  });
+
   describe('Large Display Experience (4K / Kiosk)', () => {
     it('supports multi-pane visual distribution without data loss', () => {
       const story = DEMO_STORIES[0];
@@ -249,6 +326,18 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(mapBlock).toBeDefined();
       expect(story.title).toBeDefined();
       expect(story.summary).toBeDefined();
+    });
+
+    it('renders 4K Display Wall component with stream indicators and auto-cycling', async () => {
+      const { renderToString } = await import('react-dom/server');
+      const LargeDisplayPage = (await import('../../../apps/web/src/app/display/page.js')).default;
+
+      const html = renderToString(React.createElement(LargeDisplayPage));
+
+      expect(html).toContain('GLOBALPULSE NEWS WALL');
+      expect(html).toContain('4K DISPLAY MODE');
+      expect(html).toContain('STREAM ACTIVE');
+      expect(html).toContain('Autonomous AI Ingestion via Remote MCP');
     });
   });
 });
