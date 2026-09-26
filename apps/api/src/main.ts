@@ -20,6 +20,8 @@ async function bootstrap() {
 🚀 AI-OPERABLE ENTERPRISE NEWS PLATFORM - API GATEWAY (PRODUCTION)
 ========================================================================
 • Gateway URL:          http://${host}:${port}
+• GraphQL API:          http://${host}:${port}/graphql
+• GraphiQL IDE:         http://${host}:${port}/graphiql
 • Health Check:         http://${host}:${port}/health
 • OAuth 2.0 Discovery:  http://${host}:${port}/.well-known/oauth-protected-resource
 • OpenAPI 3.1 Spec:     http://${host}:${port}/docs/openapi.json

@@ -4,13 +4,13 @@ import type { DatabaseService } from '@ai-news/database';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { generateId } from '@ai-news/shared';
 
-// In-memory mock job tracker for async operations
+// In-memory job tracker for asynchronous background processing
 const jobs = new Map<
   string,
   {
     id: string;
     type: string;
-    status: 'queued' | 'running' | 'completed' | 'failed';
+    status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
     progress: number;
     result?: unknown;
     createdAt: string;
@@ -24,7 +24,7 @@ export function registerJobTools(
 ) {
   server.tool(
     'create_job',
-    'Queue an asynchronous long-running task such as media transcoding, video derivative rendering, or bulk export. Returns a jobId to poll.',
+    '[WRITE] Queue an asynchronous long-running task such as media transcoding, video derivative rendering, or bulk export. Returns a jobId to poll.',
     {
       jobType: z.enum(['media_transcode', 'video_render', 'pdf_export', 'bulk_import']).describe('Type of job'),
       payload: z.record(z.unknown()).describe('Job parameters'),
@@ -57,7 +57,7 @@ export function registerJobTools(
 
   server.tool(
     'get_job',
-    'Check status and results of an asynchronous job by jobId.',
+    '[READ-ONLY] Check status and results of an asynchronous job by jobId.',
     {
       jobId: z.string().min(1),
     },
@@ -72,6 +72,59 @@ export function registerJobTools(
 
       return {
         content: [{ type: 'text', text: JSON.stringify(job, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    'cancel_job',
+    '[WRITE] Cancel an asynchronous or queued background task.',
+    {
+      jobId: z.string().min(1).describe('Job ID to cancel'),
+      reason: z.string().optional().describe('Cancellation reason'),
+    },
+    async ({ jobId, reason }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const job = jobs.get(jobId);
+      if (!job) {
+        throw new Error(`Job ${jobId} not found`);
+      }
+
+      job.status = 'cancelled';
+      job.result = { message: reason || 'Job cancelled by client operator.' };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ message: `Job ${jobId} cancelled.`, status: job.status }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    'list_jobs',
+    '[READ-ONLY] List recent and active background jobs with status and progress.',
+    {
+      status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled']).optional().describe('Filter by job status'),
+      limit: z.number().int().min(1).max(50).default(10).describe('Max jobs to return'),
+    },
+    async ({ status, limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      let list = Array.from(jobs.values());
+      if (status) {
+        list = list.filter((j) => j.status === status);
+      }
+      list = list.slice(0, limit);
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ count: list.length, jobs: list }, null, 2) }],
       };
     }
   );

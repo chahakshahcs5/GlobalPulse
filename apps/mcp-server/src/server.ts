@@ -1,4 +1,5 @@
 import http from 'http';
+import { AsyncLocalStorage } from 'async_hooks';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { db, DatabaseService } from '@ai-news/database';
@@ -13,6 +14,12 @@ import { registerJobTools } from './tools/job.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 
+/**
+ * Concurrency-safe request-scoped storage for AuthenticatedPrincipal
+ * Prevents race conditions across concurrent AI client requests (§54, §56)
+ */
+export const mcpPrincipalStore = new AsyncLocalStorage<AuthenticatedPrincipal>();
+
 export interface McpServerApp {
   server: McpServer;
   httpServer: http.Server;
@@ -21,8 +28,7 @@ export interface McpServerApp {
 }
 
 export function createMcpApp(database: DatabaseService = db): McpServerApp {
-  // Default principal (can be dynamically updated per request via bearer token)
-  let activePrincipal: AuthenticatedPrincipal = {
+  let defaultPrincipal: AuthenticatedPrincipal = {
     id: 'usr_mcp_gemini',
     organizationId: 'org_default',
     clientType: 'gemini',
@@ -38,14 +44,14 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     ],
   };
 
-  const getPrincipal = () => activePrincipal;
+  const getPrincipal = () => mcpPrincipalStore.getStore() || defaultPrincipal;
 
   const server = new McpServer({
     name: 'ai-news-platform-mcp',
     version: '1.0.0',
   });
 
-  // Register all tool domains
+  // Register all tool domains with concurrency-safe getPrincipal
   registerSearchTools(server, database, getPrincipal);
   registerStoryTools(server, database, getPrincipal);
   registerBlockTools(server, database, getPrincipal);
@@ -90,7 +96,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       return;
     }
 
-    // RFC 8414 OAuth Protected Resource Metadata for OpenAI & Gemini
+    // RFC 8414 OAuth Protected Resource Metadata for OpenAI & Gemini (§42, §47)
     if (url.pathname === '/.well-known/oauth-protected-resource') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
@@ -114,11 +120,12 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       return;
     }
 
-    // Resolve Authorization Bearer Token
+    // Concurrency-safe request-scoped principal resolution
+    let resolvedPrincipal = defaultPrincipal;
     try {
       const authHeader = req.headers.authorization;
       if (authHeader) {
-        activePrincipal = AuthService.resolveBearerToken(authHeader);
+        resolvedPrincipal = AuthService.resolveBearerToken(authHeader);
       }
     } catch (err: any) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -126,22 +133,24 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       return;
     }
 
-    // Streamable HTTP / MCP Handler
+    // Streamable HTTP / MCP Handler wrapped in request-scoped AsyncLocalStorage
     if (url.pathname === '/mcp' || url.pathname === '/') {
       let bodyStr = '';
       req.on('data', (chunk) => {
         bodyStr += chunk;
       });
       req.on('end', async () => {
-        try {
-          const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;
-          await transport.handleRequest(req, res, parsed);
-        } catch (e: any) {
-          if (!res.headersSent) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: e.message } }));
+        await mcpPrincipalStore.run(resolvedPrincipal, async () => {
+          try {
+            const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;
+            await transport.handleRequest(req, res, parsed);
+          } catch (e: any) {
+            if (!res.headersSent) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: e.message } }));
+            }
           }
-        }
+        });
       });
       return;
     }
@@ -156,10 +165,10 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     httpServer,
     transport,
     get currentPrincipal() {
-      return activePrincipal;
+      return defaultPrincipal;
     },
     set currentPrincipal(p: AuthenticatedPrincipal) {
-      activePrincipal = p;
+      defaultPrincipal = p;
     },
   };
 }

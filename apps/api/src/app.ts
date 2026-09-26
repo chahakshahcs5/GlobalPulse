@@ -14,6 +14,7 @@ import { mediaRoutes } from './modules/media/media.routes';
 import { auditRoutes } from './modules/audit/audit.routes';
 import { sseRoutes } from './realtime/sse.routes';
 import { openApiRoutes } from './docs/openapi';
+import { registerGraphQL } from '@ai-news/graphql';
 
 export interface AppOptions {
   logger?: boolean;
@@ -36,6 +37,9 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
 
   // Global RFC 7807 Error Handler
   app.setErrorHandler(globalErrorHandler);
+
+  // Mount GraphQL Engine (Section 10 & 36)
+  registerGraphQL(app, { graphiql: true });
 
   // Mount Feature Modules
   app.register(healthRoutes);

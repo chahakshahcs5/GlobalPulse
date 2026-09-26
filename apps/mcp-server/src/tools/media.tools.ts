@@ -5,6 +5,20 @@ import { StoryService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { generateId } from '@ai-news/shared';
 
+// Registry for media assets and variants
+const mediaRegistry = new Map<
+  string,
+  {
+    id: string;
+    mediaType: string;
+    title: string;
+    url: string;
+    metadata: Record<string, unknown>;
+    variants: Array<{ format: string; width: number; height: number; url: string }>;
+    createdAt: string;
+  }
+>();
+
 export function registerMediaTools(
   server: McpServer,
   db: DatabaseService,
@@ -13,8 +27,29 @@ export function registerMediaTools(
   const storyService = new StoryService(db);
 
   server.tool(
+    'get_media',
+    '[READ-ONLY] Retrieve metadata and processed responsive variants for a registered media asset.',
+    {
+      mediaId: z.string().min(1).describe('Media asset ID'),
+    },
+    async ({ mediaId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const media = mediaRegistry.get(mediaId);
+      if (!media) {
+        throw new Error(`Media asset "${mediaId}" not found`);
+      }
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify(media, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
     'create_chart',
-    'Create a structured programmatic D3 chart specification (line, bar, stacked_bar, area, scatter, donut, waterfall, kpi) and optionally append it to a story.',
+    '[WRITE] Create a structured programmatic D3 chart specification (line, bar, stacked_bar, area, scatter, donut, waterfall, kpi) and optionally append it to a story.',
     {
       storyId: z.string().optional().describe('Story ID to append chart to if desired'),
       chartType: z.enum([
@@ -90,7 +125,7 @@ export function registerMediaTools(
 
   server.tool(
     'create_map',
-    'Create an interactive MapLibre map block with geographic coordinates, markers, or GeoJSON layers.',
+    '[WRITE] Create an interactive MapLibre map block with geographic coordinates, markers, or GeoJSON layers.',
     {
       storyId: z.string().optional().describe('Story ID to append map to'),
       title: z.string().optional(),
@@ -141,7 +176,7 @@ export function registerMediaTools(
 
   server.tool(
     'create_timeline',
-    'Create a responsive chronological timeline block with milestones and source references.',
+    '[WRITE] Create a responsive chronological timeline block with milestones and source references.',
     {
       storyId: z.string().optional().describe('Story ID to append timeline to'),
       title: z.string().optional().describe('Timeline title'),
@@ -188,7 +223,7 @@ export function registerMediaTools(
 
   server.tool(
     'create_diagram',
-    'Create a structured diagram block using Mermaid notation or declarative flowchart syntax.',
+    '[WRITE] Create a structured diagram block using Mermaid notation or declarative flowchart syntax.',
     {
       storyId: z.string().optional().describe('Story ID to append diagram to'),
       title: z.string().optional(),
@@ -230,7 +265,7 @@ export function registerMediaTools(
 
   server.tool(
     'attach_media',
-    'Attach a hero image or media asset URL to an existing story.',
+    '[WRITE] Attach a hero image or media asset URL to an existing story.',
     {
       storyId: z.string().min(1).describe('Story ID'),
       heroImageUrl: z.string().url().describe('Direct URL to the image asset'),
@@ -252,6 +287,110 @@ export function registerMediaTools(
 
       return {
         content: [{ type: 'text', text: JSON.stringify({ message: 'Media attached to story hero.', heroImageUrl }) }],
+      };
+    }
+  );
+
+  server.tool(
+    'upload_media',
+    '[WRITE] Register an external or generated media asset (image, video, audio, chart) in the media registry.',
+    {
+      mediaType: z.enum(['image', 'video', 'audio', 'chart', 'document']).describe('Media MIME or category type'),
+      title: z.string().min(1).describe('Asset title or label'),
+      url: z.string().url().describe('Public or storage URL'),
+      metadata: z.record(z.unknown()).optional().describe('Resolution, duration, bitrate, prompt, or provenance info'),
+    },
+    async (params) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:media');
+
+      const mediaId = generateId('med');
+      const record = {
+        id: mediaId,
+        mediaType: params.mediaType,
+        title: params.title,
+        url: params.url,
+        metadata: params.metadata || {},
+        variants: [],
+        createdAt: new Date().toISOString(),
+      };
+      mediaRegistry.set(mediaId, record);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ message: 'Media asset registered.', mediaId, asset: record }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    'create_media_variant',
+    '[WRITE] Register a processed derivative/variant for an existing media asset (e.g. thumbnail, 720p, WebP).',
+    {
+      mediaId: z.string().min(1).describe('Parent media ID'),
+      format: z.string().min(1).describe('File format (e.g. webp, avif, mp4)'),
+      width: z.number().int().positive().describe('Width in pixels'),
+      height: z.number().int().positive().describe('Height in pixels'),
+      url: z.string().url().describe('Direct derivative URL'),
+    },
+    async (params) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:media');
+
+      const media = mediaRegistry.get(params.mediaId);
+      if (!media) {
+        throw new Error(`Media asset "${params.mediaId}" not found`);
+      }
+
+      const variant = {
+        format: params.format,
+        width: params.width,
+        height: params.height,
+        url: params.url,
+      };
+      media.variants.push(variant);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ message: 'Media variant registered.', mediaId: params.mediaId, variant }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    'remove_media',
+    '[WRITE] Remove media attachment from a story hero or detach an asset.',
+    {
+      storyId: z.string().min(1).describe('Story ID'),
+      removeHeroImage: z.boolean().default(true).describe('Whether to clear the story heroImageUrl'),
+    },
+    async ({ storyId, removeHeroImage }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:media');
+
+      if (removeHeroImage) {
+        await storyService.updateStory(
+          storyId,
+          { heroImageUrl: undefined },
+          {
+            organizationId: principal.organizationId,
+            authorId: principal.id,
+            clientType: principal.clientType,
+            createdVia: 'mcp',
+          }
+        );
+      }
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ message: 'Media removed from story.', storyId }) }],
       };
     }
   );

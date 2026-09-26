@@ -6,9 +6,6 @@ import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import {
   ArticleTypeSchema,
   StoryBlockSchema,
-  CreateStoryInputSchema,
-  UpdateStoryInputSchema,
-  CreateStoryVersionInputSchema,
 } from '@ai-news/schemas';
 
 export function registerStoryTools(
@@ -20,7 +17,7 @@ export function registerStoryTools(
 
   server.tool(
     'get_story',
-    'Retrieve complete structured details of a story by ID, including its current blocks, topics, entities, and sources.',
+    '[READ-ONLY] Retrieve complete structured details of a story by ID, including its current blocks, topics, entities, and sources.',
     {
       storyId: z.string().min(1).describe('The unique ID of the story (e.g. "sty_123")'),
     },
@@ -37,7 +34,7 @@ export function registerStoryTools(
 
   server.tool(
     'get_story_version',
-    'Retrieve a specific immutable historical revision of a story by version number.',
+    '[READ-ONLY] Retrieve a specific immutable historical revision of a story by version number.',
     {
       storyId: z.string().min(1).describe('Story ID'),
       versionNumber: z.number().int().positive().describe('Version sequence number (e.g. 1, 2)'),
@@ -55,7 +52,7 @@ export function registerStoryTools(
 
   server.tool(
     'get_story_versions',
-    'List all historical versions of a story with changelog summaries, authors, and timestamps.',
+    '[READ-ONLY] List all historical versions of a story with changelog summaries, authors, and timestamps.',
     {
       storyId: z.string().min(1).describe('Story ID'),
     },
@@ -72,7 +69,7 @@ export function registerStoryTools(
 
   server.tool(
     'create_story',
-    'Create a new draft story. Initializes Version 1 snapshot. Supports idempotencyKey to prevent duplicate creation on agent retries.',
+    '[WRITE] Create a new draft story. Initializes Version 1 snapshot. Supports idempotencyKey to prevent duplicate creation on agent retries.',
     {
       title: z.string().min(1).max(300).describe('Story headline'),
       summary: z.string().min(1).max(2000).describe('Editorial executive summary'),
@@ -119,7 +116,7 @@ export function registerStoryTools(
 
   server.tool(
     'update_story',
-    'Update story metadata such as headline, summary, topic associations, or hero image.',
+    '[WRITE] Update story metadata such as headline, summary, topic associations, or hero image.',
     {
       storyId: z.string().min(1).describe('Story ID to update'),
       title: z.string().min(1).max(300).optional(),
@@ -158,7 +155,7 @@ export function registerStoryTools(
 
   server.tool(
     'create_story_version',
-    'Commit a new immutable version snapshot for an existing story. Automatically diffs blocks and generates a WhatChangedBlock if not provided.',
+    '[WRITE] Commit a new immutable version snapshot for an existing story. Automatically diffs blocks and generates a WhatChangedBlock if not provided.',
     {
       storyId: z.string().min(1).describe('Story ID to snapshot'),
       changeSummary: z.string().min(1).describe('Editorial explanation of what changed in this version'),
@@ -200,7 +197,7 @@ export function registerStoryTools(
 
   server.tool(
     'publish_story',
-    'HIGH IMPACT: Publish a draft or revised story to live feeds and public readers. Requires news:publish scope.',
+    '[HIGH-IMPACT WRITE] Publish a draft or revised story to live feeds and public readers. Requires news:publish scope and client approval policy.',
     {
       storyId: z.string().min(1).describe('Story ID to publish'),
       idempotencyKey: z.string().optional().describe('Idempotency key'),
@@ -244,7 +241,7 @@ export function registerStoryTools(
 
   server.tool(
     'unpublish_story',
-    'HIGH IMPACT: Revert a published story back to DRAFT status.',
+    '[HIGH-IMPACT WRITE] Revert a published story back to DRAFT status. Requires news:publish scope.',
     {
       storyId: z.string().min(1).describe('Story ID to unpublish'),
     },
@@ -272,7 +269,7 @@ export function registerStoryTools(
 
   server.tool(
     'archive_story',
-    'HIGH IMPACT: Archive a superseded or retired story.',
+    '[HIGH-IMPACT WRITE] Archive a superseded or retired story. Requires news:publish scope.',
     {
       storyId: z.string().min(1).describe('Story ID to archive'),
     },
@@ -292,6 +289,28 @@ export function registerStoryTools(
           {
             type: 'text',
             text: JSON.stringify({ message: 'Story ARCHIVED.', storyId: story.id, status: story.status }),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    'delete_story',
+    '[HIGH-IMPACT WRITE] Permanently remove a story and its blocks. Sensitive administrative action.',
+    {
+      storyId: z.string().min(1).describe('Story ID to permanently delete'),
+    },
+    async ({ storyId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:admin');
+
+      const deleted = await db.stories.delete(storyId, principal.organizationId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ message: deleted ? 'Story deleted.' : 'Story not found.', success: deleted }),
           },
         ],
       };

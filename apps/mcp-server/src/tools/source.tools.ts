@@ -14,7 +14,7 @@ export function registerSourceTools(
 
   server.tool(
     'create_source',
-    'Register an external publication, article, document, or dataset URL in the source registry.',
+    '[WRITE] Register an external publication, article, document, or dataset URL in the source registry.',
     {
       url: z.string().url().describe('The direct URL of the external source'),
       title: z.string().min(1).describe('The article or document title'),
@@ -50,8 +50,47 @@ export function registerSourceTools(
   );
 
   server.tool(
+    'update_source',
+    '[WRITE] Update metadata or permissible excerpt for a registered external source.',
+    {
+      sourceId: z.string().min(1).describe('Source ID to update'),
+      title: z.string().optional().describe('Updated title'),
+      publisher: z.string().optional().describe('Updated publisher'),
+      author: z.string().optional().describe('Updated author name'),
+      permissibleExcerpt: z.string().max(1000).optional().describe('Updated excerpt'),
+    },
+    async ({ sourceId, ...updates }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:sources');
+
+      const source = await db.sources.findById(sourceId, principal.organizationId);
+      if (!source) {
+        throw new Error(`Source "${sourceId}" not found`);
+      }
+
+      const updated = await db.sources.update({
+        ...source,
+        title: updates.title ?? source.title,
+        publisher: updates.publisher ?? source.publisher,
+        author: updates.author !== undefined ? updates.author : source.author,
+        permissibleExcerpt: updates.permissibleExcerpt ?? source.permissibleExcerpt,
+        updatedAt: new Date().toISOString(),
+      });
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ message: 'Source updated successfully.', sourceId: updated.id, updated }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
     'attach_source',
-    'Attach a registered source to a story.',
+    '[WRITE] Attach a registered source to a story.',
     {
       storyId: z.string().min(1).describe('Story ID'),
       sourceId: z.string().min(1).describe('Source ID from create_source or search_sources'),
@@ -68,8 +107,33 @@ export function registerSourceTools(
   );
 
   server.tool(
+    'detach_source',
+    '[WRITE] Detach a source reference from a story.',
+    {
+      storyId: z.string().min(1).describe('Story ID'),
+      sourceId: z.string().min(1).describe('Source ID to detach'),
+    },
+    async ({ storyId, sourceId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:sources');
+
+      const story = await db.stories.findById(storyId, principal.organizationId);
+      if (!story) {
+        throw new Error(`Story "${storyId}" not found`);
+      }
+
+      story.sourceIds = story.sourceIds.filter((id) => id !== sourceId);
+      await db.stories.update(story);
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ message: 'Source detached from story.', storyId, sourceId }) }],
+      };
+    }
+  );
+
+  server.tool(
     'attach_citation',
-    'Attach a granular factual claim citation linking a story claim to a specific source.',
+    '[WRITE] Attach a granular factual claim citation linking a story claim to a specific source.',
     {
       storyId: z.string().min(1).describe('Story ID'),
       sourceId: z.string().min(1).describe('Source ID'),
@@ -103,7 +167,7 @@ export function registerSourceTools(
 
   server.tool(
     'get_story_sources',
-    'Retrieve all sources and claim citations attached to a story.',
+    '[READ-ONLY] Retrieve all sources and claim citations attached to a story.',
     {
       storyId: z.string().min(1).describe('Story ID'),
     },

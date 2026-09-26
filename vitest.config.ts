@@ -23,6 +23,7 @@ export default defineConfig({
       '@ai-news/media': path.resolve(__dirname, 'libs/media/src/index.ts'),
       '@ai-news/observability': path.resolve(__dirname, 'libs/observability/src/index.ts'),
       '@ai-news/jobs': path.resolve(__dirname, 'libs/jobs/src/index.ts'),
+      '@ai-news/graphql': path.resolve(__dirname, 'libs/graphql/src/index.ts'),
     },
   },
 });
