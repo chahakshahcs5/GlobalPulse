@@ -74,4 +74,26 @@ export class AuthService {
       scopes: ['news:read', 'news:search', 'news:write', 'news:publish', 'news:media', 'news:sources'],
     };
   }
+
+  /**
+   * RFC 8414 OAuth 2.0 Protected Resource Metadata
+   */
+  static getProtectedResourceMetadata(resourceUri: string = 'https://api.globalpulse.news') {
+    return {
+      resource: resourceUri,
+      authorization_servers: ['https://auth.globalpulse.news'],
+      scopes_supported: [
+        'news:read',
+        'news:search',
+        'news:write',
+        'news:publish',
+        'news:media',
+        'news:sources',
+        'news:topics',
+        'news:admin',
+      ],
+      bearer_methods_supported: ['header'],
+      resource_documentation: 'https://docs.globalpulse.news/mcp-auth',
+    };
+  }
 }

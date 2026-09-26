@@ -31,7 +31,9 @@
       "@ai-news/sources": ["libs/sources/src/index.ts"],
       "@ai-news/search": ["libs/search/src/index.ts"],
       "@ai-news/auth": ["libs/auth/src/index.ts"],
-      "@ai-news/media": ["libs/media/src/index.ts"]
+      "@ai-news/media": ["libs/media/src/index.ts"],
+      "@ai-news/observability": ["libs/observability/src/index.ts"],
+      "@ai-news/jobs": ["libs/jobs/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", "coverage"]
