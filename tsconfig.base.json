@@ -34,7 +34,8 @@
       "@ai-news/media": ["libs/media/src/index.ts"],
       "@ai-news/observability": ["libs/observability/src/index.ts"],
       "@ai-news/jobs": ["libs/jobs/src/index.ts"],
-      "@ai-news/graphql": ["libs/graphql/src/index.ts"]
+      "@ai-news/graphql": ["libs/graphql/src/index.ts"],
+      "react-native": ["apps/mobile/src/react-native-compat.tsx"]
     }
   },
   "exclude": ["node_modules", "dist", "coverage"]

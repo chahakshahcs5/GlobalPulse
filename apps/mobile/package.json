@@ -2,7 +2,11 @@
   "name": "@ai-news/mobile",
   "version": "1.0.0",
   "private": true,
+  "main": "src/index.ts",
   "scripts": {
-    "start": "expo start"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   }
 }

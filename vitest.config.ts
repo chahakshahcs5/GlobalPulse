@@ -24,6 +24,7 @@ export default defineConfig({
       '@ai-news/observability': path.resolve(__dirname, 'libs/observability/src/index.ts'),
       '@ai-news/jobs': path.resolve(__dirname, 'libs/jobs/src/index.ts'),
       '@ai-news/graphql': path.resolve(__dirname, 'libs/graphql/src/index.ts'),
+      'react-native': path.resolve(__dirname, 'apps/mobile/src/react-native-compat.tsx'),
     },
   },
 });
