@@ -1,0 +1,41 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "baseUrl": ".",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@ai-news/schemas": ["../../libs/schemas/src/index.ts"],
+      "@ai-news/shared": ["../../libs/shared/src/index.ts"],
+      "@ai-news/database": ["../../libs/database/src/index.ts"],
+      "@ai-news/content": ["../../libs/content/src/index.ts"],
+      "@ai-news/stories": ["../../libs/stories/src/index.ts"],
+      "@ai-news/events": ["../../libs/events/src/index.ts"],
+      "@ai-news/topics": ["../../libs/topics/src/index.ts"],
+      "@ai-news/entities": ["../../libs/entities/src/index.ts"],
+      "@ai-news/sources": ["../../libs/sources/src/index.ts"],
+      "@ai-news/search": ["../../libs/search/src/index.ts"],
+      "@ai-news/auth": ["../../libs/auth/src/index.ts"],
+      "@ai-news/media": ["../../libs/media/src/index.ts"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StoryBlockSchema, type StoryBlock } from './blocks.js';
+import { StoryBlockSchema, type StoryBlock } from './blocks';
 
 export const StoryStatusSchema = z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']);
 export type StoryStatus = z.infer<typeof StoryStatusSchema>;

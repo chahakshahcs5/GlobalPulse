@@ -23,7 +23,7 @@ import type {
   ISourceRepository,
   IIdempotencyRepository,
   IAuditRepository,
-} from './interfaces.js';
+} from './interfaces';
 
 function computeTextSimilarity(s1: string, s2: string): number {
   const set1 = new Set(s1.toLowerCase().split(/\s+/).filter(w => w.length > 2));

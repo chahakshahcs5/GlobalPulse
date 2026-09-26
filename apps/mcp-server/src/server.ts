@@ -3,15 +3,15 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { db, DatabaseService } from '@ai-news/database';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
-import { registerSearchTools } from './tools/search.tools.js';
-import { registerStoryTools } from './tools/story.tools.js';
-import { registerBlockTools } from './tools/block.tools.js';
-import { registerMediaTools } from './tools/media.tools.js';
-import { registerSourceTools } from './tools/source.tools.js';
-import { registerTaxonomyTools } from './tools/taxonomy.tools.js';
-import { registerJobTools } from './tools/job.tools.js';
-import { registerResources } from './resources/index.js';
-import { registerPrompts } from './prompts/index.js';
+import { registerSearchTools } from './tools/search.tools';
+import { registerStoryTools } from './tools/story.tools';
+import { registerBlockTools } from './tools/block.tools';
+import { registerMediaTools } from './tools/media.tools';
+import { registerSourceTools } from './tools/source.tools';
+import { registerTaxonomyTools } from './tools/taxonomy.tools';
+import { registerJobTools } from './tools/job.tools';
+import { registerResources } from './resources/index';
+import { registerPrompts } from './prompts/index';
 
 export interface McpServerApp {
   server: McpServer;

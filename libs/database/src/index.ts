@@ -6,7 +6,7 @@ import {
   InMemorySourceRepository,
   InMemoryIdempotencyRepository,
   InMemoryAuditRepository,
-} from './in-memory-store.js';
+} from './in-memory-store';
 import type {
   IStoryRepository,
   IEventRepository,
@@ -15,10 +15,10 @@ import type {
   ISourceRepository,
   IIdempotencyRepository,
   IAuditRepository,
-} from './interfaces.js';
+} from './interfaces';
 
-export * from './interfaces.js';
-export * from './in-memory-store.js';
+export * from './interfaces';
+export * from './in-memory-store';
 
 export class DatabaseService {
   public stories: IStoryRepository;

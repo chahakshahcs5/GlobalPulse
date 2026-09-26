@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ClientTypeSchema } from './story.js';
+import { ClientTypeSchema } from './story';
 
 export const AuditLogSchema = z.object({
   id: z.string().min(1),

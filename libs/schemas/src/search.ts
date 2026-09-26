@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StoryStatusSchema, ArticleTypeSchema } from './story.js';
+import { StoryStatusSchema, ArticleTypeSchema } from './story';
 
 export const SearchStoriesInputSchema = z.object({
   query: z.string().optional(),

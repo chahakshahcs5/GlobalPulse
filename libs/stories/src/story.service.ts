@@ -22,7 +22,7 @@ import {
   generateId,
   slugify,
 } from '@ai-news/shared';
-import { WhatChangedDiffService } from './what-changed.js';
+import { WhatChangedDiffService } from './what-changed';
 
 export interface StoryContext {
   organizationId: string;

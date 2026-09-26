@@ -1,2 +1,2 @@
-export * from './what-changed.js';
-export * from './story.service.js';
+export * from './what-changed';
+export * from './story.service';

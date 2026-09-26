@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { createMcpApp } from './server.js';
+import { createMcpApp } from './server';
 
 dotenv.config();
 
