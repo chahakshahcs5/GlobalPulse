@@ -47,7 +47,8 @@ export class MemoryEntityRepository implements IEntityRepository {
         e.organizationId === orgId &&
         (e.name.toLowerCase().includes(q) ||
           e.slug.toLowerCase().includes(q) ||
-          (e.description && e.description.toLowerCase().includes(q)))
+          (e.description && e.description.toLowerCase().includes(q)) ||
+          e.aliases?.some((a) => a.toLowerCase().includes(q)))
     );
   }
 
