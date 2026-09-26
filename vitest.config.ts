@@ -20,6 +20,7 @@ export default defineConfig({
       '@ai-news/sources': path.resolve(__dirname, 'libs/sources/src/index.ts'),
       '@ai-news/search': path.resolve(__dirname, 'libs/search/src/index.ts'),
       '@ai-news/auth': path.resolve(__dirname, 'libs/auth/src/index.ts'),
+      '@ai-news/media': path.resolve(__dirname, 'libs/media/src/index.ts'),
     },
   },
 });

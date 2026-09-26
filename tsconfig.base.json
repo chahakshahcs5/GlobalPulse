@@ -30,7 +30,8 @@
       "@ai-news/entities": ["libs/entities/src/index.ts"],
       "@ai-news/sources": ["libs/sources/src/index.ts"],
       "@ai-news/search": ["libs/search/src/index.ts"],
-      "@ai-news/auth": ["libs/auth/src/index.ts"]
+      "@ai-news/auth": ["libs/auth/src/index.ts"],
+      "@ai-news/media": ["libs/media/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", "coverage"]
