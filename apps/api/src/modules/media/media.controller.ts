@@ -1,25 +1,35 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  HttpStatus,
+  Res,
+  NotFoundException,
+} from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { QueueManager } from '@ai-news/jobs';
+import { s3Storage } from '@ai-news/media';
 import { generateId } from '@ai-news/shared';
 import { ApiResponse } from '../../common/response/api-response';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
 const queue = new QueueManager(true);
-
-export interface RegisterMediaInput {
-  url: string;
-  mediaType: 'image' | 'video' | 'audio';
-  altText?: string;
-  caption?: string;
-  formats?: ('webp' | 'avif' | 'jpeg')[];
-}
-
 const mediaRegistry = new Map<string, any>();
 
+@Controller('api/media')
+@UseGuards(NestAuthGuard)
 export class MediaController {
-  static async registerMedia(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const body = request.body as RegisterMediaInput;
-
+  @Post(['', 'assets'])
+  @RequireScope('news:media')
+  async registerMedia(
+    @Body() body: any,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const orgId = principal.organizationId;
     const mediaId = generateId('med');
     const asset = {
       id: mediaId,
@@ -29,6 +39,7 @@ export class MediaController {
       altText: body.altText,
       caption: body.caption,
       createdAt: new Date().toISOString(),
+      s3Bucket: s3Storage.getBucket(),
       variants: [
         { suffix: 'thumb', width: 320, height: 180, url: `${body.url}?w=320` },
         { suffix: 'card', width: 720, height: 405, url: `${body.url}?w=720` },
@@ -38,7 +49,7 @@ export class MediaController {
 
     mediaRegistry.set(mediaId, asset);
 
-    // Queue background variant processing job
+    // Queue background variant processing job (processed by worker into MinIO S3)
     await queue.enqueue('media.process_variant', {
       mediaId,
       sourceUrl: body.url,
@@ -48,17 +59,20 @@ export class MediaController {
         { width: 720, height: 405, suffix: 'card' },
         { width: 1920, height: 1080, suffix: 'hero' },
       ],
+      orgId,
     });
 
-    return reply.status(201).send(ApiResponse.success(asset));
+    reply.status(HttpStatus.CREATED);
+    return ApiResponse.success(asset);
   }
 
-  static async getMedia(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
+  @Get([':id', 'assets/:id'])
+  @RequireScope('news:read')
+  async getMedia(@Param('id') id: string) {
     const asset = mediaRegistry.get(id);
     if (!asset) {
-      return reply.status(404).send({ error: 'MediaNotFound', message: `Media asset ${id} not found` });
+      throw new NotFoundException(`Media asset [${id}] not found`);
     }
-    return reply.send(asset);
+    return ApiResponse.success(asset);
   }
 }

@@ -1,8 +1,8 @@
-import { Resolver, Query, Mutation, Subscription, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { Injectable } from '@nestjs/common';
 import { StoryService } from '@ai-news/stories';
 import { SearchService } from '@ai-news/search';
-import { DatabaseService, db } from '@ai-news/database';
+import { db } from '@ai-news/database';
 
 @Injectable()
 @Resolver('Story')
@@ -17,7 +17,8 @@ export class StoriesResolver {
 
   @Query('searchStories')
   async searchStories(@Args('input') input: any) {
-    return await this.searchService.searchStories(input || {}, 'org_default');
+    const res = await this.searchService.searchStories(input || {}, 'org_default');
+    return res.items || [];
   }
 
   @Query('getStory')
@@ -52,10 +53,10 @@ export class StoriesResolver {
 
   @Mutation('createStoryVersion')
   async createStoryVersion(@Args('input') input: any) {
-    return await this.storyService.createStoryVersion(input, {
+    return await this.storyService.createStoryVersion(input.storyId, input, {
       organizationId: 'org_default',
       authorId: 'usr_graphql',
-      clientType: input.clientType || 'human_web',
+      clientType: 'human_web',
       createdVia: 'api',
     });
   }
@@ -88,5 +89,11 @@ export class StoriesResolver {
       clientType: 'human_web',
       createdVia: 'api',
     });
+  }
+
+  @Mutation('attachSource')
+  async attachSource(@Args('storyId') storyId: string, @Args('sourceId') sourceId: string) {
+    await db.sources.attachToStory(storyId, sourceId, 'org_default');
+    return await this.storyService.getStory(storyId, 'org_default');
   }
 }

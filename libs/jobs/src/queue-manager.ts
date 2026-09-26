@@ -1,3 +1,4 @@
+import Redis from 'ioredis';
 import {
   JobType,
   JobStatus,
@@ -18,10 +19,34 @@ export class QueueManager {
   private handlers: Map<JobType, JobHandler> = new Map();
   private processing: boolean = false;
   private autoProcess: boolean = true;
+  private redis: Redis | null = null;
+  private isRedisActive: boolean = false;
 
   constructor(autoProcess: boolean = true) {
     this.autoProcess = autoProcess;
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl && process.env.NODE_ENV !== 'test') {
+      try {
+        this.redis = new Redis(redisUrl, {
+          lazyConnect: true,
+          maxRetriesPerRequest: 1,
+          enableOfflineQueue: false,
+        });
+        this.redis
+          .connect()
+          .then(() => {
+            this.isRedisActive = true;
+            logger.info(`Connected to Redis job queue at [${redisUrl}]`);
+          })
+          .catch((err) => {
+            logger.debug(`Redis connection deferred: ${err.message}. Operating in resilient fallback mode.`);
+          });
+      } catch {
+        this.redis = null;
+      }
+    }
   }
+
 
   public registerHandler<T = any, R = any>(
     type: JobType,
@@ -50,6 +75,14 @@ export class QueueManager {
     };
 
     this.jobs.set(id, record as JobRecord);
+    if (this.redis && this.isRedisActive) {
+      try {
+        await this.redis.set(`globalpulse:jobs:${id}`, JSON.stringify(record));
+        await this.redis.lpush(`globalpulse:queue:${type}`, id);
+      } catch (err: any) {
+        logger.debug(`Redis write error: ${err.message}`);
+      }
+    }
     metrics.incrementCounter('worker_jobs_enqueued_total', 1, { jobType: type });
     logger.info(`Enqueued background job [${id}] of type [${type}]`);
 
@@ -105,6 +138,11 @@ export class QueueManager {
       job.progress = 100;
       job.result = result;
       job.completedAt = new Date().toISOString();
+      if (this.redis && this.isRedisActive) {
+        try {
+          await this.redis.set(`globalpulse:jobs:${id}`, JSON.stringify(job));
+        } catch {}
+      }
       metrics.incrementCounter('worker_jobs_completed_total', 1, { jobType: job.type });
       logger.info(`Job [${id}] (${job.type}) completed successfully`);
       return job;
@@ -118,6 +156,11 @@ export class QueueManager {
         job.completedAt = new Date().toISOString();
         metrics.incrementCounter('worker_jobs_failed_total', 1, { jobType: job.type });
         logger.error(`Job [${id}] permanently failed: ${err.message}`, err);
+      }
+      if (this.redis && this.isRedisActive) {
+        try {
+          await this.redis.set(`globalpulse:jobs:${id}`, JSON.stringify(job));
+        } catch {}
       }
       return job;
     }

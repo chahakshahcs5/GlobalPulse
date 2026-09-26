@@ -1,12 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
+import { appConfig } from '../../config/configuration';
 
 @Controller('.well-known')
 export class OAuthController {
   @Get('oauth-protected-resource')
   getProtectedResourceMetadata() {
     return {
-      resource: process.env.OAUTH_AUDIENCE || 'https://news.platform/mcp',
-      authorization_servers: [process.env.OAUTH_ISSUER || 'http://localhost:4000/auth'],
+      resource: appConfig.jwtAudience,
+      authorization_servers: [appConfig.jwtIssuer],
       scopes_supported: [
         'news:read',
         'news:search',
@@ -18,7 +19,7 @@ export class OAuthController {
         'news:admin',
       ],
       bearer_methods_supported: ['header'],
-      resource_documentation: 'https://news.platform/docs',
+      resource_documentation: appConfig.docsUrl,
     };
   }
 }

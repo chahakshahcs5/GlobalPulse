@@ -1,12 +1,15 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
 import { db } from '@ai-news/database';
+import { s3Storage } from '@ai-news/media';
+import { FastifyReply } from 'fastify';
 
+@Controller('health')
 export class HealthController {
-  static async getHealth(request: FastifyRequest, reply: FastifyReply) {
+  @Get()
+  async getHealth(@Res({ passthrough: true }) reply: FastifyReply) {
     const dbHealth = await db.getHealth();
     const memoryUsage = process.memoryUsage();
-
-    const isHealthy = dbHealth.connected || !db.isUsingPrisma(); // healthy in memory or connected prisma
+    const isHealthy = dbHealth.connected || !db.isUsingPrisma();
 
     const payload = {
       status: isHealthy ? 'healthy' : 'degraded',
@@ -29,23 +32,33 @@ export class HealthController {
           latencyMs: dbHealth.latencyMs,
           connected: dbHealth.connected,
         },
+        redis: {
+          status: process.env.REDIS_URL ? 'configured' : 'standalone-fallback',
+          url: process.env.REDIS_URL ? '[REDACTED]' : undefined,
+        },
+        storage: {
+          status: 'online',
+          bucket: s3Storage.getBucket(),
+          provider: process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3',
+        },
       },
     };
 
-    return reply.status(isHealthy ? 200 : 503).send(payload);
+    reply.status(isHealthy ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
+    return payload;
   }
 
-  static async getLiveness(request: FastifyRequest, reply: FastifyReply) {
-    return reply.status(200).send({ status: 'alive', timestamp: new Date().toISOString() });
+  @Get('live')
+  getLiveness() {
+    return { status: 'alive', timestamp: new Date().toISOString() };
   }
 
-  static async getReadiness(request: FastifyRequest, reply: FastifyReply) {
+  @Get('ready')
+  async getReadiness(@Res({ passthrough: true }) reply: FastifyReply) {
     const dbHealth = await db.getHealth();
-    const ready = dbHealth.connected || !db.isUsingPrisma();
-    return reply.status(ready ? 200 : 503).send({
-      status: ready ? 'ready' : 'not_ready',
-      database: dbHealth.status,
-      timestamp: new Date().toISOString(),
-    });
+    const isReady = dbHealth.connected || !db.isUsingPrisma();
+
+    reply.status(isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
+    return { status: isReady ? 'ready' : 'unready', timestamp: new Date().toISOString() };
   }
 }

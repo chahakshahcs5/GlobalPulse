@@ -1,7 +1,22 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  Headers,
+  UseGuards,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { StoryService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 import {
   CreateStoryInputSchema,
   UpdateStoryInputSchema,
@@ -10,157 +25,254 @@ import {
   ReorderBlocksInputSchema,
 } from './stories.dto';
 
-const storyService = new StoryService(db);
-
+@Controller('api/stories')
+@UseGuards(NestAuthGuard)
 export class StoriesController {
-  static async listStories(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const filter = request.query as any;
-    const stories = await storyService.listStories(filter, orgId);
-    return reply.send(ApiResponse.paginated(stories, stories.length, filter?.limit || 50));
+  private storyService: StoryService;
+
+  constructor() {
+    this.storyService = new StoryService(db);
   }
 
-  static async createStory(request: FastifyRequest, reply: FastifyReply) {
-    const validated = CreateStoryInputSchema.parse(request.body);
-    const story = await storyService.createStory(validated, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
-      createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
-    });
-    return reply.status(201).send(story);
+  @Get()
+  @RequireScope('news:read')
+  async listStories(@Query() query: any, @Principal() principal: any) {
+    const orgId = principal.organizationId;
+    const stories = await this.storyService.listStories(query, orgId);
+    return ApiResponse.paginated(stories, stories.length, query?.limit || 50);
   }
 
-  static async getStoryById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const story = await storyService.getStory(id, request.principal.organizationId);
-    return reply.send(story);
-  }
-
-  static async getStoryBySlug(request: FastifyRequest<{ Params: { slug: string } }>, reply: FastifyReply) {
-    const { slug } = request.params;
-    const story = await storyService.getStoryBySlug(slug, request.principal.organizationId);
-    return reply.send(story);
-  }
-
-  static async updateStory(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const validated = UpdateStoryInputSchema.parse(request.body);
-    const updated = await storyService.updateStory(id, validated, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
-      createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
-    });
-    return reply.send(updated);
-  }
-
-  static async addBlock(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const block = await storyService.addBlock(id, request.body, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
-      createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
-    });
-    return reply.status(201).send(block);
-  }
-
-  static async getBlocks(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    await storyService.getStory(id, request.principal.organizationId);
-    const blocks = await db.stories.getBlocks(id);
-    return reply.send(blocks);
-  }
-
-  static async updateBlock(
-    request: FastifyRequest<{ Params: { id: string; blockId: string } }>,
-    reply: FastifyReply
+  @Post()
+  @RequireScope('news:write')
+  async createStory(
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
   ) {
-    const { id, blockId } = request.params;
-    const updated = await storyService.updateBlock(id, blockId, request.body, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
+    const validated = CreateStoryInputSchema.parse(body);
+    const story = await this.storyService.createStory(validated, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
       createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
+      requestId,
     });
-    return reply.send(updated);
+    reply.status(HttpStatus.CREATED);
+    return story;
   }
 
-  static async removeBlock(
-    request: FastifyRequest<{ Params: { id: string; blockId: string } }>,
-    reply: FastifyReply
+  @Get(':id')
+  @RequireScope('news:read')
+  async getStoryById(@Param('id') id: string, @Principal() principal: any) {
+    return await this.storyService.getStory(id, principal.organizationId);
+  }
+
+  @Get('slug/:slug')
+  @RequireScope('news:read')
+  async getStoryBySlug(@Param('slug') slug: string, @Principal() principal: any) {
+    return await this.storyService.getStoryBySlug(slug, principal.organizationId);
+  }
+
+  @Put(':id')
+  @RequireScope('news:write')
+  async updateStory(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
   ) {
-    const { id, blockId } = request.params;
-    const removed = await storyService.removeBlock(id, blockId, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
+    const validated = UpdateStoryInputSchema.parse(body);
+    return await this.storyService.updateStory(id, validated, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
       createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
+      requestId,
     });
-    return reply.send({ success: removed });
   }
 
-  static async reorderBlocks(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const { blockIds } = ReorderBlocksInputSchema.parse(request.body);
-    const reordered = await storyService.reorderBlocks(id, blockIds, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
-      createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
-    });
-    return reply.send(reordered);
-  }
-
-  static async createVersion(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const validated = CreateStoryVersionInputSchema.parse(request.body);
-    const version = await storyService.createStoryVersion(id, validated, {
-      organizationId: request.principal.organizationId,
-      authorId: request.principal.id,
-      clientType: request.principal.clientType,
-      createdVia: 'api',
-      requestId: request.headers['x-request-id'] as string,
-    });
-    return reply.status(201).send(version);
-  }
-
-  static async getVersions(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const versions = await storyService.getStoryVersions(id);
-    return reply.send(versions);
-  }
-
-  static async getVersion(
-    request: FastifyRequest<{ Params: { id: string; versionNumber: string } }>,
-    reply: FastifyReply
+  @Post(':id/blocks')
+  @RequireScope('news:write')
+  async addBlock(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
   ) {
-    const { id, versionNumber } = request.params;
-    const version = await storyService.getStoryVersion(id, parseInt(versionNumber, 10));
-    return reply.send(version);
+    const result = await this.storyService.addBlock(id, body, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+    reply.status(HttpStatus.CREATED);
+    return result;
   }
 
-  static async publishStory(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const body = PublishStoryInputSchema.parse(request.body || {});
-    const published = await storyService.publishStory(
-      id,
-      {
-        organizationId: request.principal.organizationId,
-        authorId: request.principal.id,
-        clientType: request.principal.clientType,
-        createdVia: 'api',
-        requestId: request.headers['x-request-id'] as string,
-      },
-      body.idempotencyKey
-    );
-    return reply.send(published);
+  @Put(':id/blocks/:blockId')
+  @RequireScope('news:write')
+  async updateBlock(
+    @Param('id') id: string,
+    @Param('blockId') blockId: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
+  ) {
+    return await this.storyService.updateBlock(id, blockId, body, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Delete(':id/blocks/:blockId')
+  @RequireScope('news:write')
+  async removeBlock(
+    @Param('id') id: string,
+    @Param('blockId') blockId: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    await this.storyService.removeBlock(id, blockId, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+    reply.status(HttpStatus.NO_CONTENT);
+  }
+
+  @Put(':id/blocks/reorder')
+  @RequireScope('news:write')
+  async reorderBlocks(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
+  ) {
+    const validated = ReorderBlocksInputSchema.parse(body);
+    return await this.storyService.reorderBlocks(id, validated.blockIds, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/versions')
+  @RequireScope('news:write')
+  async createVersion(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const validated = CreateStoryVersionInputSchema.parse(body);
+    const version = await this.storyService.createStoryVersion(id, validated, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+    reply.status(HttpStatus.CREATED);
+    return version;
+  }
+
+  @Get(':id/versions')
+  @RequireScope('news:read')
+  async listVersions(@Param('id') id: string, @Principal() principal: any) {
+    const versions = await this.storyService.getStoryVersions(id, principal.organizationId);
+    return versions;
+  }
+
+  @Get(':id/versions/:vId')
+  @RequireScope('news:read')
+  async getVersionById(
+    @Param('id') id: string,
+    @Param('vId') vId: string,
+    @Principal() principal: any
+  ) {
+    return await this.storyService.getStoryVersion(id, vId, principal.organizationId);
+  }
+
+  @Post(':id/publish')
+  @RequireScope('news:publish')
+  async publishStory(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const validated = PublishStoryInputSchema.parse(body || {});
+    const published = await this.storyService.publishStory(id, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+      idempotencyKey: validated.idempotencyKey,
+    });
+    reply.status(HttpStatus.OK);
+    return published;
+  }
+
+  @Post(':id/unpublish')
+  @RequireScope('news:publish')
+  async unpublishStory(
+    @Param('id') id: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
+  ) {
+    return await this.storyService.unpublishStory(id, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/retract')
+  @RequireScope('news:publish')
+  async retractStory(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
+  ) {
+    return await this.storyService.retractStory(id, reason, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/archive')
+  @RequireScope('news:admin')
+  async archiveStory(
+    @Param('id') id: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: any
+  ) {
+    return await this.storyService.archiveStory(id, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
   }
 }

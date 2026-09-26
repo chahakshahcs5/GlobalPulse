@@ -16,8 +16,10 @@ export const Principal = createParamDecorator(
 @Injectable()
 export class NestAuthGuard implements CanActivate {
   private authService: AuthService;
+  private reflector: Reflector;
 
-  constructor(private reflector: Reflector) {
+  constructor() {
+    this.reflector = new Reflector();
     this.authService = new AuthService();
   }
 
@@ -31,8 +33,7 @@ export class NestAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      // If no auth header, provide a fallback development principal if no specific scopes required
-      // or check bearer
+      // If no auth header, provide a fallback development principal
       const fallbackPrincipal = {
         id: (request.headers['x-actor-id'] as string) || 'usr_dev_guest',
         organizationId: (request.headers['x-organization-id'] as string) || 'org_default',
@@ -55,28 +56,21 @@ export class NestAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.authService.verifyAccessToken(parts[1]!);
-      const principal = {
-        id: payload.sub,
-        organizationId: payload.organizationId || 'org_default',
-        role: payload.role || 'editor',
-        clientType: payload.clientType || 'human_web',
-        scopes: payload.scopes || [],
-      };
-
+      const principal = AuthService.resolveBearerToken(authHeader);
       (request as any).principal = principal;
 
       if (requiredScopes && requiredScopes.length > 0) {
-        const hasScope = requiredScopes.some((s) => principal.scopes.includes(s));
-        if (!hasScope) {
-          throw new ForbiddenException(`Missing required scope(s): ${requiredScopes.join(', ')}`);
+        for (const scope of requiredScopes) {
+          AuthService.requireScope(principal, scope as any);
         }
       }
 
       return true;
     } catch (err: any) {
-      if (err instanceof ForbiddenException) throw err;
-      throw new UnauthorizedException(err.message || 'Invalid or expired token');
+      if (err.name === 'ForbiddenError' || err instanceof ForbiddenException) {
+        throw new ForbiddenException(err.message);
+      }
+      throw new UnauthorizedException(err.message);
     }
   }
 }

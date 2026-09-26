@@ -3,7 +3,7 @@ import { FastifyReply } from 'fastify';
 import { TopicService } from '@ai-news/topics';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
-import { NestAuthGuard, RequireScope, Principal } from '../common/auth.guard';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
 @Controller('api/topics')
 @UseGuards(NestAuthGuard)

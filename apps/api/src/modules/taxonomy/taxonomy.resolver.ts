@@ -40,9 +40,9 @@ export class TaxonomyResolver {
   @Query('getSources')
   async getSources(@Args('query') query?: string) {
     if (query) {
-      return await db.sources.findMany('org_default');
+      return await this.sourceService.searchSources(query, 'org_default');
     }
-    return await db.sources.findMany('org_default');
+    return await this.sourceService.listSources('org_default');
   }
 
   @Mutation('createTopic')
@@ -60,11 +60,6 @@ export class TaxonomyResolver {
     return await this.entityService.createEntity(input, 'org_default');
   }
 
-  @Mutation('attachSource')
-  async attachSource(@Args('storyId') storyId: string, @Args('sourceId') sourceId: string) {
-    await this.sourceService.attachSourceToStory(storyId, sourceId, 'org_default');
-    return await db.stories.findById(storyId, 'org_default');
-  }
 
   @Mutation('createMedia')
   async createMedia(@Args('input') input: any) {
@@ -73,7 +68,7 @@ export class TaxonomyResolver {
       type: input.mediaType,
       title: input.title,
       url: input.url,
-      metadata: input.metadata || {},
+      caption: input.caption,
       createdAt: new Date().toISOString(),
     };
   }

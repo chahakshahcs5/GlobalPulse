@@ -1,42 +1,52 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { Controller, Get, Post, Query, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { SearchService } from '@ai-news/search';
 import { db } from '@ai-news/database';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
-const searchService = new SearchService(db);
-
+@Controller('api/search')
+@UseGuards(NestAuthGuard)
 export class SearchController {
-  static async searchStories(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const query = request.query as any;
-    const result = await searchService.searchStories(query, orgId);
-    return reply.send(result);
+  private searchService: SearchService;
+
+  constructor() {
+    this.searchService = new SearchService(db);
   }
 
-  static async findSimilarStories(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const body = request.body as any;
-    const result = await searchService.findSimilarStories(body, orgId);
-    return reply.send(result);
+  @Get('stories')
+  @RequireScope('news:read')
+  async searchStories(@Query() query: any, @Principal() principal: any) {
+    const orgId = principal.organizationId;
+    return await this.searchService.searchStories(query, orgId);
   }
 
-  static async searchAll(request: FastifyRequest<{ Querystring: { q: string } }>, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const q = request.query.q || '';
+  @Post(['similar', 'stories/similar'])
+  @HttpCode(HttpStatus.OK)
+  @RequireScope('news:read')
+  async findSimilarStories(@Body() body: any, @Principal() principal: any) {
+    const orgId = principal.organizationId;
+    return await this.searchService.findSimilarStories(body, orgId);
+  }
+
+  @Get('federated')
+  @RequireScope('news:read')
+  async searchAll(@Query('q') q: string, @Principal() principal: any) {
+    const orgId = principal.organizationId;
+    const query = q || '';
 
     const [storiesResult, events, topics, entities, sources] = await Promise.all([
-      searchService.searchStories({ query: q, limit: 10 }, orgId),
-      searchService.searchEvents(q, orgId),
-      searchService.searchTopics(q, orgId),
-      searchService.searchEntities(q, orgId),
-      searchService.searchSources(q, orgId),
+      this.searchService.searchStories({ query, limit: 10 }, orgId),
+      this.searchService.searchEvents(query, orgId),
+      this.searchService.searchTopics(query, orgId),
+      this.searchService.searchEntities(query, orgId),
+      this.searchService.searchSources(query, orgId),
     ]);
 
-    return reply.send({
+    return {
       stories: storiesResult.items,
       events,
       topics,
       entities,
       sources,
-    });
+    };
   }
 }

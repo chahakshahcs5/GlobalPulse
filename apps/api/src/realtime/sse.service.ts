@@ -1,5 +1,6 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyReply } from 'fastify';
 import { EventEmitter } from 'events';
+import Redis from 'ioredis';
 import { createLogger } from '@ai-news/observability';
 
 const logger = createLogger('sse-service');
@@ -15,9 +16,44 @@ export class RealtimeSseService {
   private static instance: RealtimeSseService;
   private clients: Map<string, SseClient> = new Map();
   private bus: EventEmitter = new EventEmitter();
+  private redisPub: Redis | null = null;
+  private redisSub: Redis | null = null;
 
   private constructor() {
     this.bus.setMaxListeners(100);
+
+    // Initialize Redis Pub/Sub if REDIS_URL configured
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl && process.env.NODE_ENV !== 'test') {
+      try {
+        this.redisPub = new Redis(redisUrl, { lazyConnect: true, enableOfflineQueue: false });
+        this.redisSub = new Redis(redisUrl, { lazyConnect: true, enableOfflineQueue: false });
+
+        Promise.all([this.redisPub.connect(), this.redisSub.connect()])
+          .then(() => {
+            logger.info(`Connected to Redis Pub/Sub for distributed SSE at [${redisUrl}]`);
+            this.redisSub!.psubscribe('globalpulse:sse:*', (err) => {
+              if (err) logger.debug(`Redis psubscribe error: ${err.message}`);
+            });
+            this.redisSub!.on('pmessage', (_pattern, channel, message) => {
+              try {
+                const parsedChannel = channel.replace('globalpulse:sse:', '');
+                const { eventName, data } = JSON.parse(message);
+                this.deliverLocal(parsedChannel, eventName, data);
+              } catch (e: any) {
+                logger.debug(`Failed to parse distributed SSE message: ${e.message}`);
+              }
+            });
+          })
+          .catch((err) => {
+            logger.debug(`Redis SSE connection deferred: ${err.message}. Operating in standalone local mode.`);
+          });
+      } catch {
+        this.redisPub = null;
+        this.redisSub = null;
+      }
+    }
+
     // Periodic heartbeat to prevent proxy timeout
     setInterval(() => {
       this.broadcastRaw(': ping\n\n');
@@ -58,6 +94,20 @@ export class RealtimeSseService {
   }
 
   public broadcast(channel: string, eventName: string, data: any): void {
+    // Deliver locally
+    this.deliverLocal(channel, eventName, data);
+
+    // Fan-out to Redis cluster if connected
+    if (this.redisPub && this.redisPub.status === 'ready') {
+      try {
+        this.redisPub.publish(`globalpulse:sse:${channel}`, JSON.stringify({ eventName, data }));
+      } catch (err: any) {
+        logger.debug(`Redis publish error: ${err.message}`);
+      }
+    }
+  }
+
+  private deliverLocal(channel: string, eventName: string, data: any): void {
     const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
     let delivered = 0;
 
@@ -68,7 +118,7 @@ export class RealtimeSseService {
       }
     }
 
-    logger.debug(`Broadcast event [${eventName}] on channel [${channel}] to ${delivered} clients`);
+    logger.debug(`Delivered SSE event [${eventName}] on channel [${channel}] to ${delivered} clients`);
   }
 
   private sendToClient(client: SseClient, eventName: string, data: any): void {

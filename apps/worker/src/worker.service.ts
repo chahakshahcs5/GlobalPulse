@@ -5,6 +5,7 @@ import {
   AudioBriefingPayload,
   PdfExportPayload,
 } from '@ai-news/jobs';
+import { s3Storage } from '@ai-news/media';
 import { logger } from '@ai-news/observability';
 
 export class WorkerService {
@@ -16,7 +17,7 @@ export class WorkerService {
   }
 
   private registerAllHandlers(): void {
-    // 1. Media Variant Processing
+    // 1. Media Variant Processing (Persisted to S3 / MinIO Object Storage)
     this.queue.registerHandler<MediaProcessingPayload, any>(
       'media.process_variant',
       async (job, updateProgress) => {
@@ -38,6 +39,12 @@ export class WorkerService {
         for (const format of formats) {
           for (const dim of dimensions) {
             step++;
+            const variantKey = `variants/${mediaId}/${dim.suffix}.${format}`;
+            await s3Storage.upload(
+              variantKey,
+              Buffer.from(`[Optimized Variant: ${mediaId} ${dim.width}x${dim.height} ${format}]`),
+              `image/${format}`
+            );
             variants.push({
               format,
               width: dim.width,
@@ -89,7 +96,7 @@ export class WorkerService {
       }
     );
 
-    // 3. Audio Briefing Generation
+    // 3. Audio Briefing Generation (Persisted to S3 / MinIO Object Storage)
     this.queue.registerHandler<AudioBriefingPayload, any>(
       'audio.generate_briefing',
       async (job, updateProgress) => {
@@ -102,7 +109,12 @@ export class WorkerService {
         const estimatedSeconds = Math.max(10, Math.round((words / 150) * 60));
 
         updateProgress(75);
-        const audioUrl = `https://cdn.globalpulse.news/audio/${storyId}_briefing_${voice}.mp3`;
+        const s3Audio = await s3Storage.upload(
+          `audio/${storyId}_briefing_${voice}.mp3`,
+          Buffer.from(`[Audio Briefing MP3 Stream: Story ${storyId}]`),
+          'audio/mpeg'
+        );
+        const audioUrl = s3Audio.url;
 
         updateProgress(100);
         return {
@@ -116,7 +128,7 @@ export class WorkerService {
       }
     );
 
-    // 4. PDF Archive Export
+    // 4. PDF Archive Export (Persisted to S3 / MinIO Object Storage)
     this.queue.registerHandler<PdfExportPayload, any>(
       'export.generate_pdf',
       async (job, updateProgress) => {
@@ -124,7 +136,12 @@ export class WorkerService {
         logger.info(`Generating PDF archive export for story [${storyId}] v${versionNumber}`);
 
         updateProgress(50);
-        const pdfUrl = `https://cdn.globalpulse.news/archive/${storyId}_v${versionNumber}_${layout}.pdf`;
+        const s3Pdf = await s3Storage.upload(
+          `archive/${storyId}_v${versionNumber}_${layout}.pdf`,
+          Buffer.from(`%PDF-1.4\n%GlobalPulse Broadsheet Archival\nStory: ${storyId}\n`),
+          'application/pdf'
+        );
+        const pdfUrl = s3Pdf.url;
 
         updateProgress(100);
         return {
@@ -142,3 +159,4 @@ export class WorkerService {
     return this.queue;
   }
 }
+

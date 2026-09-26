@@ -1,30 +1,45 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpStatus, Res } from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { EntityService } from '@ai-news/entities';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
-const entityService = new EntityService(db);
-
+@Controller('api/entities')
+@UseGuards(NestAuthGuard)
 export class EntitiesController {
-  static async listEntities(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const query = (request.query as any)?.query;
+  private entityService: EntityService;
+
+  constructor() {
+    this.entityService = new EntityService(db);
+  }
+
+  @Get()
+  @RequireScope('news:read')
+  async listEntities(@Query('query') query: string, @Principal() principal: any) {
+    const orgId = principal.organizationId;
     if (query) {
-      const entities = await entityService.searchEntities(query, orgId);
-      return reply.send(ApiResponse.success(entities));
+      const entities = await this.entityService.searchEntities(query, orgId);
+      return ApiResponse.success(entities);
     }
-    const entities = await entityService.listEntities(orgId);
-    return reply.send(entities);
+    return await this.entityService.listEntities(orgId);
   }
 
-  static async getEntity(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const entity = await entityService.getEntity(id, request.principal.organizationId);
-    return reply.send(entity);
+  @Get(':id')
+  @RequireScope('news:read')
+  async getEntity(@Param('id') id: string, @Principal() principal: any) {
+    return await this.entityService.getEntity(id, principal.organizationId);
   }
 
-  static async createEntity(request: FastifyRequest, reply: FastifyReply) {
-    const entity = await entityService.createEntity(request.body as any, request.principal.organizationId);
-    return reply.status(201).send(entity);
+  @Post()
+  @RequireScope('news:write')
+  async createEntity(
+    @Body() body: any,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const entity = await this.entityService.createEntity(body, principal.organizationId);
+    reply.status(HttpStatus.CREATED);
+    return entity;
   }
 }

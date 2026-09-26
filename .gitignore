@@ -10,6 +10,7 @@ out/
 .env.*.local
 coverage/
 .turbo/
+.nx/
 .nx/cache/
 *.tsbuildinfo
 test-results/

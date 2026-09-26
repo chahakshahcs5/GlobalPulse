@@ -23,29 +23,9 @@
     "docker:status": "docker compose ps",
     "demo:e2e": "tsx scripts/demo-e2e.ts"
   },
-  "dependencies": {
-    "@fastify/cors": "^10.0.2",
-    "@modelcontextprotocol/sdk": "^1.6.1",
-    "@nestjs/common": "^12.1.0",
-    "@nestjs/core": "^12.1.0",
-    "@nestjs/graphql": "^14.0.2",
-    "@nestjs/mercurius": "^14.0.2",
-    "@nestjs/platform-fastify": "^12.1.0",
-    "d3": "^7.9.0",
-    "dotenv": "^16.4.7",
-    "fastify": "^5.2.1",
-    "graphql": "^16.10.0",
-    "lucide-react": "^1.48.0",
-    "mercurius": "^16.10.0",
-    "next": "^16.3.6",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2",
-    "uuid": "^11.1.0",
-    "zod": "^3.24.2"
-  },
+
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
     "@playwright/test": "^1.63.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^22.13.9",
@@ -56,11 +36,14 @@
     "nx": "^20.4.6",
     "postcss": "^8.5.28",
     "prettier": "^3.5.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tailwindcss": "^4.3.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "zod": "^3.24.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

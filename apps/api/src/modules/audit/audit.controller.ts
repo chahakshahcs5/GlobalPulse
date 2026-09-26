@@ -1,21 +1,25 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { Controller, Get, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
+@Controller('api/audit')
+@UseGuards(NestAuthGuard)
 export class AuditController {
-  static async queryAuditLogs(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const filter = request.query as any;
-    const logs = await db.audit.query(orgId, filter);
-    return reply.send(logs);
+  @Get(['', 'logs'])
+  @RequireScope('news:admin')
+  async queryAuditLogs(@Query() filter: any, @Principal() principal: any) {
+    const orgId = principal.organizationId;
+    return await db.audit.query(orgId, filter);
   }
 
-  static async getAuditLogById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
+  @Get([':id', 'logs/:id'])
+  @RequireScope('news:admin')
+  async getAuditLogById(@Param('id') id: string) {
     const log = await db.audit.findById(id);
     if (!log) {
-      return reply.status(404).send({ error: 'AuditLogNotFound', message: `Audit log ${id} not found` });
+      throw new NotFoundException(`Audit log ${id} not found`);
     }
-    return reply.send(ApiResponse.success(log));
+    return ApiResponse.success(log);
   }
 }

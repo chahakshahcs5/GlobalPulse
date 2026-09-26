@@ -6,11 +6,13 @@
   "types": "src/index.ts",
   "dependencies": {
     "@ai-news/database": "workspace:*",
+    "@ai-news/observability": "workspace:*",
     "@ai-news/schemas": "workspace:*",
     "@ai-news/shared": "workspace:*",
-    "@ai-news/observability": "workspace:*"
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
+    "@types/ioredis": "^5.0.0",
     "typescript": "^5.8.2"
   }
 }

@@ -1,51 +1,73 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpStatus, Res } from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
+import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 
-const sourceService = new SourceService(db);
-
+@Controller('api/sources')
+@UseGuards(NestAuthGuard)
 export class SourcesController {
-  static async listSources(request: FastifyRequest, reply: FastifyReply) {
-    const orgId = request.principal.organizationId;
-    const query = (request.query as any)?.query;
+  private sourceService: SourceService;
+
+  constructor() {
+    this.sourceService = new SourceService(db);
+  }
+
+  @Get()
+  @RequireScope('news:read')
+  async listSources(@Query('query') query: string, @Principal() principal: any) {
+    const orgId = principal.organizationId;
     if (query) {
-      const sources = await sourceService.searchSources(query, orgId);
-      return reply.send(ApiResponse.success(sources));
+      const sources = await this.sourceService.searchSources(query, orgId);
+      return ApiResponse.success(sources);
     }
-    const sources = await sourceService.listSources(orgId);
-    return reply.send(sources);
+    return await this.sourceService.listSources(orgId);
   }
 
-  static async getSource(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const source = await sourceService.getSource(id, request.principal.organizationId);
-    return reply.send(source);
+  @Get(':id')
+  @RequireScope('news:read')
+  async getSource(@Param('id') id: string, @Principal() principal: any) {
+    return await this.sourceService.getSource(id, principal.organizationId);
   }
 
-  static async createSource(request: FastifyRequest, reply: FastifyReply) {
-    const source = await sourceService.createSource(request.body as any, request.principal.organizationId);
-    return reply.status(201).send(source);
+  @Post()
+  @RequireScope('news:write')
+  async createSource(
+    @Body() body: any,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const source = await this.sourceService.createSource(body, principal.organizationId);
+    reply.status(HttpStatus.CREATED);
+    return source;
   }
 
-  static async attachSource(request: FastifyRequest, reply: FastifyReply) {
-    const { storyId, sourceId } = request.body as { storyId: string; sourceId: string };
-    await sourceService.attachSourceToStory(storyId, sourceId, request.principal.organizationId);
-    return reply.send({ success: true, storyId, sourceId });
+  @Post('attach')
+  @RequireScope('news:write')
+  async attachSource(@Body() body: { storyId: string; sourceId: string }, @Principal() principal: any) {
+    await this.sourceService.attachSourceToStory(body.storyId, body.sourceId, principal.organizationId);
+    return { success: true, storyId: body.storyId, sourceId: body.sourceId };
   }
 
-  static async createCitation(request: FastifyRequest, reply: FastifyReply) {
-    const body = request.body as any;
-    const citation = await sourceService.createCitation({
+  @Post('citations')
+  @RequireScope('news:write')
+  async createCitation(
+    @Body() body: any,
+    @Principal() principal: any,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ) {
+    const citation = await this.sourceService.createCitation({
       ...body,
-      orgId: request.principal.organizationId,
+      orgId: principal.organizationId,
     });
-    return reply.status(201).send(citation);
+    reply.status(HttpStatus.CREATED);
+    return citation;
   }
 
-  static async getCitations(request: FastifyRequest<{ Params: { storyId: string } }>, reply: FastifyReply) {
-    const { storyId } = request.params;
-    const citations = await sourceService.getStoryCitations(storyId);
-    return reply.send(citations);
+  @Get(':id/citations')
+  @RequireScope('news:read')
+  async listCitations(@Param('id') id: string) {
+    return await this.sourceService.listCitationsForSource(id);
   }
 }
