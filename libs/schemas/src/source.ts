@@ -43,7 +43,8 @@ export const CreateSourceInputSchema = z.object({
   licenseMetadata: z.string().optional(),
   permissibleExcerpt: z.string().max(1000).optional(),
 });
-export type CreateSourceInput = z.infer<typeof CreateSourceInputSchema>;
+export type CreateSourceInput = z.input<typeof CreateSourceInputSchema>;
+export type CreateSourceOutput = z.output<typeof CreateSourceInputSchema>;
 
 export const CitationSchema = z.object({
   id: z.string().min(1),

@@ -4,12 +4,11 @@ import { WorkerService } from '../../../apps/worker/src/worker.service';
 
 describe('Jobs Queue & Background Worker Unit Tests', () => {
   let queue: QueueManager;
-  let worker: WorkerService;
 
   beforeEach(() => {
     // Instantiate with autoProcess: false so tests can manually orchestrate steps
     queue = new QueueManager(false);
-    worker = new WorkerService(queue);
+    new WorkerService(queue);
   });
 
   describe('QueueManager Core Lifecycle', () => {
@@ -41,7 +40,7 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
     it('marks job as failed if no handler is registered for its type', async () => {
       const rawQueue = new QueueManager(false);
-      const job = await rawQueue.enqueue('unregistered.custom_task' as any, { data: 123 });
+      const job = await rawQueue.enqueue('unregistered.custom_task', { data: 123 });
 
       const processed = await rawQueue.processJob(job.id);
       expect(processed.status).toBe('failed');
@@ -52,7 +51,7 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       const retryQueue = new QueueManager(false);
       let callCount = 0;
 
-      retryQueue.registerHandler('flaky.job' as any, async () => {
+      retryQueue.registerHandler('flaky.job', async () => {
         callCount++;
         if (callCount < 2) {
           throw new Error('Transient network glitch');
@@ -60,7 +59,7 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
         return { success: true };
       });
 
-      const job = await retryQueue.enqueue('flaky.job' as any, {}, { maxAttempts: 3 });
+      const job = await retryQueue.enqueue('flaky.job', {}, { maxAttempts: 3 });
 
       // First run: fails and re-queues
       const attempt1 = await retryQueue.processJob(job.id);
@@ -76,11 +75,11 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
     it('permanently marks job as failed when attempts reach maxAttempts', async () => {
       const failQueue = new QueueManager(false);
-      failQueue.registerHandler('fatal.job' as any, async () => {
+      failQueue.registerHandler('fatal.job', async () => {
         throw new Error('Permanent database corruption');
       });
 
-      const job = await failQueue.enqueue('fatal.job' as any, {}, { maxAttempts: 2 });
+      const job = await failQueue.enqueue('fatal.job', {}, { maxAttempts: 2 });
 
       // Attempt 1 -> re-queues
       await failQueue.processJob(job.id);
@@ -121,9 +120,10 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
       expect(processed.progress).toBe(100);
-      expect(processed.result.totalVariants).toBe(4); // 2 formats * 2 dimensions
-      expect(processed.result.variants[0].format).toBe('webp');
-      expect(processed.result.variants[0].url).toContain('keynote.jpg_1080p.webp');
+      const res = processed.result as { totalVariants: number; variants: Array<{ format: string; url: string }> };
+      expect(res.totalVariants).toBe(4); // 2 formats * 2 dimensions
+      expect(res.variants[0].format).toBe('webp');
+      expect(res.variants[0].url).toContain('keynote.jpg_1080p.webp');
     });
 
     it('executes search.index_story and generates mock embedding tokens', async () => {
@@ -137,9 +137,10 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
-      expect(processed.result.storyId).toBe('sty_trade_2026');
-      expect(processed.result.indexedTokens).toBeGreaterThan(10);
-      expect(processed.result.embeddingDimensions).toBe(1536);
+      const res = processed.result as { storyId: string; indexedTokens: number; embeddingDimensions: number };
+      expect(res.storyId).toBe('sty_trade_2026');
+      expect(res.indexedTokens).toBeGreaterThan(10);
+      expect(res.embeddingDimensions).toBe(1536);
     });
 
     it('executes audio.generate_briefing and calculates duration based on script length', async () => {
@@ -152,9 +153,10 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
-      expect(processed.result.voice).toBe('news_anchor_f');
-      expect(processed.result.durationSeconds).toBeGreaterThanOrEqual(10);
-      expect(processed.result.audioUrl).toContain('audio/sty_breaking_mars_briefing_news_anchor_f.mp3');
+      const res = processed.result as { voice: string; durationSeconds: number; audioUrl: string };
+      expect(res.voice).toBe('news_anchor_f');
+      expect(res.durationSeconds).toBeGreaterThanOrEqual(10);
+      expect(res.audioUrl).toContain('audio/sty_breaking_mars_briefing_news_anchor_f.mp3');
     });
 
     it('executes export.generate_pdf and produces archivable PDF artifact', async () => {
@@ -166,10 +168,11 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
-      expect(processed.result.pdfUrl).toBe(
+      const res = processed.result as { pdfUrl: string; pageCount: number };
+      expect(res.pdfUrl).toBe(
         'https://cdn.globalpulse.news/archive/sty_archive_77_v3_broadsheet.pdf'
       );
-      expect(processed.result.pageCount).toBe(3);
+      expect(res.pageCount).toBe(3);
     });
   });
 });

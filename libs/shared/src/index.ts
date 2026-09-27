@@ -70,4 +70,6 @@ export interface PaginatedResult<T> {
   items: T[];
   nextCursor?: string;
   totalCount?: number;
+  total?: number;
+  hasMore?: boolean;
 }

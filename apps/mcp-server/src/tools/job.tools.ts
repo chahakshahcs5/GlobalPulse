@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { generateId } from '@ai-news/shared';
+import { mcpJsonResponse } from './tool-helpers';
 
 // In-memory job tracker for asynchronous background processing
 const jobs = new Map<
@@ -19,7 +20,7 @@ const jobs = new Map<
 
 export function registerJobTools(
   server: McpServer,
-  db: DatabaseService,
+  _db: DatabaseService,
   getPrincipal: () => AuthenticatedPrincipal
 ) {
   server.tool(
@@ -29,7 +30,7 @@ export function registerJobTools(
       jobType: z.enum(['media_transcode', 'video_render', 'pdf_export', 'bulk_import']).describe('Type of job'),
       payload: z.record(z.unknown()).describe('Job parameters'),
     },
-    async ({ jobType, payload }) => {
+    async ({ jobType, payload: _payload }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:write');
 
@@ -44,14 +45,7 @@ export function registerJobTools(
       };
       jobs.set(jobId, record);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ jobId, status: record.status, progress: record.progress }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ jobId, status: record.status, progress: record.progress });
     }
   );
 
@@ -70,9 +64,7 @@ export function registerJobTools(
         throw new Error(`Job ${jobId} not found`);
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify(job, null, 2) }],
-      };
+      return mcpJsonResponse(job);
     }
   );
 
@@ -95,14 +87,7 @@ export function registerJobTools(
       job.status = 'cancelled';
       job.result = { message: reason || 'Job cancelled by client operator.' };
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: `Job ${jobId} cancelled.`, status: job.status }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: `Job ${jobId} cancelled.`, status: job.status });
     }
   );
 
@@ -123,9 +108,7 @@ export function registerJobTools(
       }
       list = list.slice(0, limit);
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ count: list.length, jobs: list }, null, 2) }],
-      };
+      return mcpJsonResponse({ count: list.length, jobs: list });
     }
   );
 }

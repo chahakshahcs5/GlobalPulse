@@ -96,7 +96,7 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
     xAxis: z.object({
       key: z.string().min(1),
       label: z.string().min(1),
-      type: z.enum(['category', 'time', 'linear']).default('category'),
+      type: z.enum(['category', 'time', 'linear']).optional(),
     }),
     yAxis: z.object({
       label: z.string().min(1),
@@ -362,6 +362,7 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
 ]);
 
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
+export type Block = StoryBlock;
 export type BaseBlock = z.infer<typeof BaseBlockSchema>;
 export type HeadingBlock = z.infer<typeof HeadingBlockSchema>;
 export type ParagraphBlock = z.infer<typeof ParagraphBlockSchema>;

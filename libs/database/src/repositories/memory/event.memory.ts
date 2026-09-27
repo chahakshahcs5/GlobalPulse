@@ -48,7 +48,7 @@ export class MemoryEventRepository implements IEventRepository {
       (e) =>
         e.organizationId === orgId &&
         (e.title.toLowerCase().includes(q) ||
-          (e.description && e.description.toLowerCase().includes(q)))
+          (e.summary && e.summary.toLowerCase().includes(q)))
     );
   }
 

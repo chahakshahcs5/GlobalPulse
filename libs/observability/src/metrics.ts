@@ -113,7 +113,6 @@ export class MetricsRegistry {
       for (const [labels, list] of map.entries()) {
         const count = list.length;
         const sum = list.reduce((a, b) => a + b, 0);
-        const prefix = labels ? `${labels},` : '';
         lines.push(`${name}_count{${labels}} ${count}`);
         lines.push(`${name}_sum{${labels}} ${sum}`);
       }

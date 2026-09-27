@@ -9,11 +9,12 @@ export const requestLoggerPlugin: FastifyPluginAsync = async (app: FastifyInstan
     const requestId = (request.headers['x-request-id'] as string) || uuidv4();
     request.headers['x-request-id'] = requestId;
     reply.header('x-request-id', requestId);
-    (request as any).startTime = Date.now();
+type TimedRequest = typeof request & { startTime?: number };
+    (request as TimedRequest).startTime = Date.now();
   });
 
   app.addHook('onResponse', async (request, reply) => {
-    const startTime = (request as any).startTime || Date.now();
+    const startTime = (request as typeof request & { startTime?: number }).startTime || Date.now();
     const durationMs = Date.now() - startTime;
     const statusCode = reply.statusCode;
 

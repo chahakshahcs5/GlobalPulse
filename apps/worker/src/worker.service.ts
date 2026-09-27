@@ -8,6 +8,44 @@ import {
 import { s3Storage } from '@ai-news/media';
 import { logger } from '@ai-news/observability';
 
+export interface MediaProcessingResult {
+  mediaId: string;
+  totalVariants: number;
+  variants: Array<{
+    format: string;
+    width: number;
+    height: number;
+    url: string;
+    sizeBytes: number;
+  }>;
+  processedAt: string;
+}
+
+export interface SearchIndexingResult {
+  storyId: string;
+  versionNumber: number;
+  indexedTokens: number;
+  embeddingDimensions: number;
+  indexedAt: string;
+}
+
+export interface AudioBriefingResult {
+  storyId: string;
+  voice: string;
+  durationSeconds: number;
+  audioUrl: string;
+  bitrateKbps: number;
+  generatedAt: string;
+}
+
+export interface PdfExportResult {
+  storyId: string;
+  versionNumber: number;
+  pdfUrl: string;
+  pageCount: number;
+  exportedAt: string;
+}
+
 export class WorkerService {
   private queue: QueueManager;
 
@@ -18,7 +56,7 @@ export class WorkerService {
 
   private registerAllHandlers(): void {
     // 1. Media Variant Processing (Persisted to S3 / MinIO Object Storage)
-    this.queue.registerHandler<MediaProcessingPayload, any>(
+    this.queue.registerHandler<MediaProcessingPayload, MediaProcessingResult>(
       'media.process_variant',
       async (job, updateProgress) => {
         const { mediaId, sourceUrl, formats, dimensions } = job.payload;
@@ -67,11 +105,11 @@ export class WorkerService {
     );
 
     // 2. Search Indexing
-    this.queue.registerHandler<SearchIndexingPayload, any>(
+    this.queue.registerHandler<SearchIndexingPayload, SearchIndexingResult>(
       'search.index_story',
       async (job, updateProgress) => {
         const { storyId, versionNumber, title, summary, textContent } = job.payload;
-        logger.info(`Indexing story [${storyId}] (v${versionNumber}) for hybrid search`);
+        logger.info(`Indexing story version [${storyId}] v${versionNumber} into semantic & full-text index`);
         
         updateProgress(30);
         // Tokenize and extract keywords
@@ -83,7 +121,8 @@ export class WorkerService {
 
         updateProgress(70);
         // 1536-dimensional mock embedding vector
-        const embedding = Array.from({ length: 16 }, (_, i) => Math.sin(i + tokens.length));
+        const _embedding = Array.from({ length: 16 }, (_, i) => Math.sin(i + tokens.length));
+        void _embedding;
 
         updateProgress(100);
         return {
@@ -97,21 +136,20 @@ export class WorkerService {
     );
 
     // 3. Audio Briefing Generation (Persisted to S3 / MinIO Object Storage)
-    this.queue.registerHandler<AudioBriefingPayload, any>(
+    this.queue.registerHandler<AudioBriefingPayload, AudioBriefingResult>(
       'audio.generate_briefing',
       async (job, updateProgress) => {
         const { storyId, voice, scriptText } = job.payload;
         logger.info(`Generating audio briefing for story [${storyId}] with voice [${voice}]`);
 
-        updateProgress(25);
-        const words = scriptText.split(/\s+/).length;
-        // Approx 150 words per minute
-        const estimatedSeconds = Math.max(10, Math.round((words / 150) * 60));
-
-        updateProgress(75);
+        updateProgress(30);
+        // Simulate TTS latency and byte generation
+        const estimatedSeconds = Math.max(10, Math.floor(scriptText.split(/\s+/).length / 2.5));
+        
+        updateProgress(60);
         const s3Audio = await s3Storage.upload(
           `audio/${storyId}_briefing_${voice}.mp3`,
-          Buffer.from(`[Audio Briefing MP3 Stream: Story ${storyId}]`),
+          Buffer.from(`[MP3 Audio Stream: Voice ${voice}, Duration ${estimatedSeconds}s]`),
           'audio/mpeg'
         );
         const audioUrl = s3Audio.url;
@@ -129,7 +167,7 @@ export class WorkerService {
     );
 
     // 4. PDF Archive Export (Persisted to S3 / MinIO Object Storage)
-    this.queue.registerHandler<PdfExportPayload, any>(
+    this.queue.registerHandler<PdfExportPayload, PdfExportResult>(
       'export.generate_pdf',
       async (job, updateProgress) => {
         const { storyId, versionNumber, layout } = job.payload;
@@ -159,4 +197,3 @@ export class WorkerService {
     return this.queue;
   }
 }
-

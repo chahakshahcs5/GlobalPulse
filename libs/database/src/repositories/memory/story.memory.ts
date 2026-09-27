@@ -1,4 +1,5 @@
-import type { Story, StoryVersion, StoryBlock } from '@ai-news/schemas';
+import type { Story, StoryVersion, StoryBlock, SearchStoriesInput, FindSimilarStoriesInput, StorySearchResultItem } from '@ai-news/schemas';
+import type { PaginatedResult } from '@ai-news/shared';
 import type { IStoryRepository, StoryFilter } from '../../interfaces/story.repository';
 
 export class MemoryStoryRepository implements IStoryRepository {
@@ -54,7 +55,22 @@ export class MemoryStoryRepository implements IStoryRepository {
     return true;
   }
 
-  async list(filter?: StoryFilter, orgId?: string): Promise<Story[]> {
+  async list(filterOrOrgId?: StoryFilter | string, maybeOrgIdOrFilter?: string | StoryFilter): Promise<Story[]> {
+    let filter: StoryFilter | undefined;
+    let orgId: string | undefined;
+
+    if (typeof filterOrOrgId === 'string') {
+      orgId = filterOrOrgId;
+      if (typeof maybeOrgIdOrFilter === 'object' && maybeOrgIdOrFilter !== null) {
+        filter = maybeOrgIdOrFilter as StoryFilter;
+      }
+    } else {
+      filter = filterOrOrgId;
+      if (typeof maybeOrgIdOrFilter === 'string') {
+        orgId = maybeOrgIdOrFilter;
+      }
+    }
+
     let result = Array.from(this.stories.values());
 
     if (orgId) {
@@ -156,7 +172,7 @@ export class MemoryStoryRepository implements IStoryRepository {
     }
   }
 
-  async search(params: any, orgId?: string): Promise<any> {
+  async search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>> {
     let filtered = Array.from(this.stories.values());
     if (orgId) {
       filtered = filtered.filter((s) => s.organizationId === orgId);
@@ -168,13 +184,16 @@ export class MemoryStoryRepository implements IStoryRepository {
       filtered = filtered.filter((s) => s.articleType === params.articleType);
     }
     if (params.topicId) {
-      filtered = filtered.filter((s) => s.topicIds.includes(params.topicId));
+      const tid = params.topicId;
+      filtered = filtered.filter((s) => s.topicIds.includes(tid));
     }
     if (params.entityId) {
-      filtered = filtered.filter((s) => s.entityIds.includes(params.entityId));
+      const eid = params.entityId;
+      filtered = filtered.filter((s) => s.entityIds.includes(eid));
     }
     if (params.sourceId) {
-      filtered = filtered.filter((s) => s.sourceIds.includes(params.sourceId));
+      const sid = params.sourceId;
+      filtered = filtered.filter((s) => s.sourceIds.includes(sid));
     }
     if (params.query) {
       const q = params.query.toLowerCase();
@@ -209,7 +228,7 @@ export class MemoryStoryRepository implements IStoryRepository {
     };
   }
 
-  async findSimilar(params: any, orgId: string): Promise<any> {
+  async findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]> {
     const all = Array.from(this.stories.values()).filter((s) => s.organizationId === orgId);
     const scored: Array<{ story: Story; score: number }> = [];
 

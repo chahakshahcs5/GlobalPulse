@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import { ApiError } from '../../../apps/api/src/common/errors/api-error';
 import { globalErrorHandler } from '../../../apps/api/src/common/errors/error-handler';
 import { requireScope } from '../../../apps/api/src/common/guards/scope.guard';
 import { ApiResponse } from '../../../apps/api/src/common/response/api-response';
-import { DomainError, NotFoundError, ValidationError, ForbiddenError } from '@ai-news/shared';
+import { NotFoundError, ForbiddenError } from '@ai-news/shared';
 import { z } from 'zod';
 
 describe('API Common Layer Unit Tests', () => {
@@ -38,106 +39,117 @@ describe('API Common Layer Unit Tests', () => {
 
   describe('RFC 7807 Global Error Handler', () => {
     it('formats DomainError into RFC 7807 problem details JSON', () => {
-      let sentStatus = 0;
-      let sentBody: any = null;
+      const captured = {
+        status: 0,
+        body: null as Record<string, unknown> | null,
+      };
 
-      const mockReply: any = {
+      const mockReply = {
         status: (s: number) => {
-          sentStatus = s;
+          captured.status = s;
           return {
-            send: (b: any) => {
-              sentBody = b;
+            send: (b: Record<string, unknown>) => {
+              captured.body = b;
               return b;
             },
           };
         },
-      };
+      } as unknown as FastifyReply;
 
-      const mockRequest: any = {
+      const mockRequest = {
         url: '/api/stories/sty_missing',
         method: 'GET',
-      };
+      } as unknown as FastifyRequest;
 
       const notFoundErr = new NotFoundError('Story', 'sty_missing');
       globalErrorHandler(notFoundErr, mockRequest, mockReply);
 
-      expect(sentStatus).toBe(404);
-      expect(sentBody.type).toContain('not-found');
-      expect(sentBody.status).toBe(404);
-      expect(sentBody.detail).toContain('sty_missing');
-      expect(sentBody.timestamp).toBeDefined();
+      expect(captured.status).toBe(404);
+      expect(captured.body?.type as string).toContain('not-found');
+      expect(captured.body?.status).toBe(404);
+      expect(captured.body?.detail as string).toContain('sty_missing');
+      expect(captured.body?.timestamp).toBeDefined();
     });
 
     it('formats ZodError into validation problem details with field errors', () => {
-      let sentStatus = 0;
-      let sentBody: any = null;
+      const captured = {
+        status: 0,
+        body: null as Record<string, unknown> | null,
+      };
 
-      const mockReply: any = {
+      const mockReply = {
         status: (s: number) => {
-          sentStatus = s;
+          captured.status = s;
           return {
-            send: (b: any) => {
-              sentBody = b;
+            send: (b: Record<string, unknown>) => {
+              captured.body = b;
               return b;
             },
           };
         },
-      };
+      } as unknown as FastifyReply;
 
-      const mockRequest: any = { url: '/api/stories', method: 'POST' };
+      const mockRequest = { url: '/api/stories', method: 'POST' } as unknown as FastifyRequest;
 
       const TestSchema = z.object({ title: z.string().min(5) });
-      let zodErr: any;
+      let zodErr: unknown;
       try {
         TestSchema.parse({ title: 'abc' });
-      } catch (e) {
+      } catch (e: unknown) {
         zodErr = e;
       }
 
-      globalErrorHandler(zodErr, mockRequest, mockReply);
+      globalErrorHandler(zodErr as Error, mockRequest, mockReply);
 
-      expect(sentStatus).toBe(400);
-      expect(sentBody.code).toBe('VALIDATION_ERROR');
-      expect(sentBody.errors.length).toBeGreaterThan(0);
-      expect(sentBody.errors[0].path).toBe('title');
+      expect(captured.status).toBe(400);
+      expect(captured.body?.code).toBe('VALIDATION_ERROR');
+      const errors = captured.body?.errors as Array<{ path: string }>;
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].path).toBe('title');
     });
   });
 
   describe('OAuth Scope Guard', () => {
     it('allows principal with matching scope', async () => {
       const guard = requireScope('news:publish');
-      const req: any = {
+      const req = {
         principal: {
           id: 'usr_1',
           organizationId: 'org_1',
+          role: 'editor',
           scopes: ['news:read', 'news:publish'],
         },
-      };
-      await expect(guard(req, {} as any)).resolves.toBeUndefined();
+      } as unknown as FastifyRequest;
+      const dummyReply = {} as FastifyReply;
+      await expect(guard(req, dummyReply)).resolves.toBeUndefined();
     });
 
     it('allows principal with news:admin scope for any required scope', async () => {
       const guard = requireScope('news:publish');
-      const req: any = {
+      const req = {
         principal: {
           id: 'usr_admin',
           organizationId: 'org_1',
+          role: 'admin',
           scopes: ['news:admin'],
         },
-      };
-      await expect(guard(req, {} as any)).resolves.toBeUndefined();
+      } as unknown as FastifyRequest;
+      const dummyReply = {} as FastifyReply;
+      await expect(guard(req, dummyReply)).resolves.toBeUndefined();
     });
 
     it('throws ForbiddenError if principal lacks required scope', async () => {
       const guard = requireScope('news:publish');
-      const req: any = {
+      const req = {
         principal: {
           id: 'usr_reader',
           organizationId: 'org_1',
+          role: 'reader',
           scopes: ['news:read'],
         },
-      };
-      await expect(guard(req, {} as any)).rejects.toThrow(ForbiddenError);
+      } as unknown as FastifyRequest;
+      const dummyReply = {} as FastifyReply;
+      await expect(guard(req, dummyReply)).rejects.toThrow(ForbiddenError);
     });
   });
 

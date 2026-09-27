@@ -45,10 +45,12 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
     });
 
   const origReady = fastify.ready.bind(fastify);
-  fastify.ready = (async (cb?: (err?: Error) => void) => {
-    await nestPromise;
-    return origReady(cb as any);
-  }) as any;
+  fastify.ready = ((cb?: (err: Error | null) => void) => {
+    if (cb) {
+      return origReady(cb);
+    }
+    return nestPromise.then(() => origReady());
+  }) as unknown as typeof fastify.ready;
 
   return fastify;
 }
@@ -84,8 +86,9 @@ export async function startServer(options: ApiServerOptions = {}): Promise<NestF
     await app.listen(port, host);
     logger.info(`Enterprise News API Gateway (NestJS) listening at http://${host}:${port}`);
     return app;
-  } catch (err: any) {
-    logger.error(`Failed to start NestJS API Gateway: ${err.message}`, err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    logger.error(`Failed to start NestJS API Gateway: ${errorMsg}`, err instanceof Error ? err : new Error(errorMsg));
     throw err;
   }
 }

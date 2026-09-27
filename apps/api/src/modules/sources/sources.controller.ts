@@ -4,6 +4,8 @@ import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
+import { AuthenticatedPrincipal } from '@ai-news/auth';
+import type { CreateSourceInput } from '@ai-news/schemas';
 
 @Controller('api/sources')
 @UseGuards(NestAuthGuard)
@@ -16,7 +18,7 @@ export class SourcesController {
 
   @Get()
   @RequireScope('news:read')
-  async listSources(@Query('query') query: string, @Principal() principal: any) {
+  async listSources(@Query('query') query: string, @Principal() principal: AuthenticatedPrincipal) {
     const orgId = principal.organizationId;
     if (query) {
       const sources = await this.sourceService.searchSources(query, orgId);
@@ -27,15 +29,15 @@ export class SourcesController {
 
   @Get(':id')
   @RequireScope('news:read')
-  async getSource(@Param('id') id: string, @Principal() principal: any) {
+  async getSource(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
     return await this.sourceService.getSource(id, principal.organizationId);
   }
 
   @Post()
   @RequireScope('news:write')
   async createSource(
-    @Body() body: any,
-    @Principal() principal: any,
+    @Body() body: CreateSourceInput,
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
     const source = await this.sourceService.createSource(body, principal.organizationId);
@@ -45,7 +47,7 @@ export class SourcesController {
 
   @Post('attach')
   @RequireScope('news:write')
-  async attachSource(@Body() body: { storyId: string; sourceId: string }, @Principal() principal: any) {
+  async attachSource(@Body() body: { storyId: string; sourceId: string }, @Principal() principal: AuthenticatedPrincipal) {
     await this.sourceService.attachSourceToStory(body.storyId, body.sourceId, principal.organizationId);
     return { success: true, storyId: body.storyId, sourceId: body.sourceId };
   }
@@ -53,8 +55,8 @@ export class SourcesController {
   @Post('citations')
   @RequireScope('news:write')
   async createCitation(
-    @Body() body: any,
-    @Principal() principal: any,
+    @Body() body: { storyId: string; sourceId: string; claimText: string; blockId?: string; confidenceScore?: number },
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
     const citation = await this.sourceService.createCitation({

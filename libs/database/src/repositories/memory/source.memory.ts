@@ -70,7 +70,7 @@ export class MemorySourceRepository implements ISourceRepository {
   }
 
   async getClaimsForSource(sourceId: string): Promise<Claim[]> {
-    return Array.from(this.claims.values()).filter((c) => c.sourceId === sourceId);
+    return Array.from(this.claims.values()).filter((c) => c.sourceIds.includes(sourceId));
   }
 
   clear(): void {

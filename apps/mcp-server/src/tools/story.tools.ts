@@ -7,6 +7,7 @@ import {
   ArticleTypeSchema,
   StoryBlockSchema,
 } from '@ai-news/schemas';
+import { mcpJsonResponse } from './tool-helpers';
 
 export function registerStoryTools(
   server: McpServer,
@@ -26,9 +27,7 @@ export function registerStoryTools(
       AuthService.requireScope(principal, 'news:read');
 
       const story = await storyService.getStory(storyId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(story, null, 2) }],
-      };
+      return mcpJsonResponse(story);
     }
   );
 
@@ -44,9 +43,7 @@ export function registerStoryTools(
       AuthService.requireScope(principal, 'news:read');
 
       const version = await storyService.getStoryVersion(storyId, versionNumber, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(version, null, 2) }],
-      };
+      return mcpJsonResponse(version);
     }
   );
 
@@ -61,9 +58,7 @@ export function registerStoryTools(
       AuthService.requireScope(principal, 'news:read');
 
       const versions = await storyService.getStoryVersions(storyId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(versions, null, 2) }],
-      };
+      return mcpJsonResponse(versions);
     }
   );
 
@@ -93,24 +88,13 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                message: 'Story created successfully as draft (Version 1).',
-                storyId: story.id,
-                slug: story.slug,
-                status: story.status,
-                version: story.currentVersionNumber,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        message: 'Story created successfully as draft (Version 1).',
+        storyId: story.id,
+        slug: story.slug,
+        status: story.status,
+        version: story.currentVersionNumber,
+      });
     }
   );
 
@@ -138,18 +122,11 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              { message: 'Story metadata updated.', storyId: updated.id, updatedAt: updated.updatedAt },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        message: 'Story metadata updated.',
+        storyId: updated.id,
+        updatedAt: updated.updatedAt,
+      });
     }
   );
 
@@ -175,23 +152,12 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                message: `Story updated to Version ${version.versionNumber}.`,
-                storyId,
-                versionNumber: version.versionNumber,
-                changeSummary: version.changeSummary,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        message: `Story updated to Version ${version.versionNumber}.`,
+        storyId,
+        versionNumber: version.versionNumber,
+        changeSummary: version.changeSummary,
+      });
     }
   );
 
@@ -217,25 +183,14 @@ export function registerStoryTools(
         idempotencyKey
       );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                message: `Story "${published.title}" is now PUBLISHED.`,
-                storyId: published.id,
-                slug: published.slug,
-                status: published.status,
-                publishedAt: published.publishedAt,
-                version: published.currentVersionNumber,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        message: `Story "${published.title}" is now PUBLISHED.`,
+        storyId: published.id,
+        slug: published.slug,
+        status: published.status,
+        publishedAt: published.publishedAt,
+        version: published.currentVersionNumber,
+      });
     }
   );
 
@@ -256,14 +211,7 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Story unpublished to DRAFT.', storyId: story.id, status: story.status }),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Story unpublished to DRAFT.', storyId: story.id, status: story.status });
     }
   );
 
@@ -284,14 +232,7 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Story ARCHIVED.', storyId: story.id, status: story.status }),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Story ARCHIVED.', storyId: story.id, status: story.status });
     }
   );
 
@@ -306,14 +247,7 @@ export function registerStoryTools(
       AuthService.requireScope(principal, 'news:admin');
 
       const deleted = await db.stories.delete(storyId, principal.organizationId);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: deleted ? 'Story deleted.' : 'Story not found.', success: deleted }),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: deleted ? 'Story deleted.' : 'Story not found.', success: deleted });
     }
   );
 }

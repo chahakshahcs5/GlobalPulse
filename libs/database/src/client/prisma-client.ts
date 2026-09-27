@@ -1,4 +1,5 @@
 import { logger } from '@ai-news/observability';
+import type { PrismaClient } from '@prisma/client';
 
 export interface DatabasePoolConfig {
   maxConnections?: number;
@@ -9,7 +10,7 @@ export interface DatabasePoolConfig {
 export class PrismaClientManager {
   private static instance: PrismaClientManager | null = null;
   private isConnected: boolean = false;
-  private client: any = null;
+  private client: PrismaClient | null = null;
 
   private constructor() {}
 
@@ -20,7 +21,7 @@ export class PrismaClientManager {
     return PrismaClientManager.instance;
   }
 
-  public async getClient(): Promise<any> {
+  public async getClient(): Promise<PrismaClient | null> {
     if (this.client && this.isConnected) {
       return this.client;
     }
@@ -33,25 +34,27 @@ export class PrismaClientManager {
 
     try {
       // Dynamic import to prevent hard failure if prisma client is not yet generated
-      const { PrismaClient } = await import('@prisma/client').catch(() => ({ PrismaClient: null }));
-      if (!PrismaClient) {
+      const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({ PrismaClient: null }));
+      if (!PrismaClientCtor) {
         logger.warn('@prisma/client not generated; falling back to memory repository.');
         return null;
       }
 
-      this.client = new PrismaClient({
+      const instance = new PrismaClientCtor({
         log: [
           { level: 'error', emit: 'stdout' },
           { level: 'warn', emit: 'stdout' },
         ],
-      });
+      }) as PrismaClient;
 
-      await this.client.$connect();
+      await instance.$connect();
+      this.client = instance;
       this.isConnected = true;
       logger.info('Connected to PostgreSQL database via PrismaClient.');
       return this.client;
-    } catch (err: any) {
-      logger.warn(`Failed to connect to database: ${err.message}. Operating in memory mode.`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.warn(`Failed to connect to database: ${errMsg}. Operating in memory mode.`);
       this.isConnected = false;
       this.client = null;
       return null;
@@ -65,13 +68,14 @@ export class PrismaClientManager {
         this.isConnected = false;
         this.client = null;
         logger.info('Disconnected from PostgreSQL database.');
-      } catch (err: any) {
-        logger.error(`Error disconnecting PrismaClient: ${err.message}`, err);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        logger.error(`Error disconnecting PrismaClient: ${errMsg}`, err instanceof Error ? err : undefined);
       }
     }
   }
 
-  public getConnected(): boolean {
+  public isDatabaseConnected(): boolean {
     return this.isConnected;
   }
 }

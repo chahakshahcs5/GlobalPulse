@@ -203,7 +203,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       });
       expect(listRes.statusCode).toBe(200);
       const topics = JSON.parse(listRes.body);
-      expect(topics.some((t: any) => t.name === 'Artificial Intelligence & Robotics')).toBe(true);
+      expect(topics.some((t: { name?: string }) => t.name === 'Artificial Intelligence & Robotics')).toBe(true);
     });
 
     it('creates and lists entities', async () => {
@@ -228,7 +228,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       });
       expect(listRes.statusCode).toBe(200);
       const entities = JSON.parse(listRes.body);
-      expect(entities.some((e: any) => e.name === 'OpenAI Foundation')).toBe(true);
+      expect(entities.some((e: { name?: string }) => e.name === 'OpenAI Foundation')).toBe(true);
     });
 
     it('creates and attaches primary sources', async () => {
@@ -345,7 +345,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       expect(res.statusCode).toBe(403);
       const problem = JSON.parse(res.body);
       expect(problem.status).toBe(403);
-      expect(problem.detail).toContain('Insufficient privileges');
+      expect(problem.detail).toContain('Insufficient role privileges');
     });
   });
 

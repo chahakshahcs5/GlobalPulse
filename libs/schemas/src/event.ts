@@ -7,6 +7,7 @@ export const EventSchema = z.object({
   id: z.string().min(1),
   organizationId: z.string().min(1),
   title: z.string().min(1),
+  slug: z.string().optional(),
   summary: z.string().min(1),
   status: EventStatusSchema.default('ACTIVE'),
   occurredAt: z.string(),
@@ -32,4 +33,5 @@ export const CreateEventInputSchema = z.object({
   entityIds: z.array(z.string()).optional().default([]),
   idempotencyKey: z.string().optional(),
 });
-export type CreateEventInput = z.infer<typeof CreateEventInputSchema>;
+export type CreateEventInput = z.input<typeof CreateEventInputSchema>;
+export type CreateEventOutput = z.output<typeof CreateEventInputSchema>;

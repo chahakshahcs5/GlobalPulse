@@ -1,50 +1,74 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException, SetMetadata, createParamDecorator } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+  SetMetadata,
+  createParamDecorator,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthService } from '@ai-news/auth';
+import {
+  AuthService,
+  NewsScope,
+  UserRole,
+  AuthenticatedPrincipal,
+  ROLE_PERMISSIONS,
+} from '@ai-news/auth';
 import { FastifyRequest } from 'fastify';
 
 export const REQUIRE_SCOPES_KEY = 'require_scopes';
-export const RequireScope = (...scopes: string[]) => SetMetadata(REQUIRE_SCOPES_KEY, scopes);
+export const RequireScope = (...scopes: NewsScope[]) => SetMetadata(REQUIRE_SCOPES_KEY, scopes);
+
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+
+export interface AuthenticatedRequest extends FastifyRequest {
+  principal: AuthenticatedPrincipal;
+}
 
 export const Principal = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest<FastifyRequest>();
-    return (request as any).principal;
+  (_data: unknown, ctx: ExecutionContext): AuthenticatedPrincipal => {
+    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    return request.principal;
   },
 );
 
 @Injectable()
 export class NestAuthGuard implements CanActivate {
-  private authService: AuthService;
   private reflector: Reflector;
 
   constructor() {
     this.reflector = new Reflector();
-    this.authService = new AuthService();
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredScopes = this.reflector.getAllAndOverride<string[]>(REQUIRE_SCOPES_KEY, [
+    const requiredScopes = this.reflector.getAllAndOverride<NewsScope[]>(REQUIRE_SCOPES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    const request = context.switchToHttp().getRequest<FastifyRequest>();
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      // If no auth header, provide a fallback development principal
-      const fallbackPrincipal = {
+      // Development principal for internal tests or unauthenticated read
+      const fallbackPrincipal: AuthenticatedPrincipal = {
         id: (request.headers['x-actor-id'] as string) || 'usr_dev_guest',
         organizationId: (request.headers['x-organization-id'] as string) || 'org_default',
         role: 'editor',
-        clientType: (request.headers['x-client-id'] as string) || 'human_web',
-        scopes: ['news:read', 'news:write', 'news:publish', 'news:admin', 'news:sources', 'news:topics', 'media:write'],
+        clientType: 'human_web',
+        scopes: ROLE_PERMISSIONS.admin,
       };
 
-      (request as any).principal = fallbackPrincipal;
+      request.principal = fallbackPrincipal;
 
-      if (!requiredScopes || requiredScopes.length === 0) {
+      if ((!requiredScopes || requiredScopes.length === 0) && (!requiredRoles || requiredRoles.length === 0)) {
         return true;
       }
       return true;
@@ -57,20 +81,25 @@ export class NestAuthGuard implements CanActivate {
 
     try {
       const principal = AuthService.resolveBearerToken(authHeader);
-      (request as any).principal = principal;
+      request.principal = principal;
+
+      if (requiredRoles && requiredRoles.length > 0) {
+        AuthService.requireRole(principal, ...requiredRoles);
+      }
 
       if (requiredScopes && requiredScopes.length > 0) {
         for (const scope of requiredScopes) {
-          AuthService.requireScope(principal, scope as any);
+          AuthService.requireScope(principal, scope);
         }
       }
 
       return true;
-    } catch (err: any) {
-      if (err.name === 'ForbiddenError' || err instanceof ForbiddenException) {
-        throw new ForbiddenException(err.message);
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      if (errorObj.name === 'ForbiddenError' || err instanceof ForbiddenException) {
+        throw new ForbiddenException(errorObj.message);
       }
-      throw new UnauthorizedException(err.message);
+      throw new UnauthorizedException(errorObj.message);
     }
   }
 }

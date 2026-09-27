@@ -1,18 +1,113 @@
-import type { Story, StoryVersion, StoryBlock } from '@ai-news/schemas';
+import type {
+  Story,
+  StoryVersion,
+  StoryBlock,
+  SearchStoriesInput,
+  FindSimilarStoriesInput,
+  StorySearchResultItem,
+} from '@ai-news/schemas';
+import type { PaginatedResult } from '@ai-news/shared';
 import type { IStoryRepository, StoryFilter } from '../../interfaces/story.repository';
 
-export class PrismaStoryRepository implements IStoryRepository {
-  constructor(private readonly prismaGetter: () => any) {}
+interface PrismaStoryBlockRow {
+  id: string;
+  storyId: string;
+  blockType: string;
+  sortOrder: number;
+  data: unknown;
+  metadata?: unknown;
+  citationIds: string[];
+}
 
-  private get prisma() {
+interface PrismaStoryRow {
+  id: string;
+  organizationId: string;
+  slug: string;
+  title: string;
+  summary: string;
+  status: string;
+  articleType: string;
+  authorId: string;
+  createdByClient: string;
+  createdVia: string;
+  currentVersionNumber: number;
+  heroImageUrl?: string | null;
+  publishedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  blocks?: PrismaStoryBlockRow[];
+  topics?: Array<{ topicId: string }>;
+  entities?: Array<{ entityId: string }>;
+  sources?: Array<{ sourceId: string }>;
+}
+
+interface PrismaVersionRow {
+  id: string;
+  storyId: string;
+  versionNumber: number;
+  title: string;
+  summary: string;
+  blocksJson: unknown;
+  changeSummary?: string | null;
+  authorId: string;
+  clientType: string;
+  createdAt: Date;
+}
+
+export class PrismaStoryRepository implements IStoryRepository {
+  constructor(private readonly prismaGetter: () => Record<string, unknown>) {}
+
+  private get prisma(): Record<string, unknown> {
     return this.prismaGetter();
   }
 
+  private get storyClient(): {
+    findFirst: (args: { where: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow | null>;
+    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+    delete: (args: { where: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+    count: (args: { where: Record<string, unknown> }) => Promise<number>;
+  } {
+    return this.prisma.story as {
+      findFirst: (args: { where: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow | null>;
+      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+      delete: (args: { where: Record<string, unknown> }) => Promise<PrismaStoryRow>;
+      count: (args: { where: Record<string, unknown> }) => Promise<number>;
+    };
+  }
+
+  private get versionClient(): {
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaVersionRow>;
+    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaVersionRow[]>;
+    findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaVersionRow | null>;
+  } {
+    return this.prisma.storyVersion as {
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaVersionRow>;
+      findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaVersionRow[]>;
+      findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaVersionRow | null>;
+    };
+  }
+
+  private get blockClient(): {
+    deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+    createMany: (args: { data: Array<Record<string, unknown>> }) => Promise<{ count: number }>;
+    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaStoryBlockRow[]>;
+  } {
+    return this.prisma.storyBlock as {
+      deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+      createMany: (args: { data: Array<Record<string, unknown>> }) => Promise<{ count: number }>;
+      findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaStoryBlockRow[]>;
+    };
+  }
+
   async findById(id: string, orgId?: string): Promise<Story | null> {
-    const where: any = { id };
+    const where: Record<string, unknown> = { id };
     if (orgId) where.organizationId = orgId;
 
-    const row = await this.prisma.story.findFirst({
+    const row = await this.storyClient.findFirst({
       where,
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
@@ -27,10 +122,10 @@ export class PrismaStoryRepository implements IStoryRepository {
   }
 
   async findBySlug(slug: string, orgId?: string): Promise<Story | null> {
-    const where: any = { slug };
+    const where: Record<string, unknown> = { slug };
     if (orgId) where.organizationId = orgId;
 
-    const row = await this.prisma.story.findFirst({
+    const row = await this.storyClient.findFirst({
       where,
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
@@ -45,7 +140,7 @@ export class PrismaStoryRepository implements IStoryRepository {
   }
 
   async create(story: Story): Promise<Story> {
-    const created = await this.prisma.story.create({
+    const created = await this.storyClient.create({
       data: {
         id: story.id,
         organizationId: story.organizationId,
@@ -65,76 +160,69 @@ export class PrismaStoryRepository implements IStoryRepository {
             id: b.id,
             blockType: b.blockType,
             sortOrder: b.sortOrder ?? idx,
-            data: b.data as any,
+            data: b.data,
           })),
         },
       },
-      include: {
-        blocks: { orderBy: { sortOrder: 'asc' } },
-        topics: true,
-        entities: true,
-        sources: true,
-      },
     });
 
-    return this.mapToDomain(created);
+    return (await this.findById(created.id, story.organizationId))!;
   }
 
   async update(story: Story): Promise<Story> {
-    const updated = await this.prisma.story.update({
+    await this.storyClient.update({
       where: { id: story.id },
       data: {
         title: story.title,
         summary: story.summary,
-        status: story.status as any,
-        articleType: story.articleType as any,
+        status: story.status,
+        articleType: story.articleType,
         currentVersionNumber: story.currentVersionNumber,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
       },
-      include: {
-        blocks: { orderBy: { sortOrder: 'asc' } },
-        topics: true,
-        entities: true,
-        sources: true,
-      },
     });
 
-    return this.mapToDomain(updated);
+    if (story.blocks) {
+      await this.saveBlocks(story.id, story.blocks);
+    }
+
+    return (await this.findById(story.id, story.organizationId))!;
   }
 
   async delete(id: string, orgId?: string): Promise<boolean> {
-    const where: any = { id };
+    const where: Record<string, unknown> = { id };
     if (orgId) where.organizationId = orgId;
-    const res = await this.prisma.story.deleteMany({ where });
-    return res.count > 0;
+    try {
+      await this.storyClient.delete({ where });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async list(filter?: StoryFilter, orgId?: string): Promise<Story[]> {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (orgId) where.organizationId = orgId;
-
-    if (filter) {
-      if (filter.status) where.status = filter.status;
-      if (filter.articleType) where.articleType = filter.articleType;
-      if (filter.query) {
-        where.OR = [
-          { title: { contains: filter.query, mode: 'insensitive' } },
-          { summary: { contains: filter.query, mode: 'insensitive' } },
-        ];
-      }
-      if (filter.topicId) {
-        where.topics = { some: { topicId: filter.topicId } };
-      }
-      if (filter.entityId) {
-        where.entities = { some: { entityId: filter.entityId } };
-      }
-      if (filter.sourceId) {
-        where.sources = { some: { sourceId: filter.sourceId } };
-      }
+    if (filter?.status) where.status = filter.status;
+    if (filter?.articleType) where.articleType = filter.articleType;
+    if (filter?.topicId) {
+      where.topics = { some: { topicId: filter.topicId } };
+    }
+    if (filter?.entityId) {
+      where.entities = { some: { entityId: filter.entityId } };
+    }
+    if (filter?.sourceId) {
+      where.sources = { some: { sourceId: filter.sourceId } };
+    }
+    if (filter?.query) {
+      where.OR = [
+        { title: { contains: filter.query, mode: 'insensitive' } },
+        { summary: { contains: filter.query, mode: 'insensitive' } },
+      ];
     }
 
-    const rows = await this.prisma.story.findMany({
+    const rows = await this.storyClient.findMany({
       where,
       take: filter?.limit || 50,
       orderBy: { updatedAt: 'desc' },
@@ -146,39 +234,43 @@ export class PrismaStoryRepository implements IStoryRepository {
       },
     });
 
-    return rows.map((r: any) => this.mapToDomain(r));
+    return rows.map((r) => this.mapToDomain(r));
   }
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
-    await this.prisma.$transaction(async (tx: any) => {
-      await tx.storyBlock.deleteMany({ where: { storyId } });
-      await tx.storyBlock.createMany({
+    await this.blockClient.deleteMany({ where: { storyId } });
+    if (blocks.length > 0) {
+      await this.blockClient.createMany({
         data: blocks.map((b, idx) => ({
           id: b.id,
           storyId,
           blockType: b.blockType,
           sortOrder: b.sortOrder ?? idx,
-          data: b.data as any,
+          data: b.data,
+          metadata: b.metadata || null,
+          citationIds: b.citationIds || [],
         })),
       });
-    });
+    }
   }
 
   async getBlocks(storyId: string): Promise<StoryBlock[]> {
-    const rows = await this.prisma.storyBlock.findMany({
+    const rows = await this.blockClient.findMany({
       where: { storyId },
       orderBy: { sortOrder: 'asc' },
     });
-    return rows.map((r: any) => ({
+    return rows.map((r) => ({
       id: r.id,
       blockType: r.blockType,
       sortOrder: r.sortOrder,
       data: r.data,
-    }));
+      metadata: (r.metadata as Record<string, unknown>) || undefined,
+      citationIds: r.citationIds,
+    })) as unknown as StoryBlock[];
   }
 
   async createVersion(version: StoryVersion): Promise<StoryVersion> {
-    const created = await this.prisma.storyVersion.create({
+    const created = await this.versionClient.create({
       data: {
         id: version.id,
         storyId: version.storyId,
@@ -186,8 +278,8 @@ export class PrismaStoryRepository implements IStoryRepository {
         title: version.title,
         summary: version.summary,
         changeSummary: version.changeSummary,
-        blocksJson: version.blocksJson as any,
-        createdBy: version.createdBy,
+        blocksJson: version.blocks,
+        authorId: version.authorId,
         clientType: version.clientType,
       },
     });
@@ -198,35 +290,35 @@ export class PrismaStoryRepository implements IStoryRepository {
       versionNumber: created.versionNumber,
       title: created.title,
       summary: created.summary,
-      changeSummary: created.changeSummary,
-      blocksJson: created.blocksJson,
-      createdBy: created.createdBy,
-      clientType: created.clientType,
+      changeSummary: created.changeSummary || undefined,
+      blocks: (created.blocksJson as unknown) as StoryBlock[],
+      authorId: created.authorId,
+      clientType: created.clientType as StoryVersion['clientType'],
       createdAt: created.createdAt.toISOString(),
     };
   }
 
   async getVersions(storyId: string): Promise<StoryVersion[]> {
-    const rows = await this.prisma.storyVersion.findMany({
+    const rows = await this.versionClient.findMany({
       where: { storyId },
       orderBy: { versionNumber: 'desc' },
     });
-    return rows.map((r: any) => ({
+    return rows.map((r) => ({
       id: r.id,
       storyId: r.storyId,
       versionNumber: r.versionNumber,
       title: r.title,
       summary: r.summary,
-      changeSummary: r.changeSummary,
-      blocksJson: r.blocksJson,
-      createdBy: r.createdBy,
-      clientType: r.clientType,
+      changeSummary: r.changeSummary || undefined,
+      blocks: (r.blocksJson as unknown) as StoryBlock[],
+      authorId: r.authorId,
+      clientType: r.clientType as StoryVersion['clientType'],
       createdAt: r.createdAt.toISOString(),
     }));
   }
 
   async getVersion(storyId: string, versionNumber: number): Promise<StoryVersion | null> {
-    const row = await this.prisma.storyVersion.findFirst({
+    const row = await this.versionClient.findFirst({
       where: { storyId, versionNumber },
     });
     if (!row) return null;
@@ -236,16 +328,19 @@ export class PrismaStoryRepository implements IStoryRepository {
       versionNumber: row.versionNumber,
       title: row.title,
       summary: row.summary,
-      changeSummary: row.changeSummary,
-      blocksJson: row.blocksJson,
-      createdBy: row.createdBy,
-      clientType: row.clientType,
+      changeSummary: row.changeSummary || undefined,
+      blocks: (row.blocksJson as unknown) as StoryBlock[],
+      authorId: row.authorId,
+      clientType: row.clientType as StoryVersion['clientType'],
       createdAt: row.createdAt.toISOString(),
     };
   }
 
   async linkTopic(storyId: string, topicId: string): Promise<void> {
-    await this.prisma.storyTopic.upsert({
+    const relationClient = this.prisma.storyTopic as {
+      upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<unknown>;
+    };
+    await relationClient.upsert({
       where: { storyId_topicId: { storyId, topicId } },
       create: { storyId, topicId },
       update: {},
@@ -253,7 +348,10 @@ export class PrismaStoryRepository implements IStoryRepository {
   }
 
   async linkEntity(storyId: string, entityId: string): Promise<void> {
-    await this.prisma.storyEntity.upsert({
+    const relationClient = this.prisma.storyEntity as {
+      upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<unknown>;
+    };
+    await relationClient.upsert({
       where: { storyId_entityId: { storyId, entityId } },
       create: { storyId, entityId },
       update: {},
@@ -261,15 +359,18 @@ export class PrismaStoryRepository implements IStoryRepository {
   }
 
   async linkSource(storyId: string, sourceId: string): Promise<void> {
-    await this.prisma.storySource.upsert({
+    const relationClient = this.prisma.storySource as {
+      upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<unknown>;
+    };
+    await relationClient.upsert({
       where: { storyId_sourceId: { storyId, sourceId } },
       create: { storyId, sourceId },
       update: {},
     });
   }
 
-  async search(params: any, orgId?: string): Promise<{ items: any[]; totalCount: number }> {
-    const where: any = {};
+  async search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>> {
+    const where: Record<string, unknown> = {};
     if (orgId) where.organizationId = orgId;
     if (params.status) where.status = params.status;
     if (params.articleType) where.articleType = params.articleType;
@@ -290,8 +391,8 @@ export class PrismaStoryRepository implements IStoryRepository {
       ];
     }
 
-    const [rows, totalCount] = await Promise.all([
-      this.prisma.story.findMany({
+    const [rows, total] = await Promise.all([
+      this.storyClient.findMany({
         where,
         take: params.limit || 20,
         orderBy: { updatedAt: 'desc' },
@@ -301,28 +402,32 @@ export class PrismaStoryRepository implements IStoryRepository {
           sources: true,
         },
       }),
-      this.prisma.story.count({ where }),
+      this.storyClient.count({ where }),
     ]);
 
-    const items = rows.map((s: any) => ({
+    const items: StorySearchResultItem[] = rows.map((s) => ({
       storyId: s.id,
       title: s.title,
       summary: s.summary,
-      status: s.status,
-      articleType: s.articleType,
+      status: s.status as StorySearchResultItem['status'],
+      articleType: s.articleType as StorySearchResultItem['articleType'],
       currentVersionNumber: s.currentVersionNumber,
       publishedAt: s.publishedAt ? s.publishedAt.toISOString() : undefined,
       updatedAt: s.updatedAt.toISOString(),
-      topicIds: s.topics ? s.topics.map((t: any) => t.topicId) : [],
-      entityIds: s.entities ? s.entities.map((e: any) => e.entityId) : [],
+      topicIds: s.topics ? s.topics.map((t) => t.topicId) : [],
+      entityIds: s.entities ? s.entities.map((e) => e.entityId) : [],
       sourceCount: s.sources ? s.sources.length : 0,
     }));
 
-    return { items, totalCount };
+    return {
+      items,
+      total,
+      hasMore: items.length < total,
+    };
   }
 
-  async findSimilar(params: any, orgId: string): Promise<any[]> {
-    const rows = await this.prisma.story.findMany({
+  async findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]> {
+    const rows = await this.storyClient.findMany({
       where: { organizationId: orgId },
       include: {
         topics: true,
@@ -331,8 +436,8 @@ export class PrismaStoryRepository implements IStoryRepository {
       },
     });
 
-    const targetText = `${params.title} ${params.summary || ''}`;
-    const scored: Array<{ story: any; score: number }> = [];
+    const targetText = `${params.title || ''} ${params.summary || ''}`;
+    const scored: Array<{ story: PrismaStoryRow; score: number }> = [];
 
     for (const story of rows) {
       const storyText = `${story.title} ${story.summary || ''}`;
@@ -347,13 +452,13 @@ export class PrismaStoryRepository implements IStoryRepository {
       storyId: story.id,
       title: story.title,
       summary: story.summary,
-      status: story.status,
-      articleType: story.articleType,
+      status: story.status as StorySearchResultItem['status'],
+      articleType: story.articleType as StorySearchResultItem['articleType'],
       currentVersionNumber: story.currentVersionNumber,
       publishedAt: story.publishedAt ? story.publishedAt.toISOString() : undefined,
       updatedAt: story.updatedAt.toISOString(),
-      topicIds: story.topics ? story.topics.map((t: any) => t.topicId) : [],
-      entityIds: story.entities ? story.entities.map((e: any) => e.entityId) : [],
+      topicIds: story.topics ? story.topics.map((t) => t.topicId) : [],
+      entityIds: story.entities ? story.entities.map((e) => e.entityId) : [],
       sourceCount: story.sources ? story.sources.length : 0,
       similarityScore: score,
     }));
@@ -370,33 +475,34 @@ export class PrismaStoryRepository implements IStoryRepository {
     return intersection / Math.max(set1.size, set2.size);
   }
 
-  private mapToDomain(row: any): Story {
+  private mapToDomain(row: PrismaStoryRow): Story {
     return {
       id: row.id,
       organizationId: row.organizationId,
       slug: row.slug,
       title: row.title,
       summary: row.summary,
-      status: row.status,
-      articleType: row.articleType,
+      status: row.status as Story['status'],
+      articleType: row.articleType as Story['articleType'],
       authorId: row.authorId,
-      createdByClient: row.createdByClient,
-      createdVia: row.createdVia,
+      createdByClient: row.createdByClient as Story['createdByClient'],
+      createdVia: row.createdVia as Story['createdVia'],
       currentVersionNumber: row.currentVersionNumber,
-      heroImageUrl: row.heroImageUrl,
+      heroImageUrl: row.heroImageUrl || undefined,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
-      topicIds: row.topics ? row.topics.map((t: any) => t.topicId) : [],
-      entityIds: row.entities ? row.entities.map((e: any) => e.entityId) : [],
-      sourceIds: row.sources ? row.sources.map((s: any) => s.sourceId) : [],
+      topicIds: row.topics ? row.topics.map((t) => t.topicId) : [],
+      entityIds: row.entities ? row.entities.map((e) => e.entityId) : [],
+      sourceIds: row.sources ? row.sources.map((s) => s.sourceId) : [],
       blocks: row.blocks
-        ? row.blocks.map((b: any) => ({
+        ? (row.blocks.map((b) => ({
             id: b.id,
             blockType: b.blockType,
             sortOrder: b.sortOrder,
             data: b.data,
-          }))
+            citationIds: b.citationIds,
+          })) as unknown as StoryBlock[])
         : [],
     };
   }

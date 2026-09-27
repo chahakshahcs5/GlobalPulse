@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { DEMO_STORIES, DEMO_SOURCES, DEMO_ENTITIES, DEMO_EVENTS } from '../../../apps/web/src/lib/demo-data.js';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer, VisualDiffRenderer } from '@ai-news/media';
-import { StoryBlockSchema, EntitySchema, EventSchema } from '@ai-news/schemas';
+import { StoryBlockSchema, EntitySchema, EventSchema, type StoryBlock } from '@ai-news/schemas';
 
 describe('Web Application, StoryRenderer & Large Display Mode Integration Tests', () => {
   describe('Demo Data & Story Schema Integrity', () => {
@@ -91,17 +91,15 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       const { renderToString } = await import('react-dom/server');
       const { StoryRenderer } = await import('../../../apps/web/src/components/StoryRenderer.js');
 
-      const allBlocks: any[] = [
+      const allBlocks: StoryBlock[] = [
         {
           id: 'blk_head_1',
-          storyVersionId: 'ver_1',
           blockType: 'heading',
           sortOrder: 0,
           data: { level: 2, text: 'Breaking Development', subtext: 'Comprehensive overview' },
         },
         {
           id: 'blk_gal_1',
-          storyVersionId: 'ver_1',
           blockType: 'gallery',
           sortOrder: 1,
           data: {
@@ -114,7 +112,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_flow_1',
-          storyVersionId: 'ver_1',
           blockType: 'flow',
           sortOrder: 2,
           data: {
@@ -127,7 +124,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_vid_1',
-          storyVersionId: 'ver_1',
           blockType: 'video',
           sortOrder: 3,
           data: {
@@ -141,12 +137,12 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_aud_1',
-          storyVersionId: 'ver_1',
           blockType: 'audio',
           sortOrder: 4,
           data: {
             url: 'https://example.com/briefing.mp3',
             title: 'Morning Executive Audio Briefing',
+            language: 'en',
             narrator: 'Anchor AI',
             durationSeconds: 180,
             transcript: 'Good morning, here is the executive update.',
@@ -154,7 +150,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_slide_1',
-          storyVersionId: 'ver_1',
           blockType: 'slide_deck',
           sortOrder: 5,
           data: {
@@ -167,7 +162,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_comp_1',
-          storyVersionId: 'ver_1',
           blockType: 'comparison',
           sortOrder: 6,
           data: {
@@ -178,7 +172,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_src_1',
-          storyVersionId: 'ver_1',
           blockType: 'source',
           sortOrder: 7,
           data: {
@@ -191,7 +184,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_ent_1',
-          storyVersionId: 'ver_1',
           blockType: 'entity',
           sortOrder: 8,
           data: {
@@ -203,7 +195,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_rel_1',
-          storyVersionId: 'ver_1',
           blockType: 'related_stories',
           sortOrder: 9,
           data: {
@@ -213,7 +204,6 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
         {
           id: 'blk_emb_1',
-          storyVersionId: 'ver_1',
           blockType: 'embed',
           sortOrder: 10,
           data: {

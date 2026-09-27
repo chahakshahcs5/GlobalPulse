@@ -1,91 +1,112 @@
 import type { Topic } from '@ai-news/schemas';
 import type { ITopicRepository } from '../../interfaces/topic.repository';
 
-export class PrismaTopicRepository implements ITopicRepository {
-  constructor(private readonly prismaGetter: () => any) {}
+interface PrismaTopicRow {
+  id: string;
+  organizationId: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  aliases: string[];
+  parentTopicId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-  private get prisma() {
+export class PrismaTopicRepository implements ITopicRepository {
+  constructor(private readonly prismaGetter: () => Record<string, unknown>) {}
+
+  private get prisma(): Record<string, unknown> {
     return this.prismaGetter();
   }
 
+  private get topicClient(): {
+    findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow | null>;
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
+    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
+    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaTopicRow[]>;
+  } {
+    return this.prisma.topic as {
+      findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow | null>;
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
+      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
+      findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaTopicRow[]>;
+    };
+  }
+
   async findById(id: string, orgId?: string): Promise<Topic | null> {
-    const where: any = { id };
+    const where: Record<string, unknown> = { id };
     if (orgId) where.organizationId = orgId;
-    const row = await this.prisma.topic.findFirst({ where, include: { aliases: true } });
+    const row = await this.topicClient.findFirst({ where });
     return row ? this.mapToDomain(row) : null;
   }
 
   async findBySlug(slug: string, orgId: string): Promise<Topic | null> {
-    const row = await this.prisma.topic.findFirst({
+    const row = await this.topicClient.findFirst({
       where: { slug, organizationId: orgId },
-      include: { aliases: true },
     });
     return row ? this.mapToDomain(row) : null;
   }
 
   async create(topic: Topic): Promise<Topic> {
-    const created = await this.prisma.topic.create({
+    const created = await this.topicClient.create({
       data: {
         id: topic.id,
         organizationId: topic.organizationId,
         slug: topic.slug,
         name: topic.name,
         description: topic.description,
-        parentId: topic.parentId,
-        aliases: {
-          create: (topic.aliases || []).map((alias) => ({ alias })),
-        },
+        parentTopicId: topic.parentTopicId,
+        aliases: topic.aliases || [],
       },
-      include: { aliases: true },
     });
     return this.mapToDomain(created);
   }
 
   async update(topic: Topic): Promise<Topic> {
-    const updated = await this.prisma.topic.update({
+    const updated = await this.topicClient.update({
       where: { id: topic.id },
       data: {
         name: topic.name,
         description: topic.description,
-        parentId: topic.parentId,
+        parentTopicId: topic.parentTopicId,
+        aliases: topic.aliases || [],
       },
-      include: { aliases: true },
     });
     return this.mapToDomain(updated);
   }
 
   async list(orgId: string): Promise<Topic[]> {
-    const rows = await this.prisma.topic.findMany({
+    const rows = await this.topicClient.findMany({
       where: { organizationId: orgId },
-      include: { aliases: true },
       orderBy: { name: 'asc' },
     });
-    return rows.map((r: any) => this.mapToDomain(r));
+    return rows.map((r) => this.mapToDomain(r));
   }
 
   async search(query: string, orgId: string): Promise<Topic[]> {
-    const rows = await this.prisma.topic.findMany({
+    const rows = await this.topicClient.findMany({
       where: {
         organizationId: orgId,
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { slug: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
         ],
       },
-      include: { aliases: true },
     });
-    return rows.map((r: any) => this.mapToDomain(r));
+    return rows.map((r) => this.mapToDomain(r));
   }
 
-  private mapToDomain(row: any): Topic {
+  private mapToDomain(row: PrismaTopicRow): Topic {
     return {
       id: row.id,
       organizationId: row.organizationId,
       slug: row.slug,
       name: row.name,
-      description: row.description,
-      parentId: row.parentId,
-      aliases: row.aliases ? row.aliases.map((a: any) => a.alias) : [],
+      description: row.description || undefined,
+      aliases: row.aliases || [],
+      parentTopicId: row.parentTopicId || undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

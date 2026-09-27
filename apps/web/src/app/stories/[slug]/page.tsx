@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DEMO_STORIES, DEMO_SOURCES } from '../../../lib/demo-data';
@@ -84,7 +83,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
             Attached Primary Sources & Documentation ({attachedSources.length})
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {attachedSources.map((src: any) => (
+            {attachedSources.map((src) => (
               <div
                 key={src.id}
                 className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2 text-xs"

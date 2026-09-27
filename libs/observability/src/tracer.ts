@@ -68,8 +68,8 @@ export class SimpleTracer {
       const result = await fn(span);
       span.end();
       return result;
-    } catch (err: any) {
-      span.end(err);
+    } catch (err: unknown) {
+      span.end(err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }

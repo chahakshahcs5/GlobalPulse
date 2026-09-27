@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StoryBlockSchema, type StoryBlock } from './blocks';
+import { StoryBlockSchema } from './blocks';
 
 export const StoryStatusSchema = z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']);
 export type StoryStatus = z.infer<typeof StoryStatusSchema>;
@@ -95,7 +95,8 @@ export const CreateStoryInputSchema = z.object({
   heroImageUrl: z.string().url().optional(),
   idempotencyKey: z.string().max(200).optional(),
 });
-export type CreateStoryInput = z.infer<typeof CreateStoryInputSchema>;
+export type CreateStoryInput = z.input<typeof CreateStoryInputSchema>;
+export type CreateStoryOutput = z.output<typeof CreateStoryInputSchema>;
 
 export const UpdateStoryInputSchema = z.object({
   title: z.string().min(1).max(300).optional(),

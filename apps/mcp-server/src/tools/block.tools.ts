@@ -5,6 +5,7 @@ import { StoryService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { StoryBlockSchema } from '@ai-news/schemas';
 import { generateId } from '@ai-news/shared';
+import { mcpJsonResponse } from './tool-helpers';
 
 export function registerBlockTools(
   server: McpServer,
@@ -13,7 +14,7 @@ export function registerBlockTools(
 ) {
   const storyService = new StoryService(db);
 
-  const helperAdd = async (storyId: string, block: any) => {
+  const helperAdd = async (storyId: string, block: Parameters<StoryService['addBlock']>[1]) => {
     const principal = getPrincipal();
     AuthService.requireScope(principal, 'news:write');
 
@@ -24,18 +25,11 @@ export function registerBlockTools(
       createdVia: 'mcp',
     });
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            { message: `Block of type "${added.blockType}" added to story.`, blockId: added.id, sortOrder: added.sortOrder },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return mcpJsonResponse({
+      message: `Block of type "${added.blockType}" added to story.`,
+      blockId: added.id,
+      sortOrder: added.sortOrder,
+    });
   };
 
   // 1. Generic add_story_block
@@ -499,14 +493,7 @@ export function registerBlockTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: `Block "${blockId}" updated.`, block: updated }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: `Block "${blockId}" updated.`, block: updated });
     }
   );
 
@@ -529,14 +516,7 @@ export function registerBlockTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: removed ? 'Block removed.' : 'Block not found.', success: removed }),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: removed ? 'Block removed.' : 'Block not found.', success: removed });
     }
   );
 
@@ -559,14 +539,7 @@ export function registerBlockTools(
         createdVia: 'mcp',
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Blocks reordered successfully.', count: blocks.length }),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Blocks reordered successfully.', count: blocks.length });
     }
   );
 }

@@ -1,27 +1,28 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
-import { FastifyReply } from 'fastify';
-import { realtime } from '../../realtime/sse.service';
-import { v4 as uuidv4 } from 'uuid';
+import { Controller, Get, Sse, Query, Optional, Inject } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { RealtimeService, RealtimeMessageEvent } from './realtime.service';
 
 @Controller('api/realtime')
 export class RealtimeController {
-  @Get('stream')
-  async stream(
-    @Query('channels') channelsQuery: string,
-    @Query('clientId') queryClientId: string,
-    @Res() reply: FastifyReply
-  ) {
-    const channels = typeof channelsQuery === 'string' ? channelsQuery.split(',') : ['all'];
-    const clientId = queryClientId || uuidv4();
+  private readonly service: RealtimeService;
 
-    realtime.registerClient(clientId, channels, reply);
-    await new Promise(() => {});
+  constructor(@Optional() @Inject(RealtimeService) service?: RealtimeService) {
+    this.service = service || RealtimeService.getInstance();
+  }
+
+  @Sse('stream')
+  stream(@Query('channels') channelsQuery?: string): Observable<RealtimeMessageEvent> {
+    const channels = typeof channelsQuery === 'string' && channelsQuery.trim().length > 0
+      ? channelsQuery.split(',').map((c) => c.trim())
+      : ['all'];
+
+    return this.service.getEventStream(channels);
   }
 
   @Get('status')
-  getStatus() {
+  getStatus(): { connectedClients: number; timestamp: string } {
     return {
-      connectedClients: realtime.getConnectedClientsCount(),
+      connectedClients: this.service.getConnectedClientsCount(),
       timestamp: new Date().toISOString(),
     };
   }

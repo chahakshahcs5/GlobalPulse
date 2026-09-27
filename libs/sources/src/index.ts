@@ -102,4 +102,12 @@ export class SourceService {
   async searchSources(query: string, orgId: string): Promise<Source[]> {
     return this.db.sources.search(query, orgId);
   }
+
+  async listCitationsForSource(sourceId: string): Promise<Citation[]> {
+    return this.db.sources.getCitationsForStory(sourceId);
+  }
+
+  async listClaimsForSource(sourceId: string): Promise<Claim[]> {
+    return this.db.sources.getClaimsForSource(sourceId);
+  }
 }

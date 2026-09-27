@@ -1,5 +1,3 @@
-import React from 'react';
-import Link from 'next/link';
 import { DEMO_SOURCES } from '../../lib/demo-data';
 
 export default function SourcesPage() {

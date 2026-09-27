@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DatabaseService } from '@ai-news/database';
 import { StoryService } from '@ai-news/stories';
-import { ValidationError, NotFoundError } from '@ai-news/shared';
+import { ValidationError } from '@ai-news/shared';
 
 describe('Story Lifecycle & Versioning Service (Unit Tests)', () => {
   let db: DatabaseService;

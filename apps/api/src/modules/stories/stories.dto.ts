@@ -3,14 +3,16 @@ import {
   CreateStoryInputSchema,
   UpdateStoryInputSchema,
   CreateStoryVersionInputSchema,
-  StoryFilterSchema,
+  SearchStoriesInputSchema,
 } from '@ai-news/schemas';
+
+export const StoryFilterSchema = SearchStoriesInputSchema;
+export type StoryFilter = z.infer<typeof StoryFilterSchema>;
 
 export {
   CreateStoryInputSchema,
   UpdateStoryInputSchema,
   CreateStoryVersionInputSchema,
-  StoryFilterSchema,
 };
 
 export const PublishStoryInputSchema = z.object({

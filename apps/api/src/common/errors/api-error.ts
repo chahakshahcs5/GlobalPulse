@@ -1,18 +1,16 @@
-import { DomainError } from '@ai-news/shared';
-
 export class ApiError extends Error {
   constructor(
     public readonly statusCode: number,
     public readonly code: string,
     message: string,
-    public readonly details?: Record<string, any>
+    public readonly details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'ApiError';
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
-  static badRequest(message: string, details?: Record<string, any>): ApiError {
+  static badRequest(message: string, details?: Record<string, unknown>): ApiError {
     return new ApiError(400, 'BAD_REQUEST', message, details);
   }
 
@@ -29,11 +27,11 @@ export class ApiError extends Error {
     return new ApiError(404, 'NOT_FOUND', msg);
   }
 
-  static conflict(message: string, details?: Record<string, any>): ApiError {
+  static conflict(message: string, details?: Record<string, unknown>): ApiError {
     return new ApiError(409, 'CONFLICT', message, details);
   }
 
-  static unprocessable(message: string, details?: Record<string, any>): ApiError {
+  static unprocessable(message: string, details?: Record<string, unknown>): ApiError {
     return new ApiError(422, 'UNPROCESSABLE_ENTITY', message, details);
   }
 

@@ -19,4 +19,5 @@ export const CreateTopicInputSchema = z.object({
   aliases: z.array(z.string()).optional().default([]),
   parentTopicId: z.string().optional(),
 });
-export type CreateTopicInput = z.infer<typeof CreateTopicInputSchema>;
+export type CreateTopicInput = z.input<typeof CreateTopicInputSchema>;
+export type CreateTopicOutput = z.output<typeof CreateTopicInputSchema>;

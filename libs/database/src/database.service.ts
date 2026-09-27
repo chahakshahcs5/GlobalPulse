@@ -30,6 +30,11 @@ import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-s
 import { TransactionManager } from './transactions/transaction-manager';
 import { logger } from '@ai-news/observability';
 
+export interface DatabaseServiceOptions {
+  memory?: boolean;
+  engine?: 'memory' | 'prisma';
+}
+
 export class DatabaseService {
   public stories: IStoryRepository;
   public events: IEventRepository;
@@ -49,7 +54,7 @@ export class DatabaseService {
 
   private isPrismaActive = false;
 
-  constructor() {
+  constructor(_options?: DatabaseServiceOptions) {
     // Default to high-performance in-memory repositories
     this.stories = this.memoryStories;
     this.events = this.memoryEvents;
@@ -79,8 +84,9 @@ export class DatabaseService {
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode.');
         return true;
       }
-    } catch (err: any) {
-      logger.warn(`Prisma initialization failed: ${err.message}. Operating in Memory mode.`);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      logger.warn(`Prisma initialization failed: ${errorMsg}. Operating in Memory mode.`);
     }
 
     this.isPrismaActive = false;
@@ -96,7 +102,7 @@ export class DatabaseService {
     return checkDatabaseHealth();
   }
 
-  public async runInTransaction<T>(work: (tx: any) => Promise<T>): Promise<T> {
+  public async runInTransaction<T>(work: (tx: unknown) => Promise<T>): Promise<T> {
     return TransactionManager.execute(work);
   }
 

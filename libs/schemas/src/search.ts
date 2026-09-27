@@ -13,7 +13,7 @@ export const SearchStoriesInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(20),
   cursor: z.string().optional(),
 });
-export type SearchStoriesInput = z.infer<typeof SearchStoriesInputSchema>;
+export type SearchStoriesInput = z.input<typeof SearchStoriesInputSchema>;
 
 export const FindSimilarStoriesInputSchema = z.object({
   title: z.string().min(1),
@@ -21,7 +21,7 @@ export const FindSimilarStoriesInputSchema = z.object({
   threshold: z.number().min(0).max(1).default(0.7),
   limit: z.number().int().min(1).max(20).default(5),
 });
-export type FindSimilarStoriesInput = z.infer<typeof FindSimilarStoriesInputSchema>;
+export type FindSimilarStoriesInput = z.input<typeof FindSimilarStoriesInputSchema>;
 
 export const StorySearchResultItemSchema = z.object({
   storyId: z.string(),
@@ -38,3 +38,9 @@ export const StorySearchResultItemSchema = z.object({
   similarityScore: z.number().optional(),
 });
 export type StorySearchResultItem = z.infer<typeof StorySearchResultItemSchema>;
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+}

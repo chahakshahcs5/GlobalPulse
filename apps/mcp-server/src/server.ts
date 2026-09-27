@@ -31,6 +31,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   let defaultPrincipal: AuthenticatedPrincipal = {
     id: 'usr_mcp_gemini',
     organizationId: 'org_default',
+    role: 'ai_agent',
     clientType: 'gemini',
     scopes: [
       'news:read',
@@ -42,6 +43,12 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       'news:topics',
       'news:admin',
     ],
+    aiMetadata: {
+      model: 'gemini-1.5-pro',
+      provider: 'google',
+      version: '1.5',
+      capabilities: ['news:read', 'news:write', 'news:publish', 'news:admin'],
+    },
   };
 
   const getPrincipal = () => mcpPrincipalStore.getStore() || defaultPrincipal;
@@ -127,9 +134,10 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       if (authHeader) {
         resolvedPrincipal = AuthService.resolveBearerToken(authHeader);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
       res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized', message: err.message }));
+      res.end(JSON.stringify({ error: 'Unauthorized', message: errorMsg }));
       return;
     }
 
@@ -144,10 +152,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
           try {
             const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;
             await transport.handleRequest(req, res, parsed);
-          } catch (e: any) {
+          } catch (e: unknown) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
             if (!res.headersSent) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: e.message } }));
+              res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: errorMsg } }));
             }
           }
         });

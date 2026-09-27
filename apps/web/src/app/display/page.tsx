@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DEMO_STORIES } from '../../lib/demo-data';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer } from '@ai-news/media';
+import type { TimelineBlock, ChartBlock, MapBlock } from '@ai-news/schemas';
 
 export default function LargeDisplayPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -47,9 +48,9 @@ export default function LargeDisplayPage() {
   };
 
   // Find chart and map blocks from the current story or use fallbacks
-  const chartBlock = currentStory.blocks.find((b: any) => b.blockType === 'chart');
-  const mapBlock = currentStory.blocks.find((b: any) => b.blockType === 'map');
-  const timelineBlock = currentStory.blocks.find((b: any) => b.blockType === 'timeline');
+  const chartBlock = currentStory.blocks.find((b): b is ChartBlock => b.blockType === 'chart');
+  const mapBlock = currentStory.blocks.find((b): b is MapBlock => b.blockType === 'map');
+  const timelineBlock = currentStory.blocks.find((b): b is TimelineBlock => b.blockType === 'timeline');
 
   return (
     <div className="min-h-screen bg-[#060911] text-slate-100 flex flex-col justify-between overflow-hidden select-none p-4 sm:p-6 lg:p-8">
@@ -144,7 +145,7 @@ export default function LargeDisplayPage() {
                   className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950/60"
                   dangerouslySetInnerHTML={{
                     __html: TimelineRenderer.renderSvgTrack(
-                      (timelineBlock as any).data,
+                      timelineBlock.data,
                       'horizontal',
                       700,
                       200,
@@ -179,7 +180,7 @@ export default function LargeDisplayPage() {
                 <div
                   className="w-full h-full"
                   dangerouslySetInnerHTML={{
-                    __html: D3ChartRenderer.renderToSvg((chartBlock as any).data, {
+                    __html: D3ChartRenderer.renderToSvg(chartBlock.data, {
                       width: 760,
                       height: 320,
                       theme: 'dark',
@@ -203,7 +204,7 @@ export default function LargeDisplayPage() {
                 <div
                   className="w-full h-full"
                   dangerouslySetInnerHTML={{
-                    __html: MapRenderer.renderSvgFallback((mapBlock as any).data, 760, 300, 'dark'),
+                    __html: MapRenderer.renderSvgFallback(mapBlock.data, 760, 300, 'dark'),
                   }}
                 />
               ) : (

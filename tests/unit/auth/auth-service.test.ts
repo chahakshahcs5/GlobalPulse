@@ -50,6 +50,7 @@ describe('AuthService Unit Tests', () => {
     const standardPrincipal: AuthenticatedPrincipal = {
       id: 'usr_reporter',
       organizationId: 'org_pulse',
+      role: 'journalist',
       clientType: 'claude',
       scopes: ['news:read', 'news:write', 'news:sources'],
     };
@@ -57,6 +58,7 @@ describe('AuthService Unit Tests', () => {
     const adminPrincipal: AuthenticatedPrincipal = {
       id: 'usr_super',
       organizationId: 'org_pulse',
+      role: 'admin',
       clientType: 'internal_service',
       scopes: ['news:admin'],
     };
@@ -76,6 +78,91 @@ describe('AuthService Unit Tests', () => {
     it('throws ForbiddenError when principal lacks the required scope', () => {
       expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(ForbiddenError);
       expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(/Insufficient privileges/);
+    });
+  });
+
+  describe('requireRole (RBAC)', () => {
+    const editorPrincipal: AuthenticatedPrincipal = {
+      id: 'usr_ed_1',
+      organizationId: 'org_pulse',
+      role: 'editor',
+      clientType: 'human_web',
+      scopes: ['news:read', 'news:write', 'news:publish'],
+    };
+
+    const readerPrincipal: AuthenticatedPrincipal = {
+      id: 'usr_rd_1',
+      organizationId: 'org_pulse',
+      role: 'reader',
+      clientType: 'human_mobile',
+      scopes: ['news:read'],
+    };
+
+    const geminiPrincipal: AuthenticatedPrincipal = {
+      id: 'usr_gemini',
+      organizationId: 'org_pulse',
+      role: 'ai_agent',
+      clientType: 'gemini_spark',
+      scopes: ['news:read', 'news:write'],
+      agentMetadata: {
+        agentName: 'Gemini Spark News Editor',
+        model: 'gemini-2.5-flash',
+        provider: 'google',
+      },
+    };
+
+    it('allows access when principal possesses the required role', () => {
+      expect(() => AuthService.requireRole(editorPrincipal, 'editor', 'admin')).not.toThrow();
+      expect(() => AuthService.requireRole(geminiPrincipal, 'ai_agent')).not.toThrow();
+    });
+
+    it('throws ForbiddenError when principal has insufficient role', () => {
+      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(ForbiddenError);
+      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(/Insufficient role privileges/);
+    });
+  });
+
+  describe('JWT Cryptographic Issuance & Verification', () => {
+    it('signs and verifies valid JWT for human editor', () => {
+      const token = AuthService.generateToken({
+        id: 'usr_alice_editor',
+        organizationId: 'org_global',
+        role: 'editor',
+        email: 'alice@globalpulse.news',
+        clientType: 'human_web',
+        scopes: ['news:read', 'news:write', 'news:publish'],
+      });
+
+      expect(typeof token).toBe('string');
+      expect(token.split('.').length).toBe(3);
+
+      const verified = AuthService.verifyToken(token);
+      expect(verified.id).toBe('usr_alice_editor');
+      expect(verified.role).toBe('editor');
+      expect(verified.email).toBe('alice@globalpulse.news');
+      expect(verified.scopes).toContain('news:publish');
+    });
+
+    it('signs and verifies JWT for AI Agent with metadata', () => {
+      const token = AuthService.generateToken({
+        id: 'agent_gemini_lead',
+        organizationId: 'org_global',
+        role: 'ai_agent',
+        clientType: 'gemini',
+        scopes: ['news:read', 'news:write'],
+        agentMetadata: {
+          agentName: 'Gemini Newsroom Analyst',
+          model: 'gemini-2.5-pro',
+          provider: 'google',
+          version: '2026.3',
+        },
+      });
+
+      const verified = AuthService.verifyToken(token);
+      expect(verified.id).toBe('agent_gemini_lead');
+      expect(verified.role).toBe('ai_agent');
+      expect(verified.agentMetadata?.model).toBe('gemini-2.5-pro');
+      expect(verified.agentMetadata?.provider).toBe('google');
     });
   });
 

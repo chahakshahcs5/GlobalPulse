@@ -1,37 +1,39 @@
 import { DatabaseService } from '../src/database.service';
 import { logger } from '@ai-news/observability';
+import type { Story } from '@ai-news/schemas';
 
-export async function seedDatabase(db: DatabaseService) {
-  logger.info('Seeding database with enterprise newsroom dataset...');
+export async function seedDatabase(db: DatabaseService): Promise<void> {
+  logger.info('Starting enterprise database seed with canonical schema records...');
 
-  // 1. Topics
+  // 1. Taxonomy Topics
   const topics = [
+    {
+      id: 'top_geopolitics',
+      organizationId: 'org_default',
+      slug: 'geopolitics',
+      name: 'Global Geopolitics',
+      description: 'International treaties, multilateral summits, sanctions, and diplomatic affairs.',
+      aliases: ['diplomacy', 'foreign-policy', 'summits'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
     {
       id: 'top_brics_2026',
       organizationId: 'org_default',
       slug: 'brics-2026',
-      name: 'BRICS 2026 Expansion',
-      description: 'Geopolitical realignment, multilateral trade mechanisms, and accession summits.',
-      aliases: ['brics', 'brics-expansion', 'new-delhi-summit'],
+      name: 'BRICS Summit 2026',
+      parentTopicId: 'top_geopolitics',
+      description: 'Coverage of the 2026 New Delhi multilateral summit and expansion accords.',
+      aliases: ['brics', 'brics-summit', 'new-delhi-accord'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
-      id: 'top_semiconductors',
-      organizationId: 'org_default',
-      slug: 'semiconductors',
-      name: 'Global Semiconductor Supply Chains',
-      description: 'Advanced lithography, 2nm fabrication nodes, packaging, and export policies.',
-      aliases: ['chips', 'lithography', 'fab', 'foundry'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'top_fusion',
+      id: 'top_energy_fusion',
       organizationId: 'org_default',
       slug: 'fusion-energy',
-      name: 'Nuclear Fusion Breakthroughs',
-      description: 'Magnetic confinement, high-temperature superconductors, and net energy gain milestones.',
+      name: 'Nuclear Fusion Energy',
+      description: 'Commercial net-energy gain milestones, tokamaks, and magnet breakthroughs.',
       aliases: ['fusion', 'tokamak', 'plasma-physics'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -49,7 +51,8 @@ export async function seedDatabase(db: DatabaseService) {
       organizationId: 'org_default',
       slug: 'india',
       name: 'Republic of India',
-      entityType: 'COUNTRY',
+      type: 'COUNTRY' as const,
+      aliases: ['Bharat', 'IN'],
       description: 'Host nation of the 2026 multilateral economic summit.',
       metadata: { capital: 'New Delhi', region: 'South Asia' },
       createdAt: new Date().toISOString(),
@@ -60,7 +63,8 @@ export async function seedDatabase(db: DatabaseService) {
       organizationId: 'org_default',
       slug: 'tsmc',
       name: 'Taiwan Semiconductor Manufacturing Co.',
-      entityType: 'ORGANIZATION',
+      type: 'ORGANIZATION' as const,
+      aliases: ['TSMC', 'Taiwan Semi'],
       description: 'World leading semiconductor foundry and pioneer of 2nm gate-all-around nodes.',
       metadata: { ticker: 'TSM', industry: 'Semiconductors' },
       createdAt: new Date().toISOString(),
@@ -113,17 +117,17 @@ export async function seedDatabase(db: DatabaseService) {
   }
 
   // 4. Flagship Multi-Version Story
-  const story = {
+  const story: Story = {
     id: 'sty_brics_flagship',
     organizationId: 'org_default',
     slug: 'brics-expansion-2026-global-economic-realignment',
     title: 'BRICS Expansion 2026: Historic Geoeconomic Shift Finalized in New Delhi',
     summary: 'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
-    status: 'PUBLISHED' as const,
-    articleType: 'breaking_news' as const,
+    status: 'PUBLISHED',
+    articleType: 'breaking_news',
     authorId: 'usr_spark_agent',
-    createdByClient: 'gemini_spark' as const,
-    createdVia: 'mcp' as const,
+    createdByClient: 'gemini_spark',
+    createdVia: 'mcp',
     currentVersionNumber: 2,
     heroImageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80',
     publishedAt: '2026-09-26T10:00:00Z',
@@ -212,8 +216,8 @@ export async function seedDatabase(db: DatabaseService) {
     title: 'BRICS Expansion 2026: Preliminary Consensus Reached',
     summary: 'Summit opens with draft agreement on expanded membership.',
     changeSummary: 'Initial breaking news dispatch.',
-    blocksJson: [story.blocks[1]],
-    createdBy: 'usr_spark_agent',
+    blocks: [story.blocks[1]],
+    authorId: 'usr_spark_agent',
     clientType: 'gemini_spark',
     createdAt: '2026-09-26T07:00:00Z',
   });
@@ -224,9 +228,9 @@ export async function seedDatabase(db: DatabaseService) {
     versionNumber: 2,
     title: story.title,
     summary: story.summary,
-    changeSummary: 'Added What-Changed summary, D3 output chart, and ratified declaration citations.',
-    blocksJson: story.blocks,
-    createdBy: 'usr_spark_agent',
+    changeSummary: 'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
+    blocks: story.blocks,
+    authorId: 'usr_spark_agent',
     clientType: 'gemini_spark',
     createdAt: '2026-09-26T10:00:00Z',
   });

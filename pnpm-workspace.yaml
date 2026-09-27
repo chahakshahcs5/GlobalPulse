@@ -3,4 +3,5 @@ packages:
   - 'libs/*'
 allowBuilds:
   esbuild: true
+  msgpackr-extract: true
   nx: true

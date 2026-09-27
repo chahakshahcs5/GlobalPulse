@@ -1,11 +1,19 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { Injectable } from '@nestjs/common';
-import { TopicService } from '@ai-news/topics';
+import { TopicService, type CreateTopicInput } from '@ai-news/topics';
 import { EventService } from '@ai-news/events';
 import { EntityService } from '@ai-news/entities';
 import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
 import { generateId } from '@ai-news/shared';
+import type { CreateEventInput, CreateEntityInput } from '@ai-news/schemas';
+
+export interface CreateMediaInput {
+  mediaType: string;
+  title: string;
+  url: string;
+  caption?: string;
+}
 
 @Injectable()
 @Resolver()
@@ -46,23 +54,22 @@ export class TaxonomyResolver {
   }
 
   @Mutation('createTopic')
-  async createTopic(@Args('input') input: any) {
+  async createTopic(@Args('input') input: CreateTopicInput) {
     return await this.topicService.createTopic(input, 'org_default');
   }
 
   @Mutation('createEvent')
-  async createEvent(@Args('input') input: any) {
+  async createEvent(@Args('input') input: CreateEventInput) {
     return await this.eventService.createEvent(input, 'org_default');
   }
 
   @Mutation('createEntity')
-  async createEntity(@Args('input') input: any) {
+  async createEntity(@Args('input') input: CreateEntityInput) {
     return await this.entityService.createEntity(input, 'org_default');
   }
 
-
   @Mutation('createMedia')
-  async createMedia(@Args('input') input: any) {
+  async createMedia(@Args('input') input: CreateMediaInput) {
     return {
       id: generateId('med'),
       type: input.mediaType,

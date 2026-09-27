@@ -2,7 +2,11 @@ import type {
   Story,
   StoryVersion,
   StoryBlock,
+  SearchStoriesInput,
+  FindSimilarStoriesInput,
+  StorySearchResultItem,
 } from '@ai-news/schemas';
+import type { PaginatedResult } from '@ai-news/shared';
 
 export interface StoryFilter {
   status?: string;
@@ -38,6 +42,6 @@ export interface IStoryRepository {
   linkSource(storyId: string, sourceId: string): Promise<void>;
 
   // Search & Similarity
-  search(params: any, orgId?: string): Promise<any>;
-  findSimilar(params: any, orgId: string): Promise<any>;
+  search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>>;
+  findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]>;
 }

@@ -124,9 +124,16 @@ export class StructuredLogger {
     }
   }
 
-  public error(message: string, err?: Error, context?: LogContext): void {
+  public error(message: string, errorOrContext?: Error | LogContext, context?: LogContext): void {
     if (this.shouldLog('error')) {
-      this.emit(this.formatEntry('error', message, context, err));
+      let err: Error | undefined;
+      let ctx = context;
+      if (errorOrContext instanceof Error) {
+        err = errorOrContext;
+      } else if (errorOrContext) {
+        ctx = { ...errorOrContext, ...context };
+      }
+      this.emit(this.formatEntry('error', message, ctx, err));
     }
   }
 

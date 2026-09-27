@@ -13,7 +13,7 @@ export interface ProblemDetails {
   detail: string;
   instance?: string;
   code?: string;
-  errors?: any[];
+  errors?: unknown[];
   timestamp: string;
 }
 
@@ -80,11 +80,12 @@ export function globalErrorHandler(
 
   // Handle Fastify Validation / HTTP Errors
   if ('statusCode' in error && typeof error.statusCode === 'number') {
+    const problemCode = 'code' in error && typeof error.code === 'string' ? error.code : 'HTTP_ERROR';
     const problem: ProblemDetails = {
       type: 'https://news.platform/errors/http-error',
       title: error.name || 'HTTP Error',
       status: error.statusCode,
-      code: (error as any).code || 'HTTP_ERROR',
+      code: problemCode,
       detail: error.message,
       instance,
       timestamp,

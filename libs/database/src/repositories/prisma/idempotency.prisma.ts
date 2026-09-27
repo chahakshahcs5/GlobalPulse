@@ -1,15 +1,36 @@
 import type { IdempotencyRecord } from '@ai-news/schemas';
 import type { IIdempotencyRepository } from '../../interfaces/idempotency.repository';
 
-export class PrismaIdempotencyRepository implements IIdempotencyRepository {
-  constructor(private readonly prismaGetter: () => any) {}
+interface PrismaIdempotencyRow {
+  id: string;
+  organizationId: string;
+  key: string;
+  action: string;
+  responseJson: unknown;
+  createdAt: Date;
+}
 
-  private get prisma() {
+export class PrismaIdempotencyRepository implements IIdempotencyRepository {
+  constructor(private readonly prismaGetter: () => Record<string, unknown>) {}
+
+  private get prisma(): Record<string, unknown> {
     return this.prismaGetter();
   }
 
+  private get idempotencyClient(): {
+    findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaIdempotencyRow | null>;
+    upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<PrismaIdempotencyRow>;
+    deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+  } {
+    return this.prisma.idempotencyRecord as {
+      findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaIdempotencyRow | null>;
+      upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<PrismaIdempotencyRow>;
+      deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+    };
+  }
+
   async get(key: string, orgId: string): Promise<IdempotencyRecord | null> {
-    const row = await this.prisma.idempotencyRecord.findUnique({
+    const row = await this.idempotencyClient.findUnique({
       where: {
         organizationId_key: {
           organizationId: orgId,
@@ -25,12 +46,11 @@ export class PrismaIdempotencyRepository implements IIdempotencyRepository {
       action: row.action,
       responseJson: row.responseJson,
       createdAt: row.createdAt.toISOString(),
-      expiresAt: row.expiresAt ? row.expiresAt.toISOString() : undefined,
     };
   }
 
   async save(record: IdempotencyRecord): Promise<void> {
-    await this.prisma.idempotencyRecord.upsert({
+    await this.idempotencyClient.upsert({
       where: {
         organizationId_key: {
           organizationId: record.organizationId,
@@ -42,17 +62,16 @@ export class PrismaIdempotencyRepository implements IIdempotencyRepository {
         organizationId: record.organizationId,
         key: record.key,
         action: record.action,
-        responseJson: record.responseJson as any,
-        expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+        responseJson: record.responseJson,
       },
       update: {
-        responseJson: record.responseJson as any,
+        responseJson: record.responseJson,
       },
     });
   }
 
   async delete(key: string, orgId: string): Promise<boolean> {
-    const res = await this.prisma.idempotencyRecord.deleteMany({
+    const res = await this.idempotencyClient.deleteMany({
       where: { key, organizationId: orgId },
     });
     return res.count > 0;

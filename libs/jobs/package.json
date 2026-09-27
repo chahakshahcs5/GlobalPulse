@@ -9,6 +9,7 @@
     "@ai-news/observability": "workspace:*",
     "@ai-news/schemas": "workspace:*",
     "@ai-news/shared": "workspace:*",
+    "bullmq": "^6.3.9",
     "ioredis": "^6.0.0"
   },
   "devDependencies": {

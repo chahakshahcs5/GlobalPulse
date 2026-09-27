@@ -13,15 +13,15 @@ import { logger } from '@ai-news/observability';
 
 @Catch()
 export class Rfc7807ExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     if ((host.getType() as string) === 'graphql') {
-      return exception;
+      return;
     }
 
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<FastifyReply>();
     if (!response || typeof response.status !== 'function') {
-      return exception;
+      return;
     }
     const request = ctx.getRequest<FastifyRequest>();
 
@@ -29,7 +29,7 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
     let code = 'INTERNAL_ERROR';
     let title = 'Internal Server Error';
     let detail = 'An unexpected error occurred processing your request.';
-    let invalidParams: any = undefined;
+    let invalidParams: unknown = undefined;
 
     if (exception instanceof ApiError) {
       status = exception.statusCode;
@@ -58,9 +58,10 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
-      code = typeof res === 'object' && (res as any).error ? (res as any).error : 'HTTP_EXCEPTION';
+      const resObj = typeof res === 'object' && res !== null ? (res as Record<string, unknown>) : null;
+      code = resObj && typeof resObj.error === 'string' ? resObj.error : 'HTTP_EXCEPTION';
       title = exception.name;
-      detail = typeof res === 'object' && (res as any).message ? (res as any).message : exception.message;
+      detail = resObj && typeof resObj.message === 'string' ? resObj.message : exception.message;
     } else if (exception instanceof Error) {
       detail = exception.message;
     }
@@ -78,7 +79,7 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
       detail,
       instance: request.url,
       timestamp: new Date().toISOString(),
-      ...(invalidParams && { invalidParams, errors: invalidParams }),
+      ...(invalidParams ? { invalidParams, errors: invalidParams } : {}),
     };
 
     logger.warn(`Handled error [${status} ${code}]: ${detail} on ${request.url}`);

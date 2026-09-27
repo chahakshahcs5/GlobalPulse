@@ -4,6 +4,7 @@ import type { DatabaseService } from '@ai-news/database';
 import { SearchService } from '@ai-news/search';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { ArticleTypeSchema, StoryStatusSchema } from '@ai-news/schemas';
+import { mcpJsonResponse } from './tool-helpers';
 
 export function registerSearchTools(
   server: McpServer,
@@ -29,14 +30,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:search');
 
       const results = await searchService.searchStories(params, principal.organizationId);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(results, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse(results);
     }
   );
 
@@ -54,14 +48,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:search');
 
       const similar = await searchService.findSimilarStories(params, principal.organizationId);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ matches: similar }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ matches: similar });
     }
   );
 
@@ -102,14 +89,7 @@ export function registerSearchTools(
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, params.limit);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ matches }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ matches });
     }
   );
 
@@ -124,9 +104,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:search');
 
       const events = await searchService.searchEvents(params.query, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(events, null, 2) }],
-      };
+      return mcpJsonResponse(events);
     }
   );
 
@@ -141,9 +119,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:search');
 
       const topics = await searchService.searchTopics(params.query, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(topics, null, 2) }],
-      };
+      return mcpJsonResponse(topics);
     }
   );
 
@@ -158,9 +134,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:search');
 
       const entities = await searchService.searchEntities(params.query, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(entities, null, 2) }],
-      };
+      return mcpJsonResponse(entities);
     }
   );
 
@@ -175,9 +149,7 @@ export function registerSearchTools(
       AuthService.requireScope(principal, 'news:sources');
 
       const sources = await searchService.searchSources(params.query, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(sources, null, 2) }],
-      };
+      return mcpJsonResponse(sources);
     }
   );
 }

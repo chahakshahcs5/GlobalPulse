@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -27,18 +27,22 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
       {
         id: 'h1',
         blockType: 'heading',
+        sortOrder: 0,
         data: { text: 'New Multilateral Financial Architecture', level: 2 },
       },
       {
         id: 'p1',
         blockType: 'paragraph',
+        sortOrder: 1,
         data: {
           text: 'Leaders from member nations ratified an updated currency settlement framework designed to facilitate cross-border trade without intermediary dollar clearing houses.',
+          format: 'markdown',
         },
       },
       {
         id: 'sum1',
         blockType: 'summary',
+        sortOrder: 2,
         data: {
           headline: 'Key Summit Takeaways',
           bulletPoints: [
@@ -51,6 +55,7 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
       {
         id: 'quote1',
         blockType: 'quote',
+        sortOrder: 3,
         data: {
           quote: 'This accord represents the most significant recalibration of sovereign financial plumbing in fifty years.',
           attribution: 'Chief Economic Envoy',
@@ -60,6 +65,7 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
       {
         id: 'stat1',
         blockType: 'statistic',
+        sortOrder: 4,
         data: {
           label: 'Total Induced GDP ($ Trillion PPP)',
           value: '41.2',
@@ -71,9 +77,13 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
       {
         id: 'chart1',
         blockType: 'chart',
+        sortOrder: 5,
         data: {
           chartType: 'bar',
           title: 'Combined Economic Output ($ Trillion PPP)',
+          xAxis: { key: 'year', label: 'Year' },
+          yAxis: { label: 'GDP ($T)' },
+          series: [{ key: 'val', name: 'GDP' }],
           values: [
             { year: '2024', val: 32 },
             { year: '2026', val: 41 },
@@ -96,13 +106,16 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
       {
         id: 'h2',
         blockType: 'heading',
+        sortOrder: 0,
         data: { text: 'Overcoming Copper Interconnect Bottlenecks', level: 2 },
       },
       {
         id: 'p2',
         blockType: 'paragraph',
+        sortOrder: 1,
         data: {
           text: 'By replacing copper micro-traces with microscopic on-die waveguides, memory bus bandwidth is scaled by a factor of 12 while cutting thermal dissipation by 65%.',
+          format: 'markdown',
         },
       },
     ],

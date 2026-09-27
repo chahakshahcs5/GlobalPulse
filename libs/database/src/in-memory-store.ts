@@ -17,13 +17,15 @@ import type {
 import type { PaginatedResult } from '@ai-news/shared';
 import type {
   IStoryRepository,
+  StoryFilter,
   IEventRepository,
   ITopicRepository,
   IEntityRepository,
   ISourceRepository,
   IIdempotencyRepository,
   IAuditRepository,
-} from './interfaces';
+  AuditFilter,
+} from './interfaces/index';
 
 function computeTextSimilarity(s1: string, s2: string): number {
   const set1 = new Set(s1.toLowerCase().split(/\s+/).filter(w => w.length > 2));
@@ -93,6 +95,48 @@ export class InMemoryStoryRepository implements IStoryRepository {
     return true;
   }
 
+  async list(filterOrOrgId?: StoryFilter | string, maybeOrgId?: string): Promise<Story[]> {
+    const filter = typeof filterOrOrgId === 'object' ? filterOrOrgId : undefined;
+    const orgId = typeof filterOrOrgId === 'string' ? filterOrOrgId : maybeOrgId;
+
+    let result = Array.from(this.stories.values()).map((s) => ({
+      ...s,
+      blocks: this.blocks.get(s.id) || s.blocks || [],
+    }));
+
+    if (orgId) {
+      result = result.filter((s) => s.organizationId === orgId);
+    }
+    if (filter?.status) {
+      result = result.filter((s) => s.status === filter.status);
+    }
+    if (filter?.articleType) {
+      result = result.filter((s) => s.articleType === filter.articleType);
+    }
+    if (filter?.topicId) {
+      result = result.filter((s) => s.topicIds?.includes(filter.topicId!));
+    }
+    if (filter?.entityId) {
+      result = result.filter((s) => s.entityIds?.includes(filter.entityId!));
+    }
+    if (filter?.sourceId) {
+      result = result.filter((s) => s.sourceIds?.includes(filter.sourceId!));
+    }
+    if (filter?.query) {
+      const q = filter.query.toLowerCase();
+      result = result.filter(
+        (s) => s.title.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q)
+      );
+    }
+
+    result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    if (filter?.limit) {
+      result = result.slice(0, filter.limit);
+    }
+    return result;
+  }
+
   async createVersion(version: StoryVersion): Promise<StoryVersion> {
     const list = this.versions.get(version.storyId) || [];
     list.push(version);
@@ -115,7 +159,7 @@ export class InMemoryStoryRepository implements IStoryRepository {
     return [...(this.blocks.get(storyId) || [])].sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
-  async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<StoryBlock[]> {
+  async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
     const sorted = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
     this.blocks.set(storyId, sorted);
     const story = this.stories.get(storyId);
@@ -124,11 +168,10 @@ export class InMemoryStoryRepository implements IStoryRepository {
       story.updatedAt = new Date().toISOString();
       this.stories.set(storyId, story);
     }
-    return sorted;
   }
 
-  async search(params: SearchStoriesInput, orgId: string): Promise<PaginatedResult<StorySearchResultItem>> {
-    const all = Array.from(this.stories.values()).filter((s) => s.organizationId === orgId);
+  async search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>> {
+    const all = Array.from(this.stories.values()).filter((s) => (orgId ? s.organizationId === orgId : true));
     let filtered = all;
 
     if (params.status) {
@@ -177,6 +220,8 @@ export class InMemoryStoryRepository implements IStoryRepository {
     return {
       items,
       totalCount: filtered.length,
+      total: filtered.length,
+      hasMore: items.length < filtered.length,
     };
   }
 
@@ -185,10 +230,11 @@ export class InMemoryStoryRepository implements IStoryRepository {
     const scored: Array<{ story: Story; score: number }> = [];
 
     const targetText = `${params.title} ${params.summary || ''}`;
+    const threshold = params.threshold ?? 0.7;
     for (const story of all) {
       const storyText = `${story.title} ${story.summary}`;
       const score = computeTextSimilarity(targetText, storyText);
-      if (score >= params.threshold) {
+      if (score >= threshold) {
         scored.push({ story, score });
       }
     }
@@ -209,6 +255,27 @@ export class InMemoryStoryRepository implements IStoryRepository {
       similarityScore: score,
     }));
   }
+
+  async linkTopic(storyId: string, topicId: string): Promise<void> {
+    const story = this.stories.get(storyId);
+    if (story && !story.topicIds.includes(topicId)) {
+      story.topicIds.push(topicId);
+    }
+  }
+
+  async linkEntity(storyId: string, entityId: string): Promise<void> {
+    const story = this.stories.get(storyId);
+    if (story && !story.entityIds.includes(entityId)) {
+      story.entityIds.push(entityId);
+    }
+  }
+
+  async linkSource(storyId: string, sourceId: string): Promise<void> {
+    const story = this.stories.get(storyId);
+    if (story && !story.sourceIds.includes(sourceId)) {
+      story.sourceIds.push(sourceId);
+    }
+  }
 }
 
 export class InMemoryEventRepository implements IEventRepository {
@@ -219,6 +286,15 @@ export class InMemoryEventRepository implements IEventRepository {
     if (!event) return null;
     if (orgId && event.organizationId !== orgId) return null;
     return { ...event };
+  }
+
+  async findBySlug(slug: string, orgId: string): Promise<Event | null> {
+    for (const event of this.events.values()) {
+      if (event.slug === slug && event.organizationId === orgId) {
+        return { ...event };
+      }
+    }
+    return null;
   }
 
   async create(event: Event): Promise<Event> {
@@ -423,6 +499,10 @@ export class InMemoryIdempotencyRepository implements IIdempotencyRepository {
   async save(record: IdempotencyRecord): Promise<void> {
     this.records.set(this.makeKey(record.organizationId, record.key), { ...record });
   }
+
+  async delete(key: string, orgId: string): Promise<boolean> {
+    return this.records.delete(this.makeKey(orgId, key));
+  }
 }
 
 export class InMemoryAuditRepository implements IAuditRepository {
@@ -432,10 +512,31 @@ export class InMemoryAuditRepository implements IAuditRepository {
     this.logs.push({ ...entry });
   }
 
-  async query(orgId: string, limit = 100): Promise<AuditLog[]> {
-    return this.logs
-      .filter((l) => l.organizationId === orgId)
-      .slice(-limit)
-      .reverse();
+  async query(orgId: string, filter?: AuditFilter): Promise<AuditLog[]> {
+    let result = this.logs.filter((l) => l.organizationId === orgId);
+
+    if (filter) {
+      if (filter.clientType) result = result.filter((l) => l.clientType === filter.clientType);
+      if (filter.action) result = result.filter((l) => l.action === filter.action);
+      if (filter.userId) result = result.filter((l) => l.userId === filter.userId);
+      if (filter.status) result = result.filter((l) => l.status === filter.status);
+      if (filter.fromDate) {
+        const fromTime = new Date(filter.fromDate).getTime();
+        result = result.filter((l) => new Date(l.timestamp).getTime() >= fromTime);
+      }
+      if (filter.toDate) {
+        const toTime = new Date(filter.toDate).getTime();
+        result = result.filter((l) => new Date(l.timestamp).getTime() <= toTime);
+      }
+    }
+
+    result.reverse();
+    const limit = filter?.limit || 100;
+    return result.slice(0, limit);
+  }
+
+  async findById(id: string): Promise<AuditLog | null> {
+    const entry = this.logs.find((l) => l.id === id);
+    return entry ? { ...entry } : null;
   }
 }

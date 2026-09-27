@@ -4,6 +4,7 @@ import type { DatabaseService } from '@ai-news/database';
 import { StoryService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { generateId } from '@ai-news/shared';
+import { mcpJsonResponse } from './tool-helpers';
 
 // Registry for media assets and variants
 const mediaRegistry = new Map<
@@ -41,9 +42,7 @@ export function registerMediaTools(
         throw new Error(`Media asset "${mediaId}" not found`);
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify(media, null, 2) }],
-      };
+      return mcpJsonResponse(media);
     }
   );
 
@@ -112,14 +111,7 @@ export function registerMediaTools(
         });
       }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Chart block created.', block: chartBlock }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Chart block created.', block: chartBlock });
     }
   );
 
@@ -168,9 +160,7 @@ export function registerMediaTools(
         });
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Map block created.', block: mapBlock }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Map block created.', block: mapBlock });
     }
   );
 
@@ -213,11 +203,7 @@ export function registerMediaTools(
         });
       }
 
-      return {
-        content: [
-          { type: 'text', text: JSON.stringify({ message: 'Timeline block created.', block: timelineBlock }, null, 2) },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Timeline block created.', block: timelineBlock });
     }
   );
 
@@ -255,11 +241,7 @@ export function registerMediaTools(
         });
       }
 
-      return {
-        content: [
-          { type: 'text', text: JSON.stringify({ message: 'Diagram block created.', block: diagramBlock }, null, 2) },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Diagram block created.', block: diagramBlock });
     }
   );
 
@@ -285,9 +267,7 @@ export function registerMediaTools(
         }
       );
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Media attached to story hero.', heroImageUrl }) }],
-      };
+      return mcpJsonResponse({ message: 'Media attached to story hero.', heroImageUrl });
     }
   );
 
@@ -316,14 +296,7 @@ export function registerMediaTools(
       };
       mediaRegistry.set(mediaId, record);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Media asset registered.', mediaId, asset: record }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Media asset registered.', mediaId, asset: record });
     }
   );
 
@@ -354,14 +327,7 @@ export function registerMediaTools(
       };
       media.variants.push(variant);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Media variant registered.', mediaId: params.mediaId, variant }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Media variant registered.', mediaId: params.mediaId, variant });
     }
   );
 
@@ -389,9 +355,7 @@ export function registerMediaTools(
         );
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Media removed from story.', storyId }) }],
-      };
+      return mcpJsonResponse({ message: 'Media removed from story.', storyId });
     }
   );
 }

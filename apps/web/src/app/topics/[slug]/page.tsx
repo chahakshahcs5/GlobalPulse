@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { DEMO_STORIES } from '../../../lib/demo-data';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';

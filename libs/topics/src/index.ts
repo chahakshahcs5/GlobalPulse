@@ -1,4 +1,5 @@
 import type { Topic, CreateTopicInput } from '@ai-news/schemas';
+export type { CreateTopicInput };
 import { CreateTopicInputSchema } from '@ai-news/schemas';
 import type { DatabaseService } from '@ai-news/database';
 import { NotFoundError, generateId, slugify } from '@ai-news/shared';

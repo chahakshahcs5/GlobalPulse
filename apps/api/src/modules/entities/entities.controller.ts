@@ -4,6 +4,8 @@ import { EntityService } from '@ai-news/entities';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
+import type { AuthenticatedPrincipal } from '@ai-news/auth';
+import type { CreateEntityInput } from '@ai-news/schemas';
 
 @Controller('api/entities')
 @UseGuards(NestAuthGuard)
@@ -16,7 +18,7 @@ export class EntitiesController {
 
   @Get()
   @RequireScope('news:read')
-  async listEntities(@Query('query') query: string, @Principal() principal: any) {
+  async listEntities(@Query('query') query: string, @Principal() principal: AuthenticatedPrincipal) {
     const orgId = principal.organizationId;
     if (query) {
       const entities = await this.entityService.searchEntities(query, orgId);
@@ -27,15 +29,15 @@ export class EntitiesController {
 
   @Get(':id')
   @RequireScope('news:read')
-  async getEntity(@Param('id') id: string, @Principal() principal: any) {
+  async getEntity(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
     return await this.entityService.getEntity(id, principal.organizationId);
   }
 
   @Post()
   @RequireScope('news:write')
   async createEntity(
-    @Body() body: any,
-    @Principal() principal: any,
+    @Body() body: CreateEntityInput,
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
     const entity = await this.entityService.createEntity(body, principal.organizationId);

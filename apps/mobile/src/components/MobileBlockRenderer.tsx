@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, type TextStyle } from 'react-native';
+import type { StoryBlock } from '@ai-news/schemas';
 
 export interface MobileBlockProps {
-  blocks: any[];
+  blocks: StoryBlock[];
 }
 
 export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
@@ -25,7 +25,7 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             const text = block.data?.text || '';
             const subtext = block.data?.subtext;
 
-            let headingStyle = styles.h2;
+            let headingStyle: TextStyle = styles.h2;
             if (level === 1) headingStyle = styles.h1;
             else if (level === 3) headingStyle = styles.h3;
             else if (level === 4) headingStyle = styles.h4;
@@ -95,9 +95,9 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
 
                 {/* Values summary list */}
                 <View style={styles.chartValuesContainer}>
-                  {values.slice(0, 4).map((row: any, rIdx: number) => {
-                    const label = row[data.xAxis?.key] || row.name || `Row ${rIdx + 1}`;
-                    const val = row[data.series?.[0]?.key] || row.value || row.val || 0;
+                  {values.slice(0, 4).map((row: Record<string, unknown>, rIdx: number) => {
+                    const label = (row[data.xAxis?.key] as string) || (row.name as string) || `Row ${rIdx + 1}`;
+                    const val = (row[data.series?.[0]?.key] as number) || (row.value as number) || (row.val as number) || 0;
                     return (
                       <View key={rIdx} style={styles.chartValueRow}>
                         <Text style={styles.chartValueLabel}>{String(label)}</Text>
@@ -125,7 +125,7 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 </View>
                 <Text style={styles.cardTitle}>{data.title || 'Timeline'}</Text>
                 <View style={styles.timelineList}>
-                  {items.map((item: any, idx: number) => (
+                  {items.map((item: { date?: string; headline?: string; body?: string }, idx: number) => (
                     <View key={idx} style={styles.timelineItem}>
                       <View style={styles.timelineStepBadge}>
                         <Text style={styles.timelineStepText}>{idx + 1}</Text>
@@ -161,10 +161,10 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 )}
                 {markers.length > 0 && (
                   <View style={styles.markerContainer}>
-                    {markers.map((m: any, idx: number) => (
+                    {markers.map((m: { title?: string }, idx: number) => (
                       <View key={idx} style={styles.markerRow}>
                         <Text style={styles.markerPin}>📍</Text>
-                        <Text style={styles.markerTitle}>{m.title}</Text>
+                        <Text style={styles.markerTitle}>{m.title || ''}</Text>
                       </View>
                     ))}
                   </View>
@@ -291,10 +291,10 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             return (
               <View key={key} style={styles.diffCard}>
                 <Text style={styles.diffHeader}>What Changed in Version {data.previousVersionNumber + 1}</Text>
-                {items.map((item: any, idx: number) => (
+                {items.map((item: { changeType?: string; description?: string }, idx: number) => (
                   <View key={idx} style={styles.diffItem}>
                     <Text style={styles.diffBadge}>{String(item.changeType || 'UPDATED').toUpperCase()}</Text>
-                    <Text style={styles.diffText}>{item.description}</Text>
+                    <Text style={styles.diffText}>{item.description || ''}</Text>
                   </View>
                 ))}
               </View>

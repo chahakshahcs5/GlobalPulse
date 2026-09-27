@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { StoryBlock } from '@ai-news/schemas';
 import { StructuredLogger, MetricsRegistry, SimpleTracer } from '@ai-news/observability';
 import { QueueManager } from '@ai-news/jobs';
 import { WorkerService } from '../../apps/worker/src/worker.service';
 import { OfflineStorageService } from '../../apps/mobile/src/services/storage';
 import { MobileBlockRenderer } from '../../apps/mobile/src/components/MobileBlockRenderer';
 import { runEndToEndScenario } from '../../scripts/demo-e2e';
-import React from 'react';
 
 describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
   describe('Observability Engine Integration', () => {
@@ -64,11 +64,10 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
 
   describe('Background Worker & Queue Pipeline', () => {
     let queue: QueueManager;
-    let workerService: WorkerService;
 
     beforeEach(() => {
       queue = new QueueManager(false); // Manual processing for deterministic tests
-      workerService = new WorkerService(queue);
+      new WorkerService(queue);
     });
 
     it('processes media variants job and calculates dimensions', async () => {
@@ -88,8 +87,9 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
       expect(processed?.progress).toBe(100);
-      expect((processed?.result as any).totalVariants).toBe(4);
-      expect((processed?.result as any).variants[0].url).toContain('summit.jpg_thumb.webp');
+      const mediaResult = processed?.result as { totalVariants?: number; variants?: Array<{ url: string }> } | undefined;
+      expect(mediaResult?.totalVariants).toBe(4);
+      expect(mediaResult?.variants?.[0]?.url).toContain('summit.jpg_thumb.webp');
     });
 
     it('processes search indexing job and extracts keywords', async () => {
@@ -105,8 +105,9 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
 
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
-      expect((processed?.result as any).indexedTokens).toBeGreaterThan(10);
-      expect((processed?.result as any).embeddingDimensions).toBe(1536);
+      const searchResult = processed?.result as { indexedTokens?: number; embeddingDimensions?: number } | undefined;
+      expect(searchResult?.indexedTokens).toBeGreaterThan(10);
+      expect(searchResult?.embeddingDimensions).toBe(1536);
     });
 
     it('processes audio briefing generation job', async () => {
@@ -120,9 +121,10 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
 
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
-      expect((processed?.result as any).voice).toBe('news_anchor_f');
-      expect((processed?.result as any).audioUrl).toContain('sty_audio_01_briefing_news_anchor_f.mp3');
-      expect((processed?.result as any).durationSeconds).toBeGreaterThanOrEqual(10);
+      const audioResult = processed?.result as { voice?: string; audioUrl?: string; durationSeconds?: number } | undefined;
+      expect(audioResult?.voice).toBe('news_anchor_f');
+      expect(audioResult?.audioUrl).toContain('sty_audio_01_briefing_news_anchor_f.mp3');
+      expect(audioResult?.durationSeconds).toBeGreaterThanOrEqual(10);
     });
   });
 
@@ -141,7 +143,7 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
         summary: 'Global delegates agree on binding carbon thresholds.',
         articleType: 'breaking',
         currentVersionNumber: 1,
-        blocks: [{ id: 'b1', blockType: 'paragraph', data: { text: 'Article text' } }],
+        blocks: [{ id: 'b1', blockType: 'paragraph' as const, sortOrder: 0, data: { text: 'Article text', format: 'markdown' as const } }],
         savedAt: new Date().toISOString(),
         readStatus: false,
       };
@@ -165,23 +167,33 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
     });
 
     it('renders mobile blocks safely', () => {
-      const blocks = [
-        { id: 'h1', blockType: 'heading', data: { text: 'Headline', level: 1 } },
-        { id: 'p1', blockType: 'paragraph', data: { text: 'Paragraph content' } },
-        { id: 'q1', blockType: 'quote', data: { quote: 'Direct quote', attribution: 'Official' } },
+      const blocks: StoryBlock[] = [
+        { id: 'h1', blockType: 'heading', sortOrder: 0, data: { text: 'Headline', level: 1 } },
+        { id: 'p1', blockType: 'paragraph', sortOrder: 1, data: { text: 'Paragraph content', format: 'markdown' } },
+        { id: 'q1', blockType: 'quote', sortOrder: 2, data: { quote: 'Direct quote', attribution: 'Official' } },
         {
           id: 'c1',
           blockType: 'chart',
-          data: { chartType: 'bar', title: 'GDP Growth', values: [{ x: 1, y: 2 }] },
+          sortOrder: 3,
+          data: {
+            chartType: 'bar',
+            title: 'GDP Growth',
+            xAxis: { key: 'year', label: 'Year' },
+            yAxis: { label: 'Percent' },
+            series: [{ name: 'Growth', key: 'growth' }],
+            values: [{ year: '2026', growth: 5.2 }],
+          },
         },
         {
           id: 't1',
           blockType: 'timeline',
+          sortOrder: 4,
           data: {
+            title: 'Summit Progression',
             items: [{ date: '2026-09-26', headline: 'Summit Begins', body: 'Delegates arrive' }],
           },
         },
-        { id: 'stat1', blockType: 'statistic', data: { value: '41T', label: 'Total Output', change: '+12%' } },
+        { id: 'stat1', blockType: 'statistic', sortOrder: 5, data: { value: '41T', label: 'Total Output', trend: 'up', trendValue: '+12%' } },
       ];
 
       const element = MobileBlockRenderer({ blocks });

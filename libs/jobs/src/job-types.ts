@@ -3,7 +3,8 @@ export type JobType =
   | 'search.index_story'
   | 'audio.generate_briefing'
   | 'export.generate_pdf'
-  | 'cache.purge';
+  | 'cache.purge'
+  | (string & {});
 
 export type JobStatus = 'queued' | 'active' | 'completed' | 'failed';
 

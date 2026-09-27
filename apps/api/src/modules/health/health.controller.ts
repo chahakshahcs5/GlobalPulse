@@ -9,7 +9,7 @@ export class HealthController {
   async getHealth(@Res({ passthrough: true }) reply: FastifyReply) {
     const dbHealth = await db.getHealth();
     const memoryUsage = process.memoryUsage();
-    const isHealthy = dbHealth.connected || !db.isUsingPrisma();
+    const isHealthy = dbHealth.status !== 'error';
 
     const payload = {
       status: isHealthy ? 'healthy' : 'degraded',
@@ -30,7 +30,7 @@ export class HealthController {
           status: dbHealth.status,
           mode: db.isUsingPrisma() ? 'postgresql-prisma' : 'in-memory-engine',
           latencyMs: dbHealth.latencyMs,
-          connected: dbHealth.connected,
+          connected: dbHealth.status === 'connected' || dbHealth.status === 'memory_fallback',
         },
         redis: {
           status: process.env.REDIS_URL ? 'configured' : 'standalone-fallback',
@@ -56,7 +56,7 @@ export class HealthController {
   @Get('ready')
   async getReadiness(@Res({ passthrough: true }) reply: FastifyReply) {
     const dbHealth = await db.getHealth();
-    const isReady = dbHealth.connected || !db.isUsingPrisma();
+    const isReady = dbHealth.status !== 'error';
 
     reply.status(isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
     return { status: isReady ? 'ready' : 'unready', timestamp: new Date().toISOString() };

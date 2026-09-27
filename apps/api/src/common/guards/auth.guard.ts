@@ -7,7 +7,7 @@ declare module 'fastify' {
   }
 }
 
-export async function authGuard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function authGuard(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
   const authHeader = request.headers.authorization;
   const principal = AuthService.resolveBearerToken(authHeader);
   request.principal = principal;

@@ -6,6 +6,7 @@ import { EventService } from '@ai-news/events';
 import { EntityService } from '@ai-news/entities';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { EntityTypeSchema, EventStatusSchema } from '@ai-news/schemas';
+import { mcpJsonResponse } from './tool-helpers';
 
 export function registerTaxonomyTools(
   server: McpServer,
@@ -30,9 +31,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:topics');
 
       const topic = await topicService.createTopic(params, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Topic created.', topic }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Topic created.', topic });
     }
   );
 
@@ -58,9 +57,7 @@ export function registerTaxonomyTools(
         updatedAt: new Date().toISOString(),
       });
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Topic updated.', topic: updated }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Topic updated.', topic: updated });
     }
   );
 
@@ -75,9 +72,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:read');
 
       const topic = await topicService.getTopic(topicId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(topic, null, 2) }],
-      };
+      return mcpJsonResponse(topic);
     }
   );
 
@@ -99,9 +94,7 @@ export function registerTaxonomyTools(
         await db.stories.update(story);
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Story linked to topic.', storyId, topicId }) }],
-      };
+      return mcpJsonResponse({ message: 'Story linked to topic.', storyId, topicId });
     }
   );
 
@@ -122,9 +115,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:write');
 
       const event = await eventService.createEvent(params, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Event created.', event }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Event created.', event });
     }
   );
 
@@ -152,9 +143,7 @@ export function registerTaxonomyTools(
         updatedAt: new Date().toISOString(),
       });
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Event updated.', event: updated }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Event updated.', event: updated });
     }
   );
 
@@ -169,9 +158,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:read');
 
       const event = await eventService.getEvent(eventId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(event, null, 2) }],
-      };
+      return mcpJsonResponse(event);
     }
   );
 
@@ -191,9 +178,7 @@ export function registerTaxonomyTools(
       story.eventId = eventId;
       await db.stories.update(story);
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Story linked to event.', storyId, eventId }) }],
-      };
+      return mcpJsonResponse({ message: 'Story linked to event.', storyId, eventId });
     }
   );
 
@@ -212,9 +197,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:write');
 
       const entity = await entityService.createEntity(params, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Entity created.', entity }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Entity created.', entity });
     }
   );
 
@@ -242,9 +225,7 @@ export function registerTaxonomyTools(
         updatedAt: new Date().toISOString(),
       });
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Entity updated.', entity: updated }, null, 2) }],
-      };
+      return mcpJsonResponse({ message: 'Entity updated.', entity: updated });
     }
   );
 
@@ -259,9 +240,7 @@ export function registerTaxonomyTools(
       AuthService.requireScope(principal, 'news:read');
 
       const entity = await entityService.getEntity(entityId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(entity, null, 2) }],
-      };
+      return mcpJsonResponse(entity);
     }
   );
 
@@ -283,9 +262,7 @@ export function registerTaxonomyTools(
         await db.stories.update(story);
       }
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Story linked to entity.', storyId, entityId }) }],
-      };
+      return mcpJsonResponse({ message: 'Story linked to entity.', storyId, entityId });
     }
   );
 }

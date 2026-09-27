@@ -34,4 +34,5 @@ export const CreateEntityInputSchema = z.object({
   avatarUrl: z.string().url().optional(),
   metadata: z.record(z.unknown()).optional(),
 });
-export type CreateEntityInput = z.infer<typeof CreateEntityInputSchema>;
+export type CreateEntityInput = z.input<typeof CreateEntityInputSchema>;
+export type CreateEntityOutput = z.output<typeof CreateEntityInputSchema>;

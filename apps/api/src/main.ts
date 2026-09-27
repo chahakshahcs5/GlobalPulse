@@ -40,8 +40,9 @@ async function bootstrap() {
         await app.close();
         logger.info('API Gateway closed successfully.');
         process.exit(0);
-      } catch (err: any) {
-        logger.error(`Error during shutdown: ${err.message}`, err);
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logger.error(`Error during shutdown: ${errorMsg}`, err instanceof Error ? err : new Error(errorMsg));
         process.exit(1);
       }
     });

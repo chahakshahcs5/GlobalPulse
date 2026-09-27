@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DatabaseService, checkDatabaseHealth, TransactionManager } from '@ai-news/database';
+import { DatabaseService } from '@ai-news/database';
 import { seedDatabase } from '../../../libs/database/prisma/seed';
 
 describe('Production Database Core Integration Tests', () => {
@@ -26,7 +26,7 @@ describe('Production Database Core Integration Tests', () => {
     });
 
     it('executes atomic transactions via TransactionManager', async () => {
-      const result = await db.runInTransaction(async (tx) => {
+      const result = await db.runInTransaction(async (_tx) => {
         return { committed: true, value: 42 };
       });
       expect(result.committed).toBe(true);
@@ -56,7 +56,7 @@ describe('Production Database Core Integration Tests', () => {
             id: 'blk_1',
             blockType: 'paragraph',
             sortOrder: 0,
-            data: { text: 'Paragraph text' },
+            data: { text: 'Paragraph text', format: 'plain' },
           },
         ],
         createdAt: new Date().toISOString(),
@@ -82,8 +82,8 @@ describe('Production Database Core Integration Tests', () => {
         title: story.title,
         summary: story.summary,
         changeSummary: 'Initial version',
-        blocksJson: story.blocks,
-        createdBy: 'usr_ai_01',
+        blocks: story.blocks,
+        authorId: 'usr_ai_01',
         clientType: 'gemini',
         createdAt: new Date().toISOString(),
       });
@@ -117,16 +117,18 @@ describe('Production Database Core Integration Tests', () => {
 
       const citation = await db.sources.createCitation({
         id: 'cit_01',
+        organizationId: 'org_test',
         storyId: 'sty_test_01',
         sourceId: source.id,
-        claim: 'Revenue exceeded $10B in Q3',
+        claimText: 'Revenue exceeded $10B in Q3',
         confidenceScore: 0.99,
         createdAt: new Date().toISOString(),
       });
+      expect(citation.id).toBe('cit_01');
 
       const citations = await db.sources.getCitationsForStory('sty_test_01');
       expect(citations.length).toBe(1);
-      expect(citations[0].claim).toBe('Revenue exceeded $10B in Q3');
+      expect(citations[0].claimText).toBe('Revenue exceeded $10B in Q3');
     });
   });
 
@@ -161,7 +163,7 @@ describe('Production Database Core Integration Tests', () => {
 
       const record = await db.idempotency.get('idemp_key_abc', 'org_test');
       expect(record).toBeDefined();
-      expect((record?.responseJson as any).success).toBe(true);
+      expect((record?.responseJson as { success?: boolean })?.success).toBe(true);
     });
   });
 

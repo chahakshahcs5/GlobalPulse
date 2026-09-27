@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { DatabaseService } from '@ai-news/database';
-import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
+import type { AuthenticatedPrincipal } from '@ai-news/auth';
 import { registerSearchTools } from '../../../apps/mcp-server/src/tools/search.tools.js';
 import { registerStoryTools } from '../../../apps/mcp-server/src/tools/story.tools.js';
 import { registerBlockTools } from '../../../apps/mcp-server/src/tools/block.tools.js';
@@ -15,6 +15,19 @@ import { registerResources } from '../../../apps/mcp-server/src/resources/index.
 import { registerPrompts } from '../../../apps/mcp-server/src/prompts/index.js';
 import { createMcpApp, mcpPrincipalStore } from '../../../apps/mcp-server/src/server.js';
 import http from 'http';
+import type { AddressInfo } from 'net';
+
+function getText(result: unknown): string {
+  if (result && typeof result === 'object' && 'content' in result && Array.isArray((result as { content: unknown }).content)) {
+    const content = (result as { content: Array<{ type?: string; text?: string }> }).content;
+    return content[0]?.text || '';
+  }
+  return '';
+}
+
+function parseJson<T = Record<string, unknown>>(result: unknown): T {
+  return JSON.parse(getText(result));
+}
 
 describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
   let db: DatabaseService;
@@ -29,6 +42,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     activePrincipal = {
       id: 'usr_gemini_spark_01',
       organizationId: 'org_mcp_test',
+      role: 'ai_agent',
       clientType: 'gemini_spark',
       scopes: [
         'news:read',
@@ -74,7 +88,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
 
   it('discovers all registered MCP tools including Section 38 block and taxonomy tools', async () => {
     const toolsResult = await client.listTools();
-    const toolNames = toolsResult.tools.map((t) => t.name);
+    const toolNames = toolsResult.tools.map((t: { name: string }) => t.name);
 
     // Search tools
     expect(toolNames).toContain('search_stories');
@@ -164,7 +178,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
 
   it('discovers registered MCP prompts and resources', async () => {
     const promptsResult = await client.listPrompts();
-    const promptNames = promptsResult.prompts.map((p) => p.name);
+    const promptNames = promptsResult.prompts.map((p: { name: string }) => p.name);
     expect(promptNames).toContain('story-creation');
     expect(promptNames).toContain('story-update');
     expect(promptNames).toContain('topic-briefing');
@@ -183,7 +197,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         articleType: 'science',
       },
     });
-    const { storyId } = JSON.parse((createCall.content as any)[0].text);
+    const { storyId } = parseJson<{ storyId: string }>(createCall);
 
     // 2. Call add_heading_block
     const hCall = await client.callTool({
@@ -195,7 +209,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         subtext: 'Mass spectrometer orbital passes confirm methane and organic salts.',
       },
     });
-    expect((hCall.content as any)[0].text).toContain('heading');
+    expect(getText(hCall)).toContain('heading');
 
     // 3. Call add_chart_block
     const chartCall = await client.callTool({
@@ -213,7 +227,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         ],
       },
     });
-    expect((chartCall.content as any)[0].text).toContain('chart');
+    expect(getText(chartCall)).toContain('chart');
 
     // 4. Call add_timeline_block
     const tlCall = await client.callTool({
@@ -227,14 +241,14 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         ],
       },
     });
-    expect((tlCall.content as any)[0].text).toContain('timeline');
+    expect(getText(tlCall)).toContain('timeline');
 
     // 5. Verify story has the appended blocks
     const getStory = await client.callTool({
       name: 'get_story',
       arguments: { storyId },
     });
-    const story = JSON.parse((getStory.content as any)[0].text);
+    const story = parseJson<{ blocks: unknown[] }>(getStory);
     expect(story.blocks.length).toBe(3);
   });
 
@@ -249,7 +263,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         metadata: { sensor: 'HR-VIS', resolution: '4K' },
       },
     });
-    const { mediaId } = JSON.parse((uploadCall.content as any)[0].text);
+    const { mediaId } = parseJson<{ mediaId: string }>(uploadCall);
     expect(mediaId).toBeDefined();
 
     const variantCall = await client.callTool({
@@ -262,13 +276,13 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         url: 'https://images.platform/europa-plumes-1200.webp',
       },
     });
-    expect((variantCall.content as any)[0].text).toContain('Media variant registered');
+    expect(getText(variantCall)).toContain('Media variant registered');
 
     const getMediaCall = await client.callTool({
       name: 'get_media',
       arguments: { mediaId },
     });
-    const media = JSON.parse((getMediaCall.content as any)[0].text);
+    const media = parseJson<{ variants: unknown[] }>(getMediaCall);
     expect(media.variants.length).toBe(1);
 
     // 2. Register, update, and detach source
@@ -280,7 +294,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         publisher: 'Nature Astronomy',
       },
     });
-    const { sourceId } = JSON.parse((srcCall.content as any)[0].text);
+    const { sourceId } = parseJson<{ sourceId: string }>(srcCall);
 
     const updateSrc = await client.callTool({
       name: 'update_source',
@@ -290,39 +304,39 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         permissibleExcerpt: 'Vapor composition reveals organic signatures consistent with hydrothermal activity.',
       },
     });
-    expect((updateSrc.content as any)[0].text).toContain('Source updated successfully');
+    expect(getText(updateSrc)).toContain('Source updated successfully');
 
     // 3. Create topic, update topic, and link
     const topicCall = await client.callTool({
       name: 'create_topic',
       arguments: { name: 'Astrobiology', description: 'Search for life beyond Earth' },
     });
-    const { topic } = JSON.parse((topicCall.content as any)[0].text);
+    const { topic } = parseJson<{ topic: { id: string } }>(topicCall);
 
     const updateTopic = await client.callTool({
       name: 'update_topic',
       arguments: { topicId: topic.id, aliases: ['Exobiology', 'Planetary Habitability'] },
     });
-    expect((updateTopic.content as any)[0].text).toContain('Topic updated');
+    expect(getText(updateTopic)).toContain('Topic updated');
 
     // 4. Cancel job and list jobs
     const jobCall = await client.callTool({
       name: 'create_job',
       arguments: { jobType: 'media_transcode', payload: { mediaId } },
     });
-    const { jobId } = JSON.parse((jobCall.content as any)[0].text);
+    const { jobId } = parseJson<{ jobId: string }>(jobCall);
 
     const cancelCall = await client.callTool({
       name: 'cancel_job',
       arguments: { jobId, reason: 'Superceded by raw upload' },
     });
-    expect((cancelCall.content as any)[0].text).toContain('cancelled');
+    expect(getText(cancelCall)).toContain('cancelled');
 
     const listJobs = await client.callTool({
       name: 'list_jobs',
       arguments: { limit: 10 },
     });
-    const jobsResult = JSON.parse((listJobs.content as any)[0].text);
+    const jobsResult = parseJson<{ jobs: unknown[] }>(listJobs);
     expect(jobsResult.jobs.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -330,6 +344,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const principalA: AuthenticatedPrincipal = {
       id: 'usr_agent_alpha',
       organizationId: 'org_alpha',
+      role: 'ai_agent',
       clientType: 'chatgpt',
       scopes: ['news:read', 'news:write'],
     };
@@ -337,6 +352,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const principalB: AuthenticatedPrincipal = {
       id: 'usr_agent_beta',
       organizationId: 'org_beta',
+      role: 'ai_agent',
       clientType: 'gemini',
       scopes: ['news:read', 'news:write'],
     };
@@ -365,7 +381,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const testHttpServer = app.httpServer;
 
     await new Promise<void>((resolve) => testHttpServer.listen(0, resolve));
-    const address = testHttpServer.address() as any;
+    const address = testHttpServer.address() as AddressInfo;
     const port = address.port;
 
     const res = await new Promise<{ statusCode: number; data: string }>((resolve, reject) => {

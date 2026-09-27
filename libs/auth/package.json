@@ -5,9 +5,11 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@ai-news/shared": "workspace:*"
+    "@ai-news/shared": "workspace:*",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "typescript": "^5.8.2"
   }
 }

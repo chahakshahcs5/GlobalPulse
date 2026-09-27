@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { Dimensions } from 'react-native';
+import type { StoryBlock } from '@ai-news/schemas';
 import MobileApp, { SAMPLE_MOBILE_STORIES } from '../../../apps/mobile/src/App';
 import { FeedScreen } from '../../../apps/mobile/src/screens/FeedScreen';
 import { StoryDetailScreen } from '../../../apps/mobile/src/screens/StoryDetailScreen';
@@ -122,7 +123,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
         },
       ];
 
-      const html = renderToString(React.createElement(MobileBlockRenderer, { blocks: sampleBlocks }));
+      const html = renderToString(React.createElement(MobileBlockRenderer, { blocks: sampleBlocks as unknown as StoryBlock[] }));
       expect(html).toContain('Breaking Headlines');
       expect(html).toContain('Global impact analysis');
       expect(html).toContain('Key international developments');
@@ -152,11 +153,11 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
 
   describe('FeedScreen (Authentic React Native Feed)', () => {
     it('renders header branding and story cards with version pills', () => {
-      let selected: any = null;
+      let selected: unknown = null;
       const html = renderToString(
         React.createElement(FeedScreen, {
           stories: SAMPLE_MOBILE_STORIES,
-          onSelectStory: (s) => {
+          onSelectStory: (s: unknown) => {
             selected = s;
           },
         })
@@ -169,6 +170,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
       expect(html).toContain('BRICS Expansion 2026: Historic Geoeconomic Shift');
       expect(html).toContain('v2');
       expect(html).toContain('Read Dispatch');
+      expect(selected).toBeNull();
     });
   });
 

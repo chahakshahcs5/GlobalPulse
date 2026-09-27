@@ -4,6 +4,7 @@ import type { DatabaseService } from '@ai-news/database';
 import { SourceService } from '@ai-news/sources';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { SourceTypeSchema } from '@ai-news/schemas';
+import { mcpJsonResponse } from './tool-helpers';
 
 export function registerSourceTools(
   server: McpServer,
@@ -29,23 +30,12 @@ export function registerSourceTools(
       AuthService.requireScope(principal, 'news:sources');
 
       const source = await sourceService.createSource(params, principal.organizationId);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                message: 'Source registered.',
-                sourceId: source.id,
-                publisher: source.publisher,
-                url: source.url,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        message: 'Source registered.',
+        sourceId: source.id,
+        publisher: source.publisher,
+        url: source.url,
+      });
     }
   );
 
@@ -77,14 +67,7 @@ export function registerSourceTools(
         updatedAt: new Date().toISOString(),
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ message: 'Source updated successfully.', sourceId: updated.id, updated }, null, 2),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Source updated successfully.', sourceId: updated.id, updated });
     }
   );
 
@@ -100,9 +83,7 @@ export function registerSourceTools(
       AuthService.requireScope(principal, 'news:sources');
 
       await sourceService.attachSourceToStory(storyId, sourceId, principal.organizationId);
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Source attached to story.', storyId, sourceId }) }],
-      };
+      return mcpJsonResponse({ message: 'Source attached to story.', storyId, sourceId });
     }
   );
 
@@ -125,9 +106,7 @@ export function registerSourceTools(
       story.sourceIds = story.sourceIds.filter((id) => id !== sourceId);
       await db.stories.update(story);
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify({ message: 'Source detached from story.', storyId, sourceId }) }],
-      };
+      return mcpJsonResponse({ message: 'Source detached from story.', storyId, sourceId });
     }
   );
 
@@ -150,18 +129,7 @@ export function registerSourceTools(
         orgId: principal.organizationId,
       });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              { message: 'Citation attached.', citationId: citation.id, claimText: citation.claimText },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({ message: 'Citation attached.', citationId: citation.id, claimText: citation.claimText });
     }
   );
 
@@ -185,22 +153,11 @@ export function registerSourceTools(
       );
       const citations = await sourceService.getStoryCitations(storyId);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                storyId,
-                sources: sources.filter(Boolean),
-                citations,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return mcpJsonResponse({
+        storyId,
+        sources: sources.filter(Boolean),
+        citations,
+      });
     }
   );
 }

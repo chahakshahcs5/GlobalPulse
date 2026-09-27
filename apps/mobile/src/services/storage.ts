@@ -1,3 +1,5 @@
+import type { StoryBlock } from '@ai-news/schemas';
+
 export interface OfflineStory {
   id: string;
   slug: string;
@@ -6,7 +8,7 @@ export interface OfflineStory {
   articleType: string;
   heroImageUrl?: string;
   currentVersionNumber: number;
-  blocks: any[];
+  blocks: StoryBlock[];
   savedAt: string;
   readStatus: boolean;
 }

@@ -1,6 +1,4 @@
-import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { DEMO_ENTITIES, DEMO_STORIES, DEMO_EVENTS } from '../../../lib/demo-data';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 

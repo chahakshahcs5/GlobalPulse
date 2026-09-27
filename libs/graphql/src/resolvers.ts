@@ -6,12 +6,25 @@ import { EventService } from '@ai-news/events';
 import { EntityService } from '@ai-news/entities';
 import { SourceService } from '@ai-news/sources';
 import { generateId } from '@ai-news/shared';
+import type {
+  CreateStoryInput,
+  UpdateStoryInput,
+  CreateStoryVersionInput,
+  Story,
+  Block,
+  CreateTopicInput,
+  CreateEventInput,
+  CreateEntityInput,
+} from '@ai-news/schemas';
 
 export interface GraphQLContext {
-  organizationId: string;
-  userId: string;
-  clientType: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web';
-  pubsub?: any;
+  organizationId?: string;
+  userId?: string;
+  clientType?: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web';
+  pubsub?: {
+    publish: (event: { topic: string; payload: Record<string, unknown> }) => void;
+    subscribe: (topic: string) => Promise<unknown>;
+  };
 }
 
 export function createResolvers(database: DatabaseService = db) {
@@ -23,42 +36,42 @@ export function createResolvers(database: DatabaseService = db) {
   const sourceService = new SourceService(database);
 
   // In-memory media store
-  const mediaStore = new Map<string, any>();
+  const mediaStore = new Map<string, Record<string, unknown>>();
 
   return {
     Query: {
-      searchStories: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      searchStories: async (_: unknown, { input }: { input?: Record<string, unknown> }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const res = await searchService.searchStories(input || {}, orgId);
         return res.items || [];
       },
 
-      getStory: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      getStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await storyService.getStory(id, orgId);
       },
 
-      getStoryVersions: async (_: unknown, { storyId }: { storyId: string }, ctx: GraphQLContext) => {
+      getStoryVersions: async (_: unknown, { storyId }: { storyId: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await storyService.getStoryVersions(storyId, orgId);
       },
 
-      getTopic: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      getTopic: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await topicService.getTopic(id, orgId);
       },
 
-      getEvent: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      getEvent: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await eventService.getEvent(id, orgId);
       },
 
-      getEntity: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      getEntity: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await entityService.getEntity(id, orgId);
       },
 
-      getSources: async (_: unknown, { query }: { query?: string }, ctx: GraphQLContext) => {
+      getSources: async (_: unknown, { query }: { query?: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         if (query) {
           return await searchService.searchSources(query, orgId);
@@ -68,7 +81,7 @@ export function createResolvers(database: DatabaseService = db) {
     },
 
     Mutation: {
-      createStory: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      createStory: async (_: unknown, { input }: { input: CreateStoryInput }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -83,14 +96,14 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return story;
       },
 
-      updateStory: async (_: unknown, { id, input }: { id: string; input: any }, ctx: GraphQLContext) => {
+      updateStory: async (_: unknown, { id, input }: { id: string; input: UpdateStoryInput }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -105,14 +118,18 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return story;
       },
 
-      createStoryVersion: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      createStoryVersion: async (
+        _: unknown,
+        { input }: { input: CreateStoryVersionInput & { storyId: string; clientType?: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web' } },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = input.clientType || ctx?.clientType || 'human_web';
@@ -128,14 +145,14 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub && story) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return version;
       },
 
-      publishStory: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      publishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -150,14 +167,14 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return story;
       },
 
-      unpublishStory: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      unpublishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -172,14 +189,14 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return story;
       },
 
-      addStoryBlock: async (_: unknown, { storyId, block }: { storyId: string; block: any }, ctx: GraphQLContext) => {
+      addStoryBlock: async (_: unknown, { storyId, block }: { storyId: string; block: Block }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -195,20 +212,20 @@ export function createResolvers(database: DatabaseService = db) {
         if (ctx?.pubsub && story) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
-            payload: { storyUpdated: story },
+            payload: { storyUpdated: story as unknown as Record<string, unknown> },
           });
         }
 
         return addedBlock;
       },
 
-      attachSource: async (_: unknown, { storyId, sourceId }: { storyId: string; sourceId: string }, ctx: GraphQLContext) => {
+      attachSource: async (_: unknown, { storyId, sourceId }: { storyId: string; sourceId: string }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         await sourceService.attachSourceToStory(storyId, sourceId, orgId);
         return await storyService.getStory(storyId, orgId);
       },
 
-      createMedia: async (_: unknown, { input }: { input: any }) => {
+      createMedia: async (_: unknown, { input }: { input: { mediaType: string; title: string; url: string; metadata?: Record<string, unknown> } }) => {
         const media = {
           id: generateId('med'),
           type: input.mediaType,
@@ -221,17 +238,17 @@ export function createResolvers(database: DatabaseService = db) {
         return media;
       },
 
-      createTopic: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      createTopic: async (_: unknown, { input }: { input: CreateTopicInput }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await topicService.createTopic(input, orgId);
       },
 
-      createEvent: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      createEvent: async (_: unknown, { input }: { input: CreateEventInput }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await eventService.createEvent(input, orgId);
       },
 
-      createEntity: async (_: unknown, { input }: { input: any }, ctx: GraphQLContext) => {
+      createEntity: async (_: unknown, { input }: { input: CreateEntityInput }, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await entityService.createEntity(input, orgId);
       },
@@ -239,35 +256,34 @@ export function createResolvers(database: DatabaseService = db) {
 
     Subscription: {
       storyUpdated: {
-        subscribe: async (_: unknown, { storyId }: { storyId?: string }, { pubsub }: { pubsub: any }) => {
-          if (!pubsub) {
+        subscribe: async (_: unknown, _args: { storyId?: string }, context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }) => {
+          if (!context.pubsub) {
             throw new Error('PubSub is not configured');
           }
-          return await pubsub.subscribe('STORY_UPDATED');
+          return await context.pubsub.subscribe('STORY_UPDATED');
         },
-        resolve: (payload: any) => payload.storyUpdated,
+        resolve: (payload: { storyUpdated: Story }) => payload.storyUpdated,
       },
 
       jobUpdated: {
-        subscribe: async (_: unknown, { jobId }: { jobId?: string }, { pubsub }: { pubsub: any }) => {
-          if (!pubsub) {
+        subscribe: async (_: unknown, _args: { jobId?: string }, context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }) => {
+          if (!context.pubsub) {
             throw new Error('PubSub is not configured');
           }
-          return await pubsub.subscribe('JOB_UPDATED');
+          return await context.pubsub.subscribe('JOB_UPDATED');
         },
-        resolve: (payload: any) => payload.jobUpdated,
+        resolve: (payload: { jobUpdated: Record<string, unknown> }) => payload.jobUpdated,
       },
     },
 
     Story: {
-      blocks: async (parent: any, _: unknown, ctx: GraphQLContext) => {
+      blocks: async (parent: Story) => {
         if (parent.blocks && Array.isArray(parent.blocks)) {
           return parent.blocks;
         }
-        const orgId = ctx?.organizationId || parent.organizationId || 'org_default';
         return await database.stories.getBlocks(parent.id);
       },
-      versions: async (parent: any, _: unknown, ctx: GraphQLContext) => {
+      versions: async (parent: Story, _: unknown, ctx?: GraphQLContext) => {
         const orgId = ctx?.organizationId || parent.organizationId || 'org_default';
         return await storyService.getStoryVersions(parent.id, orgId);
       },

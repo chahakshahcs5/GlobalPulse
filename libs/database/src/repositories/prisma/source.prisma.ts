@@ -1,29 +1,102 @@
 import type { Source, Citation, Claim } from '@ai-news/schemas';
 import type { ISourceRepository } from '../../interfaces/source.repository';
 
-export class PrismaSourceRepository implements ISourceRepository {
-  constructor(private readonly prismaGetter: () => any) {}
+interface PrismaSourceRow {
+  id: string;
+  organizationId: string;
+  url: string;
+  canonicalUrl?: string | null;
+  title: string;
+  publisher: string;
+  author?: string | null;
+  publishedAt?: Date | null;
+  retrievedAt: Date;
+  language: string;
+  sourceType: string;
+  licenseMetadata?: string | null;
+  permissibleExcerpt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-  private get prisma() {
+interface PrismaCitationRow {
+  id: string;
+  organizationId: string;
+  storyId: string;
+  blockId?: string | null;
+  sourceId: string;
+  claimText: string;
+  confidenceScore?: number | null;
+  createdAt: Date;
+}
+
+interface PrismaClaimRow {
+  id: string;
+  organizationId: string;
+  claimText: string;
+  sourceIds: string[];
+  verifiedStatus: string;
+  editorialNotes?: string | null;
+  createdAt: Date;
+}
+
+export class PrismaSourceRepository implements ISourceRepository {
+  constructor(private readonly prismaGetter: () => Record<string, unknown>) {}
+
+  private get prisma(): Record<string, unknown> {
     return this.prismaGetter();
   }
 
+  private get sourceClient(): {
+    findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaSourceRow | null>;
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
+    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
+    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaSourceRow[]>;
+  } {
+    return this.prisma.source as {
+      findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaSourceRow | null>;
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
+      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
+      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaSourceRow[]>;
+    };
+  }
+
+  private get citationClient(): {
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaCitationRow>;
+    findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaCitationRow[]>;
+  } {
+    return this.prisma.citation as {
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaCitationRow>;
+      findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaCitationRow[]>;
+    };
+  }
+
+  private get claimClient(): {
+    create: (args: { data: Record<string, unknown> }) => Promise<PrismaClaimRow>;
+    findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaClaimRow[]>;
+  } {
+    return (this.prisma.claim || this.prisma.citation) as {
+      create: (args: { data: Record<string, unknown> }) => Promise<PrismaClaimRow>;
+      findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaClaimRow[]>;
+    };
+  }
+
   async findById(id: string, orgId?: string): Promise<Source | null> {
-    const where: any = { id };
+    const where: Record<string, unknown> = { id };
     if (orgId) where.organizationId = orgId;
-    const row = await this.prisma.source.findFirst({ where });
+    const row = await this.sourceClient.findFirst({ where });
     return row ? this.mapToDomain(row) : null;
   }
 
   async findByUrl(url: string, orgId: string): Promise<Source | null> {
-    const row = await this.prisma.source.findFirst({
+    const row = await this.sourceClient.findFirst({
       where: { url, organizationId: orgId },
     });
     return row ? this.mapToDomain(row) : null;
   }
 
   async create(source: Source): Promise<Source> {
-    const created = await this.prisma.source.create({
+    const created = await this.sourceClient.create({
       data: {
         id: source.id,
         organizationId: source.organizationId,
@@ -35,7 +108,7 @@ export class PrismaSourceRepository implements ISourceRepository {
         publishedAt: source.publishedAt ? new Date(source.publishedAt) : null,
         retrievedAt: new Date(source.retrievedAt),
         language: source.language || 'en',
-        sourceType: source.sourceType as any,
+        sourceType: source.sourceType,
         licenseMetadata: source.licenseMetadata,
         permissibleExcerpt: source.permissibleExcerpt,
       },
@@ -44,13 +117,13 @@ export class PrismaSourceRepository implements ISourceRepository {
   }
 
   async update(source: Source): Promise<Source> {
-    const updated = await this.prisma.source.update({
+    const updated = await this.sourceClient.update({
       where: { id: source.id },
       data: {
         title: source.title,
         publisher: source.publisher,
         author: source.author,
-        sourceType: source.sourceType as any,
+        sourceType: source.sourceType,
         permissibleExcerpt: source.permissibleExcerpt,
       },
     });
@@ -58,16 +131,16 @@ export class PrismaSourceRepository implements ISourceRepository {
   }
 
   async list(orgId: string, limit: number = 50): Promise<Source[]> {
-    const rows = await this.prisma.source.findMany({
+    const rows = await this.sourceClient.findMany({
       where: { organizationId: orgId },
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
-    return rows.map((r: any) => this.mapToDomain(r));
+    return rows.map((r) => this.mapToDomain(r));
   }
 
   async search(query: string, orgId: string): Promise<Source[]> {
-    const rows = await this.prisma.source.findMany({
+    const rows = await this.sourceClient.findMany({
       where: {
         organizationId: orgId,
         OR: [
@@ -77,89 +150,101 @@ export class PrismaSourceRepository implements ISourceRepository {
         ],
       },
     });
-    return rows.map((r: any) => this.mapToDomain(r));
+    return rows.map((r) => this.mapToDomain(r));
   }
 
   async createCitation(citation: Citation): Promise<Citation> {
-    const created = await this.prisma.citation.create({
+    const created = await this.citationClient.create({
       data: {
         id: citation.id,
+        organizationId: citation.organizationId,
         storyId: citation.storyId,
+        blockId: citation.blockId,
         sourceId: citation.sourceId,
-        claim: citation.claim,
+        claimText: citation.claimText,
         confidenceScore: citation.confidenceScore,
       },
     });
     return {
       id: created.id,
+      organizationId: created.organizationId,
       storyId: created.storyId,
+      blockId: created.blockId || undefined,
       sourceId: created.sourceId,
-      claim: created.claim,
-      confidenceScore: created.confidenceScore,
+      claimText: created.claimText,
+      confidenceScore: created.confidenceScore ?? undefined,
       createdAt: created.createdAt.toISOString(),
     };
   }
 
   async getCitationsForStory(storyId: string): Promise<Citation[]> {
-    const rows = await this.prisma.citation.findMany({
+    const rows = await this.citationClient.findMany({
       where: { storyId },
     });
-    return rows.map((r: any) => ({
+    return rows.map((r) => ({
       id: r.id,
+      organizationId: r.organizationId,
       storyId: r.storyId,
+      blockId: r.blockId || undefined,
       sourceId: r.sourceId,
-      claim: r.claim,
-      confidenceScore: r.confidenceScore,
+      claimText: r.claimText,
+      confidenceScore: r.confidenceScore ?? undefined,
       createdAt: r.createdAt.toISOString(),
     }));
   }
 
   async createClaim(claim: Claim): Promise<Claim> {
-    const created = await this.prisma.claim.create({
+    const created = await this.claimClient.create({
       data: {
         id: claim.id,
-        sourceId: claim.sourceId,
-        statement: claim.statement,
-        verificationStatus: claim.verificationStatus,
+        organizationId: claim.organizationId,
+        sourceIds: claim.sourceIds,
+        claimText: claim.claimText,
+        verifiedStatus: claim.verifiedStatus,
+        editorialNotes: claim.editorialNotes,
       },
     });
     return {
       id: created.id,
-      sourceId: created.sourceId,
-      statement: created.statement,
-      verificationStatus: created.verificationStatus,
+      organizationId: created.organizationId,
+      sourceIds: created.sourceIds,
+      claimText: created.claimText,
+      verifiedStatus: created.verifiedStatus as Claim['verifiedStatus'],
+      editorialNotes: created.editorialNotes || undefined,
       createdAt: created.createdAt.toISOString(),
     };
   }
 
   async getClaimsForSource(sourceId: string): Promise<Claim[]> {
-    const rows = await this.prisma.claim.findMany({
-      where: { sourceId },
+    const rows = await this.claimClient.findMany({
+      where: { sourceIds: { has: sourceId } },
     });
-    return rows.map((r: any) => ({
+    return rows.map((r) => ({
       id: r.id,
-      sourceId: r.sourceId,
-      statement: r.statement,
-      verificationStatus: r.verificationStatus,
+      organizationId: r.organizationId,
+      sourceIds: r.sourceIds,
+      claimText: r.claimText,
+      verifiedStatus: r.verifiedStatus as Claim['verifiedStatus'],
+      editorialNotes: r.editorialNotes || undefined,
       createdAt: r.createdAt.toISOString(),
     }));
   }
 
-  private mapToDomain(row: any): Source {
+  private mapToDomain(row: PrismaSourceRow): Source {
     return {
       id: row.id,
       organizationId: row.organizationId,
       url: row.url,
-      canonicalUrl: row.canonicalUrl,
+      canonicalUrl: row.canonicalUrl || undefined,
       title: row.title,
       publisher: row.publisher,
-      author: row.author,
+      author: row.author || undefined,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       retrievedAt: row.retrievedAt.toISOString(),
       language: row.language,
-      sourceType: row.sourceType,
-      licenseMetadata: row.licenseMetadata,
-      permissibleExcerpt: row.permissibleExcerpt,
+      sourceType: row.sourceType as Source['sourceType'],
+      licenseMetadata: row.licenseMetadata || undefined,
+      permissibleExcerpt: row.permissibleExcerpt || undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

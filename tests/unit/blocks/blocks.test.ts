@@ -12,7 +12,9 @@ describe('Block Model & Validation (Unit Tests)', () => {
     };
     const block = validateBlock(raw);
     expect(block.blockType).toBe('heading');
-    expect(block.data.text).toBe('BRICS 2026 Summit Concludes');
+    if (block.blockType === 'heading') {
+      expect(block.data.text).toBe('BRICS 2026 Summit Concludes');
+    }
   });
 
   it('validates a chart block with D3 numeric series data', () => {

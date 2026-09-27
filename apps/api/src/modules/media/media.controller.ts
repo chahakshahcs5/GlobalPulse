@@ -15,9 +15,30 @@ import { s3Storage } from '@ai-news/media';
 import { generateId } from '@ai-news/shared';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
+import type { AuthenticatedPrincipal } from '@ai-news/auth';
+
+export interface RegisterMediaBody {
+  url: string;
+  mediaType: string;
+  altText?: string;
+  caption?: string;
+  formats?: string[];
+}
+
+export interface MediaAsset {
+  id: string;
+  organizationId: string;
+  url: string;
+  mediaType: string;
+  altText?: string;
+  caption?: string;
+  createdAt: string;
+  s3Bucket: string;
+  variants: Array<{ suffix: string; width: number; height: number; url: string }>;
+}
 
 const queue = new QueueManager(true);
-const mediaRegistry = new Map<string, any>();
+const mediaRegistry = new Map<string, MediaAsset>();
 
 @Controller('api/media')
 @UseGuards(NestAuthGuard)
@@ -25,13 +46,13 @@ export class MediaController {
   @Post(['', 'assets'])
   @RequireScope('news:media')
   async registerMedia(
-    @Body() body: any,
-    @Principal() principal: any,
+    @Body() body: RegisterMediaBody,
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
     const orgId = principal.organizationId;
     const mediaId = generateId('med');
-    const asset = {
+    const asset: MediaAsset = {
       id: mediaId,
       organizationId: orgId,
       url: body.url,

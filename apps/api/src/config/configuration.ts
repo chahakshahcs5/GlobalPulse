@@ -31,7 +31,7 @@ export function getAppConfig(): AppConfig {
     apiBaseUrl,
     mcpBaseUrl,
     databaseUrl: process.env.DATABASE_URL,
-    databaseEngine: (process.env.DATABASE_ENGINE as any) || (process.env.NODE_ENV === 'production' ? 'prisma' : 'prisma'),
+    databaseEngine: (process.env.DATABASE_ENGINE as 'prisma' | 'memory') || 'prisma',
     redisUrl: process.env.REDIS_URL,
     s3Endpoint,
     s3Bucket,

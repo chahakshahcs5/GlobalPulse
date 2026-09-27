@@ -28,7 +28,7 @@ import { registerResources } from '../apps/mcp-server/src/resources/index';
 import { registerPrompts } from '../apps/mcp-server/src/prompts/index';
 import { defaultQueue } from '@ai-news/jobs';
 import { WorkerService } from '../apps/worker/src/worker.service';
-import { logger, metrics } from '@ai-news/observability';
+import { metrics } from '@ai-news/observability';
 import { offlineStorage } from '../apps/mobile/src/services/storage';
 
 export async function runEndToEndScenario() {
@@ -40,13 +40,13 @@ export async function runEndToEndScenario() {
   // Initialize Core Services & Database
   const db = new DatabaseService();
   const storyService = new StoryService(db);
-  const authService = new AuthService();
-  const workerService = new WorkerService(defaultQueue);
+  new WorkerService(defaultQueue);
 
   // Authenticated Principal representing Gemini Spark
   const activePrincipal: AuthenticatedPrincipal = {
     id: 'usr_spark_agent',
     organizationId: 'org_default',
+    role: 'ai_agent',
     clientType: 'gemini_spark',
     scopes: [
       'news:read',
@@ -58,6 +58,10 @@ export async function runEndToEndScenario() {
       'news:topics',
       'news:admin',
     ],
+    aiMetadata: {
+      model: 'gemini-spark',
+      provider: 'google',
+    },
   };
 
   // Stand up MCP Server instance
@@ -114,14 +118,14 @@ export async function runEndToEndScenario() {
       organizationId: 'org_default',
       authorId: 'usr_spark_agent',
       clientType: 'gemini_spark',
-      createdVia: 'MCP',
+      createdVia: 'mcp',
     }
   );
   await storyService.publishStory(storyV1.id, {
     organizationId: 'org_default',
     authorId: 'usr_spark_agent',
     clientType: 'gemini_spark',
-    createdVia: 'MCP',
+    createdVia: 'mcp',
   });
   console.log(`   Created story: "${storyV1.title}" (ID: ${storyV1.id}, v${storyV1.currentVersionNumber})`);
 
@@ -131,12 +135,13 @@ export async function runEndToEndScenario() {
     name: 'search_stories',
     arguments: { query: 'BRICS', limit: 5 },
   });
-  const searchData = JSON.parse((searchCall.content as any)[0].text);
-  const matchedStories = searchData.items || [];
+  const searchContent = searchCall.content as Array<{ type: string; text: string }>;
+  const searchData = JSON.parse(searchContent[0]?.text || '{}');
+  const matchedStories = (searchData.items as Array<Record<string, unknown>>) || [];
   console.log(`   MCP returned ${matchedStories.length} matching stories.`);
   const targetStory = matchedStories[0];
-  const targetStoryId = targetStory?.storyId || storyV1.id;
-  console.log(`   Target story found: "${targetStory.title}" (ID: ${targetStoryId}, v${targetStory.currentVersionNumber})`);
+  const targetStoryId = (targetStory?.id as string) || (targetStory?.storyId as string) || storyV1.id;
+  console.log(`   Target story found: "${targetStory?.title || 'BRICS'}" (ID: ${targetStoryId}, v${targetStory?.currentVersionNumber ?? 1})`);
 
   // 4. Agent Discovers New Facts & Registers Primary Source via MCP
   console.log('\n📚 [Step 4] Agent registers verified primary source via MCP [create_source]...');
@@ -151,7 +156,8 @@ export async function runEndToEndScenario() {
       permissibleExcerpt: 'The member states formally adopt the 2026 New Delhi multilateral clearing mechanism.',
     },
   });
-  const sourceData = JSON.parse((sourceCall.content as any)[0].text);
+  const sourceContent = sourceCall.content as Array<{ type: string; text: string }>;
+  const sourceData = JSON.parse(sourceContent[0]?.text || '{}');
   const sourceId = sourceData.sourceId;
   console.log(`   Source created via MCP: ID [${sourceId}]`);
 
@@ -224,7 +230,8 @@ export async function runEndToEndScenario() {
       ],
     },
   });
-  const versionData = JSON.parse((versionCall.content as any)[0].text);
+  const versionContent = versionCall.content as Array<{ type: string; text: string }>;
+  const versionData = JSON.parse(versionContent[0]?.text || '{}');
   console.log(`   Updated story via MCP to Version ${versionData.versionNumber}`);
 
   // 6. Agent Publishes the Story via MCP
@@ -233,7 +240,8 @@ export async function runEndToEndScenario() {
     name: 'publish_story',
     arguments: { storyId: targetStoryId },
   });
-  const publishData = JSON.parse((publishCall.content as any)[0].text);
+  const publishContent = publishCall.content as Array<{ type: string; text: string }>;
+  const publishData = JSON.parse(publishContent[0]?.text || '{}');
   const publishedStory = await storyService.getStory(publishData.storyId);
   console.log(`   Story status is now: [${publishedStory.status}], version: [${publishedStory.currentVersionNumber}]`);
 
@@ -267,9 +275,12 @@ export async function runEndToEndScenario() {
 
   // Drain worker jobs
   await defaultQueue.drain();
-  console.log(`   ✓ Search index job completed: status=[${searchJob.status}], tokens=[${(searchJob.result as any)?.indexedTokens}]`);
-  console.log(`   ✓ Media variants job completed: status=[${mediaJob.status}], variants=[${(mediaJob.result as any)?.totalVariants}]`);
-  console.log(`   ✓ Audio briefing job completed: status=[${audioJob.status}], duration=[${(audioJob.result as any)?.durationSeconds}s]`);
+  const searchRes = searchJob.result as Record<string, unknown> | undefined;
+  const mediaRes = mediaJob.result as Record<string, unknown> | undefined;
+  const audioRes = audioJob.result as Record<string, unknown> | undefined;
+  console.log(`   ✓ Search index job completed: status=[${searchJob.status}], tokens=[${searchRes?.indexedTokens}]`);
+  console.log(`   ✓ Media variants job completed: status=[${mediaJob.status}], variants=[${mediaRes?.totalVariants}]`);
+  console.log(`   ✓ Audio briefing job completed: status=[${audioJob.status}], duration=[${audioRes?.durationSeconds}s]`);
 
   // 8. Mobile App Offline Caching Verification
   console.log('\n📱 [Step 8] Mobile App reads published story and saves to offline cache...');

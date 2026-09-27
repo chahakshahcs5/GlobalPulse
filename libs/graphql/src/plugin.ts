@@ -1,9 +1,9 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import mercurius from 'mercurius';
 import { typeDefs } from './schema';
 import { createResolvers } from './resolvers';
 import { DatabaseService, db } from '@ai-news/database';
-import { AuthService } from '@ai-news/auth';
+import { AuthService, type ClientType } from '@ai-news/auth';
 
 export interface GraphQLPluginOptions {
   database?: DatabaseService;
@@ -19,10 +19,10 @@ export async function registerGraphQL(app: FastifyInstance, options: GraphQLPlug
     resolvers,
     subscription: true,
     graphiql: options.graphiql ?? true,
-    context: (req) => {
+    context: (req: FastifyRequest) => {
       let organizationId = 'org_default';
       let userId = 'usr_graphql_user';
-      let clientType: any = 'human_web';
+      let clientType: ClientType = 'human_web';
 
       const authHeader = req.headers?.authorization;
       if (authHeader) {

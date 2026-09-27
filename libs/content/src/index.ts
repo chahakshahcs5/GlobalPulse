@@ -1,5 +1,5 @@
 import { StoryBlockSchema, type StoryBlock } from '@ai-news/schemas';
-import { ValidationError, generateId } from '@ai-news/shared';
+import { ValidationError } from '@ai-news/shared';
 
 export function validateBlock(raw: unknown): StoryBlock {
   const result = StoryBlockSchema.safeParse(raw);

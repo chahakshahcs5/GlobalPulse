@@ -13,12 +13,11 @@ import {
   UpdateStoryInputSchema,
   CreateStoryVersionInputSchema,
 } from '@ai-news/schemas';
-import type { DatabaseService } from '@ai-news/database';
+import type { DatabaseService, StoryFilter } from '@ai-news/database';
 import { validateBlocks, validateBlock } from '@ai-news/content';
 import {
   NotFoundError,
   ValidationError,
-  ConflictError,
   generateId,
   slugify,
 } from '@ai-news/shared';
@@ -136,6 +135,10 @@ export class StoryService {
     return savedStory;
   }
 
+  async listStories(filter?: StoryFilter, orgId: string = 'org_default'): Promise<Story[]> {
+    return this.db.stories.list(filter, orgId);
+  }
+
   async getStory(id: string, orgId?: string): Promise<Story> {
     const story = await this.db.stories.findById(id, orgId);
     if (!story) {
@@ -188,7 +191,7 @@ export class StoryService {
   }
 
   async addBlock(storyId: string, rawBlock: unknown, ctx: StoryContext): Promise<StoryBlock> {
-    const story = await this.getStory(storyId, ctx.organizationId);
+    await this.getStory(storyId, ctx.organizationId);
     const validated = validateBlock(rawBlock);
 
     const currentBlocks = await this.db.stories.getBlocks(storyId);
