@@ -65,7 +65,7 @@ export class BullQueueService {
     return this.queues.get(queueName)!;
   }
 
-  public async enqueueJob<T = any>(
+  public async enqueueJob<T = unknown>(
     type: JobType,
     payload: T,
     opts: { id?: string; delayMs?: number; priority?: number; maxAttempts?: number } = {}

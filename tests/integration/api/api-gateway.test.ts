@@ -4,6 +4,7 @@ import { buildServer } from '../../../apps/api/src/server';
 
 describe('Modular Production API Gateway Integration Tests', () => {
   let app: FastifyInstance;
+  let createdStoryId: string;
 
   beforeAll(async () => {
     app = buildServer();
@@ -66,8 +67,6 @@ describe('Modular Production API Gateway Integration Tests', () => {
   });
 
   describe('Story Lifecycle & Block Management', () => {
-    let createdStoryId: string;
-
     it('creates a new draft story with valid authorization', async () => {
       const res = await app.inject({
         method: 'POST',
@@ -391,6 +390,239 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const problem = JSON.parse(res.body);
       expect(problem.status).toBe(401);
       expect(problem.detail).toContain('Token has expired');
+    });
+  });
+
+  describe('Taxonomy, Topics & Knowledge Graph Endpoints', () => {
+    let createdTopicId: string;
+
+    it('creates a new taxonomy topic via POST /api/topics', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/topics',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          name: 'Generative AI & LLMs',
+          description: 'Autonomous agents, foundation models, and AI news platforms',
+          aliases: ['GenAI', 'LLM'],
+        },
+      });
+      expect(res.statusCode).toBe(201);
+      const topic = JSON.parse(res.body);
+      expect(topic.id).toMatch(/^top_/);
+      expect(topic.slug).toBe('generative-ai-llms');
+      createdTopicId = topic.id;
+    });
+
+    it('retrieves topics list via GET /api/topics', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/topics',
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const topics = JSON.parse(res.body);
+      expect(Array.isArray(topics)).toBe(true);
+      expect(topics.some((t: { id: string }) => t.id === createdTopicId)).toBe(true);
+    });
+
+    it('retrieves single topic by ID via GET /api/topics/:id', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/topics/${createdTopicId}`,
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const topic = JSON.parse(res.body);
+      expect(topic.id).toBe(createdTopicId);
+      expect(topic.name).toBe('Generative AI & LLMs');
+    });
+  });
+
+  describe('Verified Sources, Attachments & Citations Endpoints', () => {
+    let createdSourceId: string;
+
+    it('registers a verified source via POST /api/sources', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/sources',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          url: 'https://news.mit.edu/2026/quantum-neutral-atom-computing',
+          title: 'MIT Researchers Achieve Fault-Tolerant Quantum Neutral-Atom Architecture',
+          publisher: 'MIT News',
+          author: 'David L. Chandler',
+        },
+      });
+      expect(res.statusCode).toBe(201);
+      const source = JSON.parse(res.body);
+      expect(source.id).toMatch(/^src_/);
+      expect(source.publisher).toBe('MIT News');
+      createdSourceId = source.id;
+    });
+
+    it('lists registered sources via GET /api/sources', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/sources',
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const sources = JSON.parse(res.body);
+      expect(Array.isArray(sources)).toBe(true);
+      expect(sources.length).toBeGreaterThan(0);
+    });
+
+    it('retrieves source by ID via GET /api/sources/:id', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/sources/${createdSourceId}`,
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const source = JSON.parse(res.body);
+      expect(source.id).toBe(createdSourceId);
+      expect(source.title).toContain('MIT Researchers');
+    });
+
+    it('attaches source to story via POST /api/sources/attach', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/sources/attach',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          storyId: createdStoryId,
+          sourceId: createdSourceId,
+        },
+      });
+      expect(res.statusCode).toBe(201);
+      const body = JSON.parse(res.body);
+      expect(body.success).toBe(true);
+      expect(body.sourceId).toBe(createdSourceId);
+    });
+  });
+
+  describe('Entities & Named Entity Recognition Endpoints', () => {
+    let createdEntityId: string;
+
+    it('creates an entity via POST /api/entities', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/entities',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          name: 'European Space Agency',
+          type: 'ORGANIZATION',
+          description: 'Intergovernmental organisation dedicated to space exploration',
+        },
+      });
+      expect(res.statusCode).toBe(201);
+      const entity = JSON.parse(res.body);
+      expect(entity.id).toMatch(/^ent_/);
+      expect(entity.name).toBe('European Space Agency');
+      createdEntityId = entity.id;
+    });
+
+    it('lists entities via GET /api/entities', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/entities',
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const entities = JSON.parse(res.body);
+      expect(Array.isArray(entities)).toBe(true);
+      expect(entities.some((e: { id: string }) => e.id === createdEntityId)).toBe(true);
+    });
+
+    it('retrieves entity by ID via GET /api/entities/:id', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/entities/${createdEntityId}`,
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const entity = JSON.parse(res.body);
+      expect(entity.id).toBe(createdEntityId);
+      expect(entity.type).toBe('ORGANIZATION');
+    });
+  });
+
+  describe('Events & Historical Timeline Endpoints', () => {
+    let createdEventId: string;
+
+    it('creates a timeline event via POST /api/events', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/events',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          title: 'Quantum Advantage Treaty Ratification',
+          summary: 'Multilateral agreement establishing quantum non-proliferation norms',
+          occurredAt: '2026-04-10T14:00:00Z',
+        },
+      });
+      expect(res.statusCode).toBe(201);
+      const event = JSON.parse(res.body);
+      expect(event.id).toMatch(/^evt_/);
+      expect(event.title).toBe('Quantum Advantage Treaty Ratification');
+      createdEventId = event.id;
+    });
+
+    it('lists events via GET /api/events', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/events',
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const events = JSON.parse(res.body);
+      expect(Array.isArray(events)).toBe(true);
+      expect(events.some((e: { id: string }) => e.id === createdEventId)).toBe(true);
+    });
+
+    it('retrieves event by ID via GET /api/events/:id', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/events/${createdEventId}`,
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const event = JSON.parse(res.body);
+      expect(event.id).toBe(createdEventId);
+      expect(event.summary).toBe('Multilateral agreement establishing quantum non-proliferation norms');
+    });
+  });
+
+  describe('Semantic Search & Federated Discovery Endpoints', () => {
+    it('executes federated multi-domain search across stories, topics, entities, and sources', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/search/federated?q=Quantum',
+        headers: { authorization: 'Bearer test-token' },
+      });
+      expect(res.statusCode).toBe(200);
+      const result = JSON.parse(res.body);
+      expect(result.stories).toBeDefined();
+      expect(result.events).toBeDefined();
+      expect(result.topics).toBeDefined();
+      expect(result.entities).toBeDefined();
+      expect(result.sources).toBeDefined();
+    });
+
+    it('finds similar stories via POST /api/search/similar', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/search/similar',
+        headers: { authorization: 'Bearer test-token' },
+        payload: {
+          storyId: createdStoryId,
+          limit: 5,
+        },
+      });
+      expect(res.statusCode).toBe(200);
+      const similar = JSON.parse(res.body);
+      expect(Array.isArray(similar)).toBe(true);
     });
   });
 });

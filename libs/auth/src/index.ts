@@ -95,17 +95,17 @@ export class AuthService {
    * Generates a signed RFC 7519 JSON Web Token for human users or AI agents.
    */
   static generateToken(
-    principal: Omit<AuthenticatedPrincipal, 'tokenExpiresAt'>,
+    principal: Partial<Omit<AuthenticatedPrincipal, 'tokenExpiresAt'>> & { id: string; role: UserRole },
     secret: string = DEFAULT_JWT_SECRET,
     expiresIn: SignOptions['expiresIn'] = '24h'
   ): string {
     const payload: Record<string, unknown> = {
       sub: principal.id,
-      org: principal.organizationId,
+      org: principal.organizationId || 'org_default',
       role: principal.role,
       email: principal.email,
-      clientType: principal.clientType,
-      scopes: principal.scopes.length > 0 ? principal.scopes : ROLE_PERMISSIONS[principal.role] || [],
+      clientType: principal.clientType || 'human_web',
+      scopes: principal.scopes && principal.scopes.length > 0 ? principal.scopes : ROLE_PERMISSIONS[principal.role] || [],
       ...(principal.agentMetadata ? { agent: principal.agentMetadata } : {}),
     };
 
@@ -224,6 +224,16 @@ export class AuthService {
         email: 'editor@news.platform',
         clientType: 'human_web',
         scopes: ROLE_PERMISSIONS.editor,
+      };
+    }
+    if (token === 'journalist-token') {
+      return {
+        id: 'usr_journalist_1',
+        organizationId: 'org_default',
+        role: 'journalist',
+        email: 'journalist@news.platform',
+        clientType: 'human_web',
+        scopes: ROLE_PERMISSIONS.journalist,
       };
     }
     if (token === 'reader-token') {

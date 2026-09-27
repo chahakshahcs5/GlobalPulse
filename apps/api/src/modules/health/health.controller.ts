@@ -3,7 +3,7 @@ import { db } from '@ai-news/database';
 import { s3Storage } from '@ai-news/media';
 import { FastifyReply } from 'fastify';
 
-@Controller('health')
+@Controller(['health', 'api/health'])
 export class HealthController {
   @Get()
   async getHealth(@Res({ passthrough: true }) reply: FastifyReply) {
