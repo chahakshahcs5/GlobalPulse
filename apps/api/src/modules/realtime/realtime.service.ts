@@ -32,8 +32,21 @@ export class RealtimeService implements OnModuleDestroy {
     const redisUrl = process.env.REDIS_URL;
     if (redisUrl && process.env.NODE_ENV !== 'test') {
       try {
-        this.redisPub = new Redis(redisUrl, { lazyConnect: true, enableOfflineQueue: false });
-        this.redisSub = new Redis(redisUrl, { lazyConnect: true, enableOfflineQueue: false });
+        const redisOptions = {
+          lazyConnect: true,
+          enableOfflineQueue: false,
+          maxRetriesPerRequest: 1,
+          retryStrategy: () => null,
+        };
+        this.redisPub = new Redis(redisUrl, redisOptions);
+        this.redisSub = new Redis(redisUrl, redisOptions);
+
+        this.redisPub.on('error', (err) => {
+          logger.debug(`Redis SSE Pub error: ${err.message}`);
+        });
+        this.redisSub.on('error', (err) => {
+          logger.debug(`Redis SSE Sub error: ${err.message}`);
+        });
 
         Promise.all([this.redisPub.connect(), this.redisSub.connect()])
           .then(() => {
@@ -58,7 +71,9 @@ export class RealtimeService implements OnModuleDestroy {
             });
           })
           .catch((err: Error) => {
-            logger.debug(`Redis SSE connection deferred: ${err.message}. Operating in standalone local mode.`);
+            logger.info(`Redis SSE connection deferred (${err.message}). Operating in standalone local mode.`);
+            this.redisPub = null;
+            this.redisSub = null;
           });
       } catch {
         this.redisPub = null;

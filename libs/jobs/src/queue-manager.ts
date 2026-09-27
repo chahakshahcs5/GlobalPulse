@@ -31,17 +31,21 @@ export class QueueManager {
           lazyConnect: true,
           maxRetriesPerRequest: 1,
           enableOfflineQueue: false,
+          retryStrategy: () => null,
+        });
+        this.redis.on('error', (err) => {
+          logger.debug(`QueueManager Redis connection error: ${err.message}`);
         });
         this.redis.connect().then(() => {
           this.isRedisActive = true;
           logger.info(`QueueManager connected to Redis at ${redisUrl}`);
         }).catch((err) => {
-          logger.warn(`Redis connection failed for QueueManager: ${err.message}. Running in memory fallback.`);
+          logger.info(`Redis connection deferred for QueueManager (${err.message}). Running in memory fallback.`);
           this.isRedisActive = false;
         });
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.warn(`Redis initialization skipped: ${errorMsg}`);
+        logger.debug(`Redis initialization skipped: ${errorMsg}`);
         this.isRedisActive = false;
       }
     }
