@@ -311,4 +311,19 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, limit);
   }
+
+  // ---------------------------------------------------------------------------
+  // Social Shares (F15)
+  // ---------------------------------------------------------------------------
+  private shareCounts = new Map<string, number>();
+
+  async recordShare(storyId: string, _platform?: string, _userId?: string): Promise<{ shareCount: number }> {
+    const count = (this.shareCounts.get(storyId) || 0) + 1;
+    this.shareCounts.set(storyId, count);
+    return { shareCount: count };
+  }
+
+  async getShareCount(storyId: string): Promise<number> {
+    return this.shareCounts.get(storyId) || 0;
+  }
 }

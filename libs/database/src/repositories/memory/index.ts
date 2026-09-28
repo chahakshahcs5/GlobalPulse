@@ -10,3 +10,5 @@ export * from './user.memory';
 export * from './notification.memory';
 export * from './cluster.memory';
 export * from './liveblog.memory';
+export * from './newsletter.memory';
+export * from './collection.memory';

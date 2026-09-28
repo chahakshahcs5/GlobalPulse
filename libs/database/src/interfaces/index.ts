@@ -10,3 +10,5 @@ export * from './user.repository';
 export * from './notification.repository';
 export * from './cluster.repository';
 export * from './liveblog.repository';
+export * from './newsletter.repository';
+export * from './collection.repository';

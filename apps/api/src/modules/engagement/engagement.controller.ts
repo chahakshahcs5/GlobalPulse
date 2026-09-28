@@ -21,6 +21,7 @@ import type {
   ModerateCommentInput,
   StoryReactionType,
 } from '@ai-news/schemas';
+import { generateOpenGraphMeta, generateSocialShareLinks } from '@ai-news/shared';
 
 @Controller('api')
 @UseGuards(NestAuthGuard)
@@ -202,5 +203,56 @@ export class EngagementController {
   @RequireScope('news:read')
   async getReadingHistory(@Principal() principal: AuthenticatedPrincipal) {
     return await this.engagementService.listReadingHistory(principal.id);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Social Sharing & OpenGraph Meta (F15)
+  // ---------------------------------------------------------------------------
+
+  @Post('stories/:id/share')
+  @HttpCode(HttpStatus.OK)
+  @RequireScope('news:read')
+  async recordShare(
+    @Param('id') storyId: string,
+    @Body() body: { platform?: string },
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const result = await db.engagement.recordShare(storyId, body?.platform || 'direct', principal.id);
+    const story = await db.stories.findById(storyId, principal.organizationId);
+    const baseUrl = process.env.BASE_URL || 'https://news.globalpulse.com';
+    const slug = story ? story.slug : storyId;
+    const storyUrl = `${baseUrl}/stories/${slug}`;
+    const title = story ? story.title : 'GlobalPulse News Article';
+    const summary = story ? story.summary : '';
+
+    return {
+      storyId,
+      shareCount: result.shareCount,
+      platform: body?.platform || 'direct',
+      shareUrls: generateSocialShareLinks(storyUrl, title, summary),
+      meta: story ? generateOpenGraphMeta({ story, baseUrl }) : null,
+    };
+  }
+
+  @Get('stories/:id/share')
+  @RequireScope('news:read')
+  async getShareMeta(
+    @Param('id') storyId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const shareCount = await db.engagement.getShareCount(storyId);
+    const story = await db.stories.findById(storyId, principal.organizationId);
+    const baseUrl = process.env.BASE_URL || 'https://news.globalpulse.com';
+    const slug = story ? story.slug : storyId;
+    const storyUrl = `${baseUrl}/stories/${slug}`;
+    const title = story ? story.title : 'GlobalPulse News Article';
+    const summary = story ? story.summary : '';
+
+    return {
+      storyId,
+      shareCount,
+      shareUrls: generateSocialShareLinks(storyUrl, title, summary),
+      meta: story ? generateOpenGraphMeta({ story, baseUrl }) : null,
+    };
   }
 }

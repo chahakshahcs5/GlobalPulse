@@ -10,3 +10,5 @@ export * from './notification.prisma';
 export * from './engagement.prisma';
 export * from './cluster.prisma';
 export * from './liveblog.prisma';
+export * from './newsletter.prisma';
+export * from './collection.prisma';

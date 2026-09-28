@@ -11,6 +11,8 @@ import type {
   INotificationRepository,
   IClusterRepository,
   ILiveblogRepository,
+  INewsletterRepository,
+  ICollectionRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -25,6 +27,8 @@ import {
   MemoryNotificationRepository,
   MemoryClusterRepository,
   MemoryLiveblogRepository,
+  MemoryNewsletterRepository,
+  MemoryCollectionRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -39,6 +43,8 @@ import {
   PrismaEngagementRepository,
   PrismaClusterRepository,
   PrismaLiveblogRepository,
+  PrismaNewsletterRepository,
+  PrismaCollectionRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -63,6 +69,8 @@ export class DatabaseService {
   public notifications: INotificationRepository;
   public clusters: IClusterRepository;
   public liveblogs: ILiveblogRepository;
+  public newsletters: INewsletterRepository;
+  public collections: ICollectionRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -76,6 +84,8 @@ export class DatabaseService {
   private memoryNotifications = new MemoryNotificationRepository();
   private memoryClusters = new MemoryClusterRepository();
   private memoryLiveblogs = new MemoryLiveblogRepository();
+  private memoryNewsletters = new MemoryNewsletterRepository();
+  private memoryCollections = new MemoryCollectionRepository();
 
   private isPrismaActive = false;
 
@@ -93,6 +103,8 @@ export class DatabaseService {
     this.notifications = this.memoryNotifications;
     this.clusters = this.memoryClusters;
     this.liveblogs = this.memoryLiveblogs;
+    this.newsletters = this.memoryNewsletters;
+    this.collections = this.memoryCollections;
   }
 
   /**
@@ -115,8 +127,10 @@ export class DatabaseService {
         this.engagement = new PrismaEngagementRepository(getPrisma);
         this.clusters = new PrismaClusterRepository(getPrisma);
         this.liveblogs = new PrismaLiveblogRepository(getPrisma);
+        this.newsletters = new PrismaNewsletterRepository(getPrisma);
+        this.collections = new PrismaCollectionRepository(getPrisma);
         this.isPrismaActive = true;
-        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 12 domains).');
+        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 14 domains).');
         return true;
       }
     } catch (err: unknown) {
@@ -201,6 +215,8 @@ export class DatabaseService {
     this.memoryNotifications.clear();
     this.memoryClusters.clear();
     this.memoryLiveblogs.clear();
+    this.memoryNewsletters.clear();
+    this.memoryCollections.clear();
   }
 }
 

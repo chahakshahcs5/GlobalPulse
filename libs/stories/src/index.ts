@@ -11,3 +11,5 @@ export * from './template.service';
 export * from './liveblog.service';
 export * from './fact-check.service';
 export * from './collaboration.service';
+export * from './newsletter.service';
+export * from './collection.service';

@@ -209,17 +209,33 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     return list.slice(0, limit);
   }
 
+  // Social Shares (F15)
+  private shares: Map<string, number> = new Map();
+
+  async recordShare(storyId: string, _platform?: string, _userId?: string): Promise<{ shareCount: number }> {
+    const current = this.shares.get(storyId) || 0;
+    const next = current + 1;
+    this.shares.set(storyId, next);
+    return { shareCount: next };
+  }
+
+  async getShareCount(storyId: string): Promise<number> {
+    return this.shares.get(storyId) || 0;
+  }
+
   snapshot(): {
     comments: Map<string, Comment>;
     reactions: Map<string, StoryReaction>;
     bookmarks: Map<string, BookmarkItem>;
     progress: Map<string, ReadingProgressRecord>;
+    shares: Map<string, number>;
   } {
     return {
       comments: new Map(this.comments),
       reactions: new Map(this.reactions),
       bookmarks: new Map(this.bookmarks),
       progress: new Map(this.progress),
+      shares: new Map(this.shares),
     };
   }
 
@@ -228,12 +244,16 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     reactions: Map<string, StoryReaction>;
     bookmarks: Map<string, BookmarkItem>;
     progress?: Map<string, ReadingProgressRecord>;
+    shares?: Map<string, number>;
   }): void {
     this.comments = new Map(snapshot.comments);
     this.reactions = new Map(snapshot.reactions);
     this.bookmarks = new Map(snapshot.bookmarks);
     if (snapshot.progress) {
       this.progress = new Map(snapshot.progress);
+    }
+    if (snapshot.shares) {
+      this.shares = new Map(snapshot.shares);
     }
   }
 
@@ -242,5 +262,6 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     this.reactions.clear();
     this.bookmarks.clear();
     this.progress.clear();
+    this.shares.clear();
   }
 }

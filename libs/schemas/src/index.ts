@@ -16,3 +16,5 @@ export * from './template';
 export * from './liveblog';
 export * from './fact-check';
 export * from './collaboration';
+export * from './newsletter';
+export * from './collection';

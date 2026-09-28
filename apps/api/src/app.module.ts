@@ -24,6 +24,8 @@ import { ClusteringModule } from './modules/clustering/clustering.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { FactCheckModule } from './modules/fact-check/fact-check.module';
 import { EditorialModule } from './modules/editorial/editorial.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
+import { CollectionsModule } from './modules/collections/collections.module';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { EditorialModule } from './modules/editorial/editorial.module';
     TemplatesModule,
     FactCheckModule,
     EditorialModule,
+    NewsletterModule,
+    CollectionsModule,
   ],
 })
 export class AppModule {}

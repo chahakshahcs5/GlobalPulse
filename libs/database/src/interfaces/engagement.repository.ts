@@ -40,6 +40,10 @@ export interface IEngagementRepository {
   ): Promise<ReadingProgressRecord>;
   getReadingProgress(userId: string, storyId: string): Promise<ReadingProgressRecord | null>;
   listReadingHistory(userId: string, limit?: number): Promise<ReadingProgressRecord[]>;
+
+  // Social Shares (F15)
+  recordShare(storyId: string, platform: string, userId?: string): Promise<{ shareCount: number }>;
+  getShareCount(storyId: string): Promise<number>;
 }
 
 export interface ReadingProgressRecord {
