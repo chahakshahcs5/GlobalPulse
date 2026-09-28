@@ -3,6 +3,8 @@ import {
   Get,
   Post,
   Put,
+  Delete,
+  Query,
   Param,
   Body,
   UseGuards,
@@ -15,6 +17,7 @@ import { NestAuthGuard, Principal } from '../../common/auth.guard';
 import {
   AssignUserRoleInputSchema,
   InviteUserInputSchema,
+  FollowTargetInputSchema,
 } from '@ai-news/schemas';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 
@@ -76,5 +79,52 @@ export class UsersController {
     };
 
     return this.userService.assignRole(id, validated.role, ctx);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Following Interests (F17)
+  // ---------------------------------------------------------------------------
+
+  @Post('follow')
+  @HttpCode(HttpStatus.OK)
+  async followTarget(
+    @Body() body: unknown,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    AuthService.requireScope(principal, 'news:read');
+    const validated = FollowTargetInputSchema.parse(body);
+    return this.userService.followTarget(principal.id, validated.targetType, validated.targetId);
+  }
+
+  @Delete('follow/:targetType/:targetId')
+  @HttpCode(HttpStatus.OK)
+  async unfollowTarget(
+    @Param('targetType') targetType: 'topic' | 'entity' | 'author',
+    @Param('targetId') targetId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    AuthService.requireScope(principal, 'news:read');
+    const success = await this.userService.unfollowTarget(principal.id, targetType, targetId);
+    return { success, message: success ? 'Unfollowed successfully' : 'Not currently following' };
+  }
+
+  @Get('following')
+  async listFollowing(
+    @Query('targetType') targetType: 'topic' | 'entity' | 'author' | undefined,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    AuthService.requireScope(principal, 'news:read');
+    return this.userService.listFollowing(principal.id, targetType);
+  }
+
+  @Get('following/:targetType/:targetId')
+  async isFollowing(
+    @Param('targetType') targetType: 'topic' | 'entity' | 'author',
+    @Param('targetId') targetId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    AuthService.requireScope(principal, 'news:read');
+    const following = await this.userService.isFollowing(principal.id, targetType, targetId);
+    return { targetType, targetId, following };
   }
 }

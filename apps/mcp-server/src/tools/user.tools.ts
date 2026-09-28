@@ -112,4 +112,77 @@ export function registerUserTools(
       }
     }
   );
+
+  // 4. follow_interest (F17)
+  server.tool(
+    'follow_interest',
+    'Follow a news topic, cited entity, or journalist/author to personalize news delivery.',
+    {
+      target_type: z.enum(['topic', 'entity', 'author']).describe('Type of interest to follow'),
+      target_id: z.string().min(1).describe('The unique ID or slug of the topic/entity/author'),
+    },
+    async (args) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const record = await userService.followTarget(principal.id, args.target_type, args.target_id);
+        return successResponse({
+          message: `Successfully followed ${args.target_type} "${args.target_id}".`,
+          follow: record,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 5. unfollow_interest (F17)
+  server.tool(
+    'unfollow_interest',
+    'Unfollow a previously followed topic, entity, or author.',
+    {
+      target_type: z.enum(['topic', 'entity', 'author']).describe('Type of interest to unfollow'),
+      target_id: z.string().min(1).describe('The unique ID or slug'),
+    },
+    async (args) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const removed = await userService.unfollowTarget(principal.id, args.target_type, args.target_id);
+        return successResponse({
+          success: removed,
+          message: removed
+            ? `Successfully unfollowed ${args.target_type} "${args.target_id}".`
+            : `Was not following ${args.target_type} "${args.target_id}".`,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 6. list_user_following (F17)
+  server.tool(
+    'list_user_following',
+    'Retrieve all topics, entities, and authors followed by the active user/agent.',
+    {
+      target_type: z.enum(['topic', 'entity', 'author']).optional().describe('Filter by target type'),
+    },
+    async (args) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const list = await userService.listFollowing(principal.id, args.target_type);
+        return successResponse({
+          count: list.length,
+          following: list,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
 }

@@ -1,5 +1,5 @@
 import type { NewsroomUser, UserRole, UserStatus } from '@ai-news/schemas';
-import type { IUserRepository } from '../../interfaces/user.repository';
+import type { IUserRepository, FollowRecord } from '../../interfaces/user.repository';
 
 interface PrismaUserRow {
   id: string;
@@ -125,5 +125,59 @@ export class PrismaUserRepository implements IUserRepository {
     } catch {
       return false;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Following Interests (F17)
+  // ---------------------------------------------------------------------------
+  private follows = new Map<string, FollowRecord>();
+
+  async followTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<FollowRecord> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    const record: FollowRecord = {
+      userId,
+      targetType,
+      targetId,
+      createdAt: new Date().toISOString(),
+    };
+    this.follows.set(key, record);
+    return record;
+  }
+
+  async unfollowTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    return this.follows.delete(key);
+  }
+
+  async listFollowing(
+    userId: string,
+    targetType?: 'topic' | 'entity' | 'author'
+  ): Promise<FollowRecord[]> {
+    const list: FollowRecord[] = [];
+    for (const record of this.follows.values()) {
+      if (record.userId === userId) {
+        if (!targetType || record.targetType === targetType) {
+          list.push({ ...record });
+        }
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async isFollowing(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    return this.follows.has(key);
   }
 }

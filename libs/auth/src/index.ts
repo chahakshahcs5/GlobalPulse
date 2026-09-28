@@ -357,3 +357,5 @@ export class AuthService {
     };
   }
 }
+
+export * from './password';

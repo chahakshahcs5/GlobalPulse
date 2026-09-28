@@ -1,5 +1,5 @@
 import type { NewsroomUser } from '@ai-news/schemas';
-import type { IUserRepository } from '../../interfaces/user.repository';
+import type { IUserRepository, FollowRecord } from '../../interfaces/user.repository';
 
 export class MemoryUserRepository implements IUserRepository {
   private users = new Map<string, NewsroomUser>();
@@ -125,16 +125,81 @@ export class MemoryUserRepository implements IUserRepository {
     return this.users.delete(id);
   }
 
-  snapshot(): Map<string, NewsroomUser> {
-    return new Map(Array.from(this.users.entries()).map(([k, v]) => [k, { ...v }]));
+  // ---------------------------------------------------------------------------
+  // Following Interests (F17)
+  // ---------------------------------------------------------------------------
+  private follows = new Map<string, FollowRecord>(); // `${userId}:${targetType}:${targetId}` -> FollowRecord
+
+  async followTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<FollowRecord> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    const record: FollowRecord = {
+      userId,
+      targetType,
+      targetId,
+      createdAt: new Date().toISOString(),
+    };
+    this.follows.set(key, record);
+    return { ...record };
   }
 
-  restore(snap: Map<string, NewsroomUser>): void {
-    this.users = new Map(Array.from(snap.entries()).map(([k, v]) => [k, { ...v }]));
+  async unfollowTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    return this.follows.delete(key);
+  }
+
+  async listFollowing(
+    userId: string,
+    targetType?: 'topic' | 'entity' | 'author'
+  ): Promise<FollowRecord[]> {
+    const list: FollowRecord[] = [];
+    for (const record of this.follows.values()) {
+      if (record.userId === userId) {
+        if (!targetType || record.targetType === targetType) {
+          list.push({ ...record });
+        }
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async isFollowing(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean> {
+    const key = `${userId}:${targetType}:${targetId}`;
+    return this.follows.has(key);
+  }
+
+  snapshot(): { users: Map<string, NewsroomUser>; follows: Map<string, FollowRecord> } {
+    return {
+      users: new Map(this.users),
+      follows: new Map(this.follows),
+    };
+  }
+
+  restore(snap: any): void {
+    if (snap instanceof Map) {
+      this.users = new Map(snap);
+    } else if (snap && snap.users) {
+      this.users = new Map(snap.users);
+      if (snap.follows) {
+        this.follows = new Map(snap.follows);
+      }
+    }
   }
 
   clear(): void {
     this.users.clear();
+    this.follows.clear();
     this.seedBaselineUsers();
   }
 }
