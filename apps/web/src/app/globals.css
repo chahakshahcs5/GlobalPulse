@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --bg-main: #f8fafc;
@@ -12,7 +14,8 @@
     --accent-green: #15803d;
   }
 
-  .dark {
+  .dark,
+  [data-theme="dark"] {
     --bg-main: #0b0f19;
     --bg-card: #111827;
     --text-primary: #f8fafc;
@@ -21,6 +24,7 @@
     --accent-red: #ef4444;
     --accent-blue: #3b82f6;
     --accent-green: #22c55e;
+    color-scheme: dark;
   }
 
   html, body {

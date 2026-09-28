@@ -113,25 +113,38 @@ export const GoogleNewsHeader: React.FC = () => {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('globalpulse_theme');
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
+    try {
+      const isCurrentlyDark =
+        document.documentElement.classList.contains('dark') ||
+        localStorage.getItem('globalpulse_theme') === 'dark';
+      setIsDark(isCurrentlyDark);
+      if (isCurrentlyDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch {
+      // Ignore
     }
   }, []);
 
   const toggleDarkMode = () => {
     const next = !isDark;
     setIsDark(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('globalpulse_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('globalpulse_theme', 'light');
+    try {
+      if (next) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('globalpulse_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('globalpulse_theme', 'light');
+      }
+    } catch {
+      // Ignore
     }
   };
 
