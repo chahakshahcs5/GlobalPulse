@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useNewsClusters } from '../lib/cluster-builder';
 import { BreakingTicker } from '../components/BreakingTicker';
 import { GoogleNewsLeadCard } from '../components/GoogleNewsLeadCard';
@@ -21,24 +22,83 @@ import {
   Globe2,
   ChevronDown,
   Check,
+  Plus,
+  X as XIcon,
 } from 'lucide-react';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
 export type FeedMode = 'top' | 'for-you' | 'following' | 'history';
 export type RegionalEdition = 'global' | 'india' | 'us' | 'europe';
 
-export default function GoogleNewsHomePage() {
+const ALL_AVAILABLE_TOPICS = [
+  'AI Breakthroughs',
+  'Geopolitics',
+  'Clean Energy',
+  'Semiconductors',
+  'Space Exploration',
+  'Quantum Computing',
+  'Global Markets',
+  'Health Science',
+];
+
+function GoogleNewsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab');
+
   const [activeFullCoverageSlug, setActiveFullCoverageSlug] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [feedMode, setFeedMode] = useState<FeedMode>('top');
   const [edition, setEdition] = useState<RegionalEdition>('global');
   const [visibleCount, setVisibleCount] = useState<number>(4);
-  const [readingHistory, setReadingHistory] = useState<Array<{ slug: string; title: string; category?: string; readAt: string }>>([]);
-  const [followedTopics, setFollowedTopics] = useState<string[]>(['AI Breakthroughs', 'Geopolitics', 'Clean Energy']);
+  const [readingHistory, setReadingHistory] = useState<
+    Array<{ slug: string; title: string; category?: string; readAt: string }>
+  >([]);
+  const [followedTopics, setFollowedTopics] = useState<string[]>([
+    'AI Breakthroughs',
+    'Geopolitics',
+    'Clean Energy',
+  ]);
 
   const { stories: userStories } = useAllStories();
   const { clusters, leadCluster, secondaryClusters } = useNewsClusters();
   const bookmarks = useBookmarks();
+
+  // Synchronize feedMode with URL tab parameter or window hash
+  useEffect(() => {
+    if (tabParam === 'for-you') {
+      setFeedMode('for-you');
+    } else if (tabParam === 'following') {
+      setFeedMode('following');
+    } else if (tabParam === 'history') {
+      setFeedMode('history');
+    } else if (tabParam === 'top') {
+      setFeedMode('top');
+    } else if (!tabParam) {
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'for-you') setFeedMode('for-you');
+        else if (hash === 'following') setFeedMode('following');
+        else if (hash === 'history') setFeedMode('history');
+        else setFeedMode('top');
+      } else {
+        setFeedMode('top');
+      }
+    }
+  }, [tabParam]);
+
+  // Listen to hash changes in real time
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'for-you') setFeedMode('for-you');
+      else if (hash === 'following') setFeedMode('following');
+      else if (hash === 'history') setFeedMode('history');
+      else if (hash === 'top') setFeedMode('top');
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // Load reading history and followed topics from localStorage
   useEffect(() => {
@@ -52,6 +112,28 @@ export default function GoogleNewsHomePage() {
     }
   }, []);
 
+  // Switch tab and synchronize URL
+  const switchFeedMode = (mode: FeedMode) => {
+    setFeedMode(mode);
+    setSelectedTopic(null);
+    const target = mode === 'top' ? '/' : `/?tab=${mode}`;
+    router.push(target, { scroll: false });
+  };
+
+  // Toggle topic follow
+  const toggleFollowTopic = (topic: string) => {
+    setFollowedTopics((prev) => {
+      const exists = prev.includes(topic);
+      const next = exists ? prev.filter((t) => t !== topic) : [...prev, topic];
+      try {
+        localStorage.setItem('globalpulse_following', JSON.stringify(next));
+      } catch {
+        // Safe fallback
+      }
+      return next;
+    });
+  };
+
   // Today's formatted date
   const todayFormatted = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
@@ -62,7 +144,12 @@ export default function GoogleNewsHomePage() {
   // Filter clusters by edition/region
   const editionClusters = secondaryClusters.filter((c) => {
     if (edition === 'global') return true;
-    if (edition === 'india') return c.category === 'India' || c.title.toLowerCase().includes('india') || c.title.toLowerCase().includes('delhi');
+    if (edition === 'india')
+      return (
+        c.category === 'India' ||
+        c.title.toLowerCase().includes('india') ||
+        c.title.toLowerCase().includes('delhi')
+      );
     if (edition === 'us') return c.category === 'World' || c.category === 'Business';
     if (edition === 'europe') return c.category === 'World' || c.category === 'Science';
     return true;
@@ -81,6 +168,34 @@ export default function GoogleNewsHomePage() {
   const paginatedClusters = displayClusters.slice(0, visibleCount);
   const hasMore = displayClusters.length > visibleCount;
 
+  // Personalized clusters for "For You"
+  const forYouClusters = [...clusters].sort((a, b) => {
+    const aMatch = followedTopics.some(
+      (t) =>
+        a.title.toLowerCase().includes(t.toLowerCase()) ||
+        a.category.toLowerCase().includes(t.toLowerCase())
+    );
+    const bMatch = followedTopics.some(
+      (t) =>
+        b.title.toLowerCase().includes(t.toLowerCase()) ||
+        b.category.toLowerCase().includes(t.toLowerCase())
+    );
+    if (aMatch && !bMatch) return -1;
+    if (!aMatch && bMatch) return 1;
+    return 0;
+  });
+
+  // Clusters matching followed topics for "Following"
+  const followedClusters = clusters.filter((c) => {
+    if (followedTopics.length === 0) return true;
+    return followedTopics.some(
+      (t) =>
+        c.title.toLowerCase().includes(t.toLowerCase()) ||
+        c.category.toLowerCase().includes(t.toLowerCase()) ||
+        c.summary.toLowerCase().includes(t.toLowerCase())
+    );
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Real-time Breaking News Ticker */}
@@ -90,7 +205,7 @@ export default function GoogleNewsHomePage() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
           <button
-            onClick={() => { setFeedMode('top'); setSelectedTopic(null); }}
+            onClick={() => switchFeedMode('top')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               feedMode === 'top'
                 ? 'bg-blue-600 text-white shadow-xs'
@@ -102,7 +217,7 @@ export default function GoogleNewsHomePage() {
           </button>
 
           <button
-            onClick={() => setFeedMode('for-you')}
+            onClick={() => switchFeedMode('for-you')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               feedMode === 'for-you'
                 ? 'bg-blue-600 text-white shadow-xs'
@@ -114,7 +229,7 @@ export default function GoogleNewsHomePage() {
           </button>
 
           <button
-            onClick={() => setFeedMode('following')}
+            onClick={() => switchFeedMode('following')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               feedMode === 'following'
                 ? 'bg-blue-600 text-white shadow-xs'
@@ -126,7 +241,7 @@ export default function GoogleNewsHomePage() {
           </button>
 
           <button
-            onClick={() => setFeedMode('history')}
+            onClick={() => switchFeedMode('history')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               feedMode === 'history'
                 ? 'bg-blue-600 text-white shadow-xs'
@@ -168,7 +283,10 @@ export default function GoogleNewsHomePage() {
                 {feedMode === 'following' && 'Your followed topics & sources'}
                 {feedMode === 'history' && 'Reading history'}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium" suppressHydrationWarning>
+              <p
+                className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium"
+                suppressHydrationWarning
+              >
                 {todayFormatted} • {edition.toUpperCase()} REGION
               </p>
             </div>
@@ -201,12 +319,18 @@ export default function GoogleNewsHomePage() {
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
                   {readingHistory.map((item, idx) => (
-                    <div key={idx} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition flex items-center justify-between gap-4">
+                    <div
+                      key={idx}
+                      className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition flex items-center justify-between gap-4"
+                    >
                       <div className="space-y-1">
                         <span className="text-[11px] font-bold text-blue-600 uppercase">
                           {item.category?.replace('_', ' ') || 'Dispatch'}
                         </span>
-                        <Link href={`/stories/${item.slug}`} className="block font-bold text-sm text-slate-900 dark:text-white hover:text-blue-600 transition">
+                        <Link
+                          href={`/stories/${item.slug}`}
+                          className="block font-bold text-sm text-slate-900 dark:text-white hover:text-blue-600 transition"
+                        >
                           {item.title}
                         </Link>
                         <span className="text-[10px] text-slate-400" suppressHydrationWarning>
@@ -229,9 +353,10 @@ export default function GoogleNewsHomePage() {
           {/* VIEW: FOR YOU (F10) */}
           {feedMode === 'for-you' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-sky-500/10 border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
+              {/* Personalized Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-sky-500/10 border border-blue-200/60 dark:border-blue-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
                     <Sparkles className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
@@ -239,50 +364,109 @@ export default function GoogleNewsHomePage() {
                       Curated For Your Reading Habits
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Based on your interest in AI Breakthroughs, Global Economy, and Tech Innovation
+                      Intelligence ranked by your interests in {followedTopics.slice(0, 3).join(', ')}
                     </p>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {followedTopics.map((top) => (
+                    <span
+                      key={top}
+                      className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 text-[11px] font-bold"
+                    >
+                      {top}
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              {clusters.map((cluster) => (
-                <GoogleNewsClusterCard
-                  key={cluster.id}
-                  cluster={cluster}
-                  onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
-                />
+              {forYouClusters.map((cluster) => (
+                <div key={cluster.id} className="relative">
+                  <GoogleNewsClusterCard
+                    cluster={cluster}
+                    onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+                  />
+                </div>
               ))}
             </div>
           )}
 
           {/* VIEW: FOLLOWING (F11) */}
           {feedMode === 'following' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
-                <div className="flex items-center justify-between">
+            <div className="space-y-5">
+              {/* Followed & Suggested Topics Control Panel */}
+              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4 shadow-xs">
+                <div>
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                    <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics
+                    <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics ({followedTopics.length})
                   </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Click any tag to toggle following or unfollowing. Stories below filter dynamically.
+                  </p>
                 </div>
+
+                {/* Followed Topics Chips */}
                 <div className="flex flex-wrap gap-2">
-                  {followedTopics.map((top) => (
-                    <span
-                      key={top}
-                      className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-xs font-bold flex items-center gap-1.5"
-                    >
-                      <Check className="w-3.5 h-3.5 text-blue-600" /> {top}
-                    </span>
-                  ))}
+                  {followedTopics.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">No topics followed yet. Choose suggestions below:</span>
+                  ) : (
+                    followedTopics.map((top) => (
+                      <button
+                        key={top}
+                        onClick={() => toggleFollowTopic(top)}
+                        className="group px-3 py-1.5 rounded-full bg-blue-50 hover:bg-rose-50 dark:bg-blue-950/60 dark:hover:bg-rose-950/50 text-blue-700 hover:text-rose-600 dark:text-blue-300 dark:hover:text-rose-300 border border-blue-200 hover:border-rose-200 dark:border-blue-900 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                        title={`Click to unfollow ${top}`}
+                      >
+                        <Check className="w-3.5 h-3.5 text-blue-600 group-hover:hidden" />
+                        <XIcon className="w-3.5 h-3.5 text-rose-500 hidden group-hover:inline" />
+                        <span>{top}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+
+                {/* Suggested Topics to Follow */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Recommended to Follow:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {ALL_AVAILABLE_TOPICS.filter((t) => !followedTopics.includes(t)).map((top) => (
+                      <button
+                        key={top}
+                        onClick={() => toggleFollowTopic(top)}
+                        className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/60 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3 text-slate-400" />
+                        <span>{top}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {clusters.slice(0, 3).map((cluster) => (
-                <GoogleNewsClusterCard
-                  key={cluster.id}
-                  cluster={cluster}
-                  onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
-                />
-              ))}
+              {/* Followed Feed Story Results */}
+              {followedClusters.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="text-xs text-slate-500 font-semibold px-1">
+                    Showing {followedClusters.length} dispatches matching your followed topics
+                  </div>
+                  {followedClusters.map((cluster) => (
+                    <GoogleNewsClusterCard
+                      key={cluster.id}
+                      cluster={cluster}
+                      onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 space-y-2">
+                  <BookmarkCheck className="w-8 h-8 mx-auto text-slate-300" />
+                  <p className="text-sm font-semibold">No dispatches match your current followed topics</p>
+                  <p className="text-xs">Follow more topics from the recommended panel above to populate your stream.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -321,19 +505,25 @@ export default function GoogleNewsHomePage() {
                 </div>
               )}
 
-              {/* User-Published Stories from Human Newsroom / CMS */}
-              {userStories.filter((s) => s.createdVia === 'admin' || s.createdVia === 'web').length > 0 && (
+              {/* User Stories / AI Agent Generated Dispatches Carousel Section */}
+              {userStories.length > 0 && (
                 <div className="pt-6 space-y-4 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                      <span>Dispatches from GlobalPulse Newsroom</span>
-                    </h2>
+                    <div>
+                      <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        Live Multi-Agent Newsroom Dispatches
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        Stories drafted, verified, and published via MCP and Editorial Studio
+                      </p>
+                    </div>
                     <Link
                       href="/admin"
-                      className="text-xs font-semibold text-blue-600 hover:underline"
+                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
                     >
-                      Manage in CMS →
+                      <span>Studio Dashboard</span>
+                      <ArrowRight className="w-3 h-3" />
                     </Link>
                   </div>
 
@@ -452,5 +642,19 @@ export default function GoogleNewsHomePage() {
         onClose={() => setActiveFullCoverageSlug(null)}
       />
     </div>
+  );
+}
+
+export default function GoogleNewsHomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center text-slate-400">
+          Loading GlobalPulse News...
+        </div>
+      }
+    >
+      <GoogleNewsContent />
+    </Suspense>
   );
 }
