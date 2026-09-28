@@ -86,8 +86,39 @@ export default function StoryPage() {
     }
   };
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: story.title,
+    description: story.summary,
+    image: story.heroImageUrl ? [story.heroImageUrl] : [],
+    datePublished: story.publishedAt || story.createdAt,
+    dateModified: story.updatedAt || story.publishedAt || story.createdAt,
+    author: [
+      {
+        '@type': 'Person',
+        name: story.authorId === 'usr_admin' ? 'GlobalPulse Editorial Board' : story.authorId,
+      },
+    ],
+    publisher: {
+      '@type': 'NewsMediaOrganization',
+      name: 'GlobalPulse News',
+      url: 'https://globalpulse.news',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://globalpulse.news/stories/${story.slug}`,
+    },
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Schema.org NewsArticle JSON-LD for Google News & Search Engines */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Navigation Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
         <Link href="/" className="hover:text-blue-600 flex items-center gap-1">

@@ -5,6 +5,26 @@ import { GoogleNewsHeader } from '../components/GoogleNewsHeader';
 export const metadata: Metadata = {
   title: 'GlobalPulse — Independent Global News, Tech, Business & Science',
   description: 'Comprehensive, real-time news coverage aggregated across global bureaus and verified sources by GlobalPulse.',
+  metadataBase: new URL('https://globalpulse.news'),
+  openGraph: {
+    title: 'GlobalPulse — Independent Global News',
+    description: 'Comprehensive, real-time news coverage aggregated across global bureaus and verified sources.',
+    url: 'https://globalpulse.news',
+    siteName: 'GlobalPulse News',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GlobalPulse News',
+    description: 'Real-time multi-agent and human verified news dispatches.',
+  },
+  alternates: {
+    types: {
+      'application/rss+xml': '/api/feeds/rss',
+      'application/atom+xml': '/api/feeds/atom',
+    },
+  },
 };
 
 export default function RootLayout({
