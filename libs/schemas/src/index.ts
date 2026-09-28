@@ -12,3 +12,5 @@ export * from './analytics';
 export * from './user';
 export * from './notification';
 export * from './cluster';
+export * from './template';
+export * from './liveblog';

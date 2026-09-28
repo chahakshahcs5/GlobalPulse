@@ -21,6 +21,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClusteringModule } from './modules/clustering/clustering.module';
+import { TemplatesModule } from './modules/templates/templates.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ClusteringModule } from './modules/clustering/clustering.module';
     NotificationsModule,
     UsersModule,
     ClusteringModule,
+    TemplatesModule,
   ],
 })
 export class AppModule {}

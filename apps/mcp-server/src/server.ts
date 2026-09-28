@@ -18,6 +18,8 @@ import { registerNotificationTools } from './tools/notification.tools';
 import { registerUserTools } from './tools/user.tools';
 import { registerSyndicationTools } from './tools/syndication.tools';
 import { registerClusteringTools } from './tools/clustering.tools';
+import { registerTemplateTools } from './tools/template.tools';
+import { registerLiveblogTools } from './tools/liveblog.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 
@@ -79,6 +81,8 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   registerUserTools(server, database, getPrincipal);
   registerSyndicationTools(server, database, getPrincipal);
   registerClusteringTools(server, database, getPrincipal);
+  registerTemplateTools(server, database, getPrincipal);
+  registerLiveblogTools(server, database, getPrincipal);
 
   // Register resources and prompts
   registerResources(server, database, getPrincipal);

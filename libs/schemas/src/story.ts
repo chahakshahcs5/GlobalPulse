@@ -24,6 +24,10 @@ export const ArticleTypeSchema = z.enum([
   'local',
   'weekly_digest',
   'topic_briefing',
+  'liveblog',
+  'fact_check',
+  'opinion',
+  'investigation',
 ]);
 export type ArticleType = z.infer<typeof ArticleTypeSchema>;
 

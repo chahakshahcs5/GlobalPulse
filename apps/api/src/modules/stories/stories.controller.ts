@@ -14,7 +14,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { StoryService, SchedulingService, PersonalizationService, ClusteringService } from '@ai-news/stories';
+import { StoryService, SchedulingService, PersonalizationService, ClusteringService, LiveblogService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
@@ -27,8 +27,9 @@ import {
   ReorderBlocksInputSchema,
   StoryFilterSchema,
 } from './stories.dto';
+import { CreateLiveblogEntryInputSchema } from '@ai-news/schemas';
 
-import type { Story, StoryBlock, StoryVersion, FullCoverageResult } from '@ai-news/schemas';
+import type { Story, StoryBlock, StoryVersion, FullCoverageResult, LiveblogEntry } from '@ai-news/schemas';
 
 @Controller('api/stories')
 @UseGuards(NestAuthGuard)
@@ -37,12 +38,14 @@ export class StoriesController {
   private schedulingService: SchedulingService;
   private personalizationService: PersonalizationService;
   private clusteringService: ClusteringService;
+  private liveblogService: LiveblogService;
 
   constructor() {
     this.storyService = new StoryService(db);
     this.schedulingService = new SchedulingService(db);
     this.personalizationService = new PersonalizationService(db);
     this.clusteringService = new ClusteringService(db);
+    this.liveblogService = new LiveblogService(db);
   }
 
   @Get()
@@ -142,6 +145,37 @@ export class StoriesController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<FullCoverageResult> {
     return await this.clusteringService.getFullCoverage(id, principal.organizationId);
+  }
+
+  @Get(':id/liveblog/entries')
+  @RequireScope('news:read')
+  async listLiveblogEntries(
+    @Param('id') storyId: string,
+    @Query('limit') limitStr: string
+  ): Promise<LiveblogEntry[]> {
+    const limit = limitStr ? parseInt(limitStr, 10) : 100;
+    return await this.liveblogService.listEntries(storyId, limit);
+  }
+
+  @Post(':id/liveblog/entries')
+  @HttpCode(HttpStatus.CREATED)
+  @Roles('admin', 'editor', 'journalist', 'ai_agent')
+  @RequireScope('news:write')
+  async addLiveblogEntry(
+    @Param('id') storyId: string,
+    @Body() body: unknown,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<LiveblogEntry> {
+    const validated = CreateLiveblogEntryInputSchema.parse(body);
+    return await this.liveblogService.addEntry(
+      storyId,
+      validated,
+      {
+        id: principal.id,
+        name: principal.id,
+      },
+      principal.organizationId
+    );
   }
 
   @Get(':id')

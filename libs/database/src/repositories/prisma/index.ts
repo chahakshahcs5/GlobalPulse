@@ -9,3 +9,4 @@ export * from './user.prisma';
 export * from './notification.prisma';
 export * from './engagement.prisma';
 export * from './cluster.prisma';
+export * from './liveblog.prisma';
