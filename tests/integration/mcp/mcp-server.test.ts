@@ -260,6 +260,25 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     });
     const story = parseJson<{ blocks: unknown[] }>(getStory);
     expect(story.blocks.length).toBe(3);
+
+    // 6. Verify LLM token optimization: get_story with includeBlocks: false strips blocks
+    const getStoryCompact = await client.callTool({
+      name: 'get_story',
+      arguments: { storyId, includeBlocks: false },
+    });
+    const compactStory = parseJson<{ blocks?: unknown[]; blockCount: number }>(getStoryCompact);
+    expect(compactStory.blocks).toBeUndefined();
+    expect(compactStory.blockCount).toBe(3);
+
+    // 7. Verify list_stories token optimization options
+    const listRes = await client.callTool({
+      name: 'list_stories',
+      arguments: { includeBlocks: true },
+    });
+    const listData = parseJson<{ stories: Array<{ id: string; blocks?: unknown[]; summary?: string }> }>(listRes);
+    const target = listData.stories.find((s) => s.id === storyId);
+    expect(target?.blocks).toBeDefined();
+    expect(target?.summary).toBeDefined();
   });
 
   it('executes media, source, and taxonomy update/link tools', async () => {

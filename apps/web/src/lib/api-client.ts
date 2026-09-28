@@ -409,6 +409,12 @@ export async function searchStories(query: string, limit = 20) {
   );
 }
 
+export async function getSearchSuggestions(query: string, limit = 8) {
+  return request<Array<{ text: string; type: 'category' | 'topic' | 'entity' | 'story'; id: string; score: number }>>(
+    `/api/search/suggestions?q=${encodeURIComponent(query)}&limit=${limit}`
+  );
+}
+
 export async function searchFederated(q: string) {
   return request<{
     stories: any[];

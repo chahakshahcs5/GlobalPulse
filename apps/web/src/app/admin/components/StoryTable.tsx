@@ -11,6 +11,7 @@ import {
   XCircle,
   Send,
   Zap,
+  Edit3,
 } from 'lucide-react';
 import type { Story } from '@ai-news/schemas';
 import {
@@ -26,9 +27,10 @@ interface StoryTableProps {
   stories: Story[];
   filterStatus: FilterStatus;
   onSuccess: (message: string) => void;
+  onEditStory?: (story: Story) => void;
 }
 
-export function StoryTable({ stories, filterStatus, onSuccess }: StoryTableProps) {
+export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: StoryTableProps) {
   const { sweep: sweepScheduled } = useScheduledStories();
 
   const filteredStories = stories.filter(
@@ -152,6 +154,16 @@ export function StoryTable({ stories, filterStatus, onSuccess }: StoryTableProps
                       title="Release immediately"
                     >
                       <Zap className="w-3 h-3 text-purple-600" /> Release
+                    </button>
+                  )}
+
+                  {onEditStory && (
+                    <button
+                      onClick={() => onEditStory(story)}
+                      className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold cursor-pointer"
+                      title="Edit story content & blocks"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" /> Edit
                     </button>
                   )}
 

@@ -23,12 +23,23 @@ export function registerStoryTools(
     '[READ-ONLY] Retrieve complete structured details of a story by ID, including its current blocks, topics, entities, and sources.',
     {
       storyId: z.string().min(1).describe('The unique ID of the story (e.g. "sty_123")'),
+      includeBlocks: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe(
+          'Whether to include full structured content blocks (set false to retrieve compact metadata and conserve LLM context window)'
+        ),
     },
-    async ({ storyId }) => {
+    async ({ storyId, includeBlocks }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
       const story = await storyService.getStory(storyId, principal.organizationId);
+      if (!includeBlocks) {
+        const { blocks, ...rest } = story;
+        return mcpJsonResponse({ ...rest, blockCount: blocks?.length || 0 });
+      }
       return mcpJsonResponse(story);
     }
   );
@@ -327,6 +338,16 @@ export function registerStoryTools(
       limit: z.number().int().min(1).max(100).default(20).describe('Max items to return (1-100)'),
       offset: z.number().int().min(0).optional().describe('Offset number'),
       cursor: z.string().optional().describe('Opaque pagination cursor from previous response'),
+      includeSummary: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe('Whether to include story summaries in the list items'),
+      includeBlocks: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Whether to include full content blocks in each story (defaults to false to preserve LLM context)'),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -344,6 +365,7 @@ export function registerStoryTools(
           id: s.id,
           title: s.title,
           slug: s.slug,
+          ...(params.includeSummary !== false ? { summary: s.summary } : {}),
           status: s.status,
           articleType: s.articleType,
           authorId: s.authorId,
@@ -352,6 +374,7 @@ export function registerStoryTools(
           topicIds: s.topicIds,
           entityIds: s.entityIds,
           blockCount: s.blocks?.length || 0,
+          ...(params.includeBlocks ? { blocks: s.blocks } : {}),
         })),
       });
     }

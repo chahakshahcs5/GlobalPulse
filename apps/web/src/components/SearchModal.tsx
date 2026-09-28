@@ -16,6 +16,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [apiResults, setApiResults] = useState<any[] | null>(null);
+  const [suggestions, setSuggestions] = useState<Array<{ text: string; type: string; id: string; score: number }>>([]);
   const { stories } = useAllStories();
 
   useEffect(() => {
@@ -31,11 +32,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Debounced API search
+  // Debounced API search & Google News style instant suggestions
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
       setApiResults(null);
+      setSuggestions([]);
       setIsSearching(false);
       return;
     }
@@ -43,10 +45,19 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     setIsSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await api.searchStories(trimmed, 20);
-        if (res?.items) {
-          // Map to story format
-          const mapped = res.items.map((item: any) => {
+        const [storiesRes, suggestionsRes] = await Promise.allSettled([
+          api.searchStories(trimmed, 20),
+          api.getSearchSuggestions(trimmed, 6),
+        ]);
+
+        if (suggestionsRes.status === 'fulfilled' && Array.isArray(suggestionsRes.value)) {
+          setSuggestions(suggestionsRes.value);
+        } else {
+          setSuggestions([]);
+        }
+
+        if (storiesRes.status === 'fulfilled' && storiesRes.value?.items) {
+          const mapped = storiesRes.value.items.map((item: any) => {
             const fullStory = stories.find((s) => s.id === item.storyId);
             return {
               id: item.storyId,
@@ -63,10 +74,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         }
       } catch {
         setApiResults(null);
+        setSuggestions([]);
       } finally {
         setIsSearching(false);
       }
-    }, 200);
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [query, stories]);
@@ -119,6 +131,45 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             ESC
           </button>
         </div>
+
+        {/* Instant Suggestions Bar (Google News Style Autocomplete) */}
+        {suggestions.length > 0 && (
+          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs">
+            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] shrink-0 mr-1">
+              Suggestions:
+            </span>
+            {suggestions.map((item) => {
+              const badgeColors: Record<string, string> = {
+                category: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400',
+                topic: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400',
+                entity: 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400',
+                story: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400',
+              };
+              const color = badgeColors[item.type] || 'bg-slate-100 text-slate-700';
+
+              return (
+                <button
+                  key={`${item.type}-${item.id}-${item.text}`}
+                  type="button"
+                  onClick={() => {
+                    if (item.type === 'story') {
+                      const full = stories.find((s) => s.id === item.id);
+                      window.location.href = `/stories/${full?.slug || item.id}`;
+                    } else {
+                      setQuery(item.text);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap hover:opacity-85 transition cursor-pointer ${color}`}
+                >
+                  <span className="text-[10px] uppercase font-mono opacity-80">
+                    {item.type}:
+                  </span>
+                  <span>{item.text}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Search Results Area */}
         <div className="max-h-[60vh] overflow-y-auto p-4 space-y-2">

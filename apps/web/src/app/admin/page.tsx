@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
+import type { Story } from '@ai-news/schemas';
 import {
   useAllStories,
   useNewsroomMetrics,
@@ -38,6 +39,7 @@ export default function EditorialCMSPage() {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('stories');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
 
@@ -46,12 +48,30 @@ export default function EditorialCMSPage() {
     setTimeout(() => setSuccessMessage(null), 5000);
   };
 
+  const handleEditStory = (story: Story) => {
+    setEditingStory(story);
+    setIsEditorOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditorOpen(false);
+    setEditingStory(null);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <AdminHeader
         isApiConnected={isApiConnected}
         isEditorOpen={isEditorOpen}
-        onToggleEditor={() => setIsEditorOpen(!isEditorOpen)}
+        onToggleEditor={() => {
+          if (isEditorOpen) {
+            handleCloseEditor();
+          } else {
+            setEditingStory(null);
+            setIsEditorOpen(true);
+          }
+        }}
       />
 
       <AdminNavTabs
@@ -76,8 +96,9 @@ export default function EditorialCMSPage() {
 
       <StoryEditorDrawer
         isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
+        onClose={handleCloseEditor}
         onSuccess={triggerSuccess}
+        editingStory={editingStory}
       />
 
       {activeTab === 'stories' && (
@@ -100,6 +121,7 @@ export default function EditorialCMSPage() {
               stories={stories}
               filterStatus={filterStatus}
               onSuccess={triggerSuccess}
+              onEditStory={handleEditStory}
             />
           </div>
         </div>

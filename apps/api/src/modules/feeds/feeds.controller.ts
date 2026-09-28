@@ -110,11 +110,22 @@ export class FeedsController {
     @Res() reply: FastifyReply
   ) {
     const normalized = category.toLowerCase();
-    const stories = await db.stories.list({
+    const allPublished = await db.stories.list({
       status: 'PUBLISHED',
-      articleType: normalized as any,
-      limit: 30,
+      limit: 100,
     });
+    const stories = allPublished
+      .filter((s) => {
+        const matchesArticleType = s.articleType?.toLowerCase() === normalized;
+        const matchesTopic = s.topicIds?.some(
+          (t) =>
+            t.toLowerCase() === `top_${normalized}` ||
+            t.toLowerCase() === normalized ||
+            t.toLowerCase().includes(normalized)
+        );
+        return matchesArticleType || matchesTopic;
+      })
+      .slice(0, 30);
     const now = new Date().toUTCString();
 
     const itemsXml = stories

@@ -229,6 +229,65 @@ export async function saveUserStory(storyData: Partial<Story> & { title: string;
 }
 
 /**
+ * Updates an existing story, changes metadata, and commits a new version snapshot.
+ */
+export async function updateUserStory(
+  storyId: string,
+  storyData: Partial<Story> & { changeSummary?: string }
+): Promise<Story> {
+  try {
+    // 1. Update story metadata
+    const updated = await api.updateStory(storyId, {
+      title: storyData.title,
+      summary: storyData.summary,
+      articleType: storyData.articleType,
+      topicIds: storyData.topicIds,
+      entityIds: storyData.entityIds,
+      heroImageUrl: storyData.heroImageUrl,
+    });
+
+    // 2. If blocks are provided, commit a new version snapshot
+    if (storyData.blocks && storyData.blocks.length > 0) {
+      await api.createStoryVersion(storyId, {
+        changeSummary: storyData.changeSummary || 'Story updated via Editorial CMS',
+        title: storyData.title,
+        summary: storyData.summary,
+        blocks: storyData.blocks,
+      });
+    }
+
+    // 3. Handle publication status change if requested
+    if (storyData.status === 'PUBLISHED' && updated.status !== 'PUBLISHED') {
+      await api.publishStory(storyId);
+    } else if (storyData.status === 'DRAFT' && updated.status === 'PUBLISHED') {
+      await api.unpublishStory(storyId);
+    }
+
+    notifyStoryMutation();
+    return updated;
+  } catch (err) {
+    console.warn('API unavailable for update, falling back to localStorage:', err);
+    if (typeof window !== 'undefined') {
+      const storageKey = 'globalpulse_user_stories_v1';
+      const existing: Story[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updatedList = existing.map((s) => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            ...storyData,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return s;
+      });
+      localStorage.setItem(storageKey, JSON.stringify(updatedList));
+    }
+    notifyStoryMutation();
+    return storyData as Story;
+  }
+}
+
+/**
  * Toggles a story between PUBLISHED and DRAFT via the API.
  */
 export async function toggleStoryStatus(storyId: string): Promise<void> {

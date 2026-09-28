@@ -17,7 +17,12 @@ import {
   Copy,
   X,
   Zap,
+  Loader2,
+  Play,
+  Pause,
 } from 'lucide-react';
+import type { Story } from '@ai-news/schemas';
+import * as api from '../../../lib/api-client';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
 import { StoryRenderer } from '../../../components/StoryRenderer';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
@@ -37,13 +42,62 @@ export default function StoryPage() {
   const [isFullCoverageOpen, setIsFullCoverageOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isAudioActive, setIsAudioActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [audioRate, setAudioRate] = useState<number>(1.0);
   const [readingProgress, setReadingProgress] = useState(0);
   const [isDark, setIsDark] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [monthlyReads, setMonthlyReads] = useState(1);
 
-  const story = allStories.find((s) => s.slug === slug);
+  const [remoteStory, setRemoteStory] = useState<Story | null>(null);
+  const [isLoadingStory, setIsLoadingStory] = useState(false);
+
+  // Cached or remotely resolved story
+  const cachedStory = allStories.find((s) => s.slug === slug || s.id === slug);
+  const story = cachedStory || remoteStory;
+
+  // Asynchronous fallback for direct deep links / shared URLs beyond initial cache
+  useEffect(() => {
+    if (!cachedStory && slug && !remoteStory && !isLoadingStory) {
+      setIsLoadingStory(true);
+
+      // Check localStorage first
+      if (typeof window !== 'undefined') {
+        try {
+          const localList: Story[] = JSON.parse(
+            localStorage.getItem('globalpulse_user_stories_v1') || '[]'
+          );
+          const localFound = localList.find((s) => s.slug === slug || s.id === slug);
+          if (localFound) {
+            setRemoteStory(localFound);
+            setIsLoadingStory(false);
+            return;
+          }
+        } catch {
+          // ignore localStorage read error
+        }
+      }
+
+      // Fetch from API by slug, with fallback by id
+      api
+        .getStoryBySlug(slug)
+        .then((fetched) => {
+          if (fetched) setRemoteStory(fetched);
+        })
+        .catch(() => {
+          return api.getStory(slug).then((fetched) => {
+            if (fetched) setRemoteStory(fetched);
+          });
+        })
+        .catch(() => {
+          // Both failed, story remains null
+        })
+        .finally(() => {
+          setIsLoadingStory(false);
+        });
+    }
+  }, [cachedStory, slug, remoteStory, isLoadingStory]);
 
   // Dynamic Reading Time Calculation
   const totalWords =
@@ -111,6 +165,15 @@ export default function StoryPage() {
     }
   }, [story]);
 
+  if (isLoadingStory) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-4">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+        <p className="text-slate-500 text-sm font-medium">Resolving dispatch and structured blocks...</p>
+      </div>
+    );
+  }
+
   if (!story) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-4">
@@ -140,25 +203,77 @@ export default function StoryPage() {
   const toggleTextToSpeech = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+    if (isAudioActive) {
+      stopAudioBriefing();
     } else {
-      const textToRead = `${story.title}. ${story.summary}`;
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.rate = audioRate;
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
+      startAudioBriefing();
     }
+  };
+
+  const startAudioBriefing = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+    const textToRead = `${story.title}. Executive summary: ${story.summary}.`;
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.rate = audioRate;
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+    setIsPaused(false);
+    setIsAudioActive(true);
+  };
+
+  const togglePauseResume = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+      setIsSpeaking(true);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+      setIsSpeaking(false);
+    }
+  };
+
+  const stopAudioBriefing = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setIsAudioActive(false);
   };
 
   const changeAudioSpeed = (rate: number) => {
     setAudioRate(rate);
-    if (isSpeaking && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+      if (isAudioActive) {
+        const textToRead = `${story.title}. Executive summary: ${story.summary}.`;
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.rate = rate;
+        utterance.onend = () => {
+          setIsSpeaking(false);
+          setIsPaused(false);
+        };
+        utterance.onerror = () => {
+          setIsSpeaking(false);
+          setIsPaused(false);
+        };
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+        setIsPaused(false);
+      }
     }
   };
 
@@ -585,6 +700,81 @@ export default function StoryPage() {
                 {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? 'Link Copied to Clipboard!' : 'Copy Permanent Link'}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating AI Audio Briefing Player Widget */}
+      {isAudioActive && (
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 p-4 rounded-2xl bg-slate-900/95 text-white border border-slate-800 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 ${isSpeaking ? '' : 'hidden'}`}></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
+                AI Audio Briefing Narrator
+              </span>
+            </div>
+            <button
+              onClick={stopAudioBriefing}
+              className="text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="py-2.5">
+            <h4 className="text-xs font-bold text-slate-200 line-clamp-1">{story.title}</h4>
+            <div className="flex items-center gap-1.5 mt-2 h-4">
+              {[40, 75, 55, 90, 60, 85, 45, 100, 70, 50, 80, 65].map((h, i) => (
+                <div
+                  key={i}
+                  className={`w-1 rounded-full bg-blue-500 transition-all duration-150 ${
+                    isSpeaking ? 'opacity-90' : 'opacity-30'
+                  }`}
+                  style={{
+                    height: isSpeaking ? `${Math.max(20, (h * (i % 2 === 0 ? 1 : 0.7)))}%` : '20%',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              onClick={togglePauseResume}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition cursor-pointer"
+            >
+              {isSpeaking ? (
+                <>
+                  <Pause className="w-3.5 h-3.5" /> Pause
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5" /> Resume
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-0.5 text-[10px] font-bold">
+              {[1.0, 1.25, 1.5, 2.0].map((rate) => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => changeAudioSpeed(rate)}
+                  className={`px-1.5 py-0.5 rounded cursor-pointer transition ${
+                    audioRate === rate
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {rate}x
+                </button>
+              ))}
             </div>
           </div>
         </div>
