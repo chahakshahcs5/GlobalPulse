@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { GoogleNewsHeader } from '../components/GoogleNewsHeader';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'GlobalPulse — Independent Global News, Tech, Business & Science',
@@ -53,8 +54,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 selection:bg-blue-500/20 selection:text-blue-600 transition-colors">
-        <GoogleNewsHeader />
-        <main className="flex-1">{children}</main>
+        <Providers>
+          <GoogleNewsHeader />
+          <main className="flex-1">{children}</main>
         <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10 mt-16 text-xs text-slate-500 dark:text-slate-400">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
@@ -85,6 +87,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        </Providers>
       </body>
     </html>
   );

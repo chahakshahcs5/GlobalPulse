@@ -88,7 +88,7 @@ export class WorkerService {
             await s3Storage.upload(
               variantKey,
               imageBuffer,
-              format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg'
+              (format as string) === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg'
             );
             variants.push({
               format,
@@ -192,7 +192,7 @@ export class WorkerService {
           storyId,
           versionNumber,
           pdfUrl,
-          pageCount: layout === 'broadsheet' ? 3 : 1,
+          pageCount: (layout as string) === 'broadsheet' ? 3 : 1,
           exportedAt: new Date().toISOString(),
         };
       }

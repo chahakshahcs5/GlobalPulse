@@ -9,6 +9,17 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    env: {
+      // Dev tokens for test suites (format: role:clientType)
+      DEV_TOKEN_ADMIN: 'admin:internal_service',
+      DEV_TOKEN_EDITOR: 'editor:human_web',
+      DEV_TOKEN_JOURNALIST: 'journalist:human_web',
+      DEV_TOKEN_READER: 'reader:human_mobile',
+      DEV_TOKEN_GEMINI: 'ai_agent:gemini_spark',
+      DEV_TOKEN_CHATGPT: 'ai_agent:chatgpt',
+      DEV_TOKEN_CLAUDE: 'ai_agent:claude',
+      DEV_TOKEN_TEST: 'editor:human_web',
+    },
   },
   resolve: {
     alias: {

@@ -16,10 +16,10 @@ export interface AppConfig {
 }
 
 export function getAppConfig(): AppConfig {
-  const port = parseInt(process.env.PORT || '3000', 10);
+  const port = parseInt(process.env.PORT || '4000', 10);
   const host = process.env.HOST || '0.0.0.0';
   const apiBaseUrl = process.env.API_BASE_URL || `http://localhost:${port}`;
-  const mcpPort = parseInt(process.env.MCP_PORT || '3001', 10);
+  const mcpPort = parseInt(process.env.MCP_PORT || '4001', 10);
   const mcpBaseUrl = process.env.MCP_BASE_URL || `http://localhost:${mcpPort}`;
   const s3Endpoint = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://localhost:9000';
   const s3Bucket = process.env.S3_BUCKET || 'news-media';

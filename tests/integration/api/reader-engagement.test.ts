@@ -15,7 +15,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/stories',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         title: 'Global Semiconductor Consortium Advances Joint Architecture',
         summary: 'Leading fabrication plants align on open RISC-V standards.',
@@ -37,7 +37,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/publish`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
   });
 
@@ -49,7 +49,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/comments`,
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
       payload: {
         content: 'This architecture breakthrough significantly reduces licensing friction! <script>alert("xss")</script>',
         authorName: 'SiliconArchitect',
@@ -67,7 +67,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const res = await app.inject({
       method: 'GET',
       url: `/api/stories/${storyId}/comments`,
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
     });
     expect(res.statusCode).toBe(200);
     const comments = JSON.parse(res.body);
@@ -79,7 +79,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const res = await app.inject({
       method: 'PUT',
       url: `/api/comments/${commentId}/moderate`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
       payload: {
         status: 'flagged',
         reason: 'Under editorial verification',
@@ -96,7 +96,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const toggleRes = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/reactions`,
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
       payload: { reactionType: 'insightful' },
     });
     expect(toggleRes.statusCode).toBe(200);
@@ -107,7 +107,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const getRes = await app.inject({
       method: 'GET',
       url: `/api/stories/${storyId}/reactions`,
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
     });
     expect(getRes.statusCode).toBe(200);
     const summary = JSON.parse(getRes.body);
@@ -118,7 +118,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const toggleRes = await app.inject({
       method: 'POST',
       url: `/api/bookmarks/${storyId}`,
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
     });
     expect(toggleRes.statusCode).toBe(200);
     expect(JSON.parse(toggleRes.body).bookmarked).toBe(true);
@@ -126,7 +126,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     const listRes = await app.inject({
       method: 'GET',
       url: '/api/bookmarks',
-      headers: { authorization: 'Bearer reader-token' },
+      headers: { authorization: 'Bearer dev-reader' },
     });
     expect(listRes.statusCode).toBe(200);
     const bookmarks = JSON.parse(listRes.body);

@@ -71,7 +71,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/stories',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: 'Quantum Advantage Milestone Confirmed',
           summary: 'Neutral-atom quantum processor achieves 1,000 logical qubits error-mitigated.',
@@ -90,7 +90,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/stories/${createdStoryId}/blocks`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           id: 'chart_quantum_fidelity',
           blockType: 'chart',
@@ -119,7 +119,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/stories/${createdStoryId}/versions`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: 'Quantum Advantage Milestone Confirmed: Verified in Peer Review',
           summary: 'Neutral-atom processor benchmark verified across 4 independent national laboratories.',
@@ -147,7 +147,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/stories/${createdStoryId}/publish`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: { idempotencyKey: 'pub_test_quantum_1' },
       });
       expect(res.statusCode).toBe(200);
@@ -159,7 +159,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/stories/${createdStoryId}`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const fetched = JSON.parse(res.body);
@@ -172,7 +172,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/stories/${createdStoryId}/versions`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const versions = JSON.parse(res.body);
@@ -185,7 +185,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const createRes = await app.inject({
         method: 'POST',
         url: '/api/topics',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           name: 'Artificial Intelligence & Robotics',
           description: 'Autonomous agents, foundational models, and robotics.',
@@ -198,7 +198,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const listRes = await app.inject({
         method: 'GET',
         url: '/api/topics',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(listRes.statusCode).toBe(200);
       const topics = JSON.parse(listRes.body);
@@ -209,7 +209,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const createRes = await app.inject({
         method: 'POST',
         url: '/api/entities',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           name: 'OpenAI Foundation',
           type: 'ORGANIZATION',
@@ -223,7 +223,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const listRes = await app.inject({
         method: 'GET',
         url: '/api/entities',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(listRes.statusCode).toBe(200);
       const entities = JSON.parse(listRes.body);
@@ -234,7 +234,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const createRes = await app.inject({
         method: 'POST',
         url: '/api/sources',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           url: 'https://nature.com/articles/quantum-computing-2026',
           title: 'Demonstration of fault-tolerant quantum operations',
@@ -253,7 +253,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/search/stories?query=Quantum',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const result = JSON.parse(res.body);
@@ -265,7 +265,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/search/stories/similar',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: 'Quantum processor achievement announced',
           summary: 'Neutral-atom processors benchmark logical qubits.',
@@ -282,7 +282,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/search/federated?q=Quantum',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const result = JSON.parse(res.body);
@@ -297,7 +297,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/media',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           url: 'https://images.globalpulse.news/quantum-lab.png',
           mediaType: 'image',
@@ -327,7 +327,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/audit',
-        headers: { authorization: 'Bearer admin-token' },
+        headers: { authorization: 'Bearer dev-admin' },
       });
       expect(res.statusCode).toBe(200);
       const logs = JSON.parse(res.body);
@@ -339,7 +339,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/audit',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(403);
       const problem = JSON.parse(res.body);
@@ -353,7 +353,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/stories/sty_non_existent_9999',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(404);
       const problem = JSON.parse(res.body);
@@ -367,7 +367,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/stories',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: '', // Invalid: empty title violates min length
           summary: 'Missing requirements',
@@ -400,7 +400,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/topics',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           name: 'Generative AI & LLMs',
           description: 'Autonomous agents, foundation models, and AI news platforms',
@@ -418,7 +418,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/topics',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const topics = JSON.parse(res.body);
@@ -430,7 +430,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/topics/${createdTopicId}`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const topic = JSON.parse(res.body);
@@ -446,7 +446,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/sources',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           url: 'https://news.mit.edu/2026/quantum-neutral-atom-computing',
           title: 'MIT Researchers Achieve Fault-Tolerant Quantum Neutral-Atom Architecture',
@@ -465,7 +465,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/sources',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const sources = JSON.parse(res.body);
@@ -477,7 +477,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/sources/${createdSourceId}`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const source = JSON.parse(res.body);
@@ -489,7 +489,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/sources/attach',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           storyId: createdStoryId,
           sourceId: createdSourceId,
@@ -509,7 +509,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/entities',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           name: 'European Space Agency',
           type: 'ORGANIZATION',
@@ -527,7 +527,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/entities',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const entities = JSON.parse(res.body);
@@ -539,7 +539,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/entities/${createdEntityId}`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const entity = JSON.parse(res.body);
@@ -555,7 +555,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/events',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: 'Quantum Advantage Treaty Ratification',
           summary: 'Multilateral agreement establishing quantum non-proliferation norms',
@@ -573,7 +573,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/events',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const events = JSON.parse(res.body);
@@ -585,7 +585,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/events/${createdEventId}`,
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const event = JSON.parse(res.body);
@@ -599,7 +599,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/search/federated?q=Quantum',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
       });
       expect(res.statusCode).toBe(200);
       const result = JSON.parse(res.body);
@@ -614,7 +614,7 @@ describe('Modular Production API Gateway Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/search/similar',
-        headers: { authorization: 'Bearer test-token' },
+        headers: { authorization: 'Bearer dev-test' },
         payload: {
           storyId: createdStoryId,
           limit: 5,

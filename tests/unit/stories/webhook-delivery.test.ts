@@ -8,7 +8,7 @@ describe('Webhook Delivery Engine Unit Tests', () => {
   const orgId = 'org_enterprise_1';
 
   beforeEach(async () => {
-    db = new DatabaseService({ useMemory: true });
+    db = new DatabaseService({ memory: true });
     await db.initialize();
   });
 
@@ -61,11 +61,11 @@ describe('Webhook Delivery Engine Unit Tests', () => {
     const webhookService = new WebhookService(db, mockHttpClient);
     await webhookService.registerWebhook(orgId, {
       url: 'https://flaky-server.example.org/hook',
-      events: ['story.breaking'],
+      events: ['breaking_news.alert'],
     });
 
     const logs = await webhookService.dispatch(
-      'story.breaking',
+      'breaking_news.alert',
       { storyId: 'sty_breaking_1' },
       orgId,
       { maxRetries: 2 }
@@ -88,8 +88,8 @@ describe('Webhook Delivery Engine Unit Tests', () => {
     });
 
     const logs = await webhookService.dispatch(
-      'story.archived',
-      { storyId: 'sty_archived_1' },
+      'story.updated',
+      { storyId: 'sty_updated_1' },
       orgId
     );
 

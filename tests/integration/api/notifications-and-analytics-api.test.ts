@@ -15,7 +15,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/stories',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         title: 'Central Bank Digital Currency Pilot Across Asian Financial Hubs',
         summary: 'Multilateral cross-border settlement test yields sub-second clearing times.',
@@ -67,7 +67,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const res = await app.inject({
       method: 'GET',
       url: '/api/analytics/newsroom',
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
 
     expect(res.statusCode).toBe(200);
@@ -80,7 +80,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const res = await app.inject({
       method: 'POST',
       url: '/api/notifications/breaking',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         storyId,
         headline: 'BREAKING: Regional Digital Currency Settlements Go Live',
@@ -112,7 +112,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const listRes = await app.inject({
       method: 'GET',
       url: '/api/users',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
     });
     expect(listRes.statusCode).toBe(200);
     const users = JSON.parse(listRes.body);
@@ -122,7 +122,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const inviteRes = await app.inject({
       method: 'POST',
       url: '/api/users/invite',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         name: 'Rachel Adams',
         email: 'rachel.adams@news.platform',
@@ -139,7 +139,7 @@ describe('Notifications, Analytics, and User Management API Endpoints (Integrati
     const roleRes = await app.inject({
       method: 'PUT',
       url: `/api/users/${invitedUserId}/role`,
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: { role: 'editor' },
     });
     expect(roleRes.statusCode).toBe(200);

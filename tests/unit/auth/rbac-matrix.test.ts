@@ -149,39 +149,38 @@ describe('Enterprise RBAC Matrix & Token Lifecycle (Unit Tests)', () => {
   });
 
   describe('Pre-configured Persona Resolution & AI Agent Metadata', () => {
-    it('resolves Bearer journalist-token to journalist role and scopes', () => {
-      const principal = AuthService.resolveBearerToken('Bearer journalist-token');
-      expect(principal.id).toBe('usr_journalist_1');
+    it('resolves Bearer dev-journalist to journalist role and scopes', () => {
+      const principal = AuthService.resolveBearerToken('Bearer dev-journalist');
+      expect(principal.id).toBe('usr_dev_journalist');
       expect(principal.role).toBe('journalist');
       expect(principal.scopes).toEqual(ROLE_PERMISSIONS.journalist);
     });
 
-    it('resolves Bearer reader-token to reader role and mobile client type', () => {
-      const principal = AuthService.resolveBearerToken('Bearer reader-token');
-      expect(principal.id).toBe('usr_reader');
+    it('resolves Bearer dev-reader to reader role and mobile client type', () => {
+      const principal = AuthService.resolveBearerToken('Bearer dev-reader');
+      expect(principal.id).toBe('usr_dev_reader');
       expect(principal.role).toBe('reader');
       expect(principal.clientType).toBe('human_mobile');
     });
 
-    it('resolves Bearer gemini-token with full Google AI Agent metadata', () => {
-      const principal = AuthService.resolveBearerToken('Bearer gemini-token');
-      expect(principal.id).toBe('usr_gemini_agent');
+    it('resolves Bearer dev-gemini to ai_agent role with gemini_spark client type', () => {
+      const principal = AuthService.resolveBearerToken('Bearer dev-gemini');
+      expect(principal.id).toBe('usr_dev_gemini');
       expect(principal.role).toBe('ai_agent');
       expect(principal.clientType).toBe('gemini_spark');
-      expect(principal.agentMetadata).toBeDefined();
-      expect(principal.agentMetadata?.provider).toBe('google');
-      expect(principal.agentMetadata?.model).toBe('gemini-2.5-flash');
-      expect(principal.agentMetadata?.capabilities).toContain('autonomous_reporting');
+      expect(principal.scopes).toEqual(ROLE_PERMISSIONS.ai_agent);
     });
 
-    it('resolves Bearer chatgpt-token with full OpenAI Agent metadata', () => {
-      const principal = AuthService.resolveBearerToken('Bearer chatgpt-token');
-      expect(principal.id).toBe('usr_chatgpt_agent');
+    it('resolves Bearer dev-chatgpt to ai_agent role with chatgpt client type', () => {
+      const principal = AuthService.resolveBearerToken('Bearer dev-chatgpt');
+      expect(principal.id).toBe('usr_dev_chatgpt');
       expect(principal.role).toBe('ai_agent');
       expect(principal.clientType).toBe('chatgpt');
-      expect(principal.agentMetadata).toBeDefined();
-      expect(principal.agentMetadata?.provider).toBe('openai');
-      expect(principal.agentMetadata?.model).toBe('gpt-5-news');
+      expect(principal.scopes).toEqual(ROLE_PERMISSIONS.ai_agent);
+    });
+
+    it('rejects unrecognized tokens instead of silently granting access', () => {
+      expect(() => AuthService.resolveBearerToken('Bearer unknown-string')).toThrow();
     });
   });
 

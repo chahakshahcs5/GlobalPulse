@@ -7,7 +7,7 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
   let db: DatabaseService;
 
   beforeEach(async () => {
-    db = new DatabaseService({ useMemory: true });
+    db = new DatabaseService({ memory: true });
     await db.initialize();
   });
 
@@ -30,8 +30,13 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
         authorId: 'usr_editor_1',
         organizationId: 'org_default',
         blocks: [],
-        schemaVersion: 1,
-        version: 1,
+        currentVersionNumber: 1,
+        createdVia: 'web',
+        createdByClient: 'human_web',
+        topicIds: [],
+        entityIds: [],
+        sourceIds: [],
+        readingTimeMinutes: 2,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -83,7 +88,7 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
       const ctx = {
         authorId: 'usr_editor_1',
         organizationId: 'org_default',
-        clientType: 'editorial_studio' as const,
+        clientType: 'human_web' as const,
         requestId: 'req_test_1',
       };
 
@@ -97,8 +102,13 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
         authorId: 'usr_editor_1',
         organizationId: 'org_default',
         blocks: [],
-        schemaVersion: 1,
-        version: 1,
+        currentVersionNumber: 1,
+        createdVia: 'web',
+        createdByClient: 'human_web',
+        topicIds: [],
+        entityIds: [],
+        sourceIds: [],
+        readingTimeMinutes: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -106,12 +116,12 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
       await db.stories.saveBlocks(story.id, [
         {
           id: 'blk_1',
-          storyId: story.id,
-          type: 'text',
-          sequenceOrder: 0,
-          content: 'Strictly confidential financial results.',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          blockType: 'paragraph',
+          sortOrder: 0,
+          data: {
+            text: 'Strictly confidential financial results.',
+            format: 'plain' as const,
+          },
         },
       ]);
 

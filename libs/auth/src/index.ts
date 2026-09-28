@@ -196,7 +196,40 @@ export class AuthService {
   }
 
   /**
-   * Resolves Authorization Bearer token header supporting real signed JWTs and dev/test tokens.
+   * Registry of configured dev/test tokens loaded from environment variables.
+   * Format: DEV_TOKEN_<NAME>=<role>:<clientType>
+   * Example: DEV_TOKEN_GEMINI=ai_agent:gemini_spark
+   */
+  private static _devTokenRegistry: Map<string, AuthenticatedPrincipal> | null = null;
+
+  private static getDevTokenRegistry(): Map<string, AuthenticatedPrincipal> {
+    if (this._devTokenRegistry) return this._devTokenRegistry;
+    this._devTokenRegistry = new Map();
+
+    for (const [key, value] of Object.entries(process.env)) {
+      if (key.startsWith('DEV_TOKEN_') && value) {
+        const tokenName = key.replace('DEV_TOKEN_', '').toLowerCase();
+        const [role, clientType] = value.split(':') as [UserRole, ClientType];
+        if (role && ROLE_PERMISSIONS[role]) {
+          this._devTokenRegistry.set(`dev-${tokenName}`, {
+            id: `usr_dev_${tokenName}`,
+            organizationId: 'org_default',
+            role,
+            email: `${tokenName}@dev.news.platform`,
+            clientType: clientType || 'human_web',
+            scopes: ROLE_PERMISSIONS[role],
+          });
+        }
+      }
+    }
+
+    return this._devTokenRegistry;
+  }
+
+  /**
+   * Resolves Authorization Bearer token header.
+   * Production: requires cryptographically signed JWT.
+   * Dev/Test: accepts JWTs and explicitly configured dev tokens via DEV_TOKEN_* env vars.
    */
   static resolveBearerToken(authHeader?: string): AuthenticatedPrincipal {
     const isProduction = process.env.NODE_ENV === 'production';
@@ -206,13 +239,14 @@ export class AuthService {
       if (isProduction) {
         throw new UnauthorizedError('Missing or malformed Authorization header');
       }
+      // Non-production anonymous fallback: read-only access only
       return {
-        id: 'usr_dev_default',
+        id: 'usr_anonymous_dev',
         organizationId: 'org_default',
-        role: 'editor',
-        email: 'agent@news.platform',
-        clientType: 'gemini',
-        scopes: ROLE_PERMISSIONS.admin,
+        role: 'reader',
+        email: undefined,
+        clientType: 'human_web',
+        scopes: ROLE_PERMISSIONS.reader,
       };
     }
 
@@ -227,106 +261,30 @@ export class AuthService {
       return this.verifyToken(token);
     }
 
-    // Fast-path for testing harness mock tokens (only allowed in non-production or when explicitly enabled)
+    // Dev/test tokens: only accepted in non-production or when explicitly enabled
     if (!allowDevTokens) {
       throw new UnauthorizedError('Invalid token format: cryptographic JWT required in production');
     }
 
+    // Special error-simulation tokens for test harnesses
     if (token === 'expired_token') {
       throw new UnauthorizedError('Token has expired');
     }
     if (token === 'invalid_signature') {
       throw new UnauthorizedError('Invalid token signature');
     }
-    if (token === 'admin-token') {
-      return {
-        id: 'usr_admin',
-        organizationId: 'org_default',
-        role: 'admin',
-        email: 'admin@news.platform',
-        clientType: 'internal_service',
-        scopes: ROLE_PERMISSIONS.admin,
-      };
-    }
-    if (token === 'editor-token') {
-      return {
-        id: 'usr_editor',
-        organizationId: 'org_default',
-        role: 'editor',
-        email: 'editor@news.platform',
-        clientType: 'human_web',
-        scopes: ROLE_PERMISSIONS.editor,
-      };
-    }
-    if (token === 'journalist-token') {
-      return {
-        id: 'usr_journalist_1',
-        organizationId: 'org_default',
-        role: 'journalist',
-        email: 'journalist@news.platform',
-        clientType: 'human_web',
-        scopes: ROLE_PERMISSIONS.journalist,
-      };
-    }
-    if (token === 'reader-token') {
-      return {
-        id: 'usr_reader',
-        organizationId: 'org_default',
-        role: 'reader',
-        email: 'reader@news.platform',
-        clientType: 'human_mobile',
-        scopes: ROLE_PERMISSIONS.reader,
-      };
-    }
-    if (token === 'gemini-token') {
-      return {
-        id: 'usr_gemini_agent',
-        organizationId: 'org_default',
-        role: 'ai_agent',
-        clientType: 'gemini_spark',
-        scopes: ROLE_PERMISSIONS.ai_agent,
-        agentMetadata: {
-          agentName: 'Gemini Spark News Editor',
-          model: 'gemini-2.5-flash',
-          provider: 'google',
-          version: '2026.1',
-          capabilities: ['autonomous_reporting', 'source_validation', 'block_generation'],
-        },
-      };
-    }
-    if (token === 'chatgpt-token') {
-      return {
-        id: 'usr_chatgpt_agent',
-        organizationId: 'org_default',
-        role: 'ai_agent',
-        clientType: 'chatgpt',
-        scopes: ROLE_PERMISSIONS.ai_agent,
-        agentMetadata: {
-          agentName: 'ChatGPT Research Agent',
-          model: 'gpt-5-news',
-          provider: 'openai',
-          version: '2026.2',
-          capabilities: ['fact_checking', 'summary_generation'],
-        },
-      };
+
+    // Look up in environment-configured dev token registry
+    const devRegistry = this.getDevTokenRegistry();
+    const devPrincipal = devRegistry.get(token);
+    if (devPrincipal) {
+      return { ...devPrincipal };
     }
 
-    // Standard dev fallback for mock tests with arbitrary strings (e.g. 'test-token')
-    return {
-      id: 'usr_mcp_client',
-      organizationId: 'org_default',
-      role: 'editor',
-      clientType: 'chatgpt',
-      scopes: [
-        'news:read',
-        'news:search',
-        'news:write',
-        'news:publish',
-        'news:media',
-        'news:sources',
-        'news:topics',
-      ],
-    };
+    // No matching token found — reject instead of silently granting access
+    throw new UnauthorizedError(
+      'Unrecognized token. In non-production, configure dev tokens via DEV_TOKEN_* environment variables (e.g. DEV_TOKEN_EDITOR=editor:human_web) and use "Bearer dev-editor".'
+    );
   }
 
   /**

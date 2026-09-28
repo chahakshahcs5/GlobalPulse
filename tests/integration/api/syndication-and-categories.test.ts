@@ -13,7 +13,7 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/stories',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         title: 'Commercial Fusion Reactor Achieves Sustained High-Beta Plasma',
         summary: 'Magnetohydrodynamic stability demonstrated for ninety consecutive minutes.',
@@ -33,7 +33,7 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
     await app.inject({
       method: 'POST',
       url: `/api/stories/${story.id}/publish`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
   });
 
@@ -46,7 +46,7 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/categories',
-        headers: { authorization: 'Bearer reader-token' },
+        headers: { authorization: 'Bearer dev-reader' },
       });
       expect(res.statusCode).toBe(200);
       const categories = JSON.parse(res.body);
@@ -62,7 +62,7 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/categories/technology/stories',
-        headers: { authorization: 'Bearer reader-token' },
+        headers: { authorization: 'Bearer dev-reader' },
       });
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body);

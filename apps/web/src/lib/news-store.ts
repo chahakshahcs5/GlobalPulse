@@ -83,38 +83,34 @@ function notifyStoryMutation() {
 
 /**
  * React hook that fetches all published stories from the API.
- * Falls back to demo data when the API is unreachable.
+ * Only falls back to demo data when the API is completely unreachable.
  * Automatically refreshes on SSE events and local mutations.
  */
 export function useAllStories() {
-  const [stories, setStories] = useState<Story[]>(EXTENDED_NEWS_STORIES);
+  const [stories, setStories] = useState<Story[]>([]);
   const [isApiConnected, setIsApiConnected] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const fetchInProgress = useRef(false);
+  const hasAttemptedFetch = useRef(false);
 
   const fetchStories = useCallback(async () => {
     if (fetchInProgress.current) return;
     fetchInProgress.current = true;
     try {
       const apiStories = await api.listStories({ limit: 100 });
-      if (apiStories && apiStories.length > 0) {
-        // Merge API stories with demo data, API stories take priority
-        const apiIds = new Set(apiStories.map((s) => s.id));
-        const merged = [
-          ...apiStories,
-          ...EXTENDED_NEWS_STORIES.filter((s) => !apiIds.has(s.id)),
-        ];
-        setStories(merged);
-        setIsApiConnected(true);
-      } else {
-        // API returned empty — use demo data as baseline
-        setStories(EXTENDED_NEWS_STORIES);
-        setIsApiConnected(true);
-      }
+      // API is reachable — use its data (even if empty)
+      setStories(apiStories || []);
+      setIsApiConnected(true);
+      setIsDemoMode(false);
     } catch {
-      // API unreachable — use demo data gracefully
-      setStories(EXTENDED_NEWS_STORIES);
+      // API unreachable — fall back to demo data only if we haven't connected before
+      if (!hasAttemptedFetch.current) {
+        setStories(EXTENDED_NEWS_STORIES);
+        setIsDemoMode(true);
+      }
       setIsApiConnected(false);
     } finally {
+      hasAttemptedFetch.current = true;
       fetchInProgress.current = false;
     }
   }, []);
@@ -155,16 +151,16 @@ export function useAllStories() {
     };
   }, [fetchStories]);
 
-  return { stories, isApiConnected };
+  return { stories, isApiConnected, isDemoMode };
 }
 
 /**
  * Fetches only published stories for the reader-facing feed.
  */
 export function usePublishedStories() {
-  const { stories, isApiConnected } = useAllStories();
+  const { stories, isApiConnected, isDemoMode } = useAllStories();
   const published = stories.filter((s) => s.status === 'PUBLISHED');
-  return { stories: published, isApiConnected };
+  return { stories: published, isApiConnected, isDemoMode };
 }
 
 // ---------------------------------------------------------------------------

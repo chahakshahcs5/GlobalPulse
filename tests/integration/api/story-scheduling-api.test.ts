@@ -14,7 +14,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/stories',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         title: 'Deep Space Telescope Detects Atmospheric Water Vapor on Exoplanet',
         summary: 'Astronomical spectroscopy reveals habitable zone signatures.',
@@ -43,7 +43,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/schedule`,
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: { publishAt: pastTime },
     });
 
@@ -57,7 +57,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/schedule`,
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: { publishAt: futureTime },
     });
 
@@ -72,7 +72,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/stories/scheduled/list',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
     });
 
     expect(res.statusCode).toBe(200);
@@ -87,7 +87,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/stories/scheduled/sweep',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
     });
 
     expect(res.statusCode).toBe(200);

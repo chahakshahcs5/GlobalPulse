@@ -14,7 +14,7 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/stories',
-      headers: { authorization: 'Bearer admin-token' },
+      headers: { authorization: 'Bearer dev-admin' },
       payload: {
         title: 'Autonomous Energy Grid Pilot in Northern Europe',
         summary: 'Smart grid infrastructure deployed across three municipalities.',
@@ -42,7 +42,7 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/submit-review`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
     expect(res.statusCode).toBe(200);
     const story = JSON.parse(res.body);
@@ -53,7 +53,7 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/stories/review-queue',
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
@@ -64,7 +64,7 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/reject`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
       payload: { feedback: 'Please verify the primary energy data source.' },
     });
     expect(res.statusCode).toBe(200);
@@ -77,14 +77,14 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/submit-review`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
 
     // Approve & publish
     const res = await app.inject({
       method: 'POST',
       url: `/api/stories/${storyId}/approve`,
-      headers: { authorization: 'Bearer editor-token' },
+      headers: { authorization: 'Bearer dev-editor' },
     });
     expect(res.statusCode).toBe(200);
     const story = JSON.parse(res.body);

@@ -8,12 +8,12 @@ import {
 
 describe('Distributed Lock Store Unit Tests', () => {
   let db: DatabaseService;
-  const user1 = { id: 'usr_sarah', name: 'Sarah Connor' };
-  const user2 = { id: 'usr_john', name: 'John Connor' };
+  const user1 = { id: 'usr_sarah', name: 'Sarah Connor', clientType: 'human_web', role: 'editor' };
+  const user2 = { id: 'usr_john', name: 'John Connor', clientType: 'human_web', role: 'journalist' };
   const storyId = 'sty_lock_test_1';
 
   beforeEach(async () => {
-    db = new DatabaseService({ useMemory: true });
+    db = new DatabaseService({ memory: true });
     await db.initialize();
     await db.stories.create({
       id: storyId,
@@ -25,8 +25,13 @@ describe('Distributed Lock Store Unit Tests', () => {
       authorId: user1.id,
       organizationId: 'org_default',
       blocks: [],
-      schemaVersion: 1,
-      version: 1,
+      currentVersionNumber: 1,
+      createdVia: 'web',
+      createdByClient: 'human_web',
+      topicIds: [],
+      entityIds: [],
+      sourceIds: [],
+      readingTimeMinutes: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });

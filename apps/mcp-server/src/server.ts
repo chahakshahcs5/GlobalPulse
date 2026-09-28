@@ -28,6 +28,53 @@ import { registerPrompts } from './prompts/index';
 import { resolveCorsOrigin, ALLOWED_CORS_HEADERS } from '@ai-news/shared';
 
 /**
+ * Sliding-window rate limiter for MCP HTTP requests.
+ * Tracks request timestamps per key and enforces a max request count within a time window.
+ */
+class RateLimiter {
+  private requests = new Map<string, number[]>();
+  private readonly maxRequests: number;
+  private readonly windowMs: number;
+
+  constructor(maxRequests: number = 200, windowMs: number = 60_000) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+
+    // Periodic cleanup of stale entries every 60 seconds
+    setInterval(() => {
+      const now = Date.now();
+      for (const [key, timestamps] of this.requests.entries()) {
+        const valid = timestamps.filter((t) => now - t < this.windowMs);
+        if (valid.length === 0) {
+          this.requests.delete(key);
+        } else {
+          this.requests.set(key, valid);
+        }
+      }
+    }, 60_000).unref();
+  }
+
+  /**
+   * Returns true if the request should be allowed, false if rate-limited.
+   */
+  check(key: string): { allowed: boolean; remaining: number; retryAfterMs: number } {
+    const now = Date.now();
+    const timestamps = this.requests.get(key) || [];
+    const validTimestamps = timestamps.filter((t) => now - t < this.windowMs);
+
+    if (validTimestamps.length >= this.maxRequests) {
+      const oldestInWindow = validTimestamps[0];
+      const retryAfterMs = this.windowMs - (now - oldestInWindow);
+      return { allowed: false, remaining: 0, retryAfterMs };
+    }
+
+    validTimestamps.push(now);
+    this.requests.set(key, validTimestamps);
+    return { allowed: true, remaining: this.maxRequests - validTimestamps.length, retryAfterMs: 0 };
+  }
+}
+
+/**
  * Concurrency-safe request-scoped storage for AuthenticatedPrincipal
  * Prevents race conditions across concurrent AI client requests (§54, §56)
  */
@@ -98,6 +145,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   const transport = new StreamableHTTPServerTransport();
   server.connect(transport);
 
+  // Rate limiter: configurable via env vars (defaults: 200 req/min)
+  const mcpRateMax = parseInt(process.env.MCP_RATE_LIMIT_MAX || '200', 10);
+  const mcpRateWindowMs = parseInt(process.env.MCP_RATE_LIMIT_WINDOW_MS || '60000', 10);
+  const rateLimiter = new RateLimiter(mcpRateMax, mcpRateWindowMs);
+
   // Create HTTP server
   const httpServer = http.createServer(async (req, res) => {
     // Secure CORS handling
@@ -114,6 +166,24 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
+      return;
+    }
+
+    // Rate limiting — keyed by auth token or IP
+    const rateLimitKey = req.headers.authorization || req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
+    const rateResult = rateLimiter.check(rateLimitKey);
+    res.setHeader('X-RateLimit-Limit', String(mcpRateMax));
+    res.setHeader('X-RateLimit-Remaining', String(rateResult.remaining));
+    if (!rateResult.allowed) {
+      res.setHeader('Retry-After', String(Math.ceil(rateResult.retryAfterMs / 1000)));
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: `Rate limit exceeded. Max ${mcpRateMax} requests per ${mcpRateWindowMs / 1000}s. Retry after ${Math.ceil(rateResult.retryAfterMs / 1000)}s.`,
+        },
+      }));
       return;
     }
 

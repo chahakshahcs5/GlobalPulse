@@ -99,6 +99,32 @@ export class DatabaseService {
 
   private isPrismaActive = false;
 
+  /**
+   * Mutex for serializing in-memory transactions to prevent concurrent
+   * transactions from seeing partial state (no real DB-level locking exists).
+   */
+  private _txMutexQueue: Array<() => void> = [];
+  private _txLocked = false;
+
+  private async acquireTransactionLock(): Promise<void> {
+    if (!this._txLocked) {
+      this._txLocked = true;
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this._txMutexQueue.push(resolve);
+    });
+  }
+
+  private releaseTransactionLock(): void {
+    if (this._txMutexQueue.length > 0) {
+      const next = this._txMutexQueue.shift()!;
+      next();
+    } else {
+      this._txLocked = false;
+    }
+  }
+
   constructor(_options?: DatabaseServiceOptions) {
     // Default to high-performance in-memory repositories
     this.stories = this.memoryStories;
@@ -170,6 +196,9 @@ export class DatabaseService {
       return TransactionManager.execute(work);
     }
 
+    // Serialize in-memory transactions via mutex to prevent partial reads
+    await this.acquireTransactionLock();
+
     // High-fidelity in-memory atomic transaction with automatic rollback across all 16 domains
     const storySnap = this.memoryStories.snapshot();
     const eventSnap = this.memoryEvents.snapshot();
@@ -209,6 +238,8 @@ export class DatabaseService {
       this.memoryWebhooks.restore(webhookSnap);
       this.memoryProvenance.restore(provenanceSnap);
       throw err;
+    } finally {
+      this.releaseTransactionLock();
     }
   }
 
@@ -244,5 +275,30 @@ export class DatabaseService {
   }
 }
 
-// Global database singleton
-export const db = new DatabaseService();
+/**
+ * Creates a new DatabaseService instance. Use this instead of the global singleton
+ * when you need explicit lifecycle control (e.g. in tests or isolated processes).
+ */
+export function createDatabaseService(options?: DatabaseServiceOptions): DatabaseService {
+  return new DatabaseService(options);
+}
+
+/**
+ * Lazy-initialized singleton for backward compatibility.
+ * Prefer `createDatabaseService()` for new code.
+ */
+let _dbSingleton: DatabaseService | null = null;
+
+export function getDatabaseService(): DatabaseService {
+  if (!_dbSingleton) {
+    _dbSingleton = new DatabaseService();
+  }
+  return _dbSingleton;
+}
+
+/**
+ * @deprecated Use `getDatabaseService()` or `createDatabaseService()` instead.
+ * Kept for backward compatibility — this is a lazy singleton accessor.
+ */
+export const db = getDatabaseService();
+

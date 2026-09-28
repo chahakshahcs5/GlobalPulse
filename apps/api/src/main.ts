@@ -36,9 +36,16 @@ async function bootstrap() {
     realtime.broadcast(channel, eventName, data);
   });
 
-  // Automated scheduled publishing background runner
+  // Automated scheduled publishing — uses setInterval but with error isolation
+  // and configurable interval. In production, this should be replaced with a
+  // BullMQ repeatable job for distributed locking and crash resilience.
   const schedulingService = new SchedulingService(db);
-  const schedulerTimer = setInterval(async () => {
+  const schedulerIntervalMs = parseInt(process.env.SCHEDULER_INTERVAL_MS || '15000', 10);
+  let schedulerRunning = false;
+
+  const runScheduledPublishing = async () => {
+    if (schedulerRunning) return; // Prevent overlapping runs
+    schedulerRunning = true;
     try {
       const published = await schedulingService.publishDueStories('org_default');
       if (published.length > 0) {
@@ -47,8 +54,12 @@ async function bootstrap() {
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.error(`Error in automated story scheduler: ${errorMsg}`);
+    } finally {
+      schedulerRunning = false;
     }
-  }, 15000);
+  };
+
+  const schedulerTimer = setInterval(runScheduledPublishing, schedulerIntervalMs);
 
   const app = await startServer({ port, host });
 

@@ -4,18 +4,20 @@ import { UnauthorizedError, ForbiddenError } from '@ai-news/shared';
 
 describe('AuthService Unit Tests', () => {
   describe('resolveBearerToken', () => {
-    it('returns default development principal when no Authorization header is provided', () => {
+    it('returns read-only development principal when no Authorization header is provided', () => {
       const principal = AuthService.resolveBearerToken();
-      expect(principal.id).toBe('usr_dev_default');
-      expect(principal.clientType).toBe('gemini');
-      expect(principal.scopes).toContain('news:admin');
-      expect(principal.scopes).toContain('news:publish');
+      expect(principal.id).toBe('usr_anonymous_dev');
+      expect(principal.role).toBe('reader');
+      expect(principal.clientType).toBe('human_web');
+      expect(principal.scopes).toContain('news:read');
+      expect(principal.scopes).not.toContain('news:admin');
+      expect(principal.scopes).not.toContain('news:publish');
     });
 
-    it('returns default development principal when header does not start with Bearer', () => {
+    it('returns read-only development principal when header does not start with Bearer', () => {
       const principal = AuthService.resolveBearerToken('Basic dXNlcjpwYXNz');
-      expect(principal.id).toBe('usr_dev_default');
-      expect(principal.clientType).toBe('gemini');
+      expect(principal.id).toBe('usr_anonymous_dev');
+      expect(principal.role).toBe('reader');
     });
 
     it('throws UnauthorizedError when token is expired_token', () => {
@@ -28,21 +30,17 @@ describe('AuthService Unit Tests', () => {
       expect(() => AuthService.resolveBearerToken('Bearer invalid_signature')).toThrow('Invalid token signature');
     });
 
-    it('resolves admin-token to internal_service with full administrative privileges', () => {
-      const principal = AuthService.resolveBearerToken('Bearer admin-token');
-      expect(principal.id).toBe('usr_admin');
+    it('resolves dev-admin to internal_service with full administrative privileges', () => {
+      const principal = AuthService.resolveBearerToken('Bearer dev-admin');
+      expect(principal.id).toBe('usr_dev_admin');
       expect(principal.clientType).toBe('internal_service');
       expect(principal.scopes).toContain('news:admin');
       expect(principal.scopes).toContain('news:publish');
     });
 
-    it('resolves standard token to MCP client with standard newsroom scopes', () => {
-      const principal = AuthService.resolveBearerToken('Bearer mcp-gemini-spark-session-token');
-      expect(principal.id).toBe('usr_mcp_client');
-      expect(principal.clientType).toBe('chatgpt');
-      expect(principal.scopes).toContain('news:write');
-      expect(principal.scopes).toContain('news:publish');
-      expect(principal.scopes).not.toContain('news:admin');
+    it('rejects unrecognized non-JWT tokens instead of silently granting access', () => {
+      expect(() => AuthService.resolveBearerToken('Bearer mcp-gemini-spark-session-token')).toThrow(UnauthorizedError);
+      expect(() => AuthService.resolveBearerToken('Bearer random-string')).toThrow(UnauthorizedError);
     });
 
     it('strictly rejects unauthenticated requests when in production', () => {
@@ -55,8 +53,8 @@ describe('AuthService Unit Tests', () => {
         expect(() => AuthService.resolveBearerToken()).toThrow(UnauthorizedError);
         expect(() => AuthService.resolveBearerToken('Basic credentials')).toThrow(UnauthorizedError);
         expect(() => AuthService.resolveBearerToken('Bearer ')).toThrow(UnauthorizedError);
-        expect(() => AuthService.resolveBearerToken('Bearer admin-token')).toThrow(UnauthorizedError);
-        expect(() => AuthService.resolveBearerToken('Bearer editor-token')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer dev-admin')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer dev-editor')).toThrow(UnauthorizedError);
       } finally {
         (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
         if (prevAllowDev !== undefined) process.env.ALLOW_DEV_TOKENS = prevAllowDev;

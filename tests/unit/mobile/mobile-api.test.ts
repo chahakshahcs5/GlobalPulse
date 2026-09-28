@@ -23,7 +23,6 @@ describe('MobileApiService Unit Tests', () => {
       blocks: [
         {
           id: 'b1',
-          storyId: 'sty_live_123',
           blockType: 'heading',
           sortOrder: 0,
           data: { level: 2, text: 'Consensus Reached' },

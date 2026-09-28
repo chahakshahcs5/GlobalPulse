@@ -514,4 +514,39 @@ export async function createTopic(input: { name: string; slug?: string; descript
   });
 }
 
+// ---------------------------------------------------------------------------
+// Authentication API
+// ---------------------------------------------------------------------------
 
+export interface AuthResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    avatarUrl?: string;
+  };
+  token: string;
+}
+
+export async function loginUser(email: string, password: string): Promise<AuthResponse> {
+  return request<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function registerUser(name: string, email: string, password: string): Promise<AuthResponse> {
+  return request<AuthResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
+  });
+}
+
+export async function getCurrentUser(): Promise<AuthResponse['user'] | null> {
+  try {
+    return await request<AuthResponse['user']>('/api/auth/me');
+  } catch {
+    return null;
+  }
+}

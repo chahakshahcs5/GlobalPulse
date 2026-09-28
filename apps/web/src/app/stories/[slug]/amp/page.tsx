@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Clock, ShieldCheck, Zap } from 'lucide-react';
