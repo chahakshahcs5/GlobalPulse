@@ -25,6 +25,7 @@ import { registerEditorialTools } from './tools/editorial.tools';
 import { registerEnterpriseTools } from './tools/enterprise.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
+import { resolveCorsOrigin, ALLOWED_CORS_HEADERS } from '@ai-news/shared';
 
 /**
  * Concurrency-safe request-scoped storage for AuthenticatedPrincipal
@@ -101,39 +102,12 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   const httpServer = http.createServer(async (req, res) => {
     // Secure CORS handling
     const reqOrigin = req.headers.origin;
-    const allowedEnv = process.env.ALLOWED_ORIGINS;
-    let allowOrigin = '*';
-
-    if (allowedEnv) {
-      const allowedList = allowedEnv.split(',').map((s) => s.trim()).filter(Boolean);
-      if (reqOrigin && (allowedList.includes(reqOrigin) || allowedList.includes('*'))) {
-        allowOrigin = reqOrigin;
-      } else if (!reqOrigin) {
-        allowOrigin = '*';
-      } else {
-        allowOrigin = '';
-      }
-    } else if (process.env.NODE_ENV === 'production') {
-      const defaultAllowed = [
-        'https://globalpulse.news',
-        'https://www.globalpulse.news',
-        'https://admin.globalpulse.news',
-        'http://localhost:3000',
-        'http://localhost:3002',
-      ];
-      if (reqOrigin && defaultAllowed.includes(reqOrigin)) {
-        allowOrigin = reqOrigin;
-      } else if (!reqOrigin) {
-        allowOrigin = '*';
-      } else {
-        allowOrigin = '';
-      }
-    }
+    const allowOrigin = resolveCorsOrigin(reqOrigin);
 
     if (allowOrigin) {
       res.setHeader('Access-Control-Allow-Origin', allowOrigin);
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.setHeader('Access-Control-Allow-Headers', ALLOWED_CORS_HEADERS.join(', '));
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
 

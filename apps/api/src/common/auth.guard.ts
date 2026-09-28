@@ -54,7 +54,15 @@ export class NestAuthGuard implements CanActivate {
     ]);
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const authHeader = request.headers.authorization;
+    let authHeader = request.headers.authorization;
+
+    // Check cookie fallback if Authorization header not provided
+    if (!authHeader && request.headers.cookie) {
+      const match = request.headers.cookie.match(/(?:^|;\s*)gp_token=([^;]+)/);
+      if (match && match[1]) {
+        authHeader = `Bearer ${decodeURIComponent(match[1])}`;
+      }
+    }
 
     if (!authHeader) {
       const isProduction = process.env.NODE_ENV === 'production';

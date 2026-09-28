@@ -19,48 +19,23 @@ export interface ApiServerOptions {
   logger?: boolean;
 }
 
+import {
+  isOriginAllowed,
+  ALLOWED_CORS_HEADERS,
+  ALLOWED_CORS_METHODS,
+} from '@ai-news/shared';
+
 export function getCorsOptions() {
-  const allowed = process.env.ALLOWED_ORIGINS;
-  if (allowed) {
-    const list = allowed.split(',').map((s) => s.trim()).filter(Boolean);
-    return {
-      origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
-        if (!origin || list.includes(origin) || list.includes('*')) {
-          return cb(null, true);
-        }
-        return cb(null, false);
-      },
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
-      credentials: true,
-    };
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    const defaultAllowed = [
-      'https://globalpulse.news',
-      'https://www.globalpulse.news',
-      'https://admin.globalpulse.news',
-      'http://localhost:3000',
-      'http://localhost:3002',
-    ];
-    return {
-      origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
-        if (!origin || defaultAllowed.includes(origin)) {
-          return cb(null, true);
-        }
-        return cb(null, false);
-      },
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
-      credentials: true,
-    };
-  }
-
   return {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
+    origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
+      if (!origin || isOriginAllowed(origin)) {
+        return cb(null, true);
+      }
+      return cb(null, false);
+    },
+    methods: ALLOWED_CORS_METHODS,
+    allowedHeaders: ALLOWED_CORS_HEADERS,
+    credentials: true,
   };
 }
 
