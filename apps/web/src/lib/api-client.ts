@@ -494,3 +494,24 @@ export async function sweepScheduledStories(): Promise<{ success: boolean; count
   });
 }
 
+// ---------------------------------------------------------------------------
+// Taxonomy & Topics API
+// ---------------------------------------------------------------------------
+
+export async function listTopics(): Promise<any[]> {
+  try {
+    const res = await request<any[]>('/api/topics');
+    return Array.isArray(res) ? res : (res as any)?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createTopic(input: { name: string; slug?: string; description?: string; parentId?: string }): Promise<any> {
+  return request<any>('/api/topics', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+

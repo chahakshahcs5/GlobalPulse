@@ -16,6 +16,7 @@ import {
   BookmarkCheck,
   PenTool,
   Radio,
+  Compass,
 } from 'lucide-react';
 import { useBookmarks } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
@@ -26,6 +27,7 @@ const CATEGORIES = [
   { id: 'top', name: 'Top Stories', href: '/', icon: Star },
   { id: 'for-you', name: 'For You', href: '/?tab=for-you', icon: Sparkles },
   { id: 'following', name: 'Following', href: '/?tab=following', icon: BookmarkCheck },
+  { id: 'explore', name: 'Explore', href: '/topics', icon: Compass },
   { id: 'india', name: 'India', href: '/category/india' },
   { id: 'world', name: 'World', href: '/category/world' },
   { id: 'business', name: 'Business', href: '/category/business' },
@@ -52,7 +54,11 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
             else if (cat.id === 'following') isActive = currentTab === 'following';
             else isActive = false;
           } else {
-            isActive = pathname === cat.href;
+            if (cat.id === 'explore') {
+              isActive = pathname.startsWith('/topics') || pathname.startsWith('/explore');
+            } else {
+              isActive = pathname === cat.href;
+            }
           }
 
           return (

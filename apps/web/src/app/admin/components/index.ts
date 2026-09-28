@@ -8,3 +8,4 @@ export * from './NewsroomPulseTab';
 export * from './BreakingNewsTab';
 export * from './StaffManagementTab';
 export * from './McpDiscoveryTab';
+export * from './TaxonomyManagementTab';

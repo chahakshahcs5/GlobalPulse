@@ -735,4 +735,172 @@ export function useEditorialNotifications(limit = 20) {
   return { notifications, isLoading, broadcastBreaking, refetch: fetchNotifications };
 }
 
+// ---------------------------------------------------------------------------
+// Taxonomy Management (Categories & Topics Store)
+// ---------------------------------------------------------------------------
+
+export interface NewsCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon?: string;
+  storyCount?: number;
+  isCustom?: boolean;
+}
+
+export interface NewsTopic {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  parentCategory?: string;
+  storyCount?: number;
+  isCustom?: boolean;
+}
+
+export const DEFAULT_CATEGORIES: NewsCategory[] = [
+  { id: 'cat_india', name: 'India', slug: 'india', description: 'National policy, economy, politics, and development across India', icon: '🇮🇳', storyCount: 8 },
+  { id: 'cat_world', name: 'World', slug: 'world', description: 'Diplomatic summits, global affairs, treaties, and international geopolitics', icon: '🌐', storyCount: 14 },
+  { id: 'cat_business', name: 'Business', slug: 'business', description: 'Financial markets, trade settlements, central banking, and corporate dispatches', icon: '📈', storyCount: 11 },
+  { id: 'cat_technology', name: 'Technology', slug: 'technology', description: 'Artificial Intelligence, semiconductor consortiums, quantum computing, and software', icon: '💻', storyCount: 16 },
+  { id: 'cat_science', name: 'Science', slug: 'science', description: 'Magnetic fusion reactors, aerospace missions, genomics, and breakthrough physics', icon: '🔬', storyCount: 9 },
+  { id: 'cat_health', name: 'Health', slug: 'health', description: 'Biotechnology, global epidemiology, therapeutics, and medical innovation', icon: '🩺', storyCount: 7 },
+  { id: 'cat_sports', name: 'Sports', slug: 'sports', description: 'International championships, athletic tournaments, and competitive sports', icon: '🏆', storyCount: 5 },
+  { id: 'cat_climate', name: 'Climate & Energy', slug: 'climate', description: 'Grid transition, carbon neutrality initiatives, renewables, and climate science', icon: '🌱', storyCount: 6 },
+  { id: 'cat_geopolitics', name: 'Geopolitics', slug: 'geopolitics', description: 'Strategic alliances, multilateral trade pacts, defense, and sovereign policy', icon: '⚖️', storyCount: 12 },
+];
+
+export const DEFAULT_TOPICS: NewsTopic[] = [
+  { id: 'top_ai', name: 'AI Breakthroughs', slug: 'ai-breakthroughs', parentCategory: 'Technology', description: 'Autonomous agent architectures, LLM models, and enterprise reasoning systems', storyCount: 12 },
+  { id: 'top_semi', name: 'Semiconductors', slug: 'semiconductors', parentCategory: 'Technology', description: '2nm fabrication standards, lithography equipment, and global foundries', storyCount: 8 },
+  { id: 'top_fusion', name: 'Clean Energy & Fusion', slug: 'clean-energy', parentCategory: 'Science', description: 'Magnetic confinement fusion, next-gen solar cells, and grid storage', storyCount: 6 },
+  { id: 'top_quantum', name: 'Quantum Computing', slug: 'quantum-computing', parentCategory: 'Technology', description: 'Qubit stability, quantum error correction, and cryptographic implications', storyCount: 5 },
+  { id: 'top_space', name: 'Space Exploration', slug: 'space-exploration', parentCategory: 'Science', description: 'Lunar gateway modules, interplanetary probes, and commercial launch vehicles', storyCount: 7 },
+  { id: 'top_brics', name: 'BRICS 2026 Summit', slug: 'brics-2026', parentCategory: 'World', description: 'Sovereign local-currency accords, bilateral trade treaties, and multilateral expansion', storyCount: 9 },
+  { id: 'top_cbdc', name: 'Central Bank Digital Currency', slug: 'cbdc', parentCategory: 'Business', description: 'Cross-border digital currency settlement pilots, sovereign reserves, and liquidity', storyCount: 4 },
+  { id: 'top_defense', name: 'Cyber Defense & Security', slug: 'cyber-defense', parentCategory: 'Technology', description: 'Critical infrastructure protection, zero-trust cryptographic protocols, and audits', storyCount: 5 },
+  { id: 'top_ev', name: 'Electric Mobility & Batteries', slug: 'electric-mobility', parentCategory: 'Business', description: 'Solid-state battery chemistry, sodium-ion scaling, and EV manufacturing', storyCount: 6 },
+  { id: 'top_biotech', name: 'Genomics & Precision Medicine', slug: 'biotech', parentCategory: 'Health', description: 'CRISPR base editing, mRNA cancer vaccines, and clinical trials', storyCount: 4 },
+];
+
+const CATEGORIES_KEY = 'globalpulse_categories_v1';
+const TOPICS_KEY = 'globalpulse_topics_v1';
+
+export function useTaxonomy() {
+  const [categories, setCategories] = useState<NewsCategory[]>(DEFAULT_CATEGORIES);
+  const [topics, setTopics] = useState<NewsTopic[]>(DEFAULT_TOPICS);
+
+  const loadTaxonomy = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const storedCats = localStorage.getItem(CATEGORIES_KEY);
+      if (storedCats) {
+        setCategories(JSON.parse(storedCats));
+      } else {
+        setCategories(DEFAULT_CATEGORIES);
+      }
+
+      const storedTops = localStorage.getItem(TOPICS_KEY);
+      if (storedTops) {
+        setTopics(JSON.parse(storedTops));
+      } else {
+        setTopics(DEFAULT_TOPICS);
+      }
+    } catch {
+      // Safe fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTaxonomy();
+    window.addEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
+    return () => window.removeEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
+  }, [loadTaxonomy]);
+
+  const addCategory = useCallback((cat: { name: string; slug?: string; description?: string; icon?: string }) => {
+    const slug = cat.slug || cat.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+    const newCat: NewsCategory = {
+      id: `cat_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      name: cat.name.trim(),
+      slug,
+      description: cat.description || `Comprehensive dispatches and analysis on ${cat.name}.`,
+      icon: cat.icon || '🏷️',
+      storyCount: 0,
+      isCustom: true,
+    };
+
+    setCategories((prev) => {
+      const updated = [newCat, ...prev.filter((c) => c.slug !== slug)];
+      try {
+        localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {}
+      return updated;
+    });
+
+    return newCat;
+  }, []);
+
+  const deleteCategory = useCallback((id: string) => {
+    setCategories((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      try {
+        localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  const addTopic = useCallback((topic: { name: string; slug?: string; description?: string; parentCategory?: string }) => {
+    const slug = topic.slug || topic.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+    const newTopic: NewsTopic = {
+      id: `top_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      name: topic.name.trim(),
+      slug,
+      description: topic.description || `In-depth coverage and timeline milestones for ${topic.name}.`,
+      parentCategory: topic.parentCategory || 'General',
+      storyCount: 0,
+      isCustom: true,
+    };
+
+    setTopics((prev) => {
+      const updated = [newTopic, ...prev.filter((t) => t.slug !== slug)];
+      try {
+        localStorage.setItem(TOPICS_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {}
+      return updated;
+    });
+
+    // Optionally sync with backend if running
+    api.createTopic({ name: newTopic.name, slug: newTopic.slug, description: newTopic.description }).catch(() => {});
+
+    return newTopic;
+  }, []);
+
+  const deleteTopic = useCallback((id: string) => {
+    setTopics((prev) => {
+      const updated = prev.filter((t) => t.id !== id);
+      try {
+        localStorage.setItem(TOPICS_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  return {
+    categories,
+    topics,
+    addCategory,
+    deleteCategory,
+    addTopic,
+    deleteTopic,
+    refetch: loadTaxonomy,
+  };
+}
+
+
 

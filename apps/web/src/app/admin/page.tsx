@@ -23,6 +23,7 @@ import {
   BreakingNewsTab,
   StaffManagementTab,
   McpDiscoveryTab,
+  TaxonomyManagementTab,
   type AdminTab,
   type FilterStatus,
 } from './components';
@@ -122,6 +123,10 @@ export default function EditorialCMSPage() {
 
       {activeTab === 'mcp' && (
         <McpDiscoveryTab />
+      )}
+
+      {activeTab === 'taxonomy' && (
+        <TaxonomyManagementTab onSuccess={triggerSuccess} />
       )}
     </div>
   );
