@@ -17,6 +17,7 @@ import { registerSchedulingTools } from './tools/scheduling.tools';
 import { registerNotificationTools } from './tools/notification.tools';
 import { registerUserTools } from './tools/user.tools';
 import { registerSyndicationTools } from './tools/syndication.tools';
+import { registerClusteringTools } from './tools/clustering.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 
@@ -77,6 +78,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   registerNotificationTools(server, database, getPrincipal);
   registerUserTools(server, database, getPrincipal);
   registerSyndicationTools(server, database, getPrincipal);
+  registerClusteringTools(server, database, getPrincipal);
 
   // Register resources and prompts
   registerResources(server, database, getPrincipal);

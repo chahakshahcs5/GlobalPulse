@@ -11,3 +11,4 @@ export * from './category';
 export * from './analytics';
 export * from './user';
 export * from './notification';
+export * from './cluster';

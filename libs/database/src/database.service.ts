@@ -9,6 +9,7 @@ import type {
   IEngagementRepository,
   IUserRepository,
   INotificationRepository,
+  IClusterRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -21,6 +22,7 @@ import {
   MemoryEngagementRepository,
   MemoryUserRepository,
   MemoryNotificationRepository,
+  MemoryClusterRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -33,6 +35,7 @@ import {
   PrismaUserRepository,
   PrismaNotificationRepository,
   PrismaEngagementRepository,
+  PrismaClusterRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -55,6 +58,7 @@ export class DatabaseService {
   public engagement: IEngagementRepository;
   public users: IUserRepository;
   public notifications: INotificationRepository;
+  public clusters: IClusterRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -66,6 +70,7 @@ export class DatabaseService {
   private memoryEngagement = new MemoryEngagementRepository();
   private memoryUsers = new MemoryUserRepository();
   private memoryNotifications = new MemoryNotificationRepository();
+  private memoryClusters = new MemoryClusterRepository();
 
   private isPrismaActive = false;
 
@@ -81,6 +86,7 @@ export class DatabaseService {
     this.engagement = this.memoryEngagement;
     this.users = this.memoryUsers;
     this.notifications = this.memoryNotifications;
+    this.clusters = this.memoryClusters;
   }
 
   /**
@@ -101,8 +107,9 @@ export class DatabaseService {
         this.users = new PrismaUserRepository(getPrisma);
         this.notifications = new PrismaNotificationRepository(getPrisma);
         this.engagement = new PrismaEngagementRepository(getPrisma);
+        this.clusters = new PrismaClusterRepository(getPrisma);
         this.isPrismaActive = true;
-        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 10 domains).');
+        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 11 domains).');
         return true;
       }
     } catch (err: unknown) {
@@ -128,7 +135,7 @@ export class DatabaseService {
       return TransactionManager.execute(work);
     }
 
-    // High-fidelity in-memory atomic transaction with automatic rollback across all 10 domains
+    // High-fidelity in-memory atomic transaction with automatic rollback across all domains
     const storySnap = this.memoryStories.snapshot();
     const eventSnap = this.memoryEvents.snapshot();
     const topicSnap = this.memoryTopics.snapshot();
@@ -139,6 +146,7 @@ export class DatabaseService {
     const engSnap = this.memoryEngagement.snapshot();
     const userSnap = this.memoryUsers.snapshot();
     const notifSnap = this.memoryNotifications.snapshot();
+    const clusterSnap = this.memoryClusters.snapshot();
 
     try {
       const result = await work(null);
@@ -154,6 +162,7 @@ export class DatabaseService {
       this.memoryEngagement.restore(engSnap);
       this.memoryUsers.restore(userSnap);
       this.memoryNotifications.restore(notifSnap);
+      this.memoryClusters.restore(clusterSnap);
       throw err;
     }
   }
@@ -181,6 +190,7 @@ export class DatabaseService {
     this.memoryEngagement.clear();
     this.memoryUsers.clear();
     this.memoryNotifications.clear();
+    this.memoryClusters.clear();
   }
 }
 

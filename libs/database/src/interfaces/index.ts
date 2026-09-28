@@ -8,3 +8,4 @@ export * from './audit.repository';
 export * from './engagement.repository';
 export * from './user.repository';
 export * from './notification.repository';
+export * from './cluster.repository';

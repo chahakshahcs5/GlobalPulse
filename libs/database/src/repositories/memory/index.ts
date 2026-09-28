@@ -8,3 +8,4 @@ export * from './audit.memory';
 export * from './engagement.memory';
 export * from './user.memory';
 export * from './notification.memory';
+export * from './cluster.memory';

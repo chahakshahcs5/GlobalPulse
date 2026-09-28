@@ -14,7 +14,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { StoryService, SchedulingService, PersonalizationService } from '@ai-news/stories';
+import { StoryService, SchedulingService, PersonalizationService, ClusteringService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
@@ -28,7 +28,7 @@ import {
   StoryFilterSchema,
 } from './stories.dto';
 
-import type { Story, StoryBlock, StoryVersion } from '@ai-news/schemas';
+import type { Story, StoryBlock, StoryVersion, FullCoverageResult } from '@ai-news/schemas';
 
 @Controller('api/stories')
 @UseGuards(NestAuthGuard)
@@ -36,11 +36,13 @@ export class StoriesController {
   private storyService: StoryService;
   private schedulingService: SchedulingService;
   private personalizationService: PersonalizationService;
+  private clusteringService: ClusteringService;
 
   constructor() {
     this.storyService = new StoryService(db);
     this.schedulingService = new SchedulingService(db);
     this.personalizationService = new PersonalizationService(db);
+    this.clusteringService = new ClusteringService(db);
   }
 
   @Get()
@@ -131,6 +133,15 @@ export class StoriesController {
       result.limit,
       result.nextCursor
     );
+  }
+
+  @Get(':id/full-coverage')
+  @RequireScope('news:read')
+  async getFullCoverage(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<FullCoverageResult> {
+    return await this.clusteringService.getFullCoverage(id, principal.organizationId);
   }
 
   @Get(':id')

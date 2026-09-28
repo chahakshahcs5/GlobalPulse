@@ -6,3 +6,4 @@ export * from './scheduling.service';
 export * from './notification.service';
 export * from './user.service';
 export * from './personalization.service';
+export * from './clustering.service';

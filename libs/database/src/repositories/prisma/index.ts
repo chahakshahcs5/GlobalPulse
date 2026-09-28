@@ -8,3 +8,4 @@ export * from './audit.prisma';
 export * from './user.prisma';
 export * from './notification.prisma';
 export * from './engagement.prisma';
+export * from './cluster.prisma';
