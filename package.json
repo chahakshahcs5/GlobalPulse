@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
+    "typecheck": "tsc --noEmit",
     "dev:api": "pnpm --filter @ai-news/api dev",
     "dev:mcp": "pnpm --filter @ai-news/mcp-server dev",
     "dev:web": "pnpm --filter @ai-news/web dev",
