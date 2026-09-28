@@ -21,6 +21,7 @@ import { registerClusteringTools } from './tools/clustering.tools';
 import { registerTemplateTools } from './tools/template.tools';
 import { registerLiveblogTools } from './tools/liveblog.tools';
 import { registerFactCheckTools } from './tools/fact-check.tools';
+import { registerEditorialTools } from './tools/editorial.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 
@@ -85,6 +86,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   registerTemplateTools(server, database, getPrincipal);
   registerLiveblogTools(server, database, getPrincipal);
   registerFactCheckTools(server, database, getPrincipal);
+  registerEditorialTools(server, database, getPrincipal);
 
   // Register resources and prompts
   registerResources(server, database, getPrincipal);

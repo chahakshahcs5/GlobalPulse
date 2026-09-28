@@ -10,3 +10,4 @@ export * from './clustering.service';
 export * from './template.service';
 export * from './liveblog.service';
 export * from './fact-check.service';
+export * from './collaboration.service';

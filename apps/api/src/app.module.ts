@@ -23,6 +23,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ClusteringModule } from './modules/clustering/clustering.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { FactCheckModule } from './modules/fact-check/fact-check.module';
+import { EditorialModule } from './modules/editorial/editorial.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { FactCheckModule } from './modules/fact-check/fact-check.module';
     ClusteringModule,
     TemplatesModule,
     FactCheckModule,
+    EditorialModule,
   ],
 })
 export class AppModule {}
