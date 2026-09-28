@@ -115,7 +115,7 @@ export default function ExploreTopicsAndCategoriesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search topics, beats, categories (e.g. Semiconductors, Fusion, Geopolitics)..."
+              placeholder="Search live topics, editorial beats, categories..."
               className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm placeholder:text-slate-400 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             />
             {searchQuery && (

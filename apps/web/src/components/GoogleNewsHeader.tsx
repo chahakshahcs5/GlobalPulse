@@ -35,9 +35,11 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
   const currentTab = searchParams?.get('tab') || 'top';
   const { categories } = useTaxonomy();
 
+  const dynamicCategories = categories.filter((c) => c.slug !== 'top-stories' && c.slug !== 'top');
+
   const navItems = [
     ...BASE_NAV_ITEMS,
-    ...categories.map((c) => ({
+    ...dynamicCategories.map((c) => ({
       id: c.slug,
       name: c.name,
       href: `/category/${c.slug}`,
@@ -287,12 +289,14 @@ export const GoogleNewsHeader: React.FC = () => {
             <div className="flex flex-col space-y-1">
               {[
                 ...BASE_NAV_ITEMS,
-                ...categories.map((c) => ({
-                  id: c.slug,
-                  name: c.name,
-                  href: `/category/${c.slug}`,
-                  icon: undefined,
-                })),
+                ...categories
+                  .filter((c) => c.slug !== 'top-stories' && c.slug !== 'top')
+                  .map((c) => ({
+                    id: c.slug,
+                    name: c.name,
+                    href: `/category/${c.slug}`,
+                    icon: undefined,
+                  })),
               ].map((cat) => {
                 const Icon = cat.icon;
                 return (

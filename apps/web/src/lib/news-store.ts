@@ -732,190 +732,47 @@ export interface NewsTopic {
   isCustom?: boolean;
 }
 
-export const DEFAULT_CATEGORIES: NewsCategory[] = [
-  {
-    id: 'cat_india',
-    name: 'India',
-    slug: 'india',
-    description: 'National policy, economy, politics, and development across India',
-    icon: '🇮🇳',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_world',
-    name: 'World',
-    slug: 'world',
-    description: 'Diplomatic summits, global affairs, treaties, and international geopolitics',
-    icon: '🌐',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_business',
-    name: 'Business',
-    slug: 'business',
-    description: 'Financial markets, trade settlements, central banking, and corporate dispatches',
-    icon: '📈',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_technology',
-    name: 'Technology',
-    slug: 'technology',
-    description:
-      'Artificial Intelligence, semiconductor consortiums, quantum computing, and software',
-    icon: '💻',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_science',
-    name: 'Science',
-    slug: 'science',
-    description: 'Magnetic fusion reactors, aerospace missions, genomics, and breakthrough physics',
-    icon: '🔬',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_health',
-    name: 'Health',
-    slug: 'health',
-    description: 'Biotechnology, global epidemiology, therapeutics, and medical innovation',
-    icon: '🩺',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_sports',
-    name: 'Sports',
-    slug: 'sports',
-    description: 'International championships, athletic tournaments, and competitive sports',
-    icon: '🏆',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_climate',
-    name: 'Climate & Energy',
-    slug: 'climate',
-    description: 'Grid transition, carbon neutrality initiatives, renewables, and climate science',
-    icon: '🌱',
-    storyCount: 0,
-  },
-  {
-    id: 'cat_geopolitics',
-    name: 'Geopolitics',
-    slug: 'geopolitics',
-    description: 'Strategic alliances, multilateral trade pacts, defense, and sovereign policy',
-    icon: '⚖️',
-    storyCount: 0,
-  },
-];
+export const DEFAULT_CATEGORIES: NewsCategory[] = [];
+export const DEFAULT_TOPICS: NewsTopic[] = [];
 
-export const DEFAULT_TOPICS: NewsTopic[] = [
-  {
-    id: 'top_ai',
-    name: 'AI Breakthroughs',
-    slug: 'ai-breakthroughs',
-    parentCategory: 'Technology',
-    description: 'Autonomous agent architectures, LLM models, and enterprise reasoning systems',
-    storyCount: 0,
-  },
-  {
-    id: 'top_semi',
-    name: 'Semiconductors',
-    slug: 'semiconductors',
-    parentCategory: 'Technology',
-    description: '2nm fabrication standards, lithography equipment, and global foundries',
-    storyCount: 0,
-  },
-  {
-    id: 'top_fusion',
-    name: 'Clean Energy & Fusion',
-    slug: 'clean-energy',
-    parentCategory: 'Science',
-    description: 'Magnetic confinement fusion, next-gen solar cells, and grid storage',
-    storyCount: 0,
-  },
-  {
-    id: 'top_quantum',
-    name: 'Quantum Computing',
-    slug: 'quantum-computing',
-    parentCategory: 'Technology',
-    description: 'Qubit stability, quantum error correction, and cryptographic implications',
-    storyCount: 0,
-  },
-  {
-    id: 'top_space',
-    name: 'Space Exploration',
-    slug: 'space-exploration',
-    parentCategory: 'Science',
-    description: 'Lunar gateway modules, interplanetary probes, and commercial launch vehicles',
-    storyCount: 0,
-  },
-  {
-    id: 'top_brics',
-    name: 'BRICS 2026 Summit',
-    slug: 'brics-2026',
-    parentCategory: 'World',
-    description:
-      'Sovereign local-currency accords, bilateral trade treaties, and multilateral expansion',
-    storyCount: 0,
-  },
-  {
-    id: 'top_cbdc',
-    name: 'Central Bank Digital Currency',
-    slug: 'cbdc',
-    parentCategory: 'Business',
-    description:
-      'Cross-border digital currency settlement pilots, sovereign reserves, and liquidity',
-    storyCount: 0,
-  },
-  {
-    id: 'top_defense',
-    name: 'Cyber Defense & Security',
-    slug: 'cyber-defense',
-    parentCategory: 'Technology',
-    description:
-      'Critical infrastructure protection, zero-trust cryptographic protocols, and audits',
-    storyCount: 0,
-  },
-  {
-    id: 'top_ev',
-    name: 'Electric Mobility & Batteries',
-    slug: 'electric-mobility',
-    parentCategory: 'Business',
-    description: 'Solid-state battery chemistry, sodium-ion scaling, and EV manufacturing',
-    storyCount: 0,
-  },
-  {
-    id: 'top_biotech',
-    name: 'Genomics & Precision Medicine',
-    slug: 'biotech',
-    parentCategory: 'Health',
-    description: 'CRISPR base editing, mRNA cancer vaccines, and clinical trials',
-    storyCount: 0,
-  },
-];
+export const CATEGORY_ICON_MAP: Record<string, string> = {
+  'top-stories': '⭐',
+  technology: '💻',
+  business: '📈',
+  world: '🌐',
+  science: '🔬',
+  health: '🩺',
+  sports: '🏆',
+  entertainment: '🎬',
+  india: '🇮🇳',
+};
 
-const CATEGORIES_KEY = 'globalpulse_categories_v1';
-const TOPICS_KEY = 'globalpulse_topics_v1';
+const CATEGORIES_KEY = 'globalpulse_api_categories_v3';
+const TOPICS_KEY = 'globalpulse_api_topics_v3';
 
 export function useTaxonomy() {
-  const [categories, setCategories] = useState<NewsCategory[]>(DEFAULT_CATEGORIES);
-  const [topics, setTopics] = useState<NewsTopic[]>(DEFAULT_TOPICS);
+  const [categories, setCategories] = useState<NewsCategory[]>([]);
+  const [topics, setTopics] = useState<NewsTopic[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const loadTaxonomy = useCallback(async () => {
-    let baseCats = DEFAULT_CATEGORIES;
-    let baseTops = DEFAULT_TOPICS;
-
+    // Clear legacy static keys from storage if present
     if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('globalpulse_categories_v1');
+        localStorage.removeItem('globalpulse_topics_v1');
+      } catch {}
+
       try {
         const storedCats = localStorage.getItem(CATEGORIES_KEY);
         if (storedCats) {
           const parsed = JSON.parse(storedCats);
-          if (Array.isArray(parsed) && parsed.length > 0) baseCats = parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
         }
         const storedTops = localStorage.getItem(TOPICS_KEY);
         if (storedTops) {
           const parsed = JSON.parse(storedTops);
-          if (Array.isArray(parsed) && parsed.length > 0) baseTops = parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) setTopics(parsed);
         }
       } catch {
         // Safe fallback
@@ -947,92 +804,72 @@ export function useTaxonomy() {
           topicCounts[tid] = (topicCounts[tid] || 0) + 1;
         }
 
-        for (const t of baseTops) {
-          const tName = t.name.toLowerCase();
-          const tSlug = t.slug.toLowerCase();
-          if (
-            storyTopicIds.includes(t.id.toLowerCase()) ||
-            storyTopicIds.includes(tSlug) ||
-            storyText.includes(tName)
-          ) {
-            topicCounts[t.id] = (topicCounts[t.id] || 0) + 1;
-            topicCounts[tSlug] = (topicCounts[tSlug] || 0) + 1;
+        if (Array.isArray(apiTops)) {
+          for (const t of apiTops) {
+            const tId = (t.id || '').toLowerCase();
+            const tSlug = (t.slug || '').toLowerCase();
+            const tName = (t.name || '').toLowerCase();
+            if (
+              storyTopicIds.includes(tId) ||
+              storyTopicIds.includes(tSlug) ||
+              storyText.includes(tName)
+            ) {
+              topicCounts[tId] = (topicCounts[tId] || 0) + 1;
+              topicCounts[tSlug] = (topicCounts[tSlug] || 0) + 1;
+            }
           }
         }
       }
 
-      // Merge backend categories with base categories
-      let finalCats: NewsCategory[] = [...baseCats];
-      if (Array.isArray(apiCats) && apiCats.length > 0) {
-        for (const ac of apiCats) {
-          const slug = ac.slug || ac.code || ac.name.toLowerCase();
-          const existingIdx = finalCats.findIndex((c) => c.slug === slug || c.id === ac.id);
-          const dynamicCount =
-            ac.storyCount ?? (categoryCounts[slug] || categoryCounts[ac.code] || 0);
-          if (existingIdx >= 0) {
-            finalCats[existingIdx] = {
-              ...finalCats[existingIdx],
-              ...ac,
-              storyCount: dynamicCount,
-            };
-          } else {
-            finalCats.push({
+      // Map categories purely from live API
+      const finalCats: NewsCategory[] = Array.isArray(apiCats)
+        ? apiCats.map((ac) => {
+            const slug = (ac.slug || ac.code || ac.name || '').toLowerCase();
+            const dynamicCount =
+              categoryCounts[slug] ?? categoryCounts[ac.code] ?? ac.storyCount ?? 0;
+            return {
               id: ac.id || `cat_${slug}`,
               name: ac.name,
               slug,
               description: ac.description || '',
-              icon: ac.icon || '🏷️',
+              icon: CATEGORY_ICON_MAP[slug] || ac.icon || '🏷️',
               storyCount: dynamicCount,
-            });
-          }
-        }
-      }
-
-      finalCats = finalCats.map((c) => ({
-        ...c,
-        storyCount:
-          categoryCounts[c.slug.toLowerCase()] ??
-          categoryCounts[c.id.toLowerCase()] ??
-          c.storyCount ??
-          0,
-      }));
-
-      // Merge backend topics with base topics
-      let finalTops: NewsTopic[] = [...baseTops];
-      if (Array.isArray(apiTops) && apiTops.length > 0) {
-        for (const at of apiTops) {
-          const slug = at.slug || at.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-          const existingIdx = finalTops.findIndex((t) => t.slug === slug || t.id === at.id);
-          const count = topicCounts[at.id] || topicCounts[slug] || 0;
-          if (existingIdx >= 0) {
-            finalTops[existingIdx] = {
-              ...finalTops[existingIdx],
-              ...at,
-              storyCount: count,
+              isPinned: ac.isPinned,
             };
-          } else {
-            finalTops.push({
+          })
+        : [];
+
+      // Map topics purely from live API
+      const finalTops: NewsTopic[] = Array.isArray(apiTops)
+        ? apiTops.map((at) => {
+            const slug = at.slug || at.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            const atId = (at.id || '').toLowerCase();
+            const count =
+              topicCounts[atId] || topicCounts[slug.toLowerCase()] || at.storyCount || 0;
+            return {
               id: at.id || `top_${slug}`,
               name: at.name,
               slug,
               description: at.description || '',
               parentCategory: at.parentCategory || 'General',
               storyCount: count,
-            });
-          }
-        }
-      }
-
-      finalTops = finalTops.map((t) => ({
-        ...t,
-        storyCount: topicCounts[t.id] ?? topicCounts[t.slug.toLowerCase()] ?? 0,
-      }));
+              isCustom: at.isCustom,
+            };
+          })
+        : [];
 
       setCategories(finalCats);
       setTopics(finalTops);
+      setIsLoading(false);
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(CATEGORIES_KEY, JSON.stringify(finalCats));
+          localStorage.setItem(TOPICS_KEY, JSON.stringify(finalTops));
+        } catch {}
+      }
     } catch {
-      setCategories(baseCats.map((c) => ({ ...c, storyCount: 0 })));
-      setTopics(baseTops.map((t) => ({ ...t, storyCount: 0 })));
+      setIsLoading(false);
     }
   }, []);
 
@@ -1145,6 +982,7 @@ export function useTaxonomy() {
   return {
     categories,
     topics,
+    isLoading,
     addCategory,
     deleteCategory,
     addTopic,
