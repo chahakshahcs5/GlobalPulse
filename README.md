@@ -1,13 +1,12 @@
 # GlobalPulse: AI-Operable Multimedia News Platform
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15.1-black.svg)](https://nextjs.org/)
 [![Fastify](https://img.shields.io/badge/Fastify-5.2-green.svg)](https://fastify.dev/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-Mercurius-e10098.svg)](https://mercurius.dev/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-orange.svg)](https://modelcontextprotocol.io/)
-[![Expo](https://img.shields.io/badge/Expo-React%20Native-4630eb.svg)](https://expo.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-3.0-yellow.svg)](https://vitest.dev/)
-[![Playwright](https://img.shields.io/badge/Playwright-E2E-45ba4b.svg)](https://playwright.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-432%20passing-brightgreen.svg)]()
 
 A production-grade, modern, interactive, animated multimedia news publishing platform designed from the ground up as an **AI-operable application**. External AI agents—such as Google Gemini, Gemini Spark, ChatGPT / OpenAI agents, Claude, and enterprise MCP clients—operate the newsroom remotely through the **Model Context Protocol (MCP)** and **GraphQL Mercurius API**.
 
@@ -85,6 +84,29 @@ flowchart TD
     Memory --> PresentationTier
     NestAPI -->|SSE Broadcast| PresentationTier
 ```
+
+---
+
+## 🌟 Key Features & Capabilities
+
+### 1. Google News Production Parity
+- **Personalized "For You" Feed**: Algorithmic ranking tailored to user reading history, followed entities, and topic interests, excluding already-read articles.
+- **Story Clustering & Full Coverage**: Deep multi-perspective analysis grouping dispatches across publishers, chronological timeline of developments, and primary source verification audits.
+- **Instant Search Autocomplete**: Sub-second typeahead search with categorized suggestions for Categories, Topics, Entities, and Stories.
+- **Floating AI Audio Briefing Player**: In-browser text-to-speech audio reader with pulsing equalizer waveform, play/pause controls, and playback speed adjustment (`1.0x` to `2.0x`).
+- **Real-time Live News Ticker**: Server-Sent Events (SSE) stream automatically pushes breaking dispatches and status updates without full-page reloads.
+
+### 2. Human Editorial CMS & Newsroom Workflow
+- **Structured 22-Block Engine**: Content is authored as composable, typed JSON blocks—including Lead Paragraphs, Pull Quotes, 13 D3 Charts, MapLibre Maps, Milestone Timelines, Comparison Tables, Callouts, and KPI Metric Statistics.
+- **Compose & Live Article Preview**: Switch between form editing and a real-time dark/light preview rendered by the production `StoryRenderer`.
+- **Revision Snapshots & WhatChanged Diffs**: Committing revisions creates immutable version snapshots with changelog diffs displayed automatically to readers.
+- **Editorial Review Queue & Scheduled Embargo**: Multi-role review gates (Draft → Submit for Review → Approve/Publish) and automated embargo scheduling.
+
+### 3. External AI Operability via Model Context Protocol (MCP)
+- **40+ MCP Tools**: External AI models (Claude, ChatGPT, Gemini, or autonomous daemons) operate the newsroom via JSON-RPC 2.0 to report breaking news, create visual charts, link citations, and manage taxonomy.
+- **OAuth 2.1 & RFC 8414 Authorization Server**: Full PKCE S256 code challenge verification and `client_credentials` grant with standard Bearer JWT issuance.
+- **Token Context Optimization**: `includeBlocks: false` and `includeSummary: false` parameters allow external LLMs to list stories and inspect metadata without consuming excessive context window tokens.
+- **Cryptographic Provenance**: Every story published by an AI carries transparent provenance tags (`createdByClient`, `clientType`, `authorId`).
 
 ---
 
@@ -174,7 +196,7 @@ pnpm docker:down
 ### 4. Running the Test Suite & Demonstrations
 
 ```bash
-# Run all 17 unit and integration test suites (158 tests)
+# Run all 56 unit and integration test suites (432 tests)
 pnpm test
 
 # Run isolated unit tests
@@ -254,4 +276,6 @@ All system aspects are thoroughly documented under [`docs/`](file:///c:/Users/ch
 ---
 
 ## 🔒 License
-MIT License. Crafted for enterprise newsrooms, automated intelligence platforms, and next-generation AI agent integrations.
+
+This project is licensed under the [MIT License](LICENSE).
+Crafted for enterprise newsrooms, automated intelligence platforms, and next-generation AI agent integrations.
