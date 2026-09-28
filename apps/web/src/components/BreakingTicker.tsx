@@ -77,15 +77,15 @@ export const BreakingTicker: React.FC<{ items?: TickerItem[] }> = ({ items: init
 
       {/* Marquee Ticker Track */}
       <div className="overflow-hidden whitespace-nowrap flex-1">
-        <div className="ticker-track">
+        <div className="ticker-track breaking-marquee-track">
           {[...items, ...items].map((item, idx) => (
             <Link
               key={`${item.id}-${idx}`}
-              href={`/stories/${item.slug}`}
-              className="inline-flex items-center gap-2 mx-6 text-slate-300 hover:text-blue-400 transition"
+              href={item.slug ? `/stories/${item.slug}` : '/'}
+              className="inline-flex items-center gap-2 mx-6 text-slate-300 hover:text-blue-400 transition cursor-pointer"
             >
               <span className="font-bold text-slate-400 font-mono uppercase tracking-wider text-[11px]">[{item.topic}]</span>
-              <span className="font-medium">{item.headline}</span>
+              <span className="font-medium hover:underline">{item.headline}</span>
               <span className="text-slate-500 font-mono text-[10px]">({item.timeAgo})</span>
               <span className="text-slate-700 ml-4">•</span>
             </Link>

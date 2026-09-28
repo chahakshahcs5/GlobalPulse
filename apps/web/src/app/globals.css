@@ -76,12 +76,15 @@
   100% { transform: translateX(-50%); }
 }
 
+.ticker-track,
 .breaking-marquee-track {
   display: flex;
   width: max-content;
   animation: breakingMarquee 35s linear infinite;
+  will-change: transform;
 }
 
+.ticker-track:hover,
 .breaking-marquee-track:hover {
   animation-play-state: paused;
 }
