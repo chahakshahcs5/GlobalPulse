@@ -20,12 +20,15 @@ import {
   Copy,
   X,
   Radio,
+  Zap,
 } from 'lucide-react';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
 import { StoryRenderer } from '../../../components/StoryRenderer';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
 import { StoryEngagement } from '../../../components/StoryEngagement';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
+import { PaywallBarrier } from '../../../components/PaywallBarrier';
+import { formatDeterministicDate, formatDeterministicDateTime } from '../../../lib/date-utils';
 
 export default function StoryPage() {
   const params = useParams();
@@ -41,6 +44,8 @@ export default function StoryPage() {
   const [audioRate, setAudioRate] = useState<number>(1.0);
   const [readingProgress, setReadingProgress] = useState(0);
   const [isDark, setIsDark] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [monthlyReads, setMonthlyReads] = useState(1);
 
   const story = allStories.find((s) => s.slug === slug);
 
@@ -82,7 +87,7 @@ export default function StoryPage() {
     };
   }, []);
 
-  // Sync Reading History to LocalStorage (F12)
+  // Sync Reading History to LocalStorage (F12) & Metered Paywall Count (F30)
   useEffect(() => {
     if (story && typeof window !== 'undefined') {
       try {
@@ -96,6 +101,14 @@ export default function StoryPage() {
           readAt: new Date().toISOString(),
         });
         localStorage.setItem('globalpulse_reading_history', JSON.stringify(filtered.slice(0, 30)));
+
+        const sub = localStorage.getItem('globalpulse_subscribed') === 'true';
+        setIsSubscribed(sub);
+
+        const monthKey = `globalpulse_reads_${new Date().getFullYear()}_${new Date().getMonth() + 1}`;
+        const currentReads = parseInt(localStorage.getItem(monthKey) || '0', 10) + 1;
+        localStorage.setItem(monthKey, currentReads.toString());
+        setMonthlyReads(currentReads);
       } catch {
         // Safe fallback
       }
@@ -227,32 +240,36 @@ export default function StoryPage() {
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <span className="flex items-center gap-1 text-slate-500 font-medium" suppressHydrationWarning>
               <Clock className="w-3.5 h-3.5" />
-              {story.publishedAt
-                ? new Date(story.publishedAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'Recent'}
+              {story.publishedAt ? formatDeterministicDateTime(story.publishedAt) : 'Recent'}
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             {/* F7: Dynamic Calculated Reading Time */}
             <span className="text-slate-500 font-medium">{readingTimeMins} min read</span>
           </div>
 
-          {/* Full Coverage Pill Button */}
-          <button
-            onClick={() => setIsFullCoverageOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800/80 transition"
-          >
-            <div className="relative w-3 h-3">
-              <span className="absolute top-0 left-0 w-2 h-2 rounded-[1px] border border-blue-600 bg-blue-600/30"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-[1px] border border-blue-600 bg-blue-600"></span>
-            </div>
-            <span>Full Coverage of this story</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* F31: AMP Version Link */}
+            <Link
+              href={`/stories/${story.slug}/amp`}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold border border-amber-200 dark:border-amber-800/80 transition"
+              title="View Accelerated Mobile Page version"
+            >
+              <Zap className="w-3 h-3 fill-amber-500" />
+              <span>⚡ AMP</span>
+            </Link>
+
+            {/* Full Coverage Pill Button */}
+            <button
+              onClick={() => setIsFullCoverageOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800/80 transition"
+            >
+              <div className="relative w-3 h-3">
+                <span className="absolute top-0 left-0 w-2 h-2 rounded-[1px] border border-blue-600 bg-blue-600/30"></span>
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-[1px] border border-blue-600 bg-blue-600"></span>
+              </div>
+              <span>Full Coverage of this story</span>
+            </button>
+          </div>
         </div>
 
         {/* Headline */}
@@ -401,7 +418,7 @@ export default function StoryPage() {
         </div>
       )}
 
-      {/* Article Content with Dynamic Font Scaling */}
+      {/* Article Content with Dynamic Font Scaling & Metered Paywall (F30) */}
       <div
         className={`space-y-6 ${
           fontSize === 'sm'
@@ -411,7 +428,26 @@ export default function StoryPage() {
             : 'reader-size-md'
         }`}
       >
-        <StoryRenderer blocks={story.blocks} theme={isDark ? 'dark' : 'light'} />
+        <StoryRenderer
+          blocks={!isSubscribed && monthlyReads > 5 ? story.blocks.slice(0, 2) : story.blocks}
+          theme={isDark ? 'dark' : 'light'}
+        />
+
+        {!isSubscribed && monthlyReads > 5 && (
+          <PaywallBarrier
+            storyTitle={story.title}
+            monthlyReads={monthlyReads}
+            readLimit={5}
+            onSubscribe={() => {
+              setIsSubscribed(true);
+              localStorage.setItem('globalpulse_subscribed', 'true');
+            }}
+            onSignIn={() => {
+              setIsSubscribed(true);
+              localStorage.setItem('globalpulse_subscribed', 'true');
+            }}
+          />
+        )}
       </div>
 
       {/* Fact Check & Provenance Card */}
@@ -456,7 +492,7 @@ export default function StoryPage() {
                     {rel.articleType.replace('_', ' ')}
                   </span>
                   <span suppressHydrationWarning>
-                    {rel.publishedAt ? new Date(rel.publishedAt).toLocaleDateString('en-US') : 'Recent'}
+                    {formatDeterministicDate(rel.publishedAt)}
                   </span>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 line-clamp-2">
