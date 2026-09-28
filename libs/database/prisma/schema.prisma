@@ -322,3 +322,77 @@ model AuditLog {
   @@index([organizationId, action])
   @@map("audit_logs")
 }
+
+model Comment {
+  id               String       @id @default(uuid())
+  storyId          String
+  organizationId   String
+  authorId         String
+  authorName       String
+  authorRole       String       @default("reader")
+  content          String
+  parentId         String?
+  status           String       @default("approved")
+  likesCount       Int          @default(0)
+  moderationReason String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story            Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, status])
+  @@index([organizationId])
+  @@map("comments")
+}
+
+model StoryReaction {
+  id             String       @id @default(uuid())
+  storyId        String
+  userId         String
+  organizationId String
+  reactionType   String
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story          Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, userId, reactionType])
+  @@index([organizationId])
+  @@map("story_reactions")
+}
+
+model Bookmark {
+  id             String       @id @default(uuid())
+  storyId        String
+  userId         String
+  organizationId String
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story          Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([userId, storyId])
+  @@index([organizationId])
+  @@map("bookmarks")
+}
+
+model EditorialNotification {
+  id             String       @id @default(uuid())
+  organizationId String
+  authorId       String
+  type           String
+  severity       String       @default("info")
+  title          String
+  message        String
+  storyId        String?
+  targetRole     String?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, isRead])
+  @@index([organizationId])
+  @@map("editorial_notifications")
+}

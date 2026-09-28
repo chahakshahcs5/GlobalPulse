@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { GOOGLE_NEWS_CLUSTERS } from '../../../lib/news-data';
+import { useNewsClusters } from '../../../lib/cluster-builder';
 import { useCategoryStories } from '../../../lib/news-store';
 import { GoogleNewsLeadCard } from '../../../components/GoogleNewsLeadCard';
 import { GoogleNewsClusterCard } from '../../../components/GoogleNewsClusterCard';
@@ -20,12 +20,13 @@ export default function CategoryPage() {
 
   // Dynamic API stories for this category
   const { stories: categoryStories } = useCategoryStories(slug);
+  const { clusters: allClusters } = useNewsClusters();
 
-  // Match demo clusters
-  const clusters = GOOGLE_NEWS_CLUSTERS.filter(
+  // Match category clusters
+  const clusters = allClusters.filter(
     (c) => c.category.toLowerCase() === slug.toLowerCase()
   );
-  const fallbackClusters = clusters.length > 0 ? clusters : GOOGLE_NEWS_CLUSTERS;
+  const fallbackClusters = clusters.length > 0 ? clusters : allClusters;
   const leadCluster = fallbackClusters[0];
   const secondaryClusters = fallbackClusters.slice(1);
 

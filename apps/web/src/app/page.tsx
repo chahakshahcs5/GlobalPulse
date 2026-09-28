@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { GOOGLE_NEWS_CLUSTERS } from '../lib/news-data';
+import { useNewsClusters } from '../lib/cluster-builder';
+import { BreakingTicker } from '../components/BreakingTicker';
 import { GoogleNewsLeadCard } from '../components/GoogleNewsLeadCard';
 import { GoogleNewsClusterCard } from '../components/GoogleNewsClusterCard';
 import { WeatherWidget } from '../components/WeatherWidget';
@@ -10,16 +11,14 @@ import { FactCheckWidget } from '../components/FactCheckWidget';
 import { TrendingTopicsWidget } from '../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../components/FullCoverageModal';
 import { useAllStories, useBookmarks, toggleBookmark } from '../lib/news-store';
-import { Sparkles, Bookmark, ArrowRight } from 'lucide-react';
+import { Sparkles, Bookmark, ArrowRight, Radio } from 'lucide-react';
 
 export default function GoogleNewsHomePage() {
   const [activeFullCoverageSlug, setActiveFullCoverageSlug] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const { stories: userStories } = useAllStories();
+  const { clusters, leadCluster, secondaryClusters } = useNewsClusters();
   const bookmarks = useBookmarks();
-
-  const leadCluster = GOOGLE_NEWS_CLUSTERS[0];
-  const secondaryClusters = GOOGLE_NEWS_CLUSTERS.slice(1);
 
   // Today's formatted date
   const todayFormatted = new Intl.DateTimeFormat('en-US', {
@@ -38,7 +37,10 @@ export default function GoogleNewsHomePage() {
     : secondaryClusters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Real-time Breaking News Ticker */}
+      <BreakingTicker />
+
       {/* Google News 2-Column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Top Stories Stream (8 cols) */}
@@ -167,7 +169,7 @@ export default function GoogleNewsHomePage() {
             </div>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {GOOGLE_NEWS_CLUSTERS.slice(1, 4).map((c) => {
+              {clusters.slice(1, 4).map((c) => {
                 const isBookmarked = bookmarks.includes(c.leadStory.slug);
                 return (
                   <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">

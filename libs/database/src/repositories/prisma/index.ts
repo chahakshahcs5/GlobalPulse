@@ -5,3 +5,6 @@ export * from './entity.prisma';
 export * from './source.prisma';
 export * from './idempotency.prisma';
 export * from './audit.prisma';
+export * from './user.prisma';
+export * from './notification.prisma';
+export * from './engagement.prisma';

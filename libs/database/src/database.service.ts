@@ -30,6 +30,9 @@ import {
   PrismaSourceRepository,
   PrismaIdempotencyRepository,
   PrismaAuditRepository,
+  PrismaUserRepository,
+  PrismaNotificationRepository,
+  PrismaEngagementRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -95,8 +98,11 @@ export class DatabaseService {
         this.sources = new PrismaSourceRepository(getPrisma);
         this.idempotency = new PrismaIdempotencyRepository(getPrisma);
         this.audit = new PrismaAuditRepository(getPrisma);
+        this.users = new PrismaUserRepository(getPrisma);
+        this.notifications = new PrismaNotificationRepository(getPrisma);
+        this.engagement = new PrismaEngagementRepository(getPrisma);
         this.isPrismaActive = true;
-        logger.info('DatabaseService initialized in PostgreSQL Prisma mode.');
+        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 10 domains).');
         return true;
       }
     } catch (err: unknown) {

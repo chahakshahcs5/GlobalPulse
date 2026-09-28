@@ -18,6 +18,9 @@ describe('Production Database Core Integration Tests', () => {
       expect(db.sources).toBeDefined();
       expect(db.idempotency).toBeDefined();
       expect(db.audit).toBeDefined();
+      expect(db.users).toBeDefined();
+      expect(db.notifications).toBeDefined();
+      expect(db.engagement).toBeDefined();
 
       const health = await db.getHealth();
       expect(health.status).toBeDefined();
