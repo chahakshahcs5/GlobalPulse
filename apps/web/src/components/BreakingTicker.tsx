@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listNotifications } from '../lib/api-client';
+import { listNotifications, listStories } from '../lib/api-client';
+import type { Story } from '@ai-news/schemas';
 
 interface TickerItem {
   id: string;
@@ -12,60 +13,61 @@ interface TickerItem {
   timeAgo: string;
 }
 
-const DEFAULT_TICKERS: TickerItem[] = [
-  {
-    id: 't1',
-    topic: 'BRICS 2026',
-    headline: 'Summit delegates ratify bilateral settlement accord across 10 member states',
-    slug: 'brics-2026-summit-ratifies-landmark-trade-pact',
-    timeAgo: '12m ago',
-  },
-  {
-    id: 't2',
-    topic: 'SEMICONDUCTORS',
-    headline: 'Global Semiconductor Consortium establishes joint 2nm lithography standard',
-    slug: 'global-semiconductor-consortium-formed',
-    timeAgo: '35m ago',
-  },
-  {
-    id: 't3',
-    topic: 'ENERGY',
-    headline: 'Magnetic fusion reactor sustains net positive Q-factor for 120 seconds',
-    slug: 'fusion-reactor-test-reaches-net-energy-gain',
-    timeAgo: '1h ago',
-  },
-  {
-    id: 't4',
-    topic: 'MARKETS',
-    headline: 'Central Bank Digital Currency cross-border pilot settles 2.4B USD in first tranche',
-    slug: 'central-bank-digital-currency-pilot-launched',
-    timeAgo: '2h ago',
-  },
-];
-
 export const BreakingTicker: React.FC<{ items?: TickerItem[] }> = ({ items: initialItems }) => {
-  const [items, setItems] = useState<TickerItem[]>(initialItems || DEFAULT_TICKERS);
+  const [items, setItems] = useState<TickerItem[]>(initialItems || []);
 
   useEffect(() => {
     let isMounted = true;
-    listNotifications(5)
-      .then((notifs) => {
-        if (!isMounted || !Array.isArray(notifs) || notifs.length === 0) return;
-        const liveItems: TickerItem[] = notifs.map((n) => ({
-          id: n.id,
-          topic: n.type === 'breaking_news' ? 'ALERT' : 'NEWS',
-          headline: n.message || n.title,
-          slug: n.storyId ? n.storyId : '',
-          timeAgo: 'LIVE',
-        }));
-        setItems(liveItems);
-      })
-      .catch(() => {});
+
+    async function loadTickerData() {
+      try {
+        const notifs = await listNotifications(5);
+        if (isMounted && Array.isArray(notifs) && notifs.length > 0) {
+          const liveItems: TickerItem[] = notifs.map((n) => ({
+            id: n.id,
+            topic: n.type === 'breaking_news' ? 'ALERT' : 'WIRE',
+            headline: n.message || n.title,
+            slug: n.storyId || '',
+            timeAgo: 'LIVE',
+          }));
+          setItems(liveItems);
+          return;
+        }
+
+        // If no urgent notifications, use latest published stories from the database
+        const stories = await listStories({ status: 'PUBLISHED', limit: 4 });
+        if (isMounted && Array.isArray(stories) && stories.length > 0) {
+          const storyItems: TickerItem[] = stories.map((s: Story) => ({
+            id: s.id,
+            topic: (s.articleType || 'DISPATCH').replace('_', ' ').toUpperCase(),
+            headline: s.title,
+            slug: s.slug,
+            timeAgo: 'LATEST',
+          }));
+          setItems(storyItems);
+          return;
+        }
+
+        if (isMounted) {
+          setItems([]);
+        }
+      } catch {
+        if (isMounted) {
+          setItems([]);
+        }
+      }
+    }
+
+    loadTickerData();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <div className="bg-slate-950 border-b border-slate-800/80 overflow-hidden h-9 flex items-center select-none text-xs">

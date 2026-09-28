@@ -73,12 +73,26 @@ export default function IntegrationsPage() {
     setTimeout(() => setCopiedToken(false), 2000);
   };
 
-  const handleTestPing = () => {
+  const handleTestPing = async () => {
     setTestingPing(true);
-    setTimeout(() => {
+    setPingResult(null);
+    try {
+      const startTime = performance.now();
+      const res = await fetch('/health');
+      const data = await res.json();
+      const duration = Math.round(performance.now() - startTime);
+      if (res.ok) {
+        setPingResult(
+          `HTTP 200 OK (${duration}ms) — Remote MCP & Core Services online. Database: ${data?.services?.database?.status || 'connected'} (${data?.services?.database?.mode || 'engine'}). Storage: ${data?.services?.storage?.status || 'healthy'}.`
+        );
+      } else {
+        setPingResult(`HTTP ${res.status} — Service degraded (${duration}ms)`);
+      }
+    } catch {
+      setPingResult('Connection failed — Backend API server is offline or unreachable.');
+    } finally {
       setTestingPing(false);
-      setPingResult('HTTP 200 OK — Remote MCP Server online. 18 Section 38 tools verified.');
-    }, 600);
+    }
   };
 
   return (

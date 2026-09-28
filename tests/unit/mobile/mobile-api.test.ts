@@ -1,8 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mobileApi, mapApiStoryToOffline } from '../../../apps/mobile/src/services/api';
-import { offlineStorage } from '../../../apps/mobile/src/services/storage';
-import { SAMPLE_MOBILE_STORIES } from '../../../apps/mobile/src/App';
+import { offlineStorage, type OfflineStory } from '../../../apps/mobile/src/services/storage';
 import type { Story } from '@ai-news/schemas';
+
+const mockTestStory: OfflineStory = {
+  id: 'sty_test_brics',
+  slug: 'brics-expansion-2026',
+  title: 'BRICS Expansion 2026: Historic Geoeconomic Shift',
+  summary: 'Four new member nations formally inducted.',
+  articleType: 'breaking',
+  currentVersionNumber: 2,
+  savedAt: new Date().toISOString(),
+  readStatus: false,
+  blocks: [],
+};
 
 describe('MobileApiService Unit Tests', () => {
   beforeEach(() => {
@@ -74,18 +85,18 @@ describe('MobileApiService Unit Tests', () => {
   });
 
   it('falls back seamlessly to offline cache when API network error occurs', async () => {
-    offlineStorage.saveStory(SAMPLE_MOBILE_STORIES[0]);
+    offlineStorage.saveStory(mockTestStory);
 
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network connection failed'));
 
     const result = await mobileApi.fetchStories();
     expect(result.isOnline).toBe(false);
     expect(result.stories.length).toBeGreaterThan(0);
-    expect(result.stories[0].id).toBe(SAMPLE_MOBILE_STORIES[0].id);
+    expect(result.stories[0].id).toBe(mockTestStory.id);
   });
 
   it('filters cached stories during offline search when network is unavailable', async () => {
-    offlineStorage.saveStory(SAMPLE_MOBILE_STORIES[0]);
+    offlineStorage.saveStory(mockTestStory);
 
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network unreachable'));
 

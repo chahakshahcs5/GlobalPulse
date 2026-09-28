@@ -1,7 +1,11 @@
 import Link from 'next/link';
-import { DEMO_EVENTS, DEMO_STORIES, DEMO_ENTITIES } from '../../../lib/demo-data';
-import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
+import { notFound } from 'next/navigation';
+import { getEvent, listStories, getEntity } from '../../../lib/api-client';
 import { MapRenderer } from '@ai-news/media';
+import { formatDeterministicDate } from '../../../lib/date-utils';
+import type { Story } from '@ai-news/schemas';
+
+import { DEMO_EVENTS, DEMO_STORIES, DEMO_ENTITIES } from '../../../lib/demo-data';
 
 interface EventPageProps {
   params: Promise<{ id: string }>;
@@ -9,50 +13,42 @@ interface EventPageProps {
 
 export default async function EventPage({ params }: EventPageProps) {
   const { id } = await params;
-  const normalizedId = id.toLowerCase().trim();
+  const normalizedId = id.trim();
 
-  // Find event by ID
-  let event = Object.values(DEMO_EVENTS).find(
-    (e) => e.id.toLowerCase() === normalizedId || e.id.toLowerCase().includes(normalizedId)
-  );
-
-  if (!event) {
-    const formattedTitle = id
-      .replace(/^evt_/, '')
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
-    event = {
-      id,
-      organizationId: 'org_default',
-      title: formattedTitle,
-      summary:
-        'Developing international event tracked continuously across multi-agent dispatches and real-time wire feeds.',
-      status: 'ACTIVE',
-      occurredAt: new Date().toISOString(),
-      location: 'Global Intelligence Feed',
-      topicIds: ['top_global'],
-      entityIds: ['ent_india', 'ent_china'],
-      storyIds: ['sty_brics_2026'],
-      sourceIds: ['src_reuters'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  // Fetch event directly from the live API backend, falling back to known records if API is offline
+  let event = await getEvent(normalizedId);
+  if (!event && DEMO_EVENTS[normalizedId]) {
+    event = DEMO_EVENTS[normalizedId];
   }
 
-  // Find all stories associated with this event
-  const stories = DEMO_STORIES.filter(
-    (s) =>
-      event!.storyIds.includes(s.id) ||
-      s.topicIds.some((t) => event!.topicIds.includes(t)) ||
-      s.entityIds.some((e) => event!.entityIds.includes(e))
+  // If the event does not exist / unknown, return authentic 404
+  if (!event) {
+    notFound();
+  }
+
+  // Find all live stories associated with this event
+  let allStories = await listStories({ limit: 50 });
+  if (allStories.length === 0) {
+    allStories = DEMO_STORIES;
+  }
+
+  const stories = allStories.filter(
+    (s: Story) =>
+      (event.storyIds || []).includes(s.id) ||
+      (s.topicIds || []).some((t: string) => (event.topicIds || []).includes(t)) ||
+      (s.entityIds || []).some((e: string) => (event.entityIds || []).includes(e))
   );
 
-  // Find participating entities
-  const participatingEntities = event.entityIds
-    .map((entId) => DEMO_ENTITIES[entId])
-    .filter(Boolean);
+  // Fetch participating entities from live backend
+  const participatingEntities: any[] = [];
+  for (const entId of (event.entityIds || []).slice(0, 10)) {
+    try {
+      const ent = (await getEntity(entId)) || DEMO_ENTITIES[entId];
+      if (ent) participatingEntities.push(ent);
+    } catch {
+      if (DEMO_ENTITIES[entId]) participatingEntities.push(DEMO_ENTITIES[entId]);
+    }
+  }
 
   // Render SVG map if coordinates exist
   let mapSvg: string | null = null;
@@ -96,15 +92,15 @@ export default async function EventPage({ params }: EventPageProps) {
                     : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                 }`}
               >
-                {`● ${event.status} EVENT`}
+                {`● ${event.status || 'ACTIVE'} EVENT`}
               </span>
               {event.location && (
                 <span className="flex items-center gap-1.5 text-xs font-mono text-slate-300 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">
                   📍 {event.location}
                 </span>
               )}
-              <span className="text-xs font-mono text-slate-500">
-                Logged {new Date(event.occurredAt).toUTCString()}
+              <span className="text-xs font-mono text-slate-500" suppressHydrationWarning>
+                Logged {formatDeterministicDate(event.occurredAt || event.createdAt)}
               </span>
             </div>
 
@@ -149,82 +145,72 @@ export default async function EventPage({ params }: EventPageProps) {
       {mapSvg && (
         <div className="glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
-              Geographic Event Epicenter & Representation
-            </h2>
-            {event.coordinates && (
-              <span className="text-xs font-mono text-slate-400">
-                Coordinates: [{event.coordinates[0].toFixed(4)}, {event.coordinates[1].toFixed(4)}]
-              </span>
-            )}
+            <span className="text-xs font-mono uppercase tracking-wider text-blue-400 font-bold">
+              Spatial Geospatial Coordinates
+            </span>
+            <span className="text-xs font-mono text-slate-500">{event.location}</span>
           </div>
           <div
-            className="w-full overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950 flex justify-center"
+            className="w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center p-2"
             dangerouslySetInnerHTML={{ __html: mapSvg }}
           />
         </div>
       )}
 
-      {/* Stories Timeline Linked to Event */}
+      {/* Linked Stories Coverage */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
-              Associated Dispatches & Revisions
-            </h2>
-            <p className="text-sm text-slate-300 mt-1">
-              External AI reporters submit verified articles as this event evolves.
-            </p>
-          </div>
-          <span className="text-xs font-mono text-slate-400">
-            {stories.length} Dispatches Published
-          </span>
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <h2 className="text-lg font-black text-white uppercase font-mono tracking-wider">
+            Connected Dispatches ({stories.length})
+          </h2>
+          <span className="text-xs font-mono text-slate-500">Live Agent Ingestion Feed</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {stories.map((story) => (
-            <div
-              key={story.id}
-              className="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-slate-700 transition"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    {story.articleType.replace('_', ' ')}
-                  </span>
-                  <span className="text-xs font-mono text-slate-500">
-                    Version {story.currentVersionNumber}
-                  </span>
+        {stories.length === 0 ? (
+          <div className="p-8 text-center rounded-2xl border border-dashed border-slate-800 text-slate-400 text-xs font-mono">
+            No published dispatches linked to this event yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {stories.map((story: Story) => (
+              <div
+                key={story.id}
+                className="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+                    <span className="uppercase text-blue-400 font-bold">
+                      {story.articleType.replace('_', ' ')}
+                    </span>
+                    <span suppressHydrationWarning>
+                      {formatDeterministicDate(story.publishedAt || story.createdAt)}
+                    </span>
+                  </div>
+
+                  <Link href={`/stories/${story.slug}`} className="block group">
+                    <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition leading-snug">
+                      {story.title}
+                    </h3>
+                  </Link>
+
+                  <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                    {story.summary}
+                  </p>
                 </div>
 
-                <Link href={`/stories/${story.slug}`} className="group block">
-                  <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition leading-snug">
-                    {story.title}
-                  </h3>
-                </Link>
-
-                <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-                  {story.summary}
-                </p>
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                  <span className="text-slate-400">By {story.authorId}</span>
+                  <Link
+                    href={`/stories/${story.slug}`}
+                    className="text-blue-400 hover:text-blue-300 font-bold transition"
+                  >
+                    Read Full Dispatch &rarr;
+                  </Link>
+                </div>
               </div>
-
-              <div className="pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                <ProvenanceBadge
-                  clientType={story.createdByClient}
-                  createdVia={story.createdVia}
-                  versionNumber={story.currentVersionNumber}
-                  sourceCount={story.sourceIds.length}
-                />
-                <Link
-                  href={`/stories/${story.slug}`}
-                  className="text-xs font-bold text-blue-400 hover:text-blue-300 transition shrink-0 ml-2"
-                >
-                  Read Dispatch →
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

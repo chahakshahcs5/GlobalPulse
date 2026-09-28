@@ -14,122 +14,10 @@ import { BookmarksScreen } from './screens/BookmarksScreen';
 import { OfflineStory } from './services/storage';
 import { mobileApi } from './services/api';
 
-export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
-  {
-    id: 'sty_brics_mobile',
-    slug: 'brics-expansion-2026-global-economic-realignment',
-    title: 'BRICS Expansion 2026: Historic Geoeconomic Shift',
-    summary:
-      'Four new member nations formally inducted into BRICS during the landmark New Delhi summit.',
-    articleType: 'breaking',
-    currentVersionNumber: 2,
-    savedAt: new Date().toISOString(),
-    readStatus: false,
-    blocks: [
-      {
-        id: 'h1',
-        blockType: 'heading',
-        sortOrder: 0,
-        data: { text: 'New Multilateral Financial Architecture', level: 2 },
-      },
-      {
-        id: 'p1',
-        blockType: 'paragraph',
-        sortOrder: 1,
-        data: {
-          text: 'Leaders from member nations ratified an updated currency settlement framework designed to facilitate cross-border trade without intermediary dollar clearing houses.',
-          format: 'markdown',
-        },
-      },
-      {
-        id: 'sum1',
-        blockType: 'summary',
-        sortOrder: 2,
-        data: {
-          headline: 'Key Summit Takeaways',
-          bulletPoints: [
-            'Direct central bank liquidity swap lines established',
-            'Mutual recognition of digital trade documentation protocols',
-            'Joint development fund capitalized at $100B',
-          ],
-        },
-      },
-      {
-        id: 'quote1',
-        blockType: 'quote',
-        sortOrder: 3,
-        data: {
-          quote:
-            'This accord represents the most significant recalibration of sovereign financial plumbing in fifty years.',
-          attribution: 'Chief Economic Envoy',
-          title: 'Summit Delegation',
-        },
-      },
-      {
-        id: 'stat1',
-        blockType: 'statistic',
-        sortOrder: 4,
-        data: {
-          label: 'Total Induced GDP ($ Trillion PPP)',
-          value: '41.2',
-          trend: 'up',
-          trendValue: '+28%',
-          context: 'Combined output of member bloc vs G7',
-        },
-      },
-      {
-        id: 'chart1',
-        blockType: 'chart',
-        sortOrder: 5,
-        data: {
-          chartType: 'bar',
-          title: 'Combined Economic Output ($ Trillion PPP)',
-          xAxis: { key: 'year', label: 'Year' },
-          yAxis: { label: 'GDP ($T)' },
-          series: [{ key: 'val', name: 'GDP' }],
-          values: [
-            { year: '2024', val: 32 },
-            { year: '2026', val: 41 },
-          ],
-          sourceAttribution: 'World Bank & IMF 2026 Outlook',
-        },
-      },
-    ],
-  },
-  {
-    id: 'sty_chips_mobile',
-    slug: 'next-gen-photonic-semiconductor-fabrication',
-    title: 'Breakthrough Photonic Lithography Unveiled',
-    summary:
-      'Research alliance demonstrates first commercially viable optical chip interconnects operating at sub-picosecond latency.',
-    articleType: 'analysis',
-    currentVersionNumber: 1,
-    savedAt: new Date(Date.now() - 3600000).toISOString(),
-    readStatus: false,
-    blocks: [
-      {
-        id: 'h2',
-        blockType: 'heading',
-        sortOrder: 0,
-        data: { text: 'Overcoming Copper Interconnect Bottlenecks', level: 2 },
-      },
-      {
-        id: 'p2',
-        blockType: 'paragraph',
-        sortOrder: 1,
-        data: {
-          text: 'By replacing copper micro-traces with microscopic on-die waveguides, memory bus bandwidth is scaled by a factor of 12 while cutting thermal dissipation by 65%.',
-          format: 'markdown',
-        },
-      },
-    ],
-  },
-];
-
 export default function MobileApp() {
   const [activeTab, setActiveTab] = useState<'feed' | 'bookmarks'>('feed');
   const [selectedStory, setSelectedStory] = useState<OfflineStory | null>(null);
-  const [stories, setStories] = useState<OfflineStory[]>(SAMPLE_MOBILE_STORIES);
+  const [stories, setStories] = useState<OfflineStory[]>([]);
   const [_isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
   const { width } = useWindowDimensions();
 
@@ -138,12 +26,12 @@ export default function MobileApp() {
     async function loadLiveStories() {
       try {
         const res = await mobileApi.fetchStories();
-        if (isMounted && res.stories && res.stories.length > 0) {
-          setStories(res.stories);
+        if (isMounted) {
+          setStories(res.stories || []);
           setIsLiveConnected(res.isOnline);
         }
       } catch {
-        // Fallback silently to offline / baseline
+        // Fallback silently to offline cache
       }
     }
     loadLiveStories();
@@ -154,7 +42,7 @@ export default function MobileApp() {
 
   // Tablet breakpoint (e.g. iPad, Android tablets)
   const isTablet = width >= 768;
-  const tabletStory = selectedStory || stories[0] || SAMPLE_MOBILE_STORIES[0];
+  const tabletStory = selectedStory || stories[0] || null;
 
   // Tablet Dual-Pane Mode
   if (isTablet) {

@@ -22,8 +22,8 @@ import type {
 
 const API_BASE_URL =
   typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Auth token stored in memory with sessionStorage fallback (isolated per session, prevents persistent XSS token theft)
 let _authToken: string | null = null;
@@ -117,21 +117,25 @@ export interface ListStoriesParams {
 }
 
 export async function listStories(params?: ListStoriesParams): Promise<Story[]> {
-  const searchParams = new URLSearchParams();
-  if (params?.status) searchParams.set('status', params.status);
-  if (params?.articleType) searchParams.set('articleType', params.articleType);
-  if (params?.topicId) searchParams.set('topicId', params.topicId);
-  if (params?.entityId) searchParams.set('entityId', params.entityId);
-  if (params?.query) searchParams.set('query', params.query);
-  if (params?.limit) searchParams.set('limit', String(params.limit));
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.articleType) searchParams.set('articleType', params.articleType);
+    if (params?.topicId) searchParams.set('topicId', params.topicId);
+    if (params?.entityId) searchParams.set('entityId', params.entityId);
+    if (params?.query) searchParams.set('query', params.query);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
 
-  const qs = searchParams.toString();
-  const response = await request<{ data: Story[]; total: number }>(
-    `/api/stories${qs ? `?${qs}` : ''}`
-  );
+    const qs = searchParams.toString();
+    const response = await request<{ data: Story[]; total: number }>(
+      `/api/stories${qs ? `?${qs}` : ''}`
+    );
 
-  // The API may return { data: [...] } or an array directly depending on wrapper
-  return Array.isArray(response) ? response : (response.data ?? []);
+    // The API may return { data: [...] } or an array directly depending on wrapper
+    return Array.isArray(response) ? response : (response.data ?? []);
+  } catch {
+    return [];
+  }
 }
 
 export async function getStory(id: string): Promise<Story> {
@@ -579,5 +583,119 @@ export async function getCurrentUser(): Promise<AuthResponse['user'] | null> {
     return await request<AuthResponse['user']>('/api/auth/me');
   } catch {
     return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sources, Events, Entities & Fact-Checks API
+// ---------------------------------------------------------------------------
+
+export async function listSources(query?: string): Promise<any[]> {
+  try {
+    const qs = query ? `?query=${encodeURIComponent(query)}` : '';
+    const res = await request<any>(`/api/sources${qs}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getSource(id: string): Promise<any | null> {
+  try {
+    return await request<any>(`/api/sources/${encodeURIComponent(id)}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function listEvents(query?: string): Promise<any[]> {
+  try {
+    const qs = query ? `?query=${encodeURIComponent(query)}` : '';
+    const res = await request<any>(`/api/events${qs}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getEvent(id: string): Promise<any | null> {
+  try {
+    return await request<any>(`/api/events/${encodeURIComponent(id)}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function listEntities(query?: string): Promise<any[]> {
+  try {
+    const qs = query ? `?query=${encodeURIComponent(query)}` : '';
+    const res = await request<any>(`/api/entities${qs}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getEntity(id: string): Promise<any | null> {
+  try {
+    return await request<any>(`/api/entities/${encodeURIComponent(id)}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function getTopic(slugOrId: string): Promise<any | null> {
+  try {
+    return await request<any>(`/api/topics/${encodeURIComponent(slugOrId)}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function listFactChecks(): Promise<any[]> {
+  try {
+    const res = await request<any[]>('/api/fact-checks');
+    return Array.isArray(res) ? res : (res as any)?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getStoryFullCoverage(storyIdOrSlug: string): Promise<any | null> {
+  try {
+    return await request<any>(`/api/clustering/coverage/${encodeURIComponent(storyIdOrSlug)}`);
+  } catch {
+    try {
+      return await request<any>(`/api/stories/${encodeURIComponent(storyIdOrSlug)}/full-coverage`);
+    } catch {
+      return null;
+    }
+  }
+}
+
+export async function listAuditLogs(
+  params?: Record<string, string | number | undefined>
+): Promise<any[]> {
+  try {
+    const sp = new URLSearchParams();
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined) sp.set(k, String(v));
+      }
+    }
+    const qs = sp.toString();
+    const res = await request<any>(`/api/audit/logs${qs ? `?${qs}` : ''}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function listMcpWebhooks(): Promise<any[]> {
+  try {
+    const res = await request<any[]>('/api/mcp/webhooks');
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
   }
 }

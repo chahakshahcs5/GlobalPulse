@@ -24,6 +24,7 @@ import {
   Check,
   Plus,
   X as XIcon,
+  Newspaper,
 } from 'lucide-react';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
@@ -483,7 +484,7 @@ function GoogleNewsContent() {
           {feedMode === 'top' && (
             <>
               {/* Lead Story with Multi-Source Perspectives & Full Coverage */}
-              {!selectedTopic && (
+              {!selectedTopic && leadCluster && (
                 <GoogleNewsLeadCard
                   cluster={leadCluster}
                   onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
@@ -500,6 +501,28 @@ function GoogleNewsContent() {
                   />
                 ))}
               </div>
+
+              {clusters.length === 0 && (
+                <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
+                  <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    No Published Stories Yet
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    Dispatches drafted in the Editorial CMS or published by autonomous AI agents
+                    will appear here in real time.
+                  </p>
+                  <div className="pt-2">
+                    <Link
+                      href="/admin"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Open Editorial CMS</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {/* F17: Infinite Scroll / Load More Dispatches */}
               {hasMore && (

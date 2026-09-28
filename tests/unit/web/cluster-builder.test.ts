@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildClustersFromStories } from '../../../apps/web/src/lib/cluster-builder';
 import type { Story } from '@ai-news/schemas';
-import { GOOGLE_NEWS_CLUSTERS } from '../../../apps/web/src/lib/news-data';
 
 describe('Google News Cluster Builder Unit Tests', () => {
   const mockStory1: Story = {
@@ -60,7 +59,7 @@ describe('Google News Cluster Builder Unit Tests', () => {
 
   it('builds GoogleNewsCluster from live published stories', () => {
     const clusters = buildClustersFromStories([mockStory1]);
-    expect(clusters.length).toBeGreaterThan(GOOGLE_NEWS_CLUSTERS.length);
+    expect(clusters.length).toBe(1);
 
     const dynamicCluster = clusters.find((c) => c.mainStoryId === 'sty_dynamic_01');
     expect(dynamicCluster).toBeDefined();
@@ -91,8 +90,9 @@ describe('Google News Cluster Builder Unit Tests', () => {
     expect(quoteArticle?.headline).toContain('computational breakthrough');
   });
 
-  it('prepends dynamic stories before baseline seed clusters', () => {
+  it('builds clusters strictly from dynamic stories without hardcoded mock seeds', () => {
     const clusters = buildClustersFromStories([mockStory1]);
+    expect(clusters.length).toBe(1);
     expect(clusters[0].mainStoryId).toBe('sty_dynamic_01');
   });
 });

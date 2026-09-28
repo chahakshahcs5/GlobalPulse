@@ -3,12 +3,32 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { Dimensions } from 'react-native';
 import type { StoryBlock } from '@ai-news/schemas';
-import MobileApp, { SAMPLE_MOBILE_STORIES } from '../../../apps/mobile/src/App';
+import MobileApp from '../../../apps/mobile/src/App';
 import { FeedScreen } from '../../../apps/mobile/src/screens/FeedScreen';
 import { StoryDetailScreen } from '../../../apps/mobile/src/screens/StoryDetailScreen';
 import { BookmarksScreen } from '../../../apps/mobile/src/screens/BookmarksScreen';
 import { MobileBlockRenderer } from '../../../apps/mobile/src/components/MobileBlockRenderer';
-import { offlineStorage } from '../../../apps/mobile/src/services/storage';
+import { offlineStorage, type OfflineStory } from '../../../apps/mobile/src/services/storage';
+
+const mockStory: OfflineStory = {
+  id: 'sty_test_brics',
+  slug: 'brics-expansion-2026-global-economic-realignment',
+  title: 'BRICS Expansion 2026: Historic Geoeconomic Shift',
+  summary:
+    'Four new member nations formally inducted into BRICS during the landmark New Delhi summit.',
+  articleType: 'breaking',
+  currentVersionNumber: 2,
+  savedAt: new Date().toISOString(),
+  readStatus: false,
+  blocks: [
+    {
+      id: 'h1',
+      blockType: 'heading',
+      sortOrder: 0,
+      data: { text: 'New Multilateral Financial Architecture', level: 2 },
+    },
+  ],
+};
 
 describe('React Native & Expo Mobile Application (Unit Tests)', () => {
   beforeEach(() => {
@@ -179,7 +199,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
       let selected: unknown = null;
       const html = renderToString(
         React.createElement(FeedScreen, {
-          stories: SAMPLE_MOBILE_STORIES,
+          stories: [mockStory],
           onSelectStory: (s: unknown) => {
             selected = s;
           },
@@ -199,7 +219,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
 
   describe('StoryDetailScreen (Authentic React Native Reader)', () => {
     it('renders story detail view with metadata and actions', () => {
-      const story = SAMPLE_MOBILE_STORIES[0];
+      const story = mockStory;
       const html = renderToString(
         React.createElement(StoryDetailScreen, {
           story,
@@ -229,7 +249,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
     });
 
     it('renders cached articles list when stories are saved', () => {
-      offlineStorage.saveStory(SAMPLE_MOBILE_STORIES[0]);
+      offlineStorage.saveStory(mockStory);
 
       const html = renderToString(
         React.createElement(BookmarksScreen, {
@@ -251,8 +271,7 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
       const html = renderToString(React.createElement(MobileApp));
       expect(html).toContain('Dispatches');
       expect(html).toContain('Offline Cache');
-      expect(html).toContain('DISPATCH READER');
-      expect(html).toContain('BRICS Expansion 2026: Historic Geoeconomic Shift');
+      expect(html).toContain('Select a dispatch to read in high resolution.');
     });
 
     it('renders phone single-pane stack layout when width < 768px', () => {

@@ -1,12 +1,11 @@
 import type { Story } from '@ai-news/schemas';
 import { offlineStorage, type OfflineStory } from './storage';
-import { SAMPLE_MOBILE_STORIES } from '../App';
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (typeof window !== 'undefined' && window.location?.hostname === 'localhost'
-    ? 'http://localhost:4000'
-    : 'http://localhost:4000');
+    ? 'http://localhost:3000'
+    : 'http://localhost:3000');
 
 export function mapApiStoryToOffline(
   story: Partial<Story> & { id: string; title: string }
@@ -75,28 +74,21 @@ export class MobileApiService {
             ? json.items
             : [];
 
-      if (rawStories.length > 0) {
-        const mapped = rawStories.map(mapApiStoryToOffline);
-        // Persist to local offline storage cache
-        for (const story of mapped) {
-          offlineStorage.saveStory(story);
-        }
-        this.isOnline = true;
-        return { stories: mapped, isOnline: true };
+      const mapped = rawStories.map(mapApiStoryToOffline);
+      // Persist to local offline storage cache
+      for (const story of mapped) {
+        offlineStorage.saveStory(story);
       }
+      this.isOnline = true;
+      return { stories: mapped, isOnline: true };
     } catch {
       // Failed to reach API (offline or local network unavailable)
       this.isOnline = false;
     }
 
-    // Graceful offline fallback
+    // Graceful offline fallback to previously cached stories
     const cached = offlineStorage.getAllSavedStories();
-    if (cached.length > 0) {
-      return { stories: cached, isOnline: false };
-    }
-
-    // Default seed baseline
-    return { stories: SAMPLE_MOBILE_STORIES, isOnline: false };
+    return { stories: cached, isOnline: false };
   }
 
   public async searchStories(query: string): Promise<OfflineStory[]> {

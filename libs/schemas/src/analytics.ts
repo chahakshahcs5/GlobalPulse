@@ -38,6 +38,10 @@ export const NewsroomMetricsSchema = z.object({
   totalReactions: z.number(),
   totalBookmarks: z.number(),
   activeCategoriesCount: z.number(),
+  totalReads: z.number().optional().default(0),
+  avgReadingTimeMinutes: z.number().optional().default(0),
+  activeJournalists: z.number().optional().default(0),
+  activeAiAgents: z.number().optional().default(0),
   generatedAt: z.string(),
 });
 export type NewsroomMetrics = z.infer<typeof NewsroomMetricsSchema>;

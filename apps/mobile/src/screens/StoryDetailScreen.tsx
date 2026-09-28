@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { offlineStorage, OfflineStory } from '../services/storage';
 import { MobileBlockRenderer } from '../components/MobileBlockRenderer';
@@ -12,6 +12,38 @@ interface StoryDetailScreenProps {
 export function StoryDetailScreen({ story, onBack, isTabletSplit }: StoryDetailScreenProps) {
   const [isSaved, setIsSaved] = useState<boolean>(offlineStorage.isBookmarked(story.id));
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [story.id]);
+
+  const handleAudioToggle = () => {
+    if (isPlayingAudio) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlayingAudio(false);
+    } else {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const textToSpeak = `${story.title}. ${story.summary}`;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        window.speechSynthesis.speak(utterance);
+        setIsPlayingAudio(true);
+      } else {
+        setIsPlayingAudio(true);
+        setTimeout(() => setIsPlayingAudio(false), 4000);
+      }
+    }
+  };
 
   const handleBookmarkToggle = () => {
     const saved = offlineStorage.toggleBookmark(story.id);
@@ -37,7 +69,7 @@ export function StoryDetailScreen({ story, onBack, isTabletSplit }: StoryDetailS
 
         <View style={styles.actionButtonGroup}>
           <TouchableOpacity
-            onPress={() => setIsPlayingAudio(!isPlayingAudio)}
+            onPress={handleAudioToggle}
             style={[styles.actionBtn, isPlayingAudio && styles.actionBtnActiveAudio]}
           >
             <Text style={[styles.actionBtnText, isPlayingAudio && styles.actionBtnTextActive]}>

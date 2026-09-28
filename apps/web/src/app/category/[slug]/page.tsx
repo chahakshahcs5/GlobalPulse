@@ -23,11 +23,12 @@ export default function CategoryPage() {
   const { stories: categoryStories } = useCategoryStories(slug);
   const { clusters: allClusters } = useNewsClusters();
 
-  // Match category clusters
-  const clusters = allClusters.filter((c) => c.category.toLowerCase() === slug.toLowerCase());
-  const fallbackClusters = clusters.length > 0 ? clusters : allClusters;
-  const leadCluster = fallbackClusters[0];
-  const secondaryClusters = fallbackClusters.slice(1);
+  // Match category clusters strictly
+  const categoryClusters = allClusters.filter(
+    (c) => c.category.toLowerCase() === slug.toLowerCase()
+  );
+  const leadCluster = categoryClusters[0] || null;
+  const secondaryClusters = categoryClusters.slice(1);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -133,6 +134,28 @@ export default function CategoryPage() {
               />
             ))}
           </div>
+
+          {categoryStories.length === 0 && !leadCluster && (
+            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
+              <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                No Dispatches in {categoryName}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                There are currently no published stories categorized under {categoryName}. Check
+                back shortly or browse other categories.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Return to Top Stories</span>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

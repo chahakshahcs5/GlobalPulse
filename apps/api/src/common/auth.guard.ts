@@ -8,13 +8,7 @@ import {
   createParamDecorator,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import {
-  AuthService,
-  NewsScope,
-  UserRole,
-  AuthenticatedPrincipal,
-  ROLE_PERMISSIONS,
-} from '@ai-news/auth';
+import { AuthService, NewsScope, UserRole, AuthenticatedPrincipal } from '@ai-news/auth';
 import { FastifyRequest } from 'fastify';
 
 export const REQUIRE_SCOPES_KEY = 'require_scopes';
@@ -67,20 +61,25 @@ export class NestAuthGuard implements CanActivate {
     if (!authHeader) {
       const isProduction = process.env.NODE_ENV === 'production';
 
-      // In production, require authentication on protected endpoints
-      if (isProduction && requiredScopes && requiredScopes.length > 0) {
+      // Check if the requested route requires elevated privileges beyond public reading
+      const requiresElevation =
+        (requiredScopes && requiredScopes.some((s) => s !== 'news:read')) ||
+        (requiredRoles && requiredRoles.length > 0 && !requiredRoles.includes('reader'));
+
+      // In production, require authentication on protected endpoints that require elevated scopes or roles
+      if (isProduction && requiresElevation) {
         throw new UnauthorizedException(
           'Authentication required. Provide a valid Bearer token in the Authorization header.'
         );
       }
 
-      // Development fallback — limited to reader-level access (not admin)
+      // Guest reader principal for unauthenticated reads
       const fallbackPrincipal: AuthenticatedPrincipal = {
-        id: (request.headers['x-actor-id'] as string) || 'usr_dev_guest',
+        id: (request.headers['x-actor-id'] as string) || 'usr_guest',
         organizationId: (request.headers['x-organization-id'] as string) || 'org_default',
-        role: 'editor',
+        role: 'reader',
         clientType: 'human_web',
-        scopes: ROLE_PERMISSIONS.editor,
+        scopes: ['news:read'],
       };
 
       request.principal = fallbackPrincipal;
@@ -92,7 +91,7 @@ export class NestAuthGuard implements CanActivate {
         return true;
       }
 
-      // In development, still check scope/role requirements for the fallback principal
+      // Check scope/role requirements for the fallback principal
       if (requiredRoles && requiredRoles.length > 0) {
         AuthService.requireRole(fallbackPrincipal, ...requiredRoles);
       }

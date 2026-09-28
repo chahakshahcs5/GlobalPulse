@@ -3,11 +3,7 @@
 import { useMemo } from 'react';
 import type { Story } from '@ai-news/schemas';
 
-import {
-  GOOGLE_NEWS_CLUSTERS,
-  type GoogleNewsCluster,
-  type RelatedSourceArticle,
-} from './news-data';
+import { type GoogleNewsCluster, type RelatedSourceArticle } from './news-data';
 import { useAllStories } from './news-store';
 
 /**
@@ -115,22 +111,9 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
  */
 export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] {
   const publishedStories = stories.filter((s) => s.status === 'PUBLISHED' || s.status === 'DRAFT');
-
-  // Track existing slugs from seed clusters so we don't duplicate
-  const seedSlugs = new Set<string>();
-  for (const cluster of GOOGLE_NEWS_CLUSTERS) {
-    seedSlugs.add(cluster.leadStory.slug);
-    for (const r of cluster.relatedArticles) {
-      seedSlugs.add(r.url.replace('/stories/', ''));
-    }
-  }
-
   const dynamicClusters: GoogleNewsCluster[] = [];
 
   for (const story of publishedStories) {
-    // If this story is already featured in seed data, skip to keep rich seed metadata
-    if (seedSlugs.has(story.slug)) continue;
-
     const publisherName =
       story.createdVia === 'admin'
         ? 'GlobalPulse Newsroom'
@@ -163,8 +146,8 @@ export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] 
     });
   }
 
-  // Prepend newly published dynamic clusters before baseline seed clusters
-  return [...dynamicClusters, ...GOOGLE_NEWS_CLUSTERS];
+  // Return clusters purely derived from live stories
+  return dynamicClusters;
 }
 
 /**
@@ -178,7 +161,7 @@ export function useNewsClusters() {
     return buildClustersFromStories(stories);
   }, [stories]);
 
-  const leadCluster = clusters[0] || GOOGLE_NEWS_CLUSTERS[0];
+  const leadCluster = clusters[0] || null;
   const secondaryClusters = clusters.slice(1);
 
   return {

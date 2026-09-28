@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Mail, User, ShieldCheck, LogIn, UserPlus, KeyRound } from 'lucide-react';
+import { X, Mail, User, ShieldCheck, LogIn, UserPlus, KeyRound, AlertCircle } from 'lucide-react';
 
 export interface UserSession {
   id: string;
@@ -31,12 +31,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleCustomAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       const endpoint = mode === 'signin' ? '/api/auth/login' : '/api/auth/register';
@@ -63,51 +65,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onLoginSuccess(user);
         onClose();
         return;
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || data.error || 'Authentication failed. Please verify credentials.');
       }
-    } catch {
-      // If backend API isn't running on local port during offline dev, fallback to clean local session
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to reach authentication service. Please check your connection.'
+      );
+    } finally {
+      setIsLoading(false);
     }
-
-    // Fallback simulation for local dev
-    const simUser: UserSession = {
-      id: `usr_${Math.random().toString(36).substring(7)}`,
-      name: name || (email.split('@')[0] ?? 'GlobalPulse Reader'),
-      email: email || 'reader@globalpulse.news',
-      role: email.includes('admin') ? 'admin' : email.includes('editor') ? 'editor' : 'reader',
-      token: 'jwt_mock_simulated_session_token',
-    };
-    onLoginSuccess(simUser);
-    setIsLoading(false);
-    onClose();
   };
 
   const quickLoginAs = (role: 'admin' | 'editor' | 'reader') => {
-    const profiles: Record<'admin' | 'editor' | 'reader', UserSession> = {
-      admin: {
-        id: 'usr_admin',
-        name: 'Editorial Director (Admin)',
-        email: 'admin@globalpulse.news',
-        role: 'admin',
-        token: 'token_admin_pre_authenticated',
-      },
-      editor: {
-        id: 'usr_editor_elena',
-        name: 'Elena Rostova (Senior Editor)',
-        email: 'elena.rostova@globalpulse.news',
-        role: 'editor',
-        token: 'token_editor_pre_authenticated',
-      },
-      reader: {
-        id: 'usr_reader_david',
-        name: 'David Chen (Verified Reader)',
-        email: 'david.chen@example.org',
-        role: 'reader',
-        token: 'token_reader_pre_authenticated',
-      },
+    const creds: Record<'admin' | 'editor' | 'reader', { email: string; pass: string }> = {
+      admin: { email: 'admin@news.platform', pass: 'Admin123!' },
+      editor: { email: 'editor@news.platform', pass: 'Editor123!' },
+      reader: { email: 'journalist@news.platform', pass: 'Journalist123!' },
     };
-
-    onLoginSuccess(profiles[role]);
-    onClose();
+    setEmail(creds[role].email);
+    setPassword(creds[role].pass);
+    setError(null);
   };
 
   return (
@@ -186,13 +167,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : (
           /* AUTH LOGIN / SIGNUP FORM */
           <div className="space-y-5">
-            {/* Quick Persona Logins (F1, F2 Testing) */}
+            {error && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Quick Role Fillers */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Quick Role-Based Sign In:
+                Prefill Role Credentials:
               </span>
               <div className="grid grid-cols-3 gap-2">
                 <button
+                  type="button"
                   onClick={() => quickLoginAs('admin')}
                   className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100 text-left transition cursor-pointer"
                 >
@@ -202,6 +191,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="text-[9px] text-slate-500">Full CMS</div>
                 </button>
                 <button
+                  type="button"
                   onClick={() => quickLoginAs('editor')}
                   className="p-2.5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 text-left transition cursor-pointer"
                 >
@@ -211,13 +201,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="text-[9px] text-slate-500">Editorial</div>
                 </button>
                 <button
+                  type="button"
                   onClick={() => quickLoginAs('reader')}
                   className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-left transition cursor-pointer"
                 >
                   <div className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
-                    Reader
+                    Reporter
                   </div>
-                  <div className="text-[9px] text-slate-500">Public</div>
+                  <div className="text-[9px] text-slate-500">Journalist</div>
                 </button>
               </div>
             </div>
@@ -259,7 +250,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="email"
                     required
-                    placeholder="user@example.com"
+                    placeholder="user@news.platform"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -287,7 +278,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {mode === 'signin' ? (
                   <LogIn className="w-4 h-4" />
@@ -295,7 +286,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <UserPlus className="w-4 h-4" />
                 )}
                 <span>
-                  {mode === 'signin' ? 'Sign In to GlobalPulse' : 'Create Reader Account'}
+                  {isLoading
+                    ? 'Authenticating...'
+                    : mode === 'signin'
+                      ? 'Sign In to GlobalPulse'
+                      : 'Create Reader Account'}
                 </span>
               </button>
             </form>
@@ -303,7 +298,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                onClick={() => {
+                  setMode(mode === 'signin' ? 'signup' : 'signin');
+                  setError(null);
+                }}
                 className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
               >
                 {mode === 'signin'

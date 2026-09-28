@@ -125,7 +125,21 @@ export class AnalyticsService {
     // Tally engagement across stories
     let totalComments = 0;
     let totalReactions = 0;
+    let totalWords = 0;
+    let totalReads = 0;
+
     for (const s of published) {
+      totalReads += (s as any).viewCount || 0;
+      const summaryWords = (s.summary || '').split(/\s+/).filter(Boolean).length;
+      const titleWords = (s.title || '').split(/\s+/).filter(Boolean).length;
+      let blockWords = 0;
+      for (const b of (s.blocks || []) as any[]) {
+        if (b.data?.text) {
+          blockWords += String(b.data.text).split(/\s+/).filter(Boolean).length;
+        }
+      }
+      totalWords += summaryWords + titleWords + blockWords;
+
       const c = await this.db.engagement.findCommentsByStory(s.id);
       const r = await this.db.engagement.getReactions(s.id);
       totalComments += c.length;
@@ -136,6 +150,22 @@ export class AnalyticsService {
     }
 
     const categories = new Set(allStories.map((s) => s.articleType).filter(Boolean));
+    const avgReadingTimeMinutes =
+      published.length > 0
+        ? Math.max(1, Math.round((totalWords / published.length / 200) * 10) / 10)
+        : 0;
+
+    let activeJournalists = 0;
+    let activeAiAgents = 0;
+    try {
+      const users = await this.db.users.list(orgId);
+      activeJournalists = users.filter((u) =>
+        ['journalist', 'editor', 'admin'].includes(u.role)
+      ).length;
+      activeAiAgents = users.filter((u) => u.role === 'ai_agent').length;
+    } catch {
+      // safe fallback if users table is empty
+    }
 
     return {
       totalStories: allStories.length,
@@ -147,6 +177,10 @@ export class AnalyticsService {
       totalReactions,
       totalBookmarks: 0,
       activeCategoriesCount: categories.size,
+      totalReads,
+      avgReadingTimeMinutes,
+      activeJournalists,
+      activeAiAgents,
       generatedAt: new Date().toISOString(),
     };
   }

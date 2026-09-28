@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { listAuditLogs } from '../../../lib/api-client';
 import {
   Bot,
   Sparkles,
@@ -114,50 +115,61 @@ interface AgentLog {
   tokens: number;
 }
 
-const INITIAL_AGENT_LOGS: AgentLog[] = [
-  {
-    id: 'log_1',
-    agent: 'Gemini Spark Autonomous Agent',
-    action: 'Dispatched Breaking News Article',
-    target: 'sty_quantum_encryption_breakthrough',
-    status: 'SUCCESS',
-    timestamp: '2 mins ago',
-    tokens: 3410,
-  },
-  {
-    id: 'log_2',
-    agent: 'Automated Fact-Check Bureau',
-    action: 'Verified Government Central Bank Registry',
-    target: 'Claim: Global Trade Settlement In Reserve Currencies',
-    status: 'VERIFIED',
-    timestamp: '6 mins ago',
-    tokens: 1820,
-  },
-  {
-    id: 'log_3',
-    agent: 'ChatGPT Research Bureau',
-    action: 'Generated Executive TL;DR Summary & Key Takeaways',
-    target: 'sty_brics_economic_accord_2026',
-    status: 'SUCCESS',
-    timestamp: '14 mins ago',
-    tokens: 2150,
-  },
-  {
-    id: 'log_4',
-    agent: 'MCP Batch Orchestrator',
-    action: 'Batch Published 3 Syndicated Regional Wire Reports',
-    target: 'Topics: Health, Science, Space Exploration',
-    status: 'SUCCESS',
-    timestamp: '22 mins ago',
-    tokens: 5800,
-  },
-];
+function formatRelativeTime(isoString: string): string {
+  try {
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+  } catch {
+    return 'Recently';
+  }
+}
 
 export function McpDiscoveryTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('ALL');
-  const [logs] = useState<AgentLog[]>(INITIAL_AGENT_LOGS);
+  const [logs, setLogs] = useState<AgentLog[]>([]);
   const [qualityTestResult, setQualityTestResult] = useState<string | null>(null);
+
+  const fetchAgentLogs = useCallback(async () => {
+    try {
+      const auditEntries = await listAuditLogs({ limit: 10 });
+      if (Array.isArray(auditEntries) && auditEntries.length > 0) {
+        setLogs(
+          auditEntries.map((log) => ({
+            id: log.id,
+            agent:
+              log.clientType === 'gemini_spark'
+                ? 'Gemini Spark Autonomous Agent'
+                : log.clientType === 'chatgpt'
+                  ? 'ChatGPT Research Bureau'
+                  : log.clientType === 'claude'
+                    ? 'Claude Editorial Desk'
+                    : `${log.clientType.toUpperCase()} Agent`,
+            action: log.action.replace('mcp.', 'Executed '),
+            target: `${log.resourceType}: ${log.resourceId || 'dispatch'}`,
+            status: log.status === 'SUCCESS' ? 'SUCCESS' : 'VERIFIED',
+            timestamp: formatRelativeTime(log.timestamp),
+            tokens: Math.max(120, (log.durationMs || 45) * 28),
+          }))
+        );
+      } else {
+        setLogs([]);
+      }
+    } catch {
+      setLogs([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgentLogs();
+    const interval = setInterval(fetchAgentLogs, 10000);
+    return () => clearInterval(interval);
+  }, [fetchAgentLogs]);
 
   const domains = ['ALL', ...Array.from(new Set(MCP_TOOLS_CATALOG.map((t) => t.domain)))];
 
@@ -314,35 +326,42 @@ export function McpDiscoveryTab() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-xs">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="p-4 space-y-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" /> {log.agent}
-                  </span>
-                  <span className="text-[11px] text-slate-400">{log.timestamp}</span>
-                </div>
-
-                <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                  {log.action}
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] pt-1">
-                  <span className="font-mono text-slate-400 truncate max-w-[200px]">
-                    {log.target}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-slate-400">{log.tokens} tokens</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                      {log.status}
+            {logs.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400 font-mono space-y-1">
+                <p className="font-bold text-slate-300">Awaiting Agent Actions</p>
+                <p>Live MCP tool invocations will stream into this feed automatically.</p>
+              </div>
+            ) : (
+              logs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-4 space-y-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" /> {log.agent}
                     </span>
+                    <span className="text-[11px] text-slate-400">{log.timestamp}</span>
+                  </div>
+
+                  <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                    {log.action}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] pt-1">
+                    <span className="font-mono text-slate-400 truncate max-w-[200px]">
+                      {log.target}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-slate-400">{log.tokens} tokens</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                        {log.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* AI Editorial Calendar Info (F28) */}

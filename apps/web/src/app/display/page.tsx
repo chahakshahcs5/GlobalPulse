@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { DEMO_STORIES } from '../../lib/demo-data';
+import { usePublishedStories } from '../../lib/news-store';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer } from '@ai-news/media';
 import type { TimelineBlock, ChartBlock, MapBlock } from '@ai-news/schemas';
 
 export default function LargeDisplayPage() {
+  const { stories } = usePublishedStories();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
   const [timeStr, setTimeStr] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const currentStory = DEMO_STORIES[currentIndex] || DEMO_STORIES[0];
+  const hasStories = stories && stories.length > 0;
+  const safeIndex = hasStories ? currentIndex % stories.length : 0;
+  const currentStory = hasStories ? stories[safeIndex] : null;
 
   // Live Clock
   useEffect(() => {
@@ -34,12 +37,12 @@ export default function LargeDisplayPage() {
 
   // Auto-rotation every 25 seconds
   useEffect(() => {
-    if (!autoRotate) return;
+    if (!autoRotate || !hasStories) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % DEMO_STORIES.length);
+      setCurrentIndex((prev) => (prev + 1) % stories.length);
     }, 25000);
     return () => clearInterval(timer);
-  }, [autoRotate]);
+  }, [autoRotate, hasStories, stories?.length]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -52,9 +55,9 @@ export default function LargeDisplayPage() {
   };
 
   // Find chart and map blocks from the current story or use fallbacks
-  const chartBlock = currentStory.blocks.find((b): b is ChartBlock => b.blockType === 'chart');
-  const mapBlock = currentStory.blocks.find((b): b is MapBlock => b.blockType === 'map');
-  const timelineBlock = currentStory.blocks.find(
+  const chartBlock = currentStory?.blocks?.find((b): b is ChartBlock => b.blockType === 'chart');
+  const mapBlock = currentStory?.blocks?.find((b): b is MapBlock => b.blockType === 'map');
+  const timelineBlock = currentStory?.blocks?.find(
     (b): b is TimelineBlock => b.blockType === 'timeline'
   );
 
@@ -120,113 +123,144 @@ export default function LargeDisplayPage() {
 
       {/* Main Responsive Grid Layout (4K & Ultrawide Optimized) */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-6 flex-1 items-stretch">
-        {/* Left Column (6 Cols): Lead Story Headline, Summary & Narrative */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 sm:p-8 flex flex-col justify-between backdrop-blur-md shadow-2xl relative overflow-hidden">
-          <div className="space-y-5">
-            {/* Story Meta Badges */}
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-600 text-white">
-                BREAKING COVERAGE
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-bold font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                {currentStory.articleType.replace('_', ' ')}
-              </span>
-              <span className="text-xs font-mono text-slate-400 ml-auto">
-                Story {currentIndex + 1} of {DEMO_STORIES.length}
-              </span>
+        {!currentStory ? (
+          <div className="lg:col-span-12 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-12 flex flex-col items-center justify-center text-center backdrop-blur-md shadow-2xl min-h-[500px]">
+            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6">
+              <span className="w-4 h-4 rounded-full bg-blue-400 animate-ping"></span>
             </div>
-
-            <h2 className="text-3xl sm:text-4xl 2xl:text-5xl font-black text-white tracking-tight leading-tight">
-              {currentStory.title}
+            <h2 className="text-3xl font-black text-white tracking-wide mb-3">
+              AWAITING LIVE DISPATCHES
             </h2>
-
-            <p className="text-lg sm:text-xl text-slate-300 leading-relaxed font-normal">
-              {currentStory.summary}
+            <p className="text-slate-400 max-w-lg mb-6 font-mono text-sm leading-relaxed">
+              Autonomous ingestion stream active. News wall is listening for live published stories
+              from newsroom staff and remote MCP agents.
             </p>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition shadow-lg shadow-blue-600/30"
+              >
+                Return to Reader
+              </Link>
+              <Link
+                href="/admin"
+                className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm transition"
+              >
+                Editorial CMS
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Left Column (6 Cols): Lead Story Headline, Summary & Narrative */}
+            <div className="lg:col-span-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 sm:p-8 flex flex-col justify-between backdrop-blur-md shadow-2xl relative overflow-hidden">
+              <div className="space-y-5">
+                {/* Story Meta Badges */}
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-600 text-white">
+                    LIVE DISPATCH
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    {currentStory.articleType.replace('_', ' ')}
+                  </span>
+                  <span className="text-xs font-mono text-slate-400 ml-auto">
+                    Story {safeIndex + 1} of {stories.length}
+                  </span>
+                </div>
 
-            {/* Timeline if present */}
-            {timelineBlock && (
-              <div className="pt-4 border-t border-slate-800">
-                <div
-                  className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950/60"
-                  dangerouslySetInnerHTML={{
-                    __html: TimelineRenderer.renderSvgTrack(
-                      timelineBlock.data,
-                      'horizontal',
-                      700,
-                      200,
-                      'dark'
-                    ),
-                  }}
-                />
+                <h2 className="text-3xl sm:text-4xl 2xl:text-5xl font-black text-white tracking-tight leading-tight">
+                  {currentStory.title}
+                </h2>
+
+                <p className="text-lg sm:text-xl text-slate-300 leading-relaxed font-normal">
+                  {currentStory.summary}
+                </p>
+
+                {/* Timeline if present */}
+                {timelineBlock && (
+                  <div className="pt-4 border-t border-slate-800">
+                    <div
+                      className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950/60"
+                      dangerouslySetInnerHTML={{
+                        __html: TimelineRenderer.renderSvgTrack(
+                          timelineBlock.data,
+                          'horizontal',
+                          700,
+                          200,
+                          'dark'
+                        ),
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Footer Provenance */}
-          <div className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-              Agent:{' '}
-              <strong className="text-slate-200">
-                {currentStory.createdByClient.toUpperCase()}
-              </strong>{' '}
-              via MCP
-            </span>
-            <span>Revision: Version {currentStory.currentVersionNumber}</span>
-          </div>
-        </div>
-
-        {/* Right Column (6 Cols): Split Visual Data (Chart + Map) */}
-        <div className="lg:col-span-6 grid grid-cols-1 gap-6">
-          {/* Top Panel: D3 Data Chart */}
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur-md shadow-2xl flex flex-col justify-between overflow-hidden">
-            <div className="text-xs font-bold font-mono uppercase text-slate-400 mb-2 px-2 flex justify-between">
-              <span>Programmatic D3 Visualization</span>
-              <span className="text-blue-400">LIVE RENDERED</span>
+              {/* Footer Provenance */}
+              <div className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                  Agent:{' '}
+                  <strong className="text-slate-200">
+                    {(currentStory.createdByClient || 'EDITORIAL').toUpperCase()}
+                  </strong>{' '}
+                  via {currentStory.createdVia ? currentStory.createdVia.toUpperCase() : 'CMS'}
+                </span>
+                <span>Revision: Version {currentStory.currentVersionNumber ?? 1}</span>
+              </div>
             </div>
-            <div className="flex-1 flex items-center justify-center">
-              {chartBlock ? (
-                <div
-                  className="w-full h-full"
-                  dangerouslySetInnerHTML={{
-                    __html: D3ChartRenderer.renderToSvg(chartBlock.data, {
-                      width: 760,
-                      height: 320,
-                      theme: 'dark',
-                    }),
-                  }}
-                />
-              ) : (
-                <div className="text-slate-500 font-mono text-xs">
-                  No chart attached to this briefing.
+
+            {/* Right Column (6 Cols): Split Visual Data (Chart + Map) */}
+            <div className="lg:col-span-6 grid grid-cols-1 gap-6">
+              {/* Top Panel: D3 Data Chart */}
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur-md shadow-2xl flex flex-col justify-between overflow-hidden">
+                <div className="text-xs font-bold font-mono uppercase text-slate-400 mb-2 px-2 flex justify-between">
+                  <span>Programmatic D3 Visualization</span>
+                  <span className="text-blue-400">LIVE RENDERED</span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Panel: MapLibre Map Representation */}
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur-md shadow-2xl flex flex-col justify-between overflow-hidden">
-            <div className="text-xs font-bold font-mono uppercase text-slate-400 mb-2 px-2 flex justify-between">
-              <span>Geospatial Intelligence Map</span>
-              <span className="text-indigo-400">COORDINATES ACTIVE</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center">
-              {mapBlock ? (
-                <div
-                  className="w-full h-full"
-                  dangerouslySetInnerHTML={{
-                    __html: MapRenderer.renderSvgFallback(mapBlock.data, 760, 300, 'dark'),
-                  }}
-                />
-              ) : (
-                <div className="text-slate-500 font-mono text-xs">
-                  No geospatial coordinates for this story.
+                <div className="flex-1 flex items-center justify-center">
+                  {chartBlock ? (
+                    <div
+                      className="w-full h-full"
+                      dangerouslySetInnerHTML={{
+                        __html: D3ChartRenderer.renderToSvg(chartBlock.data, {
+                          width: 760,
+                          height: 320,
+                          theme: 'dark',
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <div className="text-slate-500 font-mono text-xs">
+                      No chart attached to this briefing.
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* Bottom Panel: MapLibre Map Representation */}
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur-md shadow-2xl flex flex-col justify-between overflow-hidden">
+                <div className="text-xs font-bold font-mono uppercase text-slate-400 mb-2 px-2 flex justify-between">
+                  <span>Geospatial Intelligence Map</span>
+                  <span className="text-indigo-400">COORDINATES ACTIVE</span>
+                </div>
+                <div className="flex-1 flex items-center justify-center">
+                  {mapBlock ? (
+                    <div
+                      className="w-full h-full"
+                      dangerouslySetInnerHTML={{
+                        __html: MapRenderer.renderSvgFallback(mapBlock.data, 760, 300, 'dark'),
+                      }}
+                    />
+                  ) : (
+                    <div className="text-slate-500 font-mono text-xs">
+                      No geospatial coordinates for this story.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </main>
 
       {/* Bottom Live News Ticker */}
@@ -237,21 +271,29 @@ export default function LargeDisplayPage() {
         </div>
         <div className="overflow-hidden whitespace-nowrap flex-1">
           <div className="ticker-track text-xs">
-            {DEMO_STORIES.map((s) => (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-3 mx-8 text-slate-300 font-medium"
-              >
-                <span className="font-bold text-blue-400 font-mono uppercase">
-                  [{s.articleType}]
+            {hasStories ? (
+              stories.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-3 mx-8 text-slate-300 font-medium"
+                >
+                  <span className="font-bold text-blue-400 font-mono uppercase">
+                    [{s.articleType}]
+                  </span>
+                  <span>{s.title}</span>
+                  <span className="text-slate-500 font-mono text-[11px]">
+                    (Version {s.currentVersionNumber})
+                  </span>
+                  <span className="text-slate-700 ml-4">•</span>
                 </span>
-                <span>{s.title}</span>
-                <span className="text-slate-500 font-mono text-[11px]">
-                  (Version {s.currentVersionNumber})
-                </span>
-                <span className="text-slate-700 ml-4">•</span>
+              ))
+            ) : (
+              <span className="inline-flex items-center gap-3 mx-8 text-slate-400 font-medium">
+                <span>GlobalPulse Autonomous Ingestion Stream Active</span>
+                <span className="text-slate-600">•</span>
+                <span>Listening for breaking stories and agent dispatches</span>
               </span>
-            ))}
+            )}
           </div>
         </div>
       </footer>

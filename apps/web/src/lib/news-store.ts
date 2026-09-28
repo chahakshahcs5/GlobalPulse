@@ -13,7 +13,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Story } from '@ai-news/schemas';
-import { EXTENDED_NEWS_STORIES } from './news-data';
 import * as api from './api-client';
 
 // ---------------------------------------------------------------------------
@@ -103,12 +102,10 @@ export function useAllStories() {
       setIsApiConnected(true);
       setIsDemoMode(false);
     } catch {
-      // API unreachable — fall back to demo data only if we haven't connected before
-      if (!hasAttemptedFetch.current) {
-        setStories(EXTENDED_NEWS_STORIES);
-        setIsDemoMode(true);
-      }
+      // API unreachable — do not substitute mock stories
+      setStories([]);
       setIsApiConnected(false);
+      setIsDemoMode(false);
     } finally {
       hasAttemptedFetch.current = true;
       fetchInProgress.current = false;
@@ -169,65 +166,28 @@ export function usePublishedStories() {
 
 /**
  * Creates a story via the API backend.
- * Falls back to localStorage if the API is unreachable.
  */
 export async function saveUserStory(
   storyData: Partial<Story> & { title: string; summary: string }
 ): Promise<Story> {
-  try {
-    const created = await api.createStory({
-      title: storyData.title,
-      summary: storyData.summary,
-      articleType: storyData.articleType || 'developing_story',
-      topicIds: storyData.topicIds || [],
-      entityIds: storyData.entityIds || [],
-      sourceIds: storyData.sourceIds || [],
-      blocks: storyData.blocks || [],
-      heroImageUrl: storyData.heroImageUrl,
-    });
+  const created = await api.createStory({
+    title: storyData.title,
+    summary: storyData.summary,
+    articleType: storyData.articleType || 'developing_story',
+    topicIds: storyData.topicIds || [],
+    entityIds: storyData.entityIds || [],
+    sourceIds: storyData.sourceIds || [],
+    blocks: storyData.blocks || [],
+    heroImageUrl: storyData.heroImageUrl,
+  });
 
-    // If the story should be published immediately, publish it
-    if (storyData.status === 'PUBLISHED') {
-      await api.publishStory(created.id);
-    }
-
-    notifyStoryMutation();
-    return created;
-  } catch (err) {
-    console.warn('API unavailable, saving to localStorage as fallback:', err);
-    // Fallback: save to localStorage (legacy behavior)
-    const fallbackStory: Story = {
-      id: storyData.id || `sty_local_${Date.now()}`,
-      organizationId: storyData.organizationId || 'org_default',
-      slug: storyData.slug || storyData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      title: storyData.title,
-      summary: storyData.summary,
-      status: (storyData.status as any) || 'DRAFT',
-      articleType: storyData.articleType || 'developing_story',
-      currentVersionNumber: 1,
-      currentVersionId: `ver_${Date.now()}`,
-      topicIds: storyData.topicIds || [],
-      entityIds: storyData.entityIds || [],
-      sourceIds: storyData.sourceIds || [],
-      blocks: storyData.blocks || [],
-      heroImageUrl: storyData.heroImageUrl,
-      createdVia: 'admin',
-      createdByClient: 'human_web',
-      authorId: storyData.authorId || 'usr_journalist',
-      publishedAt: storyData.status === 'PUBLISHED' ? new Date().toISOString() : undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (typeof window !== 'undefined') {
-      const storageKey = 'globalpulse_user_stories_v1';
-      const existing: Story[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      localStorage.setItem(storageKey, JSON.stringify([fallbackStory, ...existing]));
-    }
-
-    notifyStoryMutation();
-    return fallbackStory;
+  // If the story should be published immediately, publish it
+  if (storyData.status === 'PUBLISHED') {
+    await api.publishStory(created.id);
   }
+
+  notifyStoryMutation();
+  return created;
 }
 
 /**
@@ -237,110 +197,57 @@ export async function updateUserStory(
   storyId: string,
   storyData: Partial<Story> & { changeSummary?: string }
 ): Promise<Story> {
-  try {
-    // 1. Update story metadata
-    const updated = await api.updateStory(storyId, {
+  // 1. Update story metadata
+  const updated = await api.updateStory(storyId, {
+    title: storyData.title,
+    summary: storyData.summary,
+    articleType: storyData.articleType,
+    topicIds: storyData.topicIds,
+    entityIds: storyData.entityIds,
+    heroImageUrl: storyData.heroImageUrl,
+  });
+
+  // 2. If blocks are provided, commit a new version snapshot
+  if (storyData.blocks && storyData.blocks.length > 0) {
+    await api.createStoryVersion(storyId, {
+      changeSummary: storyData.changeSummary || 'Story updated via Editorial CMS',
       title: storyData.title,
       summary: storyData.summary,
-      articleType: storyData.articleType,
-      topicIds: storyData.topicIds,
-      entityIds: storyData.entityIds,
-      heroImageUrl: storyData.heroImageUrl,
+      blocks: storyData.blocks,
     });
-
-    // 2. If blocks are provided, commit a new version snapshot
-    if (storyData.blocks && storyData.blocks.length > 0) {
-      await api.createStoryVersion(storyId, {
-        changeSummary: storyData.changeSummary || 'Story updated via Editorial CMS',
-        title: storyData.title,
-        summary: storyData.summary,
-        blocks: storyData.blocks,
-      });
-    }
-
-    // 3. Handle publication status change if requested
-    if (storyData.status === 'PUBLISHED' && updated.status !== 'PUBLISHED') {
-      await api.publishStory(storyId);
-    } else if (storyData.status === 'DRAFT' && updated.status === 'PUBLISHED') {
-      await api.unpublishStory(storyId);
-    }
-
-    notifyStoryMutation();
-    return updated;
-  } catch (err) {
-    console.warn('API unavailable for update, falling back to localStorage:', err);
-    if (typeof window !== 'undefined') {
-      const storageKey = 'globalpulse_user_stories_v1';
-      const existing: Story[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      const updatedList = existing.map((s) => {
-        if (s.id === storyId) {
-          return {
-            ...s,
-            ...storyData,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return s;
-      });
-      localStorage.setItem(storageKey, JSON.stringify(updatedList));
-    }
-    notifyStoryMutation();
-    return storyData as Story;
   }
+
+  // 3. Handle publication status change if requested
+  if (storyData.status === 'PUBLISHED' && updated.status !== 'PUBLISHED') {
+    await api.publishStory(storyId);
+  } else if (storyData.status === 'DRAFT' && updated.status === 'PUBLISHED') {
+    await api.unpublishStory(storyId);
+  }
+
+  notifyStoryMutation();
+  return updated;
 }
 
 /**
  * Toggles a story between PUBLISHED and DRAFT via the API.
  */
 export async function toggleStoryStatus(storyId: string): Promise<void> {
-  try {
-    // Fetch current story to determine current status
-    const story = await api.getStory(storyId);
-    if (story.status === 'PUBLISHED') {
-      await api.unpublishStory(storyId);
-    } else {
-      await api.publishStory(storyId);
-    }
-    notifyStoryMutation();
-  } catch (err) {
-    console.warn('API unavailable for toggle, falling back to localStorage:', err);
-    // Legacy localStorage fallback
-    if (typeof window !== 'undefined') {
-      const storageKey = 'globalpulse_user_stories_v1';
-      const stories: Story[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      const updated = stories.map((s) => {
-        if (s.id === storyId) {
-          const nextStatus = s.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
-          return {
-            ...s,
-            status: nextStatus as any,
-            publishedAt: nextStatus === 'PUBLISHED' ? new Date().toISOString() : s.publishedAt,
-          };
-        }
-        return s;
-      });
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      notifyStoryMutation();
-    }
+  // Fetch current story to determine current status
+  const story = await api.getStory(storyId);
+  if (story.status === 'PUBLISHED') {
+    await api.unpublishStory(storyId);
+  } else {
+    await api.publishStory(storyId);
   }
+  notifyStoryMutation();
 }
 
 /**
  * Deletes a story permanently via the API.
  */
 export async function deleteUserStory(storyId: string): Promise<void> {
-  try {
-    await api.deleteStory(storyId);
-    notifyStoryMutation();
-  } catch (err) {
-    console.warn('API unavailable for delete, falling back to localStorage:', err);
-    if (typeof window !== 'undefined') {
-      const storageKey = 'globalpulse_user_stories_v1';
-      const stories: Story[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      localStorage.setItem(storageKey, JSON.stringify(stories.filter((s) => s.id !== storyId)));
-      notifyStoryMutation();
-    }
-  }
+  await api.deleteStory(storyId);
+  notifyStoryMutation();
 }
 
 /**
