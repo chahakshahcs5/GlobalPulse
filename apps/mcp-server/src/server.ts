@@ -112,38 +112,56 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
 
   const getPrincipal = () => mcpPrincipalStore.getStore() || defaultPrincipal;
 
+  function initServerInstance(targetServer: McpServer) {
+    registerSearchTools(targetServer, database, getPrincipal);
+    registerStoryTools(targetServer, database, getPrincipal);
+    registerBlockTools(targetServer, database, getPrincipal);
+    registerMediaTools(targetServer, database, getPrincipal);
+    registerSourceTools(targetServer, database, getPrincipal);
+    registerTaxonomyTools(targetServer, database, getPrincipal);
+    registerJobTools(targetServer, database, getPrincipal);
+    registerEngagementTools(targetServer, database, getPrincipal);
+    registerAnalyticsTools(targetServer, database, getPrincipal);
+    registerSchedulingTools(targetServer, database, getPrincipal);
+    registerNotificationTools(targetServer, database, getPrincipal);
+    registerUserTools(targetServer, database, getPrincipal);
+    registerSyndicationTools(targetServer, database, getPrincipal);
+    registerClusteringTools(targetServer, database, getPrincipal);
+    registerTemplateTools(targetServer, database, getPrincipal);
+    registerLiveblogTools(targetServer, database, getPrincipal);
+    registerFactCheckTools(targetServer, database, getPrincipal);
+    registerEditorialTools(targetServer, database, getPrincipal);
+    registerEnterpriseTools(targetServer, database, getPrincipal);
+    registerResources(targetServer, database, getPrincipal);
+    registerPrompts(targetServer);
+  }
+
+  const sessions = new Map<string, StreamableHTTPServerTransport>();
+
+  function createSessionTransport(sessionId: string): StreamableHTTPServerTransport {
+    const sessionTransport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => sessionId,
+    });
+    const sessionServer = new McpServer({
+      name: 'ai-news-platform-mcp',
+      version: '1.0.0',
+    });
+    initServerInstance(sessionServer);
+    sessionServer.connect(sessionTransport);
+    sessions.set(sessionId, sessionTransport);
+    sessionTransport.onclose = () => {
+      sessions.delete(sessionId);
+    };
+    return sessionTransport;
+  }
+
+  const defaultSessionId = crypto.randomUUID();
+  const transport = createSessionTransport(defaultSessionId);
   const server = new McpServer({
     name: 'ai-news-platform-mcp',
     version: '1.0.0',
   });
-
-  // Register all tool domains with concurrency-safe getPrincipal
-  registerSearchTools(server, database, getPrincipal);
-  registerStoryTools(server, database, getPrincipal);
-  registerBlockTools(server, database, getPrincipal);
-  registerMediaTools(server, database, getPrincipal);
-  registerSourceTools(server, database, getPrincipal);
-  registerTaxonomyTools(server, database, getPrincipal);
-  registerJobTools(server, database, getPrincipal);
-  registerEngagementTools(server, database, getPrincipal);
-  registerAnalyticsTools(server, database, getPrincipal);
-  registerSchedulingTools(server, database, getPrincipal);
-  registerNotificationTools(server, database, getPrincipal);
-  registerUserTools(server, database, getPrincipal);
-  registerSyndicationTools(server, database, getPrincipal);
-  registerClusteringTools(server, database, getPrincipal);
-  registerTemplateTools(server, database, getPrincipal);
-  registerLiveblogTools(server, database, getPrincipal);
-  registerFactCheckTools(server, database, getPrincipal);
-  registerEditorialTools(server, database, getPrincipal);
-  registerEnterpriseTools(server, database, getPrincipal);
-
-  // Register resources and prompts
-  registerResources(server, database, getPrincipal);
-  registerPrompts(server);
-
-  const transport = new StreamableHTTPServerTransport();
-  server.connect(transport);
+  initServerInstance(server);
 
   // Rate limiter: configurable via env vars (defaults: 200 req/min)
   const mcpRateMax = parseInt(process.env.MCP_RATE_LIMIT_MAX || '200', 10);
@@ -270,7 +288,17 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
         await mcpPrincipalStore.run(resolvedPrincipal, async () => {
           try {
             const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;
-            await transport.handleRequest(req, res, parsed);
+            const headerSessionId = req.headers['mcp-session-id'] as string | undefined;
+
+            let activeTransport: StreamableHTTPServerTransport;
+            if (headerSessionId && sessions.has(headerSessionId)) {
+              activeTransport = sessions.get(headerSessionId)!;
+            } else {
+              const newSessionId = crypto.randomUUID();
+              activeTransport = createSessionTransport(newSessionId);
+            }
+
+            await activeTransport.handleRequest(req, res, parsed);
           } catch (e: unknown) {
             const errorMsg = e instanceof Error ? e.message : String(e);
             if (!res.headersSent) {

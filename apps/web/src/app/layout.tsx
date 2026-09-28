@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { GoogleNewsHeader } from '../components/GoogleNewsHeader';
+import { EditionBadge } from '../components/EditionBadge';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
@@ -78,9 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <p>© 2026 GlobalPulse Platform. Verified news and multimedia intelligence.</p>
                 <div className="flex items-center gap-2">
                   <span>Edition:</span>
-                  <span className="font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                    Global Edition (English)
-                  </span>
+                  <EditionBadge />
                 </div>
               </div>
             </div>

@@ -30,29 +30,70 @@ function getWeatherInfo(code: number): { condition: string; icon: string } {
   return { condition: 'Overcast', icon: '☁️' };
 }
 
+export interface WeatherCityConfig {
+  key: string;
+  name: string;
+  label: string;
+  lat: number;
+  lon: number;
+}
+
+export const WEATHER_CITIES: WeatherCityConfig[] = [
+  { key: 'new-delhi', name: 'New Delhi', label: 'New Delhi, India', lat: 28.6139, lon: 77.209 },
+  { key: 'new-york', name: 'New York', label: 'New York, USA', lat: 40.7128, lon: -74.006 },
+  { key: 'london', name: 'London', label: 'London, UK', lat: 51.5074, lon: -0.1278 },
+  { key: 'tokyo', name: 'Tokyo', label: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503 },
+  { key: 'paris', name: 'Paris', label: 'Paris, France', lat: 48.8566, lon: 2.3522 },
+  { key: 'berlin', name: 'Berlin', label: 'Berlin, Germany', lat: 52.52, lon: 13.405 },
+  { key: 'singapore', name: 'Singapore', label: 'Singapore', lat: 1.3521, lon: 103.8198 },
+  { key: 'dubai', name: 'Dubai', label: 'Dubai, UAE', lat: 25.2048, lon: 55.2708 },
+  { key: 'sydney', name: 'Sydney', label: 'Sydney, Australia', lat: -33.8688, lon: 151.2093 },
+];
+
 export const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<LiveWeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCityKey, setSelectedCityKey] = useState<string>('new-delhi');
 
-  const fetchLiveWeather = async () => {
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('globalpulse_weather_location');
+      if (saved) {
+        setSelectedCityKey(saved);
+      }
+    } catch {
+      // Safe fallback
+    }
+  }, []);
+
+  const fetchLiveWeather = async (cityKey = selectedCityKey) => {
     setIsLoading(true);
     try {
-      // Default to global newsroom hub (New York, 40.7128, -74.0060)
-      let lat = 40.7128;
-      let lon = -74.006;
-      let city = 'New York';
+      let lat = 28.6139;
+      let lon = 77.209;
+      let city = 'New Delhi';
 
-      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-        try {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
-          });
-          lat = pos.coords.latitude;
-          lon = pos.coords.longitude;
-          city = 'Local Weather';
-        } catch {
-          // Keep default city
+      if (cityKey === 'gps') {
+        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+          try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+            });
+            lat = pos.coords.latitude;
+            lon = pos.coords.longitude;
+            city = 'Local Weather (GPS)';
+          } catch {
+            const def = WEATHER_CITIES[0];
+            lat = def.lat;
+            lon = def.lon;
+            city = def.name;
+          }
         }
+      } else {
+        const found = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
+        lat = found.lat;
+        lon = found.lon;
+        city = found.name;
       }
 
       const res = await fetch(
@@ -92,20 +133,22 @@ export const WeatherWidget: React.FC = () => {
         forecast,
       });
     } catch {
-      // In case of network isolation, show fallback
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const today = new Date().getDay();
+      const currentCityConfig = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
+
       setWeather({
-        city: 'Global Intelligence Hub',
-        temperature: 21,
-        condition: 'Clear Sky',
-        icon: '☀️',
+        city: currentCityConfig.name,
+        temperature: 24,
+        condition: 'Partly Cloudy',
+        icon: '⛅',
         humidity: 50,
         windSpeed: '12 km/h',
-        forecast: [
-          { day: 'Tue', icon: '☀️', temp: 22 },
-          { day: 'Wed', icon: '⛅', temp: 20 },
-          { day: 'Thu', icon: '🌧️', temp: 18 },
-          { day: 'Fri', icon: '☀️', temp: 23 },
-        ],
+        forecast: [1, 2, 3, 4].map((offset) => ({
+          day: daysOfWeek[(today + offset) % 7],
+          icon: '☀️',
+          temp: 23 + offset,
+        })),
       });
     } finally {
       setIsLoading(false);
@@ -113,8 +156,18 @@ export const WeatherWidget: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLiveWeather();
-  }, []);
+    fetchLiveWeather(selectedCityKey);
+  }, [selectedCityKey]);
+
+  const handleCityChange = (newKey: string) => {
+    setSelectedCityKey(newKey);
+    try {
+      localStorage.setItem('globalpulse_weather_location', newKey);
+      window.dispatchEvent(
+        new CustomEvent('globalpulse_weather_location_updated', { detail: newKey })
+      );
+    } catch {}
+  };
 
   if (isLoading && !weather) {
     return (
@@ -131,16 +184,37 @@ export const WeatherWidget: React.FC = () => {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-          <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span>{weather.city}</span>
+        <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+          <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+          <select
+            value={selectedCityKey}
+            onChange={(e) => handleCityChange(e.target.value)}
+            className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 border-none p-0 focus:ring-0 cursor-pointer hover:text-blue-600 transition"
+            title="Switch weather location"
+          >
+            <option
+              value="gps"
+              className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+            >
+              📍 Local (GPS Device)
+            </option>
+            {WEATHER_CITIES.map((c) => (
+              <option
+                key={c.key}
+                value={c.key}
+                className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+              >
+                {c.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-[11px]">Live satellite</span>
           <button
-            onClick={fetchLiveWeather}
+            onClick={() => fetchLiveWeather(selectedCityKey)}
             title="Refresh weather"
-            className="hover:text-blue-600 transition p-0.5"
+            className="hover:text-blue-600 transition p-0.5 cursor-pointer"
           >
             <RefreshCw className="w-2.5 h-2.5" />
           </button>

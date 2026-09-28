@@ -2,8 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTaxonomy } from '../lib/news-store';
 
 export const Navigation: React.FC = () => {
+  const { topics } = useTaxonomy();
+  const topTopics = topics.slice(0, 3);
+
   return (
     <header className="sticky top-0 z-50 glass-panel border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -31,23 +35,20 @@ export const Navigation: React.FC = () => {
             >
               Feed
             </Link>
+            {topTopics.map((topic) => (
+              <Link
+                key={topic.id}
+                href={`/topics/${topic.slug}`}
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition whitespace-nowrap"
+              >
+                {topic.name}
+              </Link>
+            ))}
             <Link
-              href="/topics/brics-2026"
-              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+              href="/topics"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition text-blue-400 hover:text-blue-300 font-semibold"
             >
-              BRICS 2026
-            </Link>
-            <Link
-              href="/topics/semiconductors"
-              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
-            >
-              Semiconductors
-            </Link>
-            <Link
-              href="/topics/ai-policy"
-              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
-            >
-              AI Policy
+              Explore
             </Link>
             <Link
               href="/sources"

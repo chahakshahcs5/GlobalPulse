@@ -135,8 +135,8 @@ export class StoryService {
     };
 
     const savedStory = await this.db.runInTransaction(async () => {
-      await this.db.stories.createVersion(initialVersion);
       const created = await this.db.stories.create(newStory);
+      await this.db.stories.createVersion(initialVersion);
 
       // 6. Audit Log
       await this.db.audit.log({

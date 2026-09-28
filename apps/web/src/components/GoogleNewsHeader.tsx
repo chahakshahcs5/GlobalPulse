@@ -18,33 +18,37 @@ import {
   Radio,
   Compass,
 } from 'lucide-react';
-import { useBookmarks } from '../lib/news-store';
+import { useBookmarks, useTaxonomy } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
 import { BookmarksDrawer } from './BookmarksDrawer';
 import { AuthModal, type UserSession } from './AuthModal';
 
-const CATEGORIES = [
+const BASE_NAV_ITEMS = [
   { id: 'top', name: 'Top Stories', href: '/', icon: Star },
   { id: 'for-you', name: 'For You', href: '/?tab=for-you', icon: Sparkles },
   { id: 'following', name: 'Following', href: '/?tab=following', icon: BookmarkCheck },
   { id: 'explore', name: 'Explore', href: '/topics', icon: Compass },
-  { id: 'india', name: 'India', href: '/category/india' },
-  { id: 'world', name: 'World', href: '/category/world' },
-  { id: 'business', name: 'Business', href: '/category/business' },
-  { id: 'technology', name: 'Technology', href: '/category/technology' },
-  { id: 'science', name: 'Science', href: '/category/science' },
-  { id: 'health', name: 'Health', href: '/category/health' },
-  { id: 'sports', name: 'Sports', href: '/category/sports' },
 ];
 
 function CategoryNavStrip({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
   const currentTab = searchParams?.get('tab') || 'top';
+  const { categories } = useTaxonomy();
+
+  const navItems = [
+    ...BASE_NAV_ITEMS,
+    ...categories.map((c) => ({
+      id: c.slug,
+      name: c.name,
+      href: `/category/${c.slug}`,
+      icon: undefined,
+    })),
+  ];
 
   return (
     <nav className="border-t border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 h-11 text-xs sm:text-sm font-medium whitespace-nowrap">
-        {CATEGORIES.map((cat) => {
+        {navItems.map((cat) => {
           const Icon = cat.icon;
           const isHome = pathname === '/';
           let isActive = false;
@@ -63,7 +67,7 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
 
           return (
             <Link
-              key={cat.name}
+              key={cat.href}
               href={cat.href}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition ${
                 isActive
@@ -84,6 +88,7 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
 export const GoogleNewsHeader: React.FC = () => {
   const pathname = usePathname();
   const bookmarks = useBookmarks();
+  const { categories } = useTaxonomy();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -280,11 +285,19 @@ export const GoogleNewsHeader: React.FC = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-2 animate-in slide-in-from-top-2">
             <div className="flex flex-col space-y-1">
-              {CATEGORIES.map((cat) => {
+              {[
+                ...BASE_NAV_ITEMS,
+                ...categories.map((c) => ({
+                  id: c.slug,
+                  name: c.name,
+                  href: `/category/${c.slug}`,
+                  icon: undefined,
+                })),
+              ].map((cat) => {
                 const Icon = cat.icon;
                 return (
                   <Link
-                    key={cat.name}
+                    key={cat.href}
                     href={cat.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"

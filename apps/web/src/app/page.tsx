@@ -11,7 +11,7 @@ import { WeatherWidget } from '../components/WeatherWidget';
 import { FactCheckWidget } from '../components/FactCheckWidget';
 import { TrendingTopicsWidget } from '../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../components/FullCoverageModal';
-import { useAllStories, useBookmarks, toggleBookmark } from '../lib/news-store';
+import { useAllStories, useBookmarks, toggleBookmark, useTaxonomy } from '../lib/news-store';
 import {
   Sparkles,
   Bookmark,
@@ -29,18 +29,87 @@ import {
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
 export type FeedMode = 'top' | 'for-you' | 'following' | 'history';
-export type RegionalEdition = 'global' | 'india' | 'us' | 'europe';
+export type RegionalEdition = 'global' | 'india' | 'us' | 'europe' | 'asia' | 'mideast';
 
-const ALL_AVAILABLE_TOPICS = [
-  'AI Breakthroughs',
-  'Geopolitics',
-  'Clean Energy',
-  'Semiconductors',
-  'Space Exploration',
-  'Quantum Computing',
-  'Global Markets',
-  'Health Science',
-];
+function matchesRegion(
+  c: {
+    title: string;
+    summary: string;
+    category: string;
+    relatedArticles?: Array<{ headline: string; publisher: string }>;
+  },
+  region: RegionalEdition
+): boolean {
+  if (region === 'global') return true;
+  const relatedText = (c.relatedArticles || [])
+    .map((a) => `${a.headline} ${a.publisher}`)
+    .join(' ');
+  const text = `${c.title} ${c.summary} ${c.category} ${relatedText}`.toLowerCase();
+
+  switch (region) {
+    case 'india':
+      return (
+        c.category.toLowerCase() === 'india' ||
+        text.includes('india') ||
+        text.includes('delhi') ||
+        text.includes('mumbai') ||
+        text.includes('bengaluru') ||
+        text.includes('isro') ||
+        text.includes('rbi')
+      );
+    case 'us':
+      return (
+        text.includes('united states') ||
+        text.includes('u.s.') ||
+        text.includes('washington') ||
+        text.includes('new york') ||
+        text.includes('federal reserve') ||
+        text.includes('white house') ||
+        text.includes('silicon valley') ||
+        text.includes('america') ||
+        c.category.toLowerCase() === 'business'
+      );
+    case 'europe':
+      return (
+        text.includes('europe') ||
+        text.includes('european') ||
+        text.includes('eu') ||
+        text.includes('uk') ||
+        text.includes('london') ||
+        text.includes('britain') ||
+        text.includes('germany') ||
+        text.includes('berlin') ||
+        text.includes('france') ||
+        text.includes('paris') ||
+        text.includes('brussels') ||
+        text.includes('nato')
+      );
+    case 'asia':
+      return (
+        text.includes('asia') ||
+        text.includes('china') ||
+        text.includes('beijing') ||
+        text.includes('japan') ||
+        text.includes('tokyo') ||
+        text.includes('singapore') ||
+        text.includes('taiwan') ||
+        text.includes('seoul') ||
+        text.includes('korea')
+      );
+    case 'mideast':
+      return (
+        text.includes('middle east') ||
+        text.includes('gulf') ||
+        text.includes('dubai') ||
+        text.includes('uae') ||
+        text.includes('saudi') ||
+        text.includes('riyadh') ||
+        text.includes('qatar')
+      );
+    default:
+      return true;
+  }
+}
 
 function GoogleNewsContent() {
   const router = useRouter();
@@ -55,15 +124,20 @@ function GoogleNewsContent() {
   const [readingHistory, setReadingHistory] = useState<
     Array<{ slug: string; title: string; category?: string; readAt: string }>
   >([]);
-  const [followedTopics, setFollowedTopics] = useState<string[]>([
-    'AI Breakthroughs',
-    'Geopolitics',
-    'Clean Energy',
-  ]);
+  const [followedTopics, setFollowedTopics] = useState<string[]>([]);
 
   const { stories: userStories } = useAllStories();
   const { clusters, leadCluster, secondaryClusters } = useNewsClusters();
+  const { topics: taxonomyTopics, categories: taxonomyCategories } = useTaxonomy();
   const bookmarks = useBookmarks();
+
+  const availableTopics = Array.from(
+    new Set([
+      ...taxonomyTopics.map((t) => t.name),
+      ...taxonomyCategories.map((c) => c.name),
+      ...clusters.map((c) => c.category),
+    ])
+  ).filter(Boolean);
 
   // Synchronize feedMode with URL tab parameter or window hash
   useEffect(() => {
@@ -101,17 +175,23 @@ function GoogleNewsContent() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Load reading history and followed topics from localStorage
+  // Load reading history, followed topics, and regional edition from localStorage
   useEffect(() => {
     try {
       const histRaw = localStorage.getItem('globalpulse_reading_history');
       if (histRaw) setReadingHistory(JSON.parse(histRaw));
       const followRaw = localStorage.getItem('globalpulse_following');
-      if (followRaw) setFollowedTopics(JSON.parse(followRaw));
+      if (followRaw) {
+        setFollowedTopics(JSON.parse(followRaw));
+      } else if (taxonomyTopics.length > 0) {
+        setFollowedTopics(taxonomyTopics.slice(0, 3).map((t) => t.name));
+      }
+      const savedEd = localStorage.getItem('globalpulse_edition') as RegionalEdition | null;
+      if (savedEd) setEdition(savedEd);
     } catch {
       // Safe fallback
     }
-  }, []);
+  }, [taxonomyTopics]);
 
   // Switch tab and synchronize URL
   const switchFeedMode = (mode: FeedMode) => {
@@ -135,6 +215,15 @@ function GoogleNewsContent() {
     });
   };
 
+  // Handle edition change with persistent preference
+  const handleEditionChange = (newEdition: RegionalEdition) => {
+    setEdition(newEdition);
+    try {
+      localStorage.setItem('globalpulse_edition', newEdition);
+      window.dispatchEvent(new CustomEvent('globalpulse_edition_updated', { detail: newEdition }));
+    } catch {}
+  };
+
   // Today's formatted date
   const todayFormatted = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
@@ -142,28 +231,28 @@ function GoogleNewsContent() {
     day: 'numeric',
   }).format(new Date());
 
-  // Filter clusters by edition/region
-  const editionClusters = secondaryClusters.filter((c) => {
-    if (edition === 'global') return true;
-    if (edition === 'india')
-      return (
-        c.category === 'India' ||
-        c.title.toLowerCase().includes('india') ||
-        c.title.toLowerCase().includes('delhi')
-      );
-    if (edition === 'us') return c.category === 'World' || c.category === 'Business';
-    if (edition === 'europe') return c.category === 'World' || c.category === 'Science';
-    return true;
-  });
+  // Regional filtering: applies across all clusters so lead and secondary are coherent
+  const regionalClusters = clusters.filter((c) => matchesRegion(c, edition));
+
+  const effectiveLeadCluster =
+    edition === 'global' ? leadCluster : regionalClusters[0] || leadCluster;
+
+  const candidateSecondary =
+    edition === 'global'
+      ? secondaryClusters
+      : regionalClusters.length > 0
+        ? regionalClusters.slice(1)
+        : secondaryClusters;
 
   // Filter clusters if a topic is selected
   const displayClusters = selectedTopic
-    ? editionClusters.filter(
+    ? candidateSecondary.filter(
         (c) =>
           c.title.toLowerCase().includes(selectedTopic.toLowerCase()) ||
-          c.category.toLowerCase().includes(selectedTopic.toLowerCase())
+          c.category.toLowerCase().includes(selectedTopic.toLowerCase()) ||
+          c.summary.toLowerCase().includes(selectedTopic.toLowerCase())
       )
-    : editionClusters;
+    : candidateSecondary;
 
   // Sliced for pagination (F17: Infinite Scroll / Load More)
   const paginatedClusters = displayClusters.slice(0, visibleCount);
@@ -260,13 +349,15 @@ function GoogleNewsContent() {
           <span className="text-slate-400 hidden sm:inline">Edition:</span>
           <select
             value={edition}
-            onChange={(e) => setEdition(e.target.value as RegionalEdition)}
+            onChange={(e) => handleEditionChange(e.target.value as RegionalEdition)}
             className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-none rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-1 focus:ring-blue-500 cursor-pointer"
           >
             <option value="global">Global Edition</option>
             <option value="india">India Edition</option>
             <option value="us">United States</option>
             <option value="europe">Europe</option>
+            <option value="asia">Asia-Pacific</option>
+            <option value="mideast">Middle East & Gulf</option>
           </select>
         </div>
       </div>
@@ -438,16 +529,18 @@ function GoogleNewsContent() {
                     Recommended to Follow:
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {ALL_AVAILABLE_TOPICS.filter((t) => !followedTopics.includes(t)).map((top) => (
-                      <button
-                        key={top}
-                        onClick={() => toggleFollowTopic(top)}
-                        className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/60 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3 text-slate-400" />
-                        <span>{top}</span>
-                      </button>
-                    ))}
+                    {availableTopics
+                      .filter((t) => !followedTopics.includes(t))
+                      .map((top) => (
+                        <button
+                          key={top}
+                          onClick={() => toggleFollowTopic(top)}
+                          className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/60 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3 text-slate-400" />
+                          <span>{top}</span>
+                        </button>
+                      ))}
                   </div>
                 </div>
               </div>
@@ -484,9 +577,9 @@ function GoogleNewsContent() {
           {feedMode === 'top' && (
             <>
               {/* Lead Story with Multi-Source Perspectives & Full Coverage */}
-              {!selectedTopic && leadCluster && (
+              {!selectedTopic && effectiveLeadCluster && (
                 <GoogleNewsLeadCard
-                  cluster={leadCluster}
+                  cluster={effectiveLeadCluster}
                   onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
                 />
               )}

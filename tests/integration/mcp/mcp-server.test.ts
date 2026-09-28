@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { DatabaseService } from '@ai-news/database';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
@@ -441,6 +442,37 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     expect(meta.scopes_supported).toContain('news:publish');
 
     await new Promise<void>((resolve) => testHttpServer.close(() => resolve()));
+  });
+
+  it('supports concurrent independent Streamable HTTP sessions', async () => {
+    const app = createMcpApp(db);
+    const testHttpServer = app.httpServer;
+    await new Promise<void>((resolve) => testHttpServer.listen(0, resolve));
+    const address = testHttpServer.address() as AddressInfo;
+    const endpoint = new URL(`http://localhost:${address.port}/mcp`);
+    const clients: Client[] = [];
+
+    try {
+      const connectClient = async (name: string) => {
+        const client = new Client({ name, version: '1.0.0' }, { capabilities: {} });
+        clients.push(client);
+        await client.connect(new StreamableHTTPClientTransport(endpoint));
+        return client;
+      };
+
+      const [first, second] = await Promise.all([
+        connectClient('external-client-a'),
+        connectClient('external-client-b'),
+      ]);
+      const [firstTools, secondTools] = await Promise.all([first.listTools(), second.listTools()]);
+
+      expect(firstTools.tools.map((tool) => tool.name)).toContain('create_story');
+      expect(secondTools.tools.map((tool) => tool.name)).toContain('create_story');
+      expect(firstTools.tools).toHaveLength(secondTools.tools.length);
+    } finally {
+      await Promise.all(clients.map((client) => client.close()));
+      await new Promise<void>((resolve) => testHttpServer.close(() => resolve()));
+    }
   });
 
   it('rejects unauthenticated MCP requests in production mode with 401', async () => {

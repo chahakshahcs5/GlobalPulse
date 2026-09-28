@@ -739,7 +739,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'india',
     description: 'National policy, economy, politics, and development across India',
     icon: '🇮🇳',
-    storyCount: 8,
+    storyCount: 0,
   },
   {
     id: 'cat_world',
@@ -747,7 +747,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'world',
     description: 'Diplomatic summits, global affairs, treaties, and international geopolitics',
     icon: '🌐',
-    storyCount: 14,
+    storyCount: 0,
   },
   {
     id: 'cat_business',
@@ -755,7 +755,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'business',
     description: 'Financial markets, trade settlements, central banking, and corporate dispatches',
     icon: '📈',
-    storyCount: 11,
+    storyCount: 0,
   },
   {
     id: 'cat_technology',
@@ -764,7 +764,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     description:
       'Artificial Intelligence, semiconductor consortiums, quantum computing, and software',
     icon: '💻',
-    storyCount: 16,
+    storyCount: 0,
   },
   {
     id: 'cat_science',
@@ -772,7 +772,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'science',
     description: 'Magnetic fusion reactors, aerospace missions, genomics, and breakthrough physics',
     icon: '🔬',
-    storyCount: 9,
+    storyCount: 0,
   },
   {
     id: 'cat_health',
@@ -780,7 +780,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'health',
     description: 'Biotechnology, global epidemiology, therapeutics, and medical innovation',
     icon: '🩺',
-    storyCount: 7,
+    storyCount: 0,
   },
   {
     id: 'cat_sports',
@@ -788,7 +788,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'sports',
     description: 'International championships, athletic tournaments, and competitive sports',
     icon: '🏆',
-    storyCount: 5,
+    storyCount: 0,
   },
   {
     id: 'cat_climate',
@@ -796,7 +796,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'climate',
     description: 'Grid transition, carbon neutrality initiatives, renewables, and climate science',
     icon: '🌱',
-    storyCount: 6,
+    storyCount: 0,
   },
   {
     id: 'cat_geopolitics',
@@ -804,7 +804,7 @@ export const DEFAULT_CATEGORIES: NewsCategory[] = [
     slug: 'geopolitics',
     description: 'Strategic alliances, multilateral trade pacts, defense, and sovereign policy',
     icon: '⚖️',
-    storyCount: 12,
+    storyCount: 0,
   },
 ];
 
@@ -815,7 +815,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'ai-breakthroughs',
     parentCategory: 'Technology',
     description: 'Autonomous agent architectures, LLM models, and enterprise reasoning systems',
-    storyCount: 12,
+    storyCount: 0,
   },
   {
     id: 'top_semi',
@@ -823,7 +823,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'semiconductors',
     parentCategory: 'Technology',
     description: '2nm fabrication standards, lithography equipment, and global foundries',
-    storyCount: 8,
+    storyCount: 0,
   },
   {
     id: 'top_fusion',
@@ -831,7 +831,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'clean-energy',
     parentCategory: 'Science',
     description: 'Magnetic confinement fusion, next-gen solar cells, and grid storage',
-    storyCount: 6,
+    storyCount: 0,
   },
   {
     id: 'top_quantum',
@@ -839,7 +839,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'quantum-computing',
     parentCategory: 'Technology',
     description: 'Qubit stability, quantum error correction, and cryptographic implications',
-    storyCount: 5,
+    storyCount: 0,
   },
   {
     id: 'top_space',
@@ -847,7 +847,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'space-exploration',
     parentCategory: 'Science',
     description: 'Lunar gateway modules, interplanetary probes, and commercial launch vehicles',
-    storyCount: 7,
+    storyCount: 0,
   },
   {
     id: 'top_brics',
@@ -856,7 +856,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     parentCategory: 'World',
     description:
       'Sovereign local-currency accords, bilateral trade treaties, and multilateral expansion',
-    storyCount: 9,
+    storyCount: 0,
   },
   {
     id: 'top_cbdc',
@@ -865,7 +865,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     parentCategory: 'Business',
     description:
       'Cross-border digital currency settlement pilots, sovereign reserves, and liquidity',
-    storyCount: 4,
+    storyCount: 0,
   },
   {
     id: 'top_defense',
@@ -874,7 +874,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     parentCategory: 'Technology',
     description:
       'Critical infrastructure protection, zero-trust cryptographic protocols, and audits',
-    storyCount: 5,
+    storyCount: 0,
   },
   {
     id: 'top_ev',
@@ -882,7 +882,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'electric-mobility',
     parentCategory: 'Business',
     description: 'Solid-state battery chemistry, sodium-ion scaling, and EV manufacturing',
-    storyCount: 6,
+    storyCount: 0,
   },
   {
     id: 'top_biotech',
@@ -890,7 +890,7 @@ export const DEFAULT_TOPICS: NewsTopic[] = [
     slug: 'biotech',
     parentCategory: 'Health',
     description: 'CRISPR base editing, mRNA cancer vaccines, and clinical trials',
-    storyCount: 4,
+    storyCount: 0,
   },
 ];
 
@@ -901,31 +901,149 @@ export function useTaxonomy() {
   const [categories, setCategories] = useState<NewsCategory[]>(DEFAULT_CATEGORIES);
   const [topics, setTopics] = useState<NewsTopic[]>(DEFAULT_TOPICS);
 
-  const loadTaxonomy = useCallback(() => {
-    if (typeof window === 'undefined') return;
+  const loadTaxonomy = useCallback(async () => {
+    let baseCats = DEFAULT_CATEGORIES;
+    let baseTops = DEFAULT_TOPICS;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const storedCats = localStorage.getItem(CATEGORIES_KEY);
+        if (storedCats) {
+          const parsed = JSON.parse(storedCats);
+          if (Array.isArray(parsed) && parsed.length > 0) baseCats = parsed;
+        }
+        const storedTops = localStorage.getItem(TOPICS_KEY);
+        if (storedTops) {
+          const parsed = JSON.parse(storedTops);
+          if (Array.isArray(parsed) && parsed.length > 0) baseTops = parsed;
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
     try {
-      const storedCats = localStorage.getItem(CATEGORIES_KEY);
-      if (storedCats) {
-        setCategories(JSON.parse(storedCats));
-      } else {
-        setCategories(DEFAULT_CATEGORIES);
+      const [apiCats, apiTops, publishedStories] = await Promise.all([
+        api.listCategories().catch(() => []),
+        api.listTopics().catch(() => []),
+        api.listStories({ limit: 500 }).catch(() => []),
+      ]);
+
+      const stories = Array.isArray(publishedStories) ? publishedStories : [];
+
+      // Calculate dynamic story count per category and topic
+      const categoryCounts: Record<string, number> = {};
+      const topicCounts: Record<string, number> = {};
+
+      for (const story of stories) {
+        if (story.status !== 'PUBLISHED') continue;
+        const artType = (story.articleType || '').toLowerCase();
+        categoryCounts[artType] = (categoryCounts[artType] || 0) + 1;
+
+        const storyTopicIds = (story.topicIds || []).map((t) => t.toLowerCase());
+        const storyText = `${story.title} ${story.summary || ''}`.toLowerCase();
+
+        for (const tid of storyTopicIds) {
+          topicCounts[tid] = (topicCounts[tid] || 0) + 1;
+        }
+
+        for (const t of baseTops) {
+          const tName = t.name.toLowerCase();
+          const tSlug = t.slug.toLowerCase();
+          if (
+            storyTopicIds.includes(t.id.toLowerCase()) ||
+            storyTopicIds.includes(tSlug) ||
+            storyText.includes(tName)
+          ) {
+            topicCounts[t.id] = (topicCounts[t.id] || 0) + 1;
+            topicCounts[tSlug] = (topicCounts[tSlug] || 0) + 1;
+          }
+        }
       }
 
-      const storedTops = localStorage.getItem(TOPICS_KEY);
-      if (storedTops) {
-        setTopics(JSON.parse(storedTops));
-      } else {
-        setTopics(DEFAULT_TOPICS);
+      // Merge backend categories with base categories
+      let finalCats: NewsCategory[] = [...baseCats];
+      if (Array.isArray(apiCats) && apiCats.length > 0) {
+        for (const ac of apiCats) {
+          const slug = ac.slug || ac.code || ac.name.toLowerCase();
+          const existingIdx = finalCats.findIndex((c) => c.slug === slug || c.id === ac.id);
+          const dynamicCount =
+            ac.storyCount ?? (categoryCounts[slug] || categoryCounts[ac.code] || 0);
+          if (existingIdx >= 0) {
+            finalCats[existingIdx] = {
+              ...finalCats[existingIdx],
+              ...ac,
+              storyCount: dynamicCount,
+            };
+          } else {
+            finalCats.push({
+              id: ac.id || `cat_${slug}`,
+              name: ac.name,
+              slug,
+              description: ac.description || '',
+              icon: ac.icon || '🏷️',
+              storyCount: dynamicCount,
+            });
+          }
+        }
       }
+
+      finalCats = finalCats.map((c) => ({
+        ...c,
+        storyCount:
+          categoryCounts[c.slug.toLowerCase()] ??
+          categoryCounts[c.id.toLowerCase()] ??
+          c.storyCount ??
+          0,
+      }));
+
+      // Merge backend topics with base topics
+      let finalTops: NewsTopic[] = [...baseTops];
+      if (Array.isArray(apiTops) && apiTops.length > 0) {
+        for (const at of apiTops) {
+          const slug = at.slug || at.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const existingIdx = finalTops.findIndex((t) => t.slug === slug || t.id === at.id);
+          const count = topicCounts[at.id] || topicCounts[slug] || 0;
+          if (existingIdx >= 0) {
+            finalTops[existingIdx] = {
+              ...finalTops[existingIdx],
+              ...at,
+              storyCount: count,
+            };
+          } else {
+            finalTops.push({
+              id: at.id || `top_${slug}`,
+              name: at.name,
+              slug,
+              description: at.description || '',
+              parentCategory: at.parentCategory || 'General',
+              storyCount: count,
+            });
+          }
+        }
+      }
+
+      finalTops = finalTops.map((t) => ({
+        ...t,
+        storyCount: topicCounts[t.id] ?? topicCounts[t.slug.toLowerCase()] ?? 0,
+      }));
+
+      setCategories(finalCats);
+      setTopics(finalTops);
     } catch {
-      // Safe fallback
+      setCategories(baseCats.map((c) => ({ ...c, storyCount: 0 })));
+      setTopics(baseTops.map((t) => ({ ...t, storyCount: 0 })));
     }
   }, []);
 
   useEffect(() => {
     loadTaxonomy();
     window.addEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
-    return () => window.removeEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
+    window.addEventListener('globalpulse_stories_updated', loadTaxonomy);
+    return () => {
+      window.removeEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
+      window.removeEventListener('globalpulse_stories_updated', loadTaxonomy);
+    };
   }, [loadTaxonomy]);
 
   const addCategory = useCallback(

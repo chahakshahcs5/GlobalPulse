@@ -29,13 +29,13 @@ export default function ExploreTopicsAndCategoriesPage() {
       const stored = localStorage.getItem('globalpulse_following');
       if (stored) {
         setFollowedTopics(JSON.parse(stored));
-      } else {
-        setFollowedTopics(['AI Breakthroughs', 'Geopolitics', 'Clean Energy']);
+      } else if (topics.length > 0) {
+        setFollowedTopics(topics.slice(0, 3).map((t) => t.name));
       }
     } catch {
       // Safe fallback
     }
-  }, []);
+  }, [topics]);
 
   // Toggle follow/unfollow
   const toggleFollow = (name: string) => {
