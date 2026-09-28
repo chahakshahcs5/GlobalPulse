@@ -22,6 +22,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { UsersModule } from './modules/users/users.module';
 import { ClusteringModule } from './modules/clustering/clustering.module';
 import { TemplatesModule } from './modules/templates/templates.module';
+import { FactCheckModule } from './modules/fact-check/fact-check.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { TemplatesModule } from './modules/templates/templates.module';
     UsersModule,
     ClusteringModule,
     TemplatesModule,
+    FactCheckModule,
   ],
 })
 export class AppModule {}

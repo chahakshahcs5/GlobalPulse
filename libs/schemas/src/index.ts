@@ -14,3 +14,4 @@ export * from './notification';
 export * from './cluster';
 export * from './template';
 export * from './liveblog';
+export * from './fact-check';
