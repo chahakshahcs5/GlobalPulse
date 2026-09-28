@@ -170,7 +170,7 @@ export class DatabaseService {
       return TransactionManager.execute(work);
     }
 
-    // High-fidelity in-memory atomic transaction with automatic rollback across all domains
+    // High-fidelity in-memory atomic transaction with automatic rollback across all 16 domains
     const storySnap = this.memoryStories.snapshot();
     const eventSnap = this.memoryEvents.snapshot();
     const topicSnap = this.memoryTopics.snapshot();
@@ -183,6 +183,10 @@ export class DatabaseService {
     const notifSnap = this.memoryNotifications.snapshot();
     const clusterSnap = this.memoryClusters.snapshot();
     const liveblogSnap = this.memoryLiveblogs.snapshot();
+    const newsletterSnap = this.memoryNewsletters.snapshot();
+    const collectionSnap = this.memoryCollections.snapshot();
+    const webhookSnap = this.memoryWebhooks.snapshot();
+    const provenanceSnap = this.memoryProvenance.snapshot();
 
     try {
       const result = await work(null);
@@ -200,6 +204,10 @@ export class DatabaseService {
       this.memoryNotifications.restore(notifSnap);
       this.memoryClusters.restore(clusterSnap);
       this.memoryLiveblogs.restore(liveblogSnap);
+      this.memoryNewsletters.restore(newsletterSnap);
+      this.memoryCollections.restore(collectionSnap);
+      this.memoryWebhooks.restore(webhookSnap);
+      this.memoryProvenance.restore(provenanceSnap);
       throw err;
     }
   }

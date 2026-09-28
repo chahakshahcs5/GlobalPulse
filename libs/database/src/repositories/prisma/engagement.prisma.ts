@@ -280,6 +280,14 @@ export class PrismaEngagementRepository implements IEngagementRepository {
   // ---------------------------------------------------------------------------
   private progressMap = new Map<string, ReadingProgressRecord>();
 
+  private get progressClient(): any {
+    return (this.prisma as any)?.readingProgress;
+  }
+
+  private get shareClient(): any {
+    return (this.prisma as any)?.storyShare;
+  }
+
   async saveReadingProgress(
     userId: string,
     storyId: string,
@@ -287,22 +295,87 @@ export class PrismaEngagementRepository implements IEngagementRepository {
     completed?: boolean
   ): Promise<ReadingProgressRecord> {
     const clamped = Math.max(0, Math.min(100, Math.round(percentage)));
+    const isCompleted = completed !== undefined ? completed : clamped >= 90;
+    const now = new Date();
     const record: ReadingProgressRecord = {
       userId,
       storyId,
       percentage: clamped,
-      completed: completed !== undefined ? completed : clamped >= 90,
-      updatedAt: new Date().toISOString(),
+      completed: isCompleted,
+      updatedAt: now.toISOString(),
     };
+
+    if (this.progressClient) {
+      try {
+        await this.progressClient.upsert({
+          where: { userId_storyId: { userId, storyId } },
+          create: {
+            userId,
+            storyId,
+            percentage: clamped,
+            completed: isCompleted,
+            updatedAt: now,
+          },
+          update: {
+            percentage: clamped,
+            completed: isCompleted,
+            updatedAt: now,
+          },
+        });
+        return record;
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
     this.progressMap.set(`${userId}:${storyId}`, record);
     return record;
   }
 
   async getReadingProgress(userId: string, storyId: string): Promise<ReadingProgressRecord | null> {
+    if (this.progressClient) {
+      try {
+        const row = await this.progressClient.findUnique({
+          where: { userId_storyId: { userId, storyId } },
+        });
+        if (row) {
+          return {
+            userId: row.userId,
+            storyId: row.storyId,
+            percentage: row.percentage,
+            completed: row.completed,
+            updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+          };
+        }
+      } catch {
+        // Fallback to memory below
+      }
+    }
     return this.progressMap.get(`${userId}:${storyId}`) || null;
   }
 
   async listReadingHistory(userId: string, limit: number = 50): Promise<ReadingProgressRecord[]> {
+    if (this.progressClient) {
+      try {
+        const rows = await this.progressClient.findMany({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          take: limit,
+        });
+        if (rows && rows.length > 0) {
+          return rows.map((r: any) => ({
+            userId: r.userId,
+            storyId: r.storyId,
+            percentage: r.percentage,
+            completed: r.completed,
+            updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
+          }));
+        }
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
     const list: ReadingProgressRecord[] = [];
     for (const record of this.progressMap.values()) {
       if (record.userId === userId) list.push(record);
@@ -317,13 +390,39 @@ export class PrismaEngagementRepository implements IEngagementRepository {
   // ---------------------------------------------------------------------------
   private shareCounts = new Map<string, number>();
 
-  async recordShare(storyId: string, _platform?: string, _userId?: string): Promise<{ shareCount: number }> {
+  async recordShare(storyId: string, platform?: string, userId?: string): Promise<{ shareCount: number }> {
+    if (this.shareClient) {
+      try {
+        await this.shareClient.create({
+          data: {
+            storyId,
+            platform: platform || null,
+            userId: userId || null,
+            createdAt: new Date(),
+          },
+        });
+        const count = await this.shareClient.count({
+          where: { storyId },
+        });
+        return { shareCount: count };
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
     const count = (this.shareCounts.get(storyId) || 0) + 1;
     this.shareCounts.set(storyId, count);
     return { shareCount: count };
   }
 
   async getShareCount(storyId: string): Promise<number> {
+    if (this.shareClient) {
+      try {
+        return await this.shareClient.count({ where: { storyId } });
+      } catch {
+        // Fallback to memory below
+      }
+    }
     return this.shareCounts.get(storyId) || 0;
   }
 }

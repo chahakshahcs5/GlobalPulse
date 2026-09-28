@@ -80,6 +80,14 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return this.collections.delete(id);
   }
 
+  snapshot(): Map<string, StoryCollection> {
+    return new Map(this.collections);
+  }
+
+  restore(snapshot: Map<string, StoryCollection>): void {
+    this.collections = new Map(snapshot);
+  }
+
   clear(): void {
     this.collections.clear();
   }

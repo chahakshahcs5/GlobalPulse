@@ -10,8 +10,10 @@ interface PrismaUserRow {
   scopes?: string[];
   clientType?: string;
   status?: string;
+  passwordHash?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
+  preferences?: any;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +43,10 @@ export class PrismaUserRepository implements IUserRepository {
     };
   }
 
+  private get followClient(): any {
+    return (this.prisma as any)?.followRelationship;
+  }
+
   private mapToNewsroomUser(row: PrismaUserRow): NewsroomUser {
     return {
       id: row.id,
@@ -50,6 +56,8 @@ export class PrismaUserRepository implements IUserRepository {
       role: (row.role as UserRole) || 'journalist',
       clientType: (row.clientType as any) || 'human_web',
       status: (row.status as UserStatus) || 'active',
+      passwordHash: row.passwordHash || undefined,
+      preferences: row.preferences || undefined,
       bio: row.bio || undefined,
       avatarUrl: row.avatarUrl || undefined,
       createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
@@ -90,6 +98,8 @@ export class PrismaUserRepository implements IUserRepository {
         role: user.role,
         clientType: user.clientType,
         status: user.status,
+        passwordHash: user.passwordHash,
+        preferences: user.preferences,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
         createdAt: new Date(user.createdAt),
@@ -108,6 +118,8 @@ export class PrismaUserRepository implements IUserRepository {
         role: user.role,
         clientType: user.clientType,
         status: user.status,
+        passwordHash: user.passwordHash,
+        preferences: user.preferences,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
         updatedAt: new Date(user.updatedAt),
@@ -137,13 +149,39 @@ export class PrismaUserRepository implements IUserRepository {
     targetType: 'topic' | 'entity' | 'author',
     targetId: string
   ): Promise<FollowRecord> {
-    const key = `${userId}:${targetType}:${targetId}`;
+    const now = new Date().toISOString();
     const record: FollowRecord = {
       userId,
       targetType,
       targetId,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     };
+
+    if (this.followClient) {
+      try {
+        await this.followClient.upsert({
+          where: {
+            userId_targetType_targetId: {
+              userId,
+              targetType,
+              targetId,
+            },
+          },
+          create: {
+            userId,
+            targetType,
+            targetId,
+            createdAt: new Date(now),
+          },
+          update: {},
+        });
+        return record;
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
+    const key = `${userId}:${targetType}:${targetId}`;
     this.follows.set(key, record);
     return record;
   }
@@ -153,6 +191,17 @@ export class PrismaUserRepository implements IUserRepository {
     targetType: 'topic' | 'entity' | 'author',
     targetId: string
   ): Promise<boolean> {
+    if (this.followClient) {
+      try {
+        await this.followClient.deleteMany({
+          where: { userId, targetType, targetId },
+        });
+        return true;
+      } catch {
+        // Fallback to memory
+      }
+    }
+
     const key = `${userId}:${targetType}:${targetId}`;
     return this.follows.delete(key);
   }
@@ -161,6 +210,25 @@ export class PrismaUserRepository implements IUserRepository {
     userId: string,
     targetType?: 'topic' | 'entity' | 'author'
   ): Promise<FollowRecord[]> {
+    if (this.followClient) {
+      try {
+        const where: Record<string, unknown> = { userId };
+        if (targetType) where.targetType = targetType;
+        const rows = await this.followClient.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+        });
+        return rows.map((r: any) => ({
+          userId: r.userId,
+          targetType: r.targetType as 'topic' | 'entity' | 'author',
+          targetId: r.targetId,
+          createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+        }));
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
     const list: FollowRecord[] = [];
     for (const record of this.follows.values()) {
       if (record.userId === userId) {
@@ -177,7 +245,19 @@ export class PrismaUserRepository implements IUserRepository {
     targetType: 'topic' | 'entity' | 'author',
     targetId: string
   ): Promise<boolean> {
+    if (this.followClient) {
+      try {
+        const row = await this.followClient.findFirst({
+          where: { userId, targetType, targetId },
+        });
+        return Boolean(row);
+      } catch {
+        // Fallback to memory
+      }
+    }
+
     const key = `${userId}:${targetType}:${targetId}`;
     return this.follows.has(key);
   }
 }
+

@@ -279,4 +279,107 @@ describe('Transactional Integrity & Rollback Handling', () => {
     expect(await db.events.findById('evt_baseline', 'org_test')).not.toBeNull();
     expect(await db.topics.findById('top_baseline', 'org_test')).not.toBeNull();
   });
+
+  it('rolls back clusters, liveblogs, newsletters, collections, webhooks, and provenance across failed transactions', async () => {
+    const now = new Date().toISOString();
+
+    // Baseline newsletter and collection
+    await db.newsletters.subscribe('reader@example.com', 'daily', ['tech']);
+    await db.collections.create({
+      id: 'col_baseline',
+      name: 'Baseline Collection',
+      slug: 'baseline-collection',
+      curatorId: 'usr_curator',
+      isPublic: true,
+      storyIds: [],
+    });
+
+    let caughtError: Error | null = null;
+    try {
+      await db.runInTransaction(async () => {
+        // Mutate clusters
+        await db.clusters.create({
+          id: 'clu_corrupted',
+          organizationId: 'org_test',
+          title: 'Corrupted Cluster',
+          summary: 'Should not persist',
+          leadStoryId: 'sty_1',
+          storyIds: ['sty_1'],
+          topic: 'tech',
+          category: 'technology',
+          perspectives: [],
+          timeline: [],
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        // Mutate liveblogs
+        await db.liveblogs.addEntry({
+          id: 'lb_corrupted',
+          storyId: 'sty_1',
+          headline: 'Corrupted Live Entry',
+          content: 'Should not persist',
+          isKeyEvent: false,
+          author: { id: 'usr_1', name: 'Author' },
+          timestamp: now,
+        });
+
+        // Mutate newsletters
+        await db.newsletters.subscribe('uncommitted@example.com', 'weekly', ['world']);
+
+        // Mutate collections
+        await db.collections.create({
+          id: 'col_corrupted',
+          name: 'Corrupted Collection',
+          slug: 'corrupted-col',
+          curatorId: 'usr_curator',
+          isPublic: true,
+          storyIds: [],
+        });
+
+        // Mutate webhooks
+        await db.webhooks.createSubscription({
+          id: 'wh_corrupted',
+          organizationId: 'org_test',
+          url: 'https://corrupt.example.com/webhook',
+          events: ['story.published'],
+          secret: 'whsec_test',
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        // Mutate provenance
+        await db.provenance.saveProvenance({
+          id: 'prv_corrupted',
+          storyId: 'sty_corrupted',
+          generatorModel: 'gemini-1.5-pro',
+          promptHash: 'hash123',
+          confidenceScore: 0.95,
+          watermarkSignature: 'sig123',
+          generationTimestamp: now,
+          createdAt: now,
+        });
+
+        throw new Error('Simulated failure during multi-domain operation');
+      });
+    } catch (err) {
+      caughtError = err as Error;
+    }
+
+    expect(caughtError?.message).toBe('Simulated failure during multi-domain operation');
+
+    // Verify all corrupted additions were rolled back
+    expect(await db.clusters.getById('clu_corrupted', 'org_test')).toBeNull();
+    const liveEntries = await db.liveblogs.listEntries('sty_1');
+    expect(liveEntries.find((e) => e.id === 'lb_corrupted')).toBeUndefined();
+    expect(await db.newsletters.getSubscription('uncommitted@example.com')).toBeNull();
+    expect(await db.collections.findById('col_corrupted')).toBeNull();
+    expect(await db.webhooks.findSubscriptionById('wh_corrupted', 'org_test')).toBeNull();
+    expect(await db.provenance.getProvenance('sty_corrupted')).toBeNull();
+
+    // Verify baseline remained intact
+    expect(await db.newsletters.getSubscription('reader@example.com')).not.toBeNull();
+    expect(await db.collections.findById('col_baseline')).not.toBeNull();
+  });
 });

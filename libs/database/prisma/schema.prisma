@@ -12,6 +12,7 @@ generator client {
 enum StoryStatus {
   DRAFT
   IN_REVIEW
+  SCHEDULED
   PUBLISHED
   ARCHIVED
 }
@@ -36,6 +37,10 @@ enum ArticleType {
   local
   weekly_digest
   topic_briefing
+  liveblog
+  fact_check
+  opinion
+  investigation
 }
 
 enum ClientType {
@@ -104,6 +109,12 @@ model User {
   name           String
   role           String       @default("editor") // admin, editor, author, viewer, ai_agent
   scopes         String[]     @default(["news:read"])
+  passwordHash   String?
+  clientType     String       @default("human_web")
+  status         String       @default("active")
+  bio            String?
+  avatarUrl      String?
+  preferences    Json?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -396,3 +407,185 @@ model EditorialNotification {
   @@index([organizationId])
   @@map("editorial_notifications")
 }
+
+model StoryCluster {
+  id             String       @id @default(uuid())
+  organizationId String
+  title          String
+  summary        String?
+  leadStoryId    String
+  storyIds       String[]     @default([])
+  topic          String?
+  category       String?
+  perspectives   Json         @default("[]")
+  timeline       Json         @default("[]")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([leadStoryId])
+  @@map("story_clusters")
+}
+
+model LiveblogEntry {
+  id           String   @id @default(uuid())
+  storyId      String
+  headline     String
+  content      String
+  isKeyEvent   Boolean  @default(false)
+  authorId     String
+  authorName   String?
+  authorAvatar String?
+  timestamp    DateTime @default(now())
+
+  story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, timestamp])
+  @@map("liveblog_entries")
+}
+
+model NewsletterSubscription {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  frequency  String   @default("daily")
+  categories String[] @default([])
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([email, active])
+  @@map("newsletter_subscriptions")
+}
+
+model NewsletterDigest {
+  id             String   @id @default(uuid())
+  frequency      String   @default("daily")
+  category       String?
+  recipientCount Int      @default(0)
+  storyIds       String[] @default([])
+  contentSummary String?
+  metadata       Json?
+  generatedAt    DateTime @default(now())
+
+  @@index([frequency, generatedAt])
+  @@map("newsletter_digests")
+}
+
+model StoryCollection {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  curatorId   String
+  curatorName String?
+  isPublic    Boolean  @default(true)
+  storyIds    String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([curatorId])
+  @@index([isPublic])
+  @@map("story_collections")
+}
+
+model WebhookSubscription {
+  id             String       @id @default(uuid())
+  organizationId String
+  url            String
+  events         String[]     @default([])
+  secret         String
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, active])
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDispatchLog {
+  id             String   @id @default(uuid())
+  subscriptionId String
+  event          String
+  targetUrl      String
+  statusCode     Int
+  success        Boolean
+  durationMs     Int
+  attempt        Int      @default(1)
+  errorMessage   String?
+  dispatchedAt   DateTime @default(now())
+
+  @@index([subscriptionId, dispatchedAt])
+  @@map("webhook_dispatch_logs")
+}
+
+model StoryProvenance {
+  id                  String   @id @default(uuid())
+  storyId             String   @unique
+  generatorModel      String
+  promptHash          String
+  confidenceScore     Float
+  humanReviewedBy     String?
+  watermarkSignature  String
+  c2paManifestUrl     String?
+  generationTimestamp DateTime @default(now())
+  createdAt           DateTime @default(now())
+
+  story               Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@map("story_provenance")
+}
+
+model ReadingProgress {
+  id         String   @id @default(uuid())
+  userId     String
+  storyId    String
+  percentage Int
+  completed  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, storyId])
+  @@index([userId, updatedAt])
+  @@map("reading_progress")
+}
+
+model FollowRelationship {
+  id         String   @id @default(uuid())
+  userId     String
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+  @@map("follow_relationships")
+}
+
+model FactCheck {
+  id        String   @id @default(uuid())
+  claim     String
+  claimant  String
+  rating    String
+  summary   String
+  checker   String
+  sources   String[] @default([])
+  checkedAt DateTime @default(now())
+
+  @@index([rating])
+  @@map("fact_checks")
+}
+
+model StoryShare {
+  id        String   @id @default(uuid())
+  storyId   String
+  platform  String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([storyId])
+  @@map("story_shares")
+}
+

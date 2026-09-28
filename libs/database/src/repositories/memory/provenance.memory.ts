@@ -14,6 +14,14 @@ export class MemoryProvenanceRepository implements IProvenanceRepository {
     return item ? { ...item } : null;
   }
 
+  snapshot(): Map<string, AIStoryProvenance> {
+    return new Map(this.records);
+  }
+
+  restore(snapshot: Map<string, AIStoryProvenance>): void {
+    this.records = new Map(snapshot);
+  }
+
   clear(): void {
     this.records.clear();
   }

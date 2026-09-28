@@ -43,6 +43,18 @@ export class MemoryWebhookRepository implements IWebhookRepository {
     return this.logs.filter((l) => l.subscriptionId === subscriptionId);
   }
 
+  snapshot(): { subscriptions: Map<string, WebhookSubscription>; logs: WebhookDispatchLog[] } {
+    return {
+      subscriptions: new Map(this.subscriptions),
+      logs: [...this.logs],
+    };
+  }
+
+  restore(snap: { subscriptions: Map<string, WebhookSubscription>; logs: WebhookDispatchLog[] }): void {
+    this.subscriptions = new Map(snap.subscriptions);
+    this.logs = [...snap.logs];
+  }
+
   clear(): void {
     this.subscriptions.clear();
     this.logs = [];
