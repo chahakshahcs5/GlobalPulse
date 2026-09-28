@@ -6,6 +6,7 @@ import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import {
   ArticleTypeSchema,
   StoryBlockSchema,
+  StoryStatusSchema,
 } from '@ai-news/schemas';
 import { mcpJsonResponse } from './tool-helpers';
 
@@ -314,17 +315,70 @@ export function registerStoryTools(
   );
 
   server.tool(
+    'list_stories',
+    '[READ-ONLY] List stories with pagination (cursor or offset based), status filtering, and category/topic filtering.',
+    {
+      status: StoryStatusSchema.optional().describe('Filter by story status: DRAFT, IN_REVIEW, PUBLISHED, ARCHIVED'),
+      articleType: ArticleTypeSchema.optional().describe('Filter by format (e.g. developing_story, breaking_news, explainer)'),
+      topicId: z.string().optional().describe('Filter by topic ID'),
+      entityId: z.string().optional().describe('Filter by entity ID'),
+      sourceId: z.string().optional().describe('Filter by source ID'),
+      limit: z.number().int().min(1).max(100).default(20).describe('Max items to return (1-100)'),
+      offset: z.number().int().min(0).optional().describe('Offset number'),
+      cursor: z.string().optional().describe('Opaque pagination cursor from previous response'),
+    },
+    async (params) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const paginated = await storyService.listStoriesPaginated(params, principal.organizationId);
+      return mcpJsonResponse({
+        total: paginated.total,
+        limit: paginated.limit,
+        offset: paginated.offset,
+        cursor: paginated.cursor,
+        nextCursor: paginated.nextCursor,
+        hasMore: paginated.hasMore,
+        stories: paginated.items.map((s) => ({
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+          status: s.status,
+          articleType: s.articleType,
+          authorId: s.authorId,
+          publishedAt: s.publishedAt,
+          updatedAt: s.updatedAt,
+          topicIds: s.topicIds,
+          entityIds: s.entityIds,
+          blockCount: s.blocks?.length || 0,
+        })),
+      });
+    }
+  );
+
+  server.tool(
     'list_review_queue',
-    '[READ-ONLY] Fetch all pending stories currently waiting in the editorial review queue.',
-    {},
-    async () => {
+    '[READ-ONLY] Fetch stories currently waiting in the editorial review queue with pagination support.',
+    {
+      limit: z.number().int().min(1).max(100).default(20).describe('Maximum number of review queue items to return'),
+      offset: z.number().int().min(0).optional().describe('Zero-based offset for pagination'),
+    },
+    async ({ limit, offset }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
       const queue = await storyService.getReviewQueue(principal.organizationId);
+      const total = queue.length;
+      const start = offset || 0;
+      const page = queue.slice(start, start + limit);
+      const hasMore = start + page.length < total;
+
       return mcpJsonResponse({
-        queueLength: queue.length,
-        stories: queue.map((s) => ({
+        queueLength: total,
+        limit,
+        offset: start,
+        hasMore,
+        stories: page.map((s) => ({
           id: s.id,
           title: s.title,
           slug: s.slug,
@@ -337,3 +391,4 @@ export function registerStoryTools(
     }
   );
 }
+

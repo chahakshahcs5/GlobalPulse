@@ -15,8 +15,21 @@ export interface StoryFilter {
   entityId?: string;
   sourceId?: string;
   limit?: number;
+  offset?: number;
   cursor?: string;
   query?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface PaginatedStories {
+  items: Story[];
+  total: number;
+  limit: number;
+  offset?: number;
+  cursor?: string;
+  nextCursor?: string;
+  hasMore: boolean;
 }
 
 export interface IStoryRepository {
@@ -26,6 +39,7 @@ export interface IStoryRepository {
   update(story: Story): Promise<Story>;
   delete(id: string, orgId?: string): Promise<boolean>;
   list(filter?: StoryFilter, orgId?: string): Promise<Story[]>;
+  listPaginated(filter?: StoryFilter, orgId?: string): Promise<PaginatedStories>;
 
   // Block management
   saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void>;
@@ -45,3 +59,4 @@ export interface IStoryRepository {
   search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>>;
   findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]>;
 }
+

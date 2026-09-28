@@ -63,13 +63,38 @@ export function slugify(text: string): string {
 
 export interface PaginationParams {
   limit?: number;
+  offset?: number;
   cursor?: string;
 }
 
 export interface PaginatedResult<T> {
   items: T[];
   nextCursor?: string;
+  cursor?: string;
+  offset?: number;
+  limit?: number;
   totalCount?: number;
   total?: number;
   hasMore?: boolean;
 }
+
+export function encodeCursor(record: { updatedAt: string; id: string }): string {
+  const payload = JSON.stringify({ u: record.updatedAt, i: record.id });
+  return Buffer.from(payload).toString('base64url');
+}
+
+export function decodeCursor(cursor: string): { updatedAt: string; id: string } | null {
+  if (!cursor || typeof cursor !== 'string') return null;
+  try {
+    const raw = Buffer.from(cursor, 'base64url').toString('utf8');
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.i === 'string') {
+      return { updatedAt: parsed.u || '', id: parsed.i };
+    }
+  } catch {
+    // If it's a plain ID passed directly as cursor
+    return { updatedAt: '', id: cursor };
+  }
+  return { updatedAt: '', id: cursor };
+}
+

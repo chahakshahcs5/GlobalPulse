@@ -7,6 +7,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { AppModule } from './app.module';
 import { Rfc7807ExceptionFilter } from './common/rfc7807.filter';
 import { requestLoggerPlugin } from './common/middleware/request-logger';
+import { httpCachePlugin } from './common/cache/http-cache.plugin';
 import { appConfig } from './config/configuration';
 import { createLogger } from '@ai-news/observability';
 
@@ -106,6 +107,7 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
 
   fastify.register(cors, getCorsOptions() as any);
   fastify.register(rateLimit, getRateLimitOptions());
+  fastify.register(httpCachePlugin);
   fastify.register(requestLoggerPlugin);
 
   // Hook NestJS bootstrap into fastify.ready()
@@ -140,6 +142,7 @@ export async function createNestApp(): Promise<NestFastifyApplication> {
 
   await app.register(cors, getCorsOptions() as any);
   await app.register(rateLimit, getRateLimitOptions());
+  await app.register(httpCachePlugin);
 
   app.useGlobalFilters(new Rfc7807ExceptionFilter());
   await app.init();

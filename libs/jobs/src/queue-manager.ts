@@ -192,6 +192,28 @@ export class QueueManager {
   public clear(): void {
     this.jobs.clear();
   }
+
+  public getMetrics(): { queued: number; running: number; completed: number; failed: number; total: number } {
+    let queued = 0;
+    let running = 0;
+    let completed = 0;
+    let failed = 0;
+    for (const job of this.jobs.values()) {
+      if (job.status === 'queued') queued++;
+      else if (job.status === 'active') running++;
+      else if (job.status === 'completed') completed++;
+      else if (job.status === 'failed') failed++;
+
+    }
+    return {
+      queued,
+      running,
+      completed,
+      failed,
+      total: this.jobs.size,
+    };
+  }
 }
+
 
 export const defaultQueue = new QueueManager();

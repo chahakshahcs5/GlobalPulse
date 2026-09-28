@@ -10,7 +10,8 @@ export const SearchStoriesInputSchema = z.object({
   sourceId: z.string().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
-  limit: z.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).optional(),
   cursor: z.string().optional(),
 });
 export type SearchStoriesInput = z.input<typeof SearchStoriesInputSchema>;
@@ -42,5 +43,10 @@ export type StorySearchResultItem = z.infer<typeof StorySearchResultItemSchema>;
 export interface PaginatedResult<T> {
   items: T[];
   total: number;
+  limit?: number;
+  offset?: number;
+  cursor?: string;
+  nextCursor?: string;
   hasMore: boolean;
 }
+

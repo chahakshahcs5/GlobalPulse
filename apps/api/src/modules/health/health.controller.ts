@@ -1,13 +1,21 @@
 import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { s3Storage } from '@ai-news/media';
+import { defaultQueue } from '@ai-news/jobs';
+import { cacheService } from '../../common/cache';
 import { FastifyReply } from 'fastify';
 
 @Controller(['health', 'api/health'])
 export class HealthController {
   @Get()
   async getHealth(@Res({ passthrough: true }) reply: FastifyReply) {
-    const dbHealth = await db.getHealth();
+    const [dbHealth, redisHealth, storageHealth] = await Promise.all([
+      db.getHealth(),
+      cacheService.ping(),
+      s3Storage.checkHealth(),
+    ]);
+
+    const queueMetrics = defaultQueue.getMetrics();
     const memoryUsage = process.memoryUsage();
     const isHealthy = dbHealth.status !== 'error';
 
@@ -33,13 +41,25 @@ export class HealthController {
           connected: dbHealth.status === 'connected' || dbHealth.status === 'memory_fallback',
         },
         redis: {
-          status: process.env.REDIS_URL ? 'configured' : 'standalone-fallback',
-          url: process.env.REDIS_URL ? '[REDACTED]' : undefined,
+          status: redisHealth.status,
+          mode: redisHealth.mode,
+          latencyMs: redisHealth.latencyMs,
+          connected: redisHealth.connected,
+          configured: Boolean(process.env.REDIS_URL),
         },
         storage: {
+          status: storageHealth.status,
+          bucket: storageHealth.bucket,
+          provider: storageHealth.provider,
+          latencyMs: storageHealth.latencyMs,
+        },
+        queue: {
           status: 'online',
-          bucket: s3Storage.getBucket(),
-          provider: process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3',
+          queued: queueMetrics.queued,
+          running: queueMetrics.running,
+          completed: queueMetrics.completed,
+          failed: queueMetrics.failed,
+          total: queueMetrics.total,
         },
       },
     };
@@ -50,15 +70,46 @@ export class HealthController {
 
   @Get('live')
   getLiveness() {
-    return { status: 'alive', timestamp: new Date().toISOString() };
+    return {
+      status: 'alive',
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+    };
   }
 
   @Get('ready')
   async getReadiness(@Res({ passthrough: true }) reply: FastifyReply) {
-    const dbHealth = await db.getHealth();
-    const isReady = dbHealth.status !== 'error';
+    const [dbHealth, redisHealth, storageHealth] = await Promise.all([
+      db.getHealth(),
+      cacheService.ping(),
+      s3Storage.checkHealth(),
+    ]);
+
+    const isReady = dbHealth.status !== 'error' && storageHealth.status === 'healthy';
 
     reply.status(isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
-    return { status: isReady ? 'ready' : 'unready', timestamp: new Date().toISOString() };
+    return {
+      status: isReady ? 'ready' : 'unready',
+      timestamp: new Date().toISOString(),
+      dependencies: {
+        database: {
+          status: dbHealth.status,
+          latencyMs: dbHealth.latencyMs,
+          ready: dbHealth.status !== 'error',
+        },
+        cache: {
+          status: redisHealth.status,
+          mode: redisHealth.mode,
+          latencyMs: redisHealth.latencyMs,
+          ready: true,
+        },
+        storage: {
+          status: storageHealth.status,
+          latencyMs: storageHealth.latencyMs,
+          ready: storageHealth.status === 'healthy',
+        },
+      },
+    };
+
   }
 }

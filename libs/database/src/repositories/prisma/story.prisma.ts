@@ -6,8 +6,9 @@ import type {
   FindSimilarStoriesInput,
   StorySearchResultItem,
 } from '@ai-news/schemas';
-import type { PaginatedResult } from '@ai-news/shared';
-import type { IStoryRepository, StoryFilter } from '../../interfaces/story.repository';
+import { type PaginatedResult, encodeCursor, decodeCursor } from '@ai-news/shared';
+import type { IStoryRepository, StoryFilter, PaginatedStories } from '../../interfaces/story.repository';
+
 
 interface PrismaStoryBlockRow {
   id: string;
@@ -63,7 +64,7 @@ export class PrismaStoryRepository implements IStoryRepository {
 
   private get storyClient(): {
     findFirst: (args: { where: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow | null>;
-    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
+    findMany: (args: { where: Record<string, unknown>; take?: number; skip?: number; cursor?: Record<string, unknown>; orderBy?: unknown; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
     update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
     delete: (args: { where: Record<string, unknown> }) => Promise<PrismaStoryRow>;
@@ -71,13 +72,14 @@ export class PrismaStoryRepository implements IStoryRepository {
   } {
     return this.prisma.story as {
       findFirst: (args: { where: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow | null>;
-      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
+      findMany: (args: { where: Record<string, unknown>; take?: number; skip?: number; cursor?: Record<string, unknown>; orderBy?: unknown; include?: Record<string, unknown> }) => Promise<PrismaStoryRow[]>;
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
       update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaStoryRow>;
       delete: (args: { where: Record<string, unknown> }) => Promise<PrismaStoryRow>;
       count: (args: { where: Record<string, unknown> }) => Promise<number>;
     };
   }
+
 
   private get versionClient(): {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaVersionRow>;
@@ -201,7 +203,7 @@ export class PrismaStoryRepository implements IStoryRepository {
     }
   }
 
-  async list(filter?: StoryFilter, orgId?: string): Promise<Story[]> {
+  async listPaginated(filter?: StoryFilter, orgId?: string): Promise<PaginatedStories> {
     const where: Record<string, unknown> = {};
     if (orgId) where.organizationId = orgId;
     if (filter?.status) where.status = filter.status;
@@ -221,21 +223,69 @@ export class PrismaStoryRepository implements IStoryRepository {
         { summary: { contains: filter.query, mode: 'insensitive' } },
       ];
     }
+    if (filter?.fromDate || filter?.toDate) {
+      const dateFilter: Record<string, unknown> = {};
+      if (filter.fromDate) dateFilter.gte = new Date(filter.fromDate);
+      if (filter.toDate) dateFilter.lte = new Date(filter.toDate);
+      where.createdAt = dateFilter;
+    }
 
-    const rows = await this.storyClient.findMany({
+    const limit = Math.max(1, Math.min(filter?.limit ?? 50, 100));
+    const total = await this.storyClient.count({ where });
+
+    const findManyArgs: {
+      where: Record<string, unknown>;
+      take: number;
+      skip?: number;
+      cursor?: Record<string, unknown>;
+      orderBy: unknown;
+      include: Record<string, unknown>;
+    } = {
       where,
-      take: filter?.limit || 50,
-      orderBy: { updatedAt: 'desc' },
+      take: limit + 1,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
         topics: true,
         entities: true,
         sources: true,
       },
-    });
+    };
 
-    return rows.map((r) => this.mapToDomain(r));
+    if (filter?.cursor) {
+      const decoded = decodeCursor(filter.cursor);
+      if (decoded && decoded.id) {
+        findManyArgs.cursor = { id: decoded.id };
+        findManyArgs.skip = 1;
+      }
+    } else if (filter?.offset && filter.offset > 0) {
+      findManyArgs.skip = filter.offset;
+    }
+
+
+    const rows = await this.storyClient.findMany(findManyArgs);
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const items = pageRows.map((r: any) => this.mapToDomain(r));
+    const lastItem = items[items.length - 1];
+    const nextCursor = hasMore && lastItem ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id }) : undefined;
+
+    return {
+      items,
+      total,
+      limit,
+      offset: filter?.offset,
+      cursor: filter?.cursor,
+      nextCursor,
+      hasMore,
+    };
   }
+
+  async list(filter?: StoryFilter, orgId?: string): Promise<Story[]> {
+    const paginated = await this.listPaginated(filter, orgId);
+    return paginated.items;
+  }
+
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
     await this.blockClient.deleteMany({ where: { storyId } });

@@ -24,7 +24,10 @@ export function registerSearchTools(
       entityId: z.string().optional().describe('Filter by entity ID'),
       sourceId: z.string().optional().describe('Filter by source ID'),
       limit: z.number().int().min(1).max(50).default(10).describe('Max results to return'),
+      offset: z.number().int().min(0).optional().describe('Pagination offset'),
+      cursor: z.string().optional().describe('Pagination cursor'),
     },
+
     async (params) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:search');

@@ -1,6 +1,7 @@
 import type { Story, StoryVersion, StoryBlock, SearchStoriesInput, FindSimilarStoriesInput, StorySearchResultItem } from '@ai-news/schemas';
-import type { PaginatedResult } from '@ai-news/shared';
-import type { IStoryRepository, StoryFilter } from '../../interfaces/story.repository';
+import { type PaginatedResult, encodeCursor, decodeCursor } from '@ai-news/shared';
+import type { IStoryRepository, StoryFilter, PaginatedStories } from '../../interfaces/story.repository';
+
 
 export class MemoryStoryRepository implements IStoryRepository {
   private stories = new Map<string, Story>();
@@ -55,7 +56,10 @@ export class MemoryStoryRepository implements IStoryRepository {
     return true;
   }
 
-  async list(filterOrOrgId?: StoryFilter | string, maybeOrgIdOrFilter?: string | StoryFilter): Promise<Story[]> {
+  async listPaginated(
+    filterOrOrgId?: StoryFilter | string,
+    maybeOrgIdOrFilter?: string | StoryFilter
+  ): Promise<PaginatedStories> {
     let filter: StoryFilter | undefined;
     let orgId: string | undefined;
 
@@ -93,6 +97,14 @@ export class MemoryStoryRepository implements IStoryRepository {
       if (filter.sourceId) {
         result = result.filter((s) => s.sourceIds.includes(filter.sourceId!));
       }
+      if (filter.fromDate) {
+        const fromTime = new Date(filter.fromDate).getTime();
+        result = result.filter((s) => new Date(s.publishedAt || s.createdAt).getTime() >= fromTime);
+      }
+      if (filter.toDate) {
+        const toTime = new Date(filter.toDate).getTime();
+        result = result.filter((s) => new Date(s.publishedAt || s.createdAt).getTime() <= toTime);
+      }
       if (filter.query) {
         const q = filter.query.toLowerCase();
         result = result.filter(
@@ -103,22 +115,63 @@ export class MemoryStoryRepository implements IStoryRepository {
       }
     }
 
-    // Sort by publication date or updated date descending
+    // Stable sort by publication date or updated date descending, then id descending
     result.sort((a, b) => {
       const dateA = new Date(a.publishedAt || a.updatedAt).getTime();
       const dateB = new Date(b.publishedAt || b.updatedAt).getTime();
-      return dateB - dateA;
+      if (dateB !== dateA) return dateB - dateA;
+      return b.id.localeCompare(a.id);
     });
 
-    if (filter?.limit && filter.limit > 0) {
-      result = result.slice(0, filter.limit);
+    const total = result.length;
+    const limit = Math.max(1, Math.min(filter?.limit ?? 50, 100));
+
+    let startIndex = 0;
+    if (filter?.cursor) {
+      const decoded = decodeCursor(filter.cursor);
+      if (decoded) {
+        const cursorIdx = result.findIndex((s) => s.id === decoded.id);
+        if (cursorIdx !== -1) {
+          startIndex = cursorIdx + 1;
+        } else if (decoded.updatedAt) {
+          const cursorTime = new Date(decoded.updatedAt).getTime();
+          startIndex = result.findIndex((s) => {
+            const itemTime = new Date(s.publishedAt || s.updatedAt).getTime();
+            return itemTime < cursorTime || (itemTime === cursorTime && s.id.localeCompare(decoded.id) < 0);
+          });
+          if (startIndex === -1) startIndex = result.length;
+        }
+      }
+    } else if (filter?.offset && filter.offset > 0) {
+      startIndex = filter.offset;
     }
 
-    return result.map((s) => ({
+    const pageSlice = result.slice(startIndex, startIndex + limit);
+    const hasMore = startIndex + pageSlice.length < total;
+    const lastItem = pageSlice[pageSlice.length - 1];
+    const nextCursor = hasMore && lastItem ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id }) : undefined;
+
+    const items = pageSlice.map((s) => ({
       ...s,
       blocks: this.blocks.get(s.id) || [],
     }));
+
+    return {
+      items,
+      total,
+      limit,
+      offset: filter?.offset,
+      cursor: filter?.cursor,
+      nextCursor,
+      hasMore,
+    };
   }
+
+  async list(filterOrOrgId?: StoryFilter | string, maybeOrgIdOrFilter?: string | StoryFilter): Promise<Story[]> {
+    const paginated = await this.listPaginated(filterOrOrgId, maybeOrgIdOrFilter);
+    return paginated.items;
+  }
+
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
     this.blocks.set(storyId, [...blocks]);

@@ -13,7 +13,7 @@ import {
   UpdateStoryInputSchema,
   CreateStoryVersionInputSchema,
 } from '@ai-news/schemas';
-import type { DatabaseService, StoryFilter } from '@ai-news/database';
+import type { DatabaseService, StoryFilter, PaginatedStories } from '@ai-news/database';
 import { validateBlocks, validateBlock, sanitizeBlock } from '@ai-news/content';
 import {
   NotFoundError,
@@ -164,6 +164,11 @@ export class StoryService {
   async listStories(filter?: StoryFilter, orgId: string = 'org_default'): Promise<Story[]> {
     return this.db.stories.list(filter, orgId);
   }
+
+  async listStoriesPaginated(filter?: StoryFilter, orgId: string = 'org_default'): Promise<PaginatedStories> {
+    return this.db.stories.listPaginated(filter, orgId);
+  }
+
 
   async getStory(id: string, orgId?: string): Promise<Story> {
     const story = await this.db.stories.findById(id, orgId);

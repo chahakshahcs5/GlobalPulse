@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Story, StoryBlock } from '@ai-news/schemas';
+import type { Story } from '@ai-news/schemas';
+
 import {
   GOOGLE_NEWS_CLUSTERS,
   type GoogleNewsCluster,

@@ -184,7 +184,37 @@ export class S3StorageService {
       }
     }
   }
+
+  public async checkHealth(): Promise<{ status: 'healthy' | 'degraded'; bucket: string; provider: string; latencyMs: number }> {
+    const start = Date.now();
+    const provider = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3';
+    if (!this.client || process.env.NODE_ENV === 'test') {
+      return {
+        status: 'healthy',
+        bucket: this.bucket,
+        provider,
+        latencyMs: Date.now() - start,
+      };
+    }
+    try {
+      const ok = await this.ensureBucket();
+      return {
+        status: ok ? 'healthy' : 'degraded',
+        bucket: this.bucket,
+        provider,
+        latencyMs: Date.now() - start,
+      };
+    } catch {
+      return {
+        status: 'degraded',
+        bucket: this.bucket,
+        provider,
+        latencyMs: Date.now() - start,
+      };
+    }
+  }
 }
+
 
 // Global storage singleton
 export const s3Storage = new S3StorageService();

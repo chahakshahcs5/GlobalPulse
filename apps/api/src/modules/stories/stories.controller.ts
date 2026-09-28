@@ -25,8 +25,9 @@ import {
   CreateStoryVersionInputSchema,
   PublishStoryInputSchema,
   ReorderBlocksInputSchema,
-  StoryFilter,
+  StoryFilterSchema,
 } from './stories.dto';
+
 import type { Story, StoryBlock, StoryVersion } from '@ai-news/schemas';
 
 @Controller('api/stories')
@@ -42,11 +43,19 @@ export class StoriesController {
 
   @Get()
   @RequireScope('news:read')
-  async listStories(@Query() query: StoryFilter, @Principal() principal: AuthenticatedPrincipal) {
+  async listStories(@Query() query: unknown, @Principal() principal: AuthenticatedPrincipal) {
     const orgId = principal.organizationId;
-    const stories = await this.storyService.listStories(query, orgId);
-    return ApiResponse.paginated(stories, stories.length, query?.limit || 50);
+    const validated = StoryFilterSchema.parse(query || {});
+    const paginated = await this.storyService.listStoriesPaginated(validated, orgId);
+    return ApiResponse.paginated(
+      paginated.items,
+      paginated.total,
+      paginated.limit,
+      paginated.nextCursor,
+      paginated.offset
+    );
   }
+
 
   @Post()
   @Roles('admin', 'editor', 'journalist', 'ai_agent')
