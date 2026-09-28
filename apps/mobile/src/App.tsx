@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { FeedScreen } from './screens/FeedScreen';
 import { StoryDetailScreen } from './screens/StoryDetailScreen';
 import { BookmarksScreen } from './screens/BookmarksScreen';
 import { OfflineStory } from './services/storage';
+import { mobileApi } from './services/api';
 
 export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
   {
@@ -125,11 +126,32 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
 export default function MobileApp() {
   const [activeTab, setActiveTab] = useState<'feed' | 'bookmarks'>('feed');
   const [selectedStory, setSelectedStory] = useState<OfflineStory | null>(null);
+  const [stories, setStories] = useState<OfflineStory[]>(SAMPLE_MOBILE_STORIES);
+  const [_isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
   const { width } = useWindowDimensions();
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLiveStories() {
+      try {
+        const res = await mobileApi.fetchStories();
+        if (isMounted && res.stories && res.stories.length > 0) {
+          setStories(res.stories);
+          setIsLiveConnected(res.isOnline);
+        }
+      } catch {
+        // Fallback silently to offline / baseline
+      }
+    }
+    loadLiveStories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Tablet breakpoint (e.g. iPad, Android tablets)
   const isTablet = width >= 768;
-  const tabletStory = selectedStory || SAMPLE_MOBILE_STORIES[0];
+  const tabletStory = selectedStory || stories[0] || SAMPLE_MOBILE_STORIES[0];
 
   // Tablet Dual-Pane Mode
   if (isTablet) {
@@ -163,7 +185,7 @@ export default function MobileApp() {
             <View style={styles.tabletListWrapper}>
               {activeTab === 'feed' ? (
                 <FeedScreen
-                  stories={SAMPLE_MOBILE_STORIES}
+                  stories={stories}
                   onSelectStory={(s) => setSelectedStory(s)}
                   selectedStoryId={selectedStory?.id}
                 />
@@ -210,7 +232,7 @@ export default function MobileApp() {
         <View style={styles.phoneScreenContent}>
           {activeTab === 'feed' ? (
             <FeedScreen
-              stories={SAMPLE_MOBILE_STORIES}
+              stories={stories}
               onSelectStory={(s) => setSelectedStory(s)}
             />
           ) : (
