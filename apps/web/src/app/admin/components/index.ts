@@ -7,3 +7,4 @@ export * from './StoryTable';
 export * from './NewsroomPulseTab';
 export * from './BreakingNewsTab';
 export * from './StaffManagementTab';
+export * from './McpDiscoveryTab';

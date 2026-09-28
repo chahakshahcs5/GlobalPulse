@@ -22,6 +22,7 @@ import {
   NewsroomPulseTab,
   BreakingNewsTab,
   StaffManagementTab,
+  McpDiscoveryTab,
   type AdminTab,
   type FilterStatus,
 } from './components';
@@ -117,6 +118,10 @@ export default function EditorialCMSPage() {
 
       {activeTab === 'staff' && (
         <StaffManagementTab onSuccess={triggerSuccess} />
+      )}
+
+      {activeTab === 'mcp' && (
+        <McpDiscoveryTab />
       )}
     </div>
   );

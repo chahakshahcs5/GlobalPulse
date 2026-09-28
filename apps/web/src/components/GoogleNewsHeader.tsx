@@ -19,6 +19,7 @@ import {
 import { useBookmarks } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
 import { BookmarksDrawer } from './BookmarksDrawer';
+import { AuthModal, type UserSession } from './AuthModal';
 
 const CATEGORIES = [
   { name: 'Top Stories', href: '/', icon: Star },
@@ -38,8 +39,37 @@ export const GoogleNewsHeader: React.FC = () => {
   const bookmarks = useBookmarks();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('globalpulse_user');
+      if (savedUser) setCurrentUser(JSON.parse(savedUser));
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const handleLoginSuccess = (user: UserSession) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('globalpulse_user', JSON.stringify(user));
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('globalpulse_user');
+    } catch {
+      // Ignore
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('globalpulse_theme');
@@ -147,19 +177,40 @@ export const GoogleNewsHeader: React.FC = () => {
               {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
 
-            {/* Journalist Newsroom CMS Button */}
-            <Link
-              href="/admin"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 text-xs font-bold transition"
-            >
-              <PenTool className="w-3.5 h-3.5" />
-              <span>Editorial Studio</span>
-            </Link>
+            {/* Journalist Newsroom CMS Button - RBAC protected */}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'editor' || !currentUser) && (
+              <Link
+                href="/admin"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 text-xs font-bold transition"
+              >
+                <PenTool className="w-3.5 h-3.5" />
+                <span>Editorial Studio</span>
+              </Link>
+            )}
 
-            {/* User Profile Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm cursor-pointer">
-              GP
-            </div>
+            {/* User Profile Avatar / Sign In Trigger */}
+            <button
+              onClick={() => setIsAuthOpen(true)}
+              className="flex items-center gap-1.5 focus:outline-none cursor-pointer"
+              title={currentUser ? `${currentUser.name} (${currentUser.role})` : 'Sign in to GlobalPulse'}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'GP'}
+              </div>
+              {currentUser && (
+                <span
+                  className={`hidden md:inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider ${
+                    currentUser.role === 'admin'
+                      ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
+                      : currentUser.role === 'editor'
+                      ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                  }`}
+                >
+                  {currentUser.role}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -194,6 +245,15 @@ export const GoogleNewsHeader: React.FC = () => {
 
       {/* Saved Bookmarks Drawer */}
       <BookmarksDrawer isOpen={isBookmarksOpen} onClose={() => setIsBookmarksOpen(false)} />
+
+      {/* Auth & RBAC Modal (F1, F2) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        currentUser={currentUser}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
+      />
     </>
   );
 };
