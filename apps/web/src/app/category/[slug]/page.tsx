@@ -11,6 +11,7 @@ import { WeatherWidget } from '../../../components/WeatherWidget';
 import { TrendingTopicsWidget } from '../../../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
 import { ArrowLeft, Rss, Clock, ShieldCheck, Newspaper } from 'lucide-react';
+import { formatDeterministicDate } from '../../../lib/date-utils';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -92,7 +93,7 @@ export default function CategoryPage() {
                         </span>
                         <span className="flex items-center gap-1 text-[11px]" suppressHydrationWarning>
                           <Clock className="w-3 h-3" />
-                          {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
+                          {formatDeterministicDate(story.publishedAt)}
                         </span>
                       </div>
                       <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">

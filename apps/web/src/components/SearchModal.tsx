@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, X, Clock, BookOpen, Loader2 } from 'lucide-react';
 import { useAllStories } from '../lib/news-store';
 import * as api from '../lib/api-client';
+import { formatDeterministicDate } from '../lib/date-utils';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -157,7 +158,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                 <span>•</span>
                 <span className="flex items-center gap-1 text-slate-400 font-normal" suppressHydrationWarning>
                   <Clock className="w-3 h-3" />
-                  {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
+                  {formatDeterministicDate(story.publishedAt)}
                 </span>
               </div>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Bookmark, X, Trash2, ArrowRight } from 'lucide-react';
 import { useBookmarks, toggleBookmark, useAllStories } from '../lib/news-store';
+import { formatDeterministicDate } from '../lib/date-utils';
 
 interface BookmarksDrawerProps {
   isOpen: boolean;
@@ -84,7 +85,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({ isOpen, onClos
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                     <span suppressHydrationWarning>
-                      {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
+                      {formatDeterministicDate(story.publishedAt)}
                     </span>
                     <Link
                       href={`/stories/${story.slug}`}

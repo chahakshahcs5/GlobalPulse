@@ -1,4 +1,5 @@
 import { DEMO_SOURCES } from '../../lib/demo-data';
+import { formatDeterministicDate } from '../../lib/date-utils';
 
 export default function SourcesPage() {
   const sources = Object.values(DEMO_SOURCES);
@@ -45,7 +46,7 @@ export default function SourcesPage() {
             </div>
 
             <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs font-mono text-slate-400">
-              <span>{src.publishedAt ? new Date(src.publishedAt).toLocaleDateString() : 'Active'}</span>
+              <span suppressHydrationWarning>{formatDeterministicDate(src.publishedAt)}</span>
               <a
                 href={src.url}
                 target="_blank"

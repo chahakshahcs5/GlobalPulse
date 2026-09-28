@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Radio, Bell, CheckCircle2 } from 'lucide-react';
 import type { Story } from '@ai-news/schemas';
 import { useEditorialNotifications } from '../../../lib/news-store';
+import { formatDeterministicDateTime } from '../../../lib/date-utils';
 
 interface BreakingNewsTabProps {
   stories: Story[];
@@ -175,7 +176,7 @@ export function BreakingNewsTab({
                   <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
                     <span>Dispatched by {n.senderId || 'editor'}</span>
                     <span>•</span>
-                    <span>{new Date(n.sentAt || n.createdAt || Date.now()).toLocaleTimeString()}</span>
+                    <span suppressHydrationWarning>{formatDeterministicDateTime(n.sentAt || n.createdAt || Date.now())}</span>
                   </div>
                 </div>
 

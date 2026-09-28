@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { formatDeterministicDateTime } from '../lib/date-utils';
 
 interface ProvenanceBadgeProps {
   clientType: string;
@@ -74,14 +75,8 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
 
       {/* Published Date */}
       {publishedAt && (
-        <span className="text-slate-400 font-mono ml-auto">
-          {new Date(publishedAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+        <span className="text-slate-400 font-mono ml-auto" suppressHydrationWarning>
+          {formatDeterministicDateTime(publishedAt)}
         </span>
       )}
     </div>

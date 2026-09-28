@@ -22,6 +22,7 @@ import {
   DiagramRenderer,
   VisualDiffRenderer,
 } from '@ai-news/media';
+import { formatDeterministicDate } from '../lib/date-utils';
 
 interface StoryRendererProps {
   blocks: StoryBlock[];
@@ -553,8 +554,8 @@ const SourceBlockView: React.FC<{ data: SourceBlock['data'] }> = ({ data }) => {
             {data.publisher}
           </span>
           {data.publishedAt && (
-            <span className="text-xs text-slate-500 font-mono">
-              {new Date(data.publishedAt).toLocaleDateString()}
+            <span className="text-xs text-slate-500 font-mono" suppressHydrationWarning>
+              {formatDeterministicDate(data.publishedAt)}
             </span>
           )}
         </div>

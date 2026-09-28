@@ -21,6 +21,7 @@ import {
   useBookmarks,
   toggleBookmark,
 } from '../lib/news-store';
+import { formatDeterministicDateTime, formatDeterministicDate } from '../lib/date-utils';
 
 interface StoryEngagementProps {
   storyId: string;
@@ -273,13 +274,8 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(comment.createdAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                        <span className="text-[10px] text-slate-400" suppressHydrationWarning>
+                          {formatDeterministicDateTime(comment.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -315,11 +311,8 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                               {reply.authorName}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                              {new Date(reply.createdAt).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                            <span className="text-[10px] text-slate-400" suppressHydrationWarning>
+                              {formatDeterministicDate(reply.createdAt)}
                             </span>
                           </div>
                           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">

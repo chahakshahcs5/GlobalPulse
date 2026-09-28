@@ -23,6 +23,7 @@ import {
   Compass,
   Check,
 } from 'lucide-react';
+import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
 export type FeedMode = 'top' | 'for-you' | 'following' | 'history';
 export type RegionalEdition = 'global' | 'india' | 'us' | 'europe';
@@ -210,7 +211,7 @@ export default function GoogleNewsHomePage() {
                           {item.title}
                         </Link>
                         <span className="text-[10px] text-slate-400" suppressHydrationWarning>
-                          Read {new Date(item.readAt).toLocaleDateString('en-US')} at {new Date(item.readAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          Read {formatDeterministicDateTime(item.readAt)}
                         </span>
                       </div>
                       <Link
@@ -351,7 +352,7 @@ export default function GoogleNewsHomePage() {
                               {story.articleType.replace('_', ' ').toUpperCase()}
                             </span>
                             <span className="text-[11px] text-slate-400 font-mono" suppressHydrationWarning>
-                              {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Just now'}
+                              {formatDeterministicDate(story.publishedAt)}
                             </span>
                           </div>
 
