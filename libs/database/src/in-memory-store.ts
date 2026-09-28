@@ -235,13 +235,13 @@ export class InMemoryStoryRepository implements IStoryRepository {
       filtered = filtered.filter((s) => s.articleType === params.articleType);
     }
     if (params.topicId) {
-      filtered = filtered.filter((s) => s.topicIds.includes(params.topicId!));
+      filtered = filtered.filter((s) => (s.topicIds || []).includes(params.topicId!));
     }
     if (params.entityId) {
-      filtered = filtered.filter((s) => s.entityIds.includes(params.entityId!));
+      filtered = filtered.filter((s) => (s.entityIds || []).includes(params.entityId!));
     }
     if (params.sourceId) {
-      filtered = filtered.filter((s) => s.sourceIds.includes(params.sourceId!));
+      filtered = filtered.filter((s) => (s.sourceIds || []).includes(params.sourceId!));
     }
     if (params.query) {
       const q = params.query.toLowerCase();
@@ -266,9 +266,9 @@ export class InMemoryStoryRepository implements IStoryRepository {
       currentVersionNumber: s.currentVersionNumber,
       publishedAt: s.publishedAt,
       updatedAt: s.updatedAt,
-      topicIds: s.topicIds,
-      entityIds: s.entityIds,
-      sourceCount: s.sourceIds.length,
+      topicIds: s.topicIds || [],
+      entityIds: s.entityIds || [],
+      sourceCount: (s.sourceIds || []).length,
     }));
 
     return {

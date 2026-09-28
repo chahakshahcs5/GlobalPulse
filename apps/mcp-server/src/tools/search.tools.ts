@@ -155,4 +155,20 @@ export function registerSearchTools(
       return mcpJsonResponse(sources);
     }
   );
+
+  server.tool(
+    'get_search_suggestions',
+    '[READ-ONLY] Retrieve instant autocomplete search suggestions across headlines, topics, entities, and categories.',
+    {
+      query: z.string().min(1).describe('Partial search query or prefix'),
+      limit: z.number().int().min(1).max(20).default(8).describe('Max suggestions to return'),
+    },
+    async ({ query, limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:search');
+
+      const suggestions = await searchService.getSuggestions(query, principal.organizationId, limit);
+      return mcpJsonResponse({ query, suggestions });
+    }
+  );
 }

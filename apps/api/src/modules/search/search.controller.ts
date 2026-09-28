@@ -51,4 +51,16 @@ export class SearchController {
       sources,
     };
   }
+
+  @Get('suggestions')
+  @RequireScope('news:read')
+  async getSuggestions(
+    @Query('q') query: string,
+    @Query('limit') limit: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const orgId = principal.organizationId;
+    const parsedLimit = limit ? parseInt(limit, 10) : 8;
+    return await this.searchService.getSuggestions(query, orgId, parsedLimit);
+  }
 }

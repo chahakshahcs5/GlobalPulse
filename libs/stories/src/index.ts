@@ -5,3 +5,4 @@ export * from './analytics.service';
 export * from './scheduling.service';
 export * from './notification.service';
 export * from './user.service';
+export * from './personalization.service';

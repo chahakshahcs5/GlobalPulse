@@ -14,7 +14,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { StoryService, SchedulingService } from '@ai-news/stories';
+import { StoryService, SchedulingService, PersonalizationService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
@@ -35,10 +35,12 @@ import type { Story, StoryBlock, StoryVersion } from '@ai-news/schemas';
 export class StoriesController {
   private storyService: StoryService;
   private schedulingService: SchedulingService;
+  private personalizationService: PersonalizationService;
 
   constructor() {
     this.storyService = new StoryService(db);
     this.schedulingService = new SchedulingService(db);
+    this.personalizationService = new PersonalizationService(db);
   }
 
   @Get()
@@ -101,6 +103,34 @@ export class StoriesController {
   async sweepScheduledStories(@Principal() principal: AuthenticatedPrincipal) {
     const published = await this.schedulingService.publishDueStories(principal.organizationId);
     return { success: true, count: published.length, published };
+  }
+
+  /**
+   * F2: Personalized For You Feed
+   */
+  @Get('personalized')
+  @RequireScope('news:read')
+  async getPersonalizedFeed(
+    @Query('limit') limitStr: string,
+    @Query('cursor') cursor: string,
+    @Query('includeCompleted') includeCompletedStr: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const limit = limitStr ? parseInt(limitStr, 10) : 20;
+    const includeCompleted = includeCompletedStr === 'true';
+    const result = await this.personalizationService.getPersonalizedFeed({
+      userId: principal.id,
+      organizationId: principal.organizationId,
+      limit,
+      cursor,
+      includeCompleted,
+    });
+    return ApiResponse.paginated(
+      result.items,
+      result.totalCount ?? result.items.length,
+      result.limit,
+      result.nextCursor
+    );
   }
 
   @Get(':id')

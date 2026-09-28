@@ -238,15 +238,15 @@ export class MemoryStoryRepository implements IStoryRepository {
     }
     if (params.topicId) {
       const tid = params.topicId;
-      filtered = filtered.filter((s) => s.topicIds.includes(tid));
+      filtered = filtered.filter((s) => (s.topicIds || []).includes(tid));
     }
     if (params.entityId) {
       const eid = params.entityId;
-      filtered = filtered.filter((s) => s.entityIds.includes(eid));
+      filtered = filtered.filter((s) => (s.entityIds || []).includes(eid));
     }
     if (params.sourceId) {
       const sid = params.sourceId;
-      filtered = filtered.filter((s) => s.sourceIds.includes(sid));
+      filtered = filtered.filter((s) => (s.sourceIds || []).includes(sid));
     }
     if (params.query) {
       const q = params.query.toLowerCase();
@@ -270,9 +270,9 @@ export class MemoryStoryRepository implements IStoryRepository {
       currentVersionNumber: s.currentVersionNumber,
       publishedAt: s.publishedAt,
       updatedAt: s.updatedAt,
-      topicIds: s.topicIds,
-      entityIds: s.entityIds,
-      sourceCount: s.sourceIds.length,
+      topicIds: s.topicIds || [],
+      entityIds: s.entityIds || [],
+      sourceCount: (s.sourceIds || []).length,
     }));
 
     return {

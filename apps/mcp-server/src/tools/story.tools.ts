@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
-import { StoryService } from '@ai-news/stories';
+import { StoryService, PersonalizationService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import {
   ArticleTypeSchema,
@@ -16,6 +16,7 @@ export function registerStoryTools(
   getPrincipal: () => AuthenticatedPrincipal
 ) {
   const storyService = new StoryService(db);
+  const personalizationService = new PersonalizationService(db);
 
   server.tool(
     'get_story',
@@ -386,6 +387,44 @@ export function registerStoryTools(
           authorId: s.authorId,
           updatedAt: s.updatedAt,
           blockCount: s.blocks?.length || 0,
+        })),
+      });
+    }
+  );
+
+  server.tool(
+    'get_personalized_feed',
+    '[READ-ONLY] Retrieve personalized "For You" news feed tailored to the caller/user based on followed topics, entities, and interests.',
+    {
+      limit: z.number().int().min(1).max(50).default(20).describe('Number of stories to return'),
+      cursor: z.string().optional().describe('Pagination cursor'),
+    },
+    async ({ limit, cursor }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const feed = await personalizationService.getPersonalizedFeed({
+        userId: principal.id,
+        organizationId: principal.organizationId,
+        limit,
+        cursor,
+      });
+
+      return mcpJsonResponse({
+        total: feed.totalCount,
+        hasMore: feed.hasMore,
+        nextCursor: feed.nextCursor,
+        stories: feed.items.map((s) => ({
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+          articleType: s.articleType,
+          summary: s.summary,
+          publishedAt: s.publishedAt,
+          readingTimeMinutes: s.readingTimeMinutes,
+          wordCount: s.wordCount,
+          topicIds: s.topicIds,
+          entityIds: s.entityIds,
         })),
       });
     }
