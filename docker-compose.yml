@@ -100,7 +100,10 @@ services:
     ports:
       - '3001:3001'
     depends_on:
-      - api
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   # 6. Flagship Next.js 15 Web Portal, CMS & 4K Display Wall
   web:

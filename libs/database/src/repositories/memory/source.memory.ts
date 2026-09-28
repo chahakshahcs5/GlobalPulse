@@ -60,8 +60,10 @@ export class MemorySourceRepository implements ISourceRepository {
     return { ...citation };
   }
 
-  async getCitationsForStory(storyId: string): Promise<Citation[]> {
-    return Array.from(this.citations.values()).filter((c) => c.storyId === storyId);
+  async getCitationsForStory(storyId: string, orgId?: string): Promise<Citation[]> {
+    return Array.from(this.citations.values()).filter(
+      (c) => c.storyId === storyId && (!orgId || c.organizationId === orgId)
+    );
   }
 
   async createClaim(claim: Claim): Promise<Claim> {
@@ -69,8 +71,10 @@ export class MemorySourceRepository implements ISourceRepository {
     return { ...claim };
   }
 
-  async getClaimsForSource(sourceId: string): Promise<Claim[]> {
-    return Array.from(this.claims.values()).filter((c) => c.sourceIds.includes(sourceId));
+  async getClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]> {
+    return Array.from(this.claims.values()).filter(
+      (c) => c.sourceIds.includes(sourceId) && (!orgId || c.organizationId === orgId)
+    );
   }
 
   snapshot(): {

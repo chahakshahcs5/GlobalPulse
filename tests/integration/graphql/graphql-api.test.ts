@@ -1,13 +1,28 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildServer } from '../../../apps/api/src/server';
+import { AuthService } from '@ai-news/auth';
 
 describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
   let app: FastifyInstance;
+  let authHeaders: Record<string, string>;
 
   beforeAll(async () => {
     app = buildServer();
     await app.ready();
+
+    const token = AuthService.generateToken({
+      id: 'usr_editor_gql',
+      organizationId: 'org_default',
+      role: 'editor',
+      clientType: 'human_web',
+      scopes: ['news:read', 'news:write', 'news:publish', 'news:media'],
+    });
+
+    authHeaders = {
+      'Content-Type': 'application/json',
+      authorization: `Bearer ${token}`,
+    };
   });
 
   afterAll(async () => {
@@ -102,7 +117,57 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
   describe('GraphQL Mutations (§36)', () => {
     let createdStoryId: string;
 
-    it('executes createStory mutation', async () => {
+    it('rejects unauthenticated createMedia mutation with authentication error', async () => {
+      const mediaRes = await app.inject({
+        method: 'POST',
+        url: '/graphql',
+        headers: { 'Content-Type': 'application/json' },
+        payload: {
+          query: `
+            mutation {
+              createMedia(input: { mediaType: "chart", title: "Yield Curve", url: "https://storage.platform/charts/1.svg" }) {
+                id
+                type
+                title
+                url
+              }
+            }
+          `,
+        },
+      });
+
+      const mediaJson = JSON.parse(mediaRes.body);
+      expect(mediaJson.errors).toBeDefined();
+      expect(mediaJson.errors.length).toBeGreaterThan(0);
+      expect(mediaJson.errors[0].message).toMatch(/Authentication required|UNAUTHENTICATED/i);
+      expect(mediaJson.data?.createMedia).toBeFalsy();
+    });
+
+    it('rejects unauthenticated createStory mutation with authentication error', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/graphql',
+        headers: { 'Content-Type': 'application/json' },
+        payload: {
+          query: `
+            mutation {
+              createStory(input: { title: "Unauthenticated Story", summary: "Should fail", articleType: technology }) {
+                id
+                title
+              }
+            }
+          `,
+        },
+      });
+
+      const json = JSON.parse(res.body);
+      expect(json.errors).toBeDefined();
+      expect(json.errors.length).toBeGreaterThan(0);
+      expect(json.errors[0].message).toMatch(/Authentication required|UNAUTHENTICATED/i);
+      expect(json.data?.createStory).toBeFalsy();
+    });
+
+    it('executes createStory mutation when authenticated', async () => {
       const mutation = `
         mutation CreateStory($input: CreateStoryInput!) {
           createStory(input: $input) {
@@ -139,7 +204,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query: mutation, variables },
       });
 
@@ -210,7 +275,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query: mutation, variables },
       });
 
@@ -251,7 +316,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query: mutation, variables },
       });
 
@@ -278,7 +343,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const pubRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query: publishMutation, variables: { id: createdStoryId } },
       });
       expect(pubRes.statusCode).toBe(200);
@@ -297,7 +362,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const unpubRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query: unpublishMutation, variables: { id: createdStoryId } },
       });
       expect(unpubRes.statusCode).toBe(200);
@@ -310,7 +375,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const topicRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: {
           query: `
             mutation {
@@ -331,7 +396,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const eventRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: {
           query: `
             mutation {
@@ -352,7 +417,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const entityRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: {
           query: `
             mutation {
@@ -370,11 +435,11 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       expect(entityJson.data.createEntity.name).toBe('ASML Holding');
     });
 
-    it('executes createMedia mutation', async () => {
+    it('executes createMedia mutation when authenticated', async () => {
       const mediaRes = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: {
           query: `
             mutation {
@@ -390,6 +455,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       });
       expect(mediaRes.statusCode).toBe(200);
       const mediaJson = JSON.parse(mediaRes.body);
+      expect(mediaJson.errors).toBeUndefined();
       expect(mediaJson.data.createMedia.title).toBe('Yield Curve');
     });
   });

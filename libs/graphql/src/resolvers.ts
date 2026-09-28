@@ -20,10 +20,26 @@ import type {
 export interface GraphQLContext {
   organizationId?: string;
   userId?: string;
+  principal?: any;
   clientType?: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web';
   pubsub?: {
     publish: (event: { topic: string; payload: Record<string, unknown> }) => void;
     subscribe: (topic: string) => Promise<unknown>;
+  };
+}
+
+function requireAuth(ctx?: GraphQLContext): {
+  organizationId: string;
+  userId: string;
+  clientType: any;
+} {
+  if (!ctx?.principal && !ctx?.userId) {
+    throw new Error('UNAUTHENTICATED: Authentication required for GraphQL mutations.');
+  }
+  return {
+    organizationId: ctx.organizationId || ctx.principal?.organizationId || 'org_default',
+    userId: ctx.userId || ctx.principal?.id || 'usr_authenticated',
+    clientType: ctx.clientType || ctx.principal?.clientType || 'human_web',
   };
 }
 
@@ -94,14 +110,12 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateStoryInput },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
 
         const story = await storyService.createStory(input, {
-          organizationId: orgId,
-          authorId: userId,
-          clientType,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
+          clientType: auth.clientType,
           createdVia: 'api',
         });
 
@@ -120,14 +134,12 @@ export function createResolvers(database: DatabaseService = db) {
         { id, input }: { id: string; input: UpdateStoryInput },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
 
         const story = await storyService.updateStory(id, input, {
-          organizationId: orgId,
-          authorId: userId,
-          clientType,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
+          clientType: auth.clientType,
           createdVia: 'api',
         });
 
@@ -154,18 +166,17 @@ export function createResolvers(database: DatabaseService = db) {
         },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = input.clientType || ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
+        const clientType = input.clientType || auth.clientType;
 
         const version = await storyService.createStoryVersion(input.storyId, input, {
-          organizationId: orgId,
-          authorId: userId,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
           clientType,
           createdVia: 'api',
         });
 
-        const story = await storyService.getStory(input.storyId, orgId);
+        const story = await storyService.getStory(input.storyId, auth.organizationId);
         if (ctx?.pubsub && story) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
@@ -177,14 +188,12 @@ export function createResolvers(database: DatabaseService = db) {
       },
 
       publishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
 
         const story = await storyService.publishStory(id, {
-          organizationId: orgId,
-          authorId: userId,
-          clientType,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
+          clientType: auth.clientType,
           createdVia: 'api',
         });
 
@@ -199,14 +208,12 @@ export function createResolvers(database: DatabaseService = db) {
       },
 
       unpublishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
 
         const story = await storyService.unpublishStory(id, {
-          organizationId: orgId,
-          authorId: userId,
-          clientType,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
+          clientType: auth.clientType,
           createdVia: 'api',
         });
 
@@ -225,18 +232,16 @@ export function createResolvers(database: DatabaseService = db) {
         { storyId, block }: { storyId: string; block: Block },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        const userId = ctx?.userId || 'usr_graphql_user';
-        const clientType = ctx?.clientType || 'human_web';
+        const auth = requireAuth(ctx);
 
         const addedBlock = await storyService.addBlock(storyId, block, {
-          organizationId: orgId,
-          authorId: userId,
-          clientType,
+          organizationId: auth.organizationId,
+          authorId: auth.userId,
+          clientType: auth.clientType,
           createdVia: 'api',
         });
 
-        const story = await storyService.getStory(storyId, orgId);
+        const story = await storyService.getStory(storyId, auth.organizationId);
         if (ctx?.pubsub && story) {
           ctx.pubsub.publish({
             topic: 'STORY_UPDATED',
@@ -252,9 +257,9 @@ export function createResolvers(database: DatabaseService = db) {
         { storyId, sourceId }: { storyId: string; sourceId: string },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        await sourceService.attachSourceToStory(storyId, sourceId, orgId);
-        return await storyService.getStory(storyId, orgId);
+        const auth = requireAuth(ctx);
+        await sourceService.attachSourceToStory(storyId, sourceId, auth.organizationId);
+        return await storyService.getStory(storyId, auth.organizationId);
       },
 
       createMedia: async (
@@ -268,8 +273,10 @@ export function createResolvers(database: DatabaseService = db) {
             url: string;
             metadata?: Record<string, unknown>;
           };
-        }
+        },
+        ctx?: GraphQLContext
       ) => {
+        requireAuth(ctx);
         const media = {
           id: generateId('med'),
           type: input.mediaType,
@@ -287,8 +294,8 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateTopicInput },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        return await topicService.createTopic(input, orgId);
+        const auth = requireAuth(ctx);
+        return await topicService.createTopic(input, auth.organizationId);
       },
 
       createEvent: async (
@@ -296,8 +303,8 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateEventInput },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        return await eventService.createEvent(input, orgId);
+        const auth = requireAuth(ctx);
+        return await eventService.createEvent(input, auth.organizationId);
       },
 
       createEntity: async (
@@ -305,8 +312,8 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateEntityInput },
         ctx?: GraphQLContext
       ) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        return await entityService.createEntity(input, orgId);
+        const auth = requireAuth(ctx);
+        return await entityService.createEntity(input, auth.organizationId);
       },
     },
 

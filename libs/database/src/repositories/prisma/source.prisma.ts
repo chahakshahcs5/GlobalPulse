@@ -191,9 +191,13 @@ export class PrismaSourceRepository implements ISourceRepository {
     };
   }
 
-  async getCitationsForStory(storyId: string): Promise<Citation[]> {
+  async getCitationsForStory(storyId: string, orgId?: string): Promise<Citation[]> {
+    const where: Record<string, unknown> = { storyId };
+    if (orgId) {
+      where.organizationId = orgId;
+    }
     const rows = await this.citationClient.findMany({
-      where: { storyId },
+      where,
     });
     return rows.map((r) => ({
       id: r.id,
@@ -229,9 +233,13 @@ export class PrismaSourceRepository implements ISourceRepository {
     };
   }
 
-  async getClaimsForSource(sourceId: string): Promise<Claim[]> {
+  async getClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]> {
+    const where: Record<string, unknown> = { sourceIds: { has: sourceId } };
+    if (orgId) {
+      where.organizationId = orgId;
+    }
     const rows = await this.claimClient.findMany({
-      where: { sourceIds: { has: sourceId } },
+      where,
     });
     return rows.map((r) => ({
       id: r.id,

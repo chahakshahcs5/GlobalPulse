@@ -219,5 +219,131 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
 
       expect(res.statusCode).toBe(400);
     });
+
+    it('rejects client_credentials request without valid client_secret (OAuth token forgery prevention)', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/token',
+        payload: {
+          grant_type: 'client_credentials',
+          client_id: 'gemini_agent_service',
+          // Missing client_secret
+          scope: 'news:read',
+        },
+      });
+
+      expect(res.statusCode).toBe(401);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_client/i);
+    });
+
+    it('rejects client_credentials request with incorrect client_secret', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/token',
+        payload: {
+          grant_type: 'client_credentials',
+          client_id: 'gemini_agent_service',
+          client_secret: 'wrong_secret_attack',
+          scope: 'news:read',
+        },
+      });
+
+      expect(res.statusCode).toBe(401);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_client/i);
+    });
+
+    it('rejects unauthorized scope elevation (e.g. requesting news:admin without authorization)', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/token',
+        payload: {
+          grant_type: 'client_credentials',
+          client_id: 'gemini_agent_service',
+          client_secret: 'sec_test_gemini_999',
+          scope: 'news:read news:admin',
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_scope/i);
+    });
+
+    it('allows news:admin scope for authorized admin client with valid credentials', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/token',
+        payload: {
+          grant_type: 'client_credentials',
+          client_id: 'globalpulse_admin_client',
+          client_secret: 'sec_admin_secret_globalpulse',
+          scope: 'news:read news:admin',
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.access_token).toBeDefined();
+
+      const principal = AuthService.verifyToken(body.access_token);
+      expect(principal.scopes).toContain('news:admin');
+    });
+  });
+
+  describe('OAuth Redirect URI and PKCE Security Hardening', () => {
+    it('rejects /oauth/authorize with unregistered redirect_uri (open redirect prevention)', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/authorize',
+        payload: {
+          response_type: 'code',
+          client_id: 'claude_desktop_agent',
+          redirect_uri: 'https://malicious-attacker-site.com/steal-code',
+          code_challenge: 'E9Melhoa2OwvFrGMTJguCH5rtx64410-gZB7GfqWtZo',
+          code_challenge_method: 'S256',
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_request/i);
+    });
+
+    it('rejects /oauth/authorize when PKCE code_challenge is missing', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/authorize',
+        payload: {
+          response_type: 'code',
+          client_id: 'claude_desktop_agent',
+          redirect_uri: 'http://localhost:3000/oauth/callback',
+          // Missing code_challenge
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_request/i);
+    });
+
+    it('rejects /oauth/authorize when code_challenge_method is plain', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/authorize',
+        payload: {
+          response_type: 'code',
+          client_id: 'claude_desktop_agent',
+          redirect_uri: 'http://localhost:3000/oauth/callback',
+          code_challenge: 'plain_challenge_string',
+          code_challenge_method: 'plain',
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_request/i);
+    });
   });
 });

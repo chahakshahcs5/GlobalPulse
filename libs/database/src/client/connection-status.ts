@@ -35,8 +35,12 @@ export async function checkDatabaseHealth(): Promise<DatabaseHealthStatus> {
     };
   }
 
+  const requiresPrisma =
+    process.env.DATABASE_ENGINE === 'prisma' ||
+    (process.env.NODE_ENV === 'production' && process.env.DATABASE_ENGINE !== 'memory');
+
   return {
-    status: 'memory_fallback',
+    status: requiresPrisma ? 'error' : 'memory_fallback',
     engine: 'in_memory',
     latencyMs: Date.now() - start,
     databaseUrlConfigured: hasUrl,

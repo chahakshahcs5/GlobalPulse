@@ -149,6 +149,11 @@ export class DatabaseService {
    * Attempt to initialize and switch to PostgreSQL Prisma repositories if available
    */
   public async initialize(): Promise<boolean> {
+    const isExplicitPrisma = process.env.DATABASE_ENGINE === 'prisma';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const requiresPrisma =
+      isExplicitPrisma || (isProduction && process.env.DATABASE_ENGINE !== 'memory');
+
     try {
       const client = await prismaManager.getClient();
       if (client) {
@@ -173,7 +178,18 @@ export class DatabaseService {
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 16 domains).');
         return true;
       }
+
+      if (requiresPrisma) {
+        throw new Error(
+          'DATABASE_ENGINE is configured as "prisma" or running in production, but PrismaClient could not be initialized (@prisma/client not generated or connection failed). In-memory fallback is disabled for production safety.'
+        );
+      }
     } catch (err: unknown) {
+      if (requiresPrisma) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logger.error(`Fatal database initialization failure: ${errorMsg}`);
+        throw err;
+      }
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn(`Prisma initialization failed: ${errorMsg}. Operating in Memory mode.`);
     }

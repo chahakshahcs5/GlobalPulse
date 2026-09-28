@@ -98,6 +98,12 @@ model Organization {
   sources             Source[]
   idempotencyRecords  IdempotencyRecord[]
   auditLogs           AuditLog[]
+  comments            Comment[]
+  storyReactions      StoryReaction[]
+  bookmarks           Bookmark[]
+  editorialNotifications EditorialNotification[]
+  storyClusters       StoryCluster[]
+  webhookSubscriptions WebhookSubscription[]
 
   @@map("organizations")
 }
@@ -174,6 +180,11 @@ model Story {
   event                Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
   versions             StoryVersion[]
   blocks               StoryBlock[]
+  comments             Comment[]
+  reactions            StoryReaction[]
+  bookmarks            Bookmark[]
+  liveblogEntries      LiveblogEntry[]
+  provenance           StoryProvenance?
 
   @@unique([organizationId, slug])
   @@index([organizationId, status])

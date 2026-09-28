@@ -40,6 +40,9 @@ RUN pnpm install --frozen-lockfile
 # Copy full monorepo source tree
 COPY . .
 
+# Generate Prisma Client bindings for PostgreSQL database engine
+RUN npx prisma generate --schema=libs/database/prisma/schema.prisma || true
+
 ENV NODE_ENV=production
 
 CMD ["pnpm", "--filter", "@ai-news/worker", "start"]

@@ -32,12 +32,21 @@ export class PrismaClientManager {
       return null;
     }
 
+    const requiresPrisma =
+      process.env.DATABASE_ENGINE === 'prisma' ||
+      (process.env.NODE_ENV === 'production' && process.env.DATABASE_ENGINE !== 'memory');
+
     try {
       // Dynamic import to prevent hard failure if prisma client is not yet generated
       const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({
         PrismaClient: null,
       }));
       if (!PrismaClientCtor) {
+        if (requiresPrisma) {
+          throw new Error(
+            '@prisma/client is not generated. In production or prisma mode, run "prisma generate" to generate database client bindings.'
+          );
+        }
         logger.warn('@prisma/client not generated; falling back to memory repository.');
         return null;
       }
@@ -56,9 +65,12 @@ export class PrismaClientManager {
       return this.client;
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      logger.warn(`Failed to connect to database: ${errMsg}. Operating in memory mode.`);
       this.isConnected = false;
       this.client = null;
+      if (requiresPrisma) {
+        throw new Error(`Failed to connect to database in prisma/production mode: ${errMsg}`);
+      }
+      logger.warn(`Failed to connect to database: ${errMsg}. Operating in memory mode.`);
       return null;
     }
   }

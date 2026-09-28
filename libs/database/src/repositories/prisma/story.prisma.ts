@@ -40,9 +40,9 @@ interface PrismaStoryRow {
   createdAt: Date;
   updatedAt: Date;
   blocks?: PrismaStoryBlockRow[];
-  topics?: Array<{ topicId: string }>;
-  entities?: Array<{ entityId: string }>;
-  sources?: Array<{ sourceId: string }>;
+  topicIds: string[];
+  entityIds: string[];
+  sourceIds: string[];
 }
 
 interface PrismaVersionRow {
@@ -153,9 +153,6 @@ export class PrismaStoryRepository implements IStoryRepository {
       where,
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
-        topics: true,
-        entities: true,
-        sources: true,
       },
     });
 
@@ -171,9 +168,6 @@ export class PrismaStoryRepository implements IStoryRepository {
       where,
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
-        topics: true,
-        entities: true,
-        sources: true,
       },
     });
 
@@ -194,6 +188,9 @@ export class PrismaStoryRepository implements IStoryRepository {
         authorId: story.authorId,
         createdByClient: story.createdByClient,
         createdVia: story.createdVia || 'api',
+        topicIds: story.topicIds || [],
+        entityIds: story.entityIds || [],
+        sourceIds: story.sourceIds || [],
         currentVersionNumber: story.currentVersionNumber || 1,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
@@ -219,6 +216,9 @@ export class PrismaStoryRepository implements IStoryRepository {
         summary: story.summary,
         status: story.status,
         articleType: story.articleType,
+        topicIds: story.topicIds || [],
+        entityIds: story.entityIds || [],
+        sourceIds: story.sourceIds || [],
         currentVersionNumber: story.currentVersionNumber,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
@@ -249,13 +249,13 @@ export class PrismaStoryRepository implements IStoryRepository {
     if (filter?.status) where.status = filter.status;
     if (filter?.articleType) where.articleType = filter.articleType;
     if (filter?.topicId) {
-      where.topics = { some: { topicId: filter.topicId } };
+      where.topicIds = { has: filter.topicId };
     }
     if (filter?.entityId) {
-      where.entities = { some: { entityId: filter.entityId } };
+      where.entityIds = { has: filter.entityId };
     }
     if (filter?.sourceId) {
-      where.sources = { some: { sourceId: filter.sourceId } };
+      where.sourceIds = { has: filter.sourceId };
     }
     if (filter?.query) {
       where.OR = [
@@ -286,9 +286,6 @@ export class PrismaStoryRepository implements IStoryRepository {
       orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
-        topics: true,
-        entities: true,
-        sources: true,
       },
     };
 
@@ -481,13 +478,13 @@ export class PrismaStoryRepository implements IStoryRepository {
     if (params.status) where.status = params.status;
     if (params.articleType) where.articleType = params.articleType;
     if (params.topicId) {
-      where.topics = { some: { topicId: params.topicId } };
+      where.topicIds = { has: params.topicId };
     }
     if (params.entityId) {
-      where.entities = { some: { entityId: params.entityId } };
+      where.entityIds = { has: params.entityId };
     }
     if (params.sourceId) {
-      where.sources = { some: { sourceId: params.sourceId } };
+      where.sourceIds = { has: params.sourceId };
     }
     if (params.query) {
       where.OR = [
@@ -502,11 +499,6 @@ export class PrismaStoryRepository implements IStoryRepository {
         where,
         take: params.limit || 20,
         orderBy: { updatedAt: 'desc' },
-        include: {
-          topics: true,
-          entities: true,
-          sources: true,
-        },
       }),
       this.storyClient.count({ where }),
     ]);
@@ -520,9 +512,9 @@ export class PrismaStoryRepository implements IStoryRepository {
       currentVersionNumber: s.currentVersionNumber,
       publishedAt: s.publishedAt ? s.publishedAt.toISOString() : undefined,
       updatedAt: s.updatedAt.toISOString(),
-      topicIds: s.topics ? s.topics.map((t) => t.topicId) : [],
-      entityIds: s.entities ? s.entities.map((e) => e.entityId) : [],
-      sourceCount: s.sources ? s.sources.length : 0,
+      topicIds: s.topicIds,
+      entityIds: s.entityIds,
+      sourceCount: s.sourceIds.length,
     }));
 
     return {
@@ -538,11 +530,6 @@ export class PrismaStoryRepository implements IStoryRepository {
   ): Promise<StorySearchResultItem[]> {
     const rows = await this.storyClient.findMany({
       where: { organizationId: orgId },
-      include: {
-        topics: true,
-        entities: true,
-        sources: true,
-      },
     });
 
     const targetText = `${params.title || ''} ${params.summary || ''}`;
@@ -566,9 +553,9 @@ export class PrismaStoryRepository implements IStoryRepository {
       currentVersionNumber: story.currentVersionNumber,
       publishedAt: story.publishedAt ? story.publishedAt.toISOString() : undefined,
       updatedAt: story.updatedAt.toISOString(),
-      topicIds: story.topics ? story.topics.map((t) => t.topicId) : [],
-      entityIds: story.entities ? story.entities.map((e) => e.entityId) : [],
-      sourceCount: story.sources ? story.sources.length : 0,
+      topicIds: story.topicIds,
+      entityIds: story.entityIds,
+      sourceCount: story.sourceIds.length,
       similarityScore: score,
     }));
   }
@@ -611,9 +598,9 @@ export class PrismaStoryRepository implements IStoryRepository {
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
-      topicIds: row.topics ? row.topics.map((t) => t.topicId) : [],
-      entityIds: row.entities ? row.entities.map((e) => e.entityId) : [],
-      sourceIds: row.sources ? row.sources.map((s) => s.sourceId) : [],
+      topicIds: row.topicIds,
+      entityIds: row.entityIds,
+      sourceIds: row.sourceIds,
       blocks: row.blocks
         ? (row.blocks.map((b) => ({
             id: b.id,

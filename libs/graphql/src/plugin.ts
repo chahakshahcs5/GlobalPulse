@@ -20,23 +20,32 @@ export async function registerGraphQL(app: FastifyInstance, options: GraphQLPlug
     subscription: true,
     graphiql: options.graphiql ?? true,
     context: (req: FastifyRequest) => {
-      let organizationId = 'org_default';
-      let userId = 'usr_graphql_user';
+      let principal: any = null;
+      let organizationId: string | undefined = undefined;
+      let userId: string | undefined = undefined;
       let clientType: ClientType = 'human_web';
 
-      const authHeader = req.headers?.authorization;
+      let authHeader = req.headers?.authorization;
+      if (!authHeader && req.headers?.cookie) {
+        const match = (req.headers.cookie as string).match(/(?:^|;\s*)gp_token=([^;]+)/);
+        if (match && match[1]) {
+          authHeader = `Bearer ${decodeURIComponent(match[1])}`;
+        }
+      }
+
       if (authHeader) {
         try {
-          const principal = AuthService.resolveBearerToken(authHeader);
+          principal = AuthService.resolveBearerToken(authHeader);
           organizationId = principal.organizationId;
           userId = principal.id;
           clientType = principal.clientType;
         } catch {
-          // fallback to public defaults
+          // invalid or expired token
         }
       }
 
       return {
+        principal,
         organizationId,
         userId,
         clientType,

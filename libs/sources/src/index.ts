@@ -86,8 +86,8 @@ export class SourceService {
     return this.db.sources.createCitation(citation);
   }
 
-  async getStoryCitations(storyId: string): Promise<Citation[]> {
-    return this.db.sources.getCitationsForStory(storyId);
+  async getStoryCitations(storyId: string, orgId?: string): Promise<Citation[]> {
+    return this.db.sources.getCitationsForStory(storyId, orgId);
   }
 
   async listSources(orgId: string, limit = 50): Promise<Source[]> {
@@ -98,11 +98,11 @@ export class SourceService {
     return this.db.sources.search(query, orgId);
   }
 
-  async listCitationsForSource(sourceId: string): Promise<Citation[]> {
-    return this.db.sources.getCitationsForStory(sourceId);
+  async listCitationsForSource(sourceId: string, orgId?: string): Promise<Citation[]> {
+    return this.db.sources.getCitationsForStory(sourceId, orgId);
   }
 
-  async listClaimsForSource(sourceId: string): Promise<Claim[]> {
-    return this.db.sources.getClaimsForSource(sourceId);
+  async listClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]> {
+    return this.db.sources.getClaimsForSource(sourceId, orgId);
   }
 }

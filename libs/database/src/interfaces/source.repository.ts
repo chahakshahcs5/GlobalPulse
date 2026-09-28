@@ -10,7 +10,7 @@ export interface ISourceRepository {
 
   // Citations & Claims
   createCitation(citation: Citation): Promise<Citation>;
-  getCitationsForStory(storyId: string): Promise<Citation[]>;
+  getCitationsForStory(storyId: string, orgId?: string): Promise<Citation[]>;
   createClaim(claim: Claim): Promise<Claim>;
-  getClaimsForSource(sourceId: string): Promise<Claim[]>;
+  getClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]>;
 }

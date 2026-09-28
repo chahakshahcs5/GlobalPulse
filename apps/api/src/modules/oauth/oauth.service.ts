@@ -1,15 +1,25 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { AuthService, type ClientType, type NewsScope, type UserRole } from '@ai-news/auth';
 import { appConfig } from '../../config/configuration';
+
+export interface RegisteredOAuthClient {
+  clientId: string;
+  clientSecret?: string;
+  clientType: ClientType;
+  allowedGrants: ('authorization_code' | 'client_credentials')[];
+  allowedScopes: NewsScope[];
+  redirectUris?: string[];
+  isPublic?: boolean;
+}
 
 export interface AuthorizationCodeEntry {
   code: string;
   clientId: string;
   redirectUri?: string;
   scopes: NewsScope[];
-  codeChallenge?: string;
-  codeChallengeMethod?: 'S256' | 'plain';
+  codeChallenge: string;
+  codeChallengeMethod: 'S256';
   expiresAt: number;
   principalId: string;
   clientType: ClientType;
@@ -22,7 +32,7 @@ export interface AuthorizeRequest {
   scope?: string;
   state?: string;
   code_challenge?: string;
-  code_challenge_method?: 'S256' | 'plain';
+  code_challenge_method?: string;
   client_type?: string;
 }
 
@@ -49,8 +59,11 @@ const DEFAULT_SCOPES: NewsScope[] = [
 @Injectable()
 export class OAuthService {
   private codes = new Map<string, AuthorizationCodeEntry>();
+  private clients = new Map<string, RegisteredOAuthClient>();
 
   constructor() {
+    this.seedDefaultClients();
+
     // Periodically clean up expired authorization codes
     setInterval(() => {
       const now = Date.now();
@@ -60,6 +73,63 @@ export class OAuthService {
         }
       }
     }, 60000).unref();
+  }
+
+  private seedDefaultClients(): void {
+    const defaultClients: RegisteredOAuthClient[] = [
+      {
+        clientId: 'claude_desktop_agent',
+        clientType: 'claude',
+        allowedGrants: ['authorization_code'],
+        isPublic: true,
+        allowedScopes: DEFAULT_SCOPES,
+        redirectUris: [
+          'http://localhost:3000/oauth/callback',
+          'http://127.0.0.1:3000/oauth/callback',
+          'http://localhost:3002/oauth/callback',
+          'http://127.0.0.1:3002/oauth/callback',
+          'https://claude.ai/oauth/callback',
+        ],
+      },
+      {
+        clientId: 'gemini_agent_service',
+        clientSecret: process.env.OAUTH_GEMINI_CLIENT_SECRET || 'sec_test_gemini_999',
+        clientType: 'gemini',
+        allowedGrants: ['client_credentials'],
+        allowedScopes: DEFAULT_SCOPES,
+      },
+      {
+        clientId: 'chatgpt_mcp_client',
+        clientSecret: process.env.OAUTH_CHATGPT_CLIENT_SECRET || 'sec_test_chatgpt_999',
+        clientType: 'chatgpt',
+        allowedGrants: ['client_credentials', 'authorization_code'],
+        allowedScopes: DEFAULT_SCOPES,
+        redirectUris: [
+          'http://localhost:3000/oauth/callback',
+          'http://localhost:3002/oauth/callback',
+          'https://chatgpt.com/api/auth/callback',
+        ],
+      },
+      {
+        clientId: 'globalpulse_admin_client',
+        clientSecret: process.env.OAUTH_ADMIN_CLIENT_SECRET || 'sec_admin_secret_globalpulse',
+        clientType: 'custom_mcp',
+        allowedGrants: ['client_credentials'],
+        allowedScopes: [...DEFAULT_SCOPES, 'news:admin'],
+      },
+    ];
+
+    for (const client of defaultClients) {
+      this.clients.set(client.clientId, client);
+    }
+  }
+
+  public registerClient(client: RegisteredOAuthClient): void {
+    this.clients.set(client.clientId, client);
+  }
+
+  public getClient(clientId: string): RegisteredOAuthClient | undefined {
+    return this.clients.get(clientId);
   }
 
   /**
@@ -74,7 +144,7 @@ export class OAuthService {
       jwks_uri: `${issuer}/oauth/jwks`,
       response_types_supported: ['code'],
       grant_types_supported: ['authorization_code', 'client_credentials'],
-      code_challenge_methods_supported: ['S256', 'plain'],
+      code_challenge_methods_supported: ['S256'],
       token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
       scopes_supported: [
         'news:read',
@@ -134,17 +204,73 @@ export class OAuthService {
       });
     }
 
-    // Parse scopes
+    const client = this.clients.get(req.client_id);
+    if (!client) {
+      throw new BadRequestException({
+        error: 'invalid_client',
+        error_description: `Unregistered client_id: "${req.client_id}".`,
+      });
+    }
+
+    if (!client.allowedGrants.includes('authorization_code')) {
+      throw new BadRequestException({
+        error: 'unauthorized_client',
+        error_description: 'Client is not authorized for authorization_code grant.',
+      });
+    }
+
+    // Validate redirect_uri against registered client redirect URIs
+    if (req.redirect_uri) {
+      const allowedUris = client.redirectUris || [];
+      const isAllowed = allowedUris.some((uri) => {
+        try {
+          const registeredUrl = new URL(uri);
+          const reqUrl = new URL(req.redirect_uri!);
+          return (
+            registeredUrl.origin === reqUrl.origin && registeredUrl.pathname === reqUrl.pathname
+          );
+        } catch {
+          return uri === req.redirect_uri;
+        }
+      });
+
+      if (!isAllowed) {
+        throw new BadRequestException({
+          error: 'invalid_request',
+          error_description: `redirect_uri is not registered for client "${req.client_id}".`,
+        });
+      }
+    }
+
+    // PKCE is mandatory under OAuth 2.1 (RFC 7636)
+    if (!req.code_challenge) {
+      throw new BadRequestException({
+        error: 'invalid_request',
+        error_description:
+          'code_challenge is required. PKCE is mandatory for authorization_code flow.',
+      });
+    }
+
+    if (req.code_challenge_method !== 'S256') {
+      throw new BadRequestException({
+        error: 'invalid_request',
+        error_description:
+          'Only code_challenge_method="S256" is supported. plain is prohibited under OAuth 2.1.',
+      });
+    }
+
+    // Parse and authorize scopes
     const parsedScopes: NewsScope[] = req.scope
       ? (req.scope.split(/[\s,]+/).filter(Boolean) as NewsScope[])
-      : DEFAULT_SCOPES;
+      : client.allowedScopes;
 
-    // Resolve clientType
-    let clientType: ClientType = 'custom_mcp';
-    const lowerId = req.client_id.toLowerCase();
-    if (lowerId.includes('claude')) clientType = 'claude';
-    else if (lowerId.includes('chatgpt') || lowerId.includes('openai')) clientType = 'chatgpt';
-    else if (lowerId.includes('gemini')) clientType = 'gemini';
+    const unauthorizedScopes = parsedScopes.filter((s) => !client.allowedScopes.includes(s));
+    if (unauthorizedScopes.length > 0) {
+      throw new BadRequestException({
+        error: 'invalid_scope',
+        error_description: `Scope(s) [${unauthorizedScopes.join(', ')}] are not authorized for client "${req.client_id}".`,
+      });
+    }
 
     const code = `authcode_${crypto.randomBytes(24).toString('hex')}`;
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minute TTL
@@ -155,10 +281,10 @@ export class OAuthService {
       redirectUri: req.redirect_uri,
       scopes: parsedScopes,
       codeChallenge: req.code_challenge,
-      codeChallengeMethod: req.code_challenge_method || (req.code_challenge ? 'S256' : undefined),
+      codeChallengeMethod: 'S256',
       expiresAt,
       principalId: `agent_${req.client_id.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
-      clientType,
+      clientType: client.clientType,
     };
 
     this.codes.set(code, entry);
@@ -224,6 +350,24 @@ export class OAuthService {
       });
     }
 
+    const client = this.clients.get(entry.clientId);
+    if (!client) {
+      throw new BadRequestException({
+        error: 'invalid_client',
+        error_description: 'Registered client not found for issued code.',
+      });
+    }
+
+    // If client is confidential (has clientSecret), require and validate secret
+    if (client.clientSecret) {
+      if (!req.client_secret || req.client_secret !== client.clientSecret) {
+        throw new UnauthorizedException({
+          error: 'invalid_client',
+          error_description: 'client_secret is required and must match registered credentials.',
+        });
+      }
+    }
+
     if (entry.redirectUri && req.redirect_uri && entry.redirectUri !== req.redirect_uri) {
       throw new BadRequestException({
         error: 'invalid_grant',
@@ -232,26 +376,19 @@ export class OAuthService {
     }
 
     // PKCE Verification (RFC 7636)
-    if (entry.codeChallenge) {
-      if (!req.code_verifier) {
-        throw new BadRequestException({
-          error: 'invalid_request',
-          error_description: 'code_verifier is required for PKCE-secured requests.',
-        });
-      }
+    if (!req.code_verifier) {
+      throw new BadRequestException({
+        error: 'invalid_request',
+        error_description: 'code_verifier is required for PKCE-secured requests.',
+      });
+    }
 
-      const isValid = this.verifyPkce(
-        req.code_verifier,
-        entry.codeChallenge,
-        entry.codeChallengeMethod
-      );
-      if (!isValid) {
-        throw new BadRequestException({
-          error: 'invalid_grant',
-          error_description:
-            'PKCE verification failed: code_verifier does not match code_challenge.',
-        });
-      }
+    const isValid = this.verifyPkce(req.code_verifier, entry.codeChallenge);
+    if (!isValid) {
+      throw new BadRequestException({
+        error: 'invalid_grant',
+        error_description: 'PKCE verification failed: code_verifier does not match code_challenge.',
+      });
     }
 
     // Generate production-grade JWT
@@ -259,7 +396,9 @@ export class OAuthService {
       {
         id: entry.principalId,
         organizationId: 'org_globalpulse',
-        role: 'ai_agent' as UserRole,
+        role: entry.scopes.includes('news:admin')
+          ? ('admin' as UserRole)
+          : ('ai_agent' as UserRole),
         clientType: entry.clientType,
         scopes: entry.scopes,
         agentMetadata: {
@@ -287,33 +426,58 @@ export class OAuthService {
   }
 
   private handleClientCredentialsGrant(req: TokenRequest) {
-    const clientId = req.client_id || 'anonymous_agent';
+    if (!req.client_id || !req.client_secret) {
+      throw new UnauthorizedException({
+        error: 'invalid_client',
+        error_description: 'client_id and client_secret are required for client_credentials grant.',
+      });
+    }
 
-    let clientType: ClientType = 'custom_mcp';
-    const lowerId = clientId.toLowerCase();
-    if (lowerId.includes('claude')) clientType = 'claude';
-    else if (lowerId.includes('chatgpt') || lowerId.includes('openai')) clientType = 'chatgpt';
-    else if (lowerId.includes('gemini')) clientType = 'gemini';
+    const client = this.clients.get(req.client_id);
+    if (!client || client.clientSecret !== req.client_secret) {
+      throw new UnauthorizedException({
+        error: 'invalid_client',
+        error_description: 'Invalid client credentials.',
+      });
+    }
+
+    if (!client.allowedGrants.includes('client_credentials')) {
+      throw new BadRequestException({
+        error: 'unauthorized_client',
+        error_description: 'Client is not authorized for client_credentials grant.',
+      });
+    }
 
     const requestedScopes: NewsScope[] = req.scope
       ? (req.scope.split(/[\s,]+/).filter(Boolean) as NewsScope[])
-      : DEFAULT_SCOPES;
+      : client.allowedScopes;
+
+    // Check scope authorization: client cannot request scopes it has not been granted
+    const unauthorizedScopes = requestedScopes.filter((s) => !client.allowedScopes.includes(s));
+    if (unauthorizedScopes.length > 0) {
+      throw new BadRequestException({
+        error: 'invalid_scope',
+        error_description: `Scope(s) [${unauthorizedScopes.join(', ')}] are not authorized for client "${req.client_id}".`,
+      });
+    }
+
+    const role: UserRole = requestedScopes.includes('news:admin') ? 'admin' : 'ai_agent';
 
     const token = AuthService.generateToken(
       {
-        id: `agent_${clientId.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
+        id: `agent_${client.clientId.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
         organizationId: 'org_globalpulse',
-        role: 'ai_agent' as UserRole,
-        clientType,
+        role,
+        clientType: client.clientType,
         scopes: requestedScopes,
         agentMetadata: {
           model: 'autonomous-agent-daemon',
           provider:
-            clientType === 'claude'
+            client.clientType === 'claude'
               ? 'anthropic'
-              : clientType === 'gemini'
+              : client.clientType === 'gemini'
                 ? 'google'
-                : clientType === 'chatgpt'
+                : client.clientType === 'chatgpt'
                   ? 'openai'
                   : 'custom',
         },
@@ -330,10 +494,7 @@ export class OAuthService {
     };
   }
 
-  private verifyPkce(verifier: string, challenge: string, method?: 'S256' | 'plain'): boolean {
-    if (method === 'plain') {
-      return verifier === challenge;
-    }
+  private verifyPkce(verifier: string, challenge: string): boolean {
     // S256: BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
     const hash = crypto.createHash('sha256').update(verifier, 'ascii').digest('base64url');
     return hash === challenge;

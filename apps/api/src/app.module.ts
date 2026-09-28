@@ -29,6 +29,8 @@ import { CollectionsModule } from './modules/collections/collections.module';
 import { ProvenanceModule } from './modules/provenance/provenance.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { LocalizationModule } from './modules/localization/localization.module';
+import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
+import type { FastifyRequest } from 'fastify';
 
 @Module({
   imports: [
@@ -37,6 +39,32 @@ import { LocalizationModule } from './modules/localization/localization.module';
       typeDefs,
       graphiql: true,
       subscription: true,
+      context: (req: FastifyRequest) => {
+        let principal: AuthenticatedPrincipal | null = null;
+        let authHeader = req?.headers?.authorization;
+        if (!authHeader && req?.headers?.cookie) {
+          const match = (req.headers.cookie as string).match(/(?:^|;\s*)gp_token=([^;]+)/);
+          if (match && match[1]) {
+            authHeader = `Bearer ${decodeURIComponent(match[1])}`;
+          }
+        }
+        if (authHeader) {
+          try {
+            principal = AuthService.resolveBearerToken(authHeader);
+          } catch {
+            // invalid or expired token
+          }
+        }
+        return {
+          req,
+          principal,
+          userId: principal?.id,
+          organizationId: principal?.organizationId,
+          role: principal?.role,
+          scopes: principal?.scopes,
+          clientType: principal?.clientType,
+        };
+      },
     }),
     HealthModule,
     OAuthModule,

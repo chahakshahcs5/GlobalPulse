@@ -545,8 +545,9 @@ export class InMemorySourceRepository implements ISourceRepository {
     return citation;
   }
 
-  async getCitationsForStory(storyId: string): Promise<Citation[]> {
-    return [...(this.citations.get(storyId) || [])];
+  async getCitationsForStory(storyId: string, orgId?: string): Promise<Citation[]> {
+    const list = this.citations.get(storyId) || [];
+    return orgId ? list.filter((c) => c.organizationId === orgId) : [...list];
   }
 
   async createClaim(claim: Claim): Promise<Claim> {
@@ -558,8 +559,9 @@ export class InMemorySourceRepository implements ISourceRepository {
     return claim;
   }
 
-  async getClaimsForSource(sourceId: string): Promise<Claim[]> {
-    return [...(this.claims.get(sourceId) || [])];
+  async getClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]> {
+    const list = this.claims.get(sourceId) || [];
+    return orgId ? list.filter((c) => c.organizationId === orgId) : [...list];
   }
 }
 

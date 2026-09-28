@@ -56,7 +56,12 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
         typeof res === 'object' && res !== null ? (res as Record<string, unknown>) : null;
       code = resObj && typeof resObj.error === 'string' ? resObj.error : 'HTTP_EXCEPTION';
       title = exception.name;
-      detail = resObj && typeof resObj.message === 'string' ? resObj.message : exception.message;
+      detail =
+        resObj && typeof resObj.error_description === 'string'
+          ? resObj.error_description
+          : resObj && typeof resObj.message === 'string'
+            ? resObj.message
+            : exception.message;
     } else if (exception instanceof Error) {
       detail = exception.message;
     }
@@ -71,6 +76,8 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
       title,
       status,
       code,
+      error: code,
+      error_description: detail,
       detail,
       instance: request.url,
       timestamp: new Date().toISOString(),

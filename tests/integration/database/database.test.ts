@@ -35,6 +35,20 @@ describe('Production Database Core Integration Tests', () => {
       expect(result.committed).toBe(true);
       expect(result.value).toBe(42);
     });
+
+    it('fails startup instead of silently falling back to memory when DATABASE_ENGINE=prisma', async () => {
+      const origEngine = process.env.DATABASE_ENGINE;
+      process.env.DATABASE_ENGINE = 'prisma';
+      try {
+        await expect(db.initialize()).rejects.toThrow(/DATABASE_ENGINE is configured as "prisma"/i);
+      } finally {
+        if (origEngine !== undefined) {
+          process.env.DATABASE_ENGINE = origEngine;
+        } else {
+          delete process.env.DATABASE_ENGINE;
+        }
+      }
+    });
   });
 
   describe('Story Repository', () => {
@@ -132,6 +146,32 @@ describe('Production Database Core Integration Tests', () => {
       const citations = await db.sources.getCitationsForStory('sty_test_01');
       expect(citations.length).toBe(1);
       expect(citations[0].claimText).toBe('Revenue exceeded $10B in Q3');
+
+      // Multi-tenant isolation: querying with another orgId must return 0 results
+      const crossTenantCitations = await db.sources.getCitationsForStory(
+        'sty_test_01',
+        'org_other'
+      );
+      expect(crossTenantCitations.length).toBe(0);
+
+      const scopedCitations = await db.sources.getCitationsForStory('sty_test_01', 'org_test');
+      expect(scopedCitations.length).toBe(1);
+
+      // Claim multi-tenant isolation
+      await db.sources.createClaim({
+        id: 'clm_01',
+        organizationId: 'org_test',
+        sourceIds: [source.id],
+        claimText: 'Revenue grew 25% YoY',
+        verifiedStatus: 'VERIFIED_EXTERNAL',
+        createdAt: new Date().toISOString(),
+      });
+
+      const scopedClaims = await db.sources.getClaimsForSource(source.id, 'org_test');
+      expect(scopedClaims.length).toBe(1);
+
+      const crossTenantClaims = await db.sources.getClaimsForSource(source.id, 'org_other');
+      expect(crossTenantClaims.length).toBe(0);
     });
   });
 
