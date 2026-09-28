@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "build": "nx run-many --target=build",
     "test": "vitest run tests/unit tests/integration",
