@@ -19,3 +19,18 @@ export function mcpJsonResponse(data: unknown) {
     ],
   };
 }
+
+export function mcpErrorResponse(error: string) {
+  return {
+    isError: true,
+    content: [
+      {
+        type: 'text' as const,
+        text: typeof error === 'string' ? error : JSON.stringify(error),
+      },
+    ],
+  };
+}
+
+export const successResponse = mcpJsonResponse;
+export const errorResponse = mcpErrorResponse;

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { listNotifications } from '../lib/api-client';
 
 interface TickerItem {
   id: string;
@@ -42,7 +43,30 @@ const DEFAULT_TICKERS: TickerItem[] = [
   },
 ];
 
-export const BreakingTicker: React.FC<{ items?: TickerItem[] }> = ({ items = DEFAULT_TICKERS }) => {
+export const BreakingTicker: React.FC<{ items?: TickerItem[] }> = ({ items: initialItems }) => {
+  const [items, setItems] = useState<TickerItem[]>(initialItems || DEFAULT_TICKERS);
+
+  useEffect(() => {
+    let isMounted = true;
+    listNotifications(5)
+      .then((notifs) => {
+        if (!isMounted || !Array.isArray(notifs) || notifs.length === 0) return;
+        const liveItems: TickerItem[] = notifs.map((n) => ({
+          id: n.id,
+          topic: n.type === 'breaking_news' ? 'ALERT' : 'NEWS',
+          headline: n.message || n.title,
+          slug: n.storyId ? n.storyId : '',
+          timeAgo: 'LIVE',
+        }));
+        setItems(liveItems);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="bg-slate-950 border-b border-slate-800/80 overflow-hidden h-9 flex items-center select-none text-xs">
       {/* Fixed Breaking Badge */}

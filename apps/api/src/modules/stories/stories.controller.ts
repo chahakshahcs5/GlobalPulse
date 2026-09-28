@@ -10,10 +10,11 @@ import {
   Headers,
   UseGuards,
   HttpStatus,
+  HttpCode,
   Res,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { StoryService } from '@ai-news/stories';
+import { StoryService, SchedulingService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
@@ -32,9 +33,11 @@ import type { Story, StoryBlock, StoryVersion } from '@ai-news/schemas';
 @UseGuards(NestAuthGuard)
 export class StoriesController {
   private storyService: StoryService;
+  private schedulingService: SchedulingService;
 
   constructor() {
     this.storyService = new StoryService(db);
+    this.schedulingService = new SchedulingService(db);
   }
 
   @Get()
@@ -64,6 +67,31 @@ export class StoriesController {
     });
     reply.status(HttpStatus.CREATED);
     return story;
+  }
+
+  @Get('review-queue')
+  @Roles('admin', 'editor')
+  @RequireScope('news:read')
+  async getReviewQueue(@Principal() principal: AuthenticatedPrincipal) {
+    const queue = await this.storyService.getReviewQueue(principal.organizationId);
+    return ApiResponse.paginated(queue, queue.length, 50);
+  }
+
+  @Get('scheduled/list')
+  @Roles('admin', 'editor', 'ai_agent')
+  @RequireScope('news:read')
+  async listScheduledStories(@Principal() principal: AuthenticatedPrincipal) {
+    const scheduled = await this.schedulingService.listScheduledStories(principal.organizationId);
+    return ApiResponse.paginated(scheduled, scheduled.length, 50);
+  }
+
+  @Post('scheduled/sweep')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor', 'ai_agent')
+  @RequireScope('news:publish')
+  async sweepScheduledStories(@Principal() principal: AuthenticatedPrincipal) {
+    const published = await this.schedulingService.publishDueStories(principal.organizationId);
+    return { success: true, count: published.length, published };
   }
 
   @Get(':id')
@@ -241,6 +269,100 @@ export class StoriesController {
     return published;
   }
 
+  @Post(':id/schedule')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor', 'journalist', 'ai_agent')
+  @RequireScope('news:write')
+  async scheduleStory(
+    @Param('id') id: string,
+    @Body() body: { publishAt: string },
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
+    return await this.schedulingService.scheduleStory(id, body?.publishAt, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/submit-review')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor', 'journalist', 'ai_agent')
+  @RequireScope('news:write')
+  async submitReview(
+    @Param('id') id: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
+    return await this.storyService.submitForReview(id, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/review')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor')
+  @RequireScope('news:publish')
+  async reviewStory(
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'reject'; feedback?: string },
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
+    return await this.storyService.reviewStory(id, body, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor')
+  @RequireScope('news:publish')
+  async approveStory(
+    @Param('id') id: string,
+    @Body() body: { feedback?: string },
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
+    return await this.storyService.reviewStory(id, { action: 'approve', feedback: body?.feedback }, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin', 'editor')
+  @RequireScope('news:publish')
+  async rejectStory(
+    @Param('id') id: string,
+    @Body() body: { feedback?: string },
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
+    return await this.storyService.reviewStory(id, { action: 'reject', feedback: body?.feedback }, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+  }
+
   @Post(':id/unpublish')
   @Roles('admin', 'editor')
   @RequireScope('news:publish')
@@ -290,5 +412,28 @@ export class StoriesController {
       createdVia: 'api',
       requestId,
     });
+  }
+
+  @Delete(':id')
+  @Roles('admin')
+  @RequireScope('news:admin')
+  async deleteStory(
+    @Param('id') id: string,
+    @Headers('x-request-id') requestId: string,
+    @Principal() principal: AuthenticatedPrincipal,
+    @Res({ passthrough: true }) reply: FastifyReply
+  ): Promise<{ success: boolean; message: string }> {
+    const deleted = await this.storyService.deleteStory(id, {
+      organizationId: principal.organizationId,
+      authorId: principal.id,
+      clientType: principal.clientType,
+      createdVia: 'api',
+      requestId,
+    });
+    if (!deleted) {
+      reply.status(HttpStatus.NOT_FOUND);
+      return { success: false, message: 'Story not found' };
+    }
+    return { success: true, message: 'Story permanently deleted' };
   }
 }

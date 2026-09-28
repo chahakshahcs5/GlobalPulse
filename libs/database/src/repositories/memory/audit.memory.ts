@@ -45,6 +45,14 @@ export class MemoryAuditRepository implements IAuditRepository {
     return entry ? { ...entry } : null;
   }
 
+  snapshot(): AuditLog[] {
+    return this.logs.map((l) => ({ ...l }));
+  }
+
+  restore(snap: AuditLog[]): void {
+    this.logs = snap.map((l) => ({ ...l }));
+  }
+
   clear(): void {
     this.logs = [];
   }

@@ -49,7 +49,7 @@ export class PrismaIdempotencyRepository implements IIdempotencyRepository {
     };
   }
 
-  async save(record: IdempotencyRecord): Promise<void> {
+  async save(record: IdempotencyRecord, _ttlSeconds?: number): Promise<void> {
     await this.idempotencyClient.upsert({
       where: {
         organizationId_key: {
@@ -75,5 +75,22 @@ export class PrismaIdempotencyRepository implements IIdempotencyRepository {
       where: { key, organizationId: orgId },
     });
     return res.count > 0;
+  }
+
+  async pruneExpired(): Promise<number> {
+    // In database Prisma mode, idempotency records older than 24 hours can be cleaned up
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    try {
+      const res = await this.idempotencyClient.deleteMany({
+        where: {
+          createdAt: {
+            lt: cutoff,
+          },
+        },
+      });
+      return res.count;
+    } catch {
+      return 0;
+    }
   }
 }

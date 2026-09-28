@@ -5,3 +5,6 @@ export * from './entity.repository';
 export * from './source.repository';
 export * from './idempotency.repository';
 export * from './audit.repository';
+export * from './engagement.repository';
+export * from './user.repository';
+export * from './notification.repository';

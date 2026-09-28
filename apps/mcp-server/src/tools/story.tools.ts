@@ -246,8 +246,94 @@ export function registerStoryTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:admin');
 
-      const deleted = await db.stories.delete(storyId, principal.organizationId);
+      const deleted = await storyService.deleteStory(storyId, {
+        organizationId: principal.organizationId,
+        authorId: principal.id,
+        clientType: principal.clientType,
+        createdVia: 'mcp',
+      });
       return mcpJsonResponse({ message: deleted ? 'Story deleted.' : 'Story not found.', success: deleted });
+    }
+  );
+
+  server.tool(
+    'submit_for_review',
+    '[EDITORIAL WORKFLOW] Submit a draft story for editorial review and approval before publishing.',
+    {
+      storyId: z.string().min(1).describe('The ID of the draft story to submit for review'),
+    },
+    async ({ storyId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const story = await storyService.submitForReview(storyId, {
+        organizationId: principal.organizationId,
+        authorId: principal.id,
+        clientType: principal.clientType,
+        createdVia: 'mcp',
+      });
+
+      return mcpJsonResponse({
+        message: 'Story successfully submitted for review.',
+        storyId: story.id,
+        status: story.status,
+      });
+    }
+  );
+
+  server.tool(
+    'review_story',
+    '[EDITORIAL WORKFLOW] Review a pending story: approve to publish immediately or reject back to draft with feedback.',
+    {
+      storyId: z.string().min(1).describe('Story ID undergoing review'),
+      action: z.enum(['approve', 'reject']).describe('Approve to publish or reject back to draft'),
+      feedback: z.string().optional().describe('Editorial notes or change requests for the author'),
+    },
+    async ({ storyId, action, feedback }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:publish');
+
+      const story = await storyService.reviewStory(
+        storyId,
+        { action, feedback },
+        {
+          organizationId: principal.organizationId,
+          authorId: principal.id,
+          clientType: principal.clientType,
+          createdVia: 'mcp',
+        }
+      );
+
+      return mcpJsonResponse({
+        message: action === 'approve' ? 'Story APPROVED and PUBLISHED.' : 'Story REJECTED back to draft.',
+        storyId: story.id,
+        status: story.status,
+        feedback,
+      });
+    }
+  );
+
+  server.tool(
+    'list_review_queue',
+    '[READ-ONLY] Fetch all pending stories currently waiting in the editorial review queue.',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const queue = await storyService.getReviewQueue(principal.organizationId);
+      return mcpJsonResponse({
+        queueLength: queue.length,
+        stories: queue.map((s) => ({
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+          articleType: s.articleType,
+          authorId: s.authorId,
+          updatedAt: s.updatedAt,
+          blockCount: s.blocks?.length || 0,
+        })),
+      });
     }
   );
 }

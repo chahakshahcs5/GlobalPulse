@@ -14,7 +14,7 @@ import {
   CreateStoryVersionInputSchema,
 } from '@ai-news/schemas';
 import type { DatabaseService, StoryFilter } from '@ai-news/database';
-import { validateBlocks, validateBlock } from '@ai-news/content';
+import { validateBlocks, validateBlock, sanitizeBlock } from '@ai-news/content';
 import {
   NotFoundError,
   ValidationError,
@@ -22,6 +22,27 @@ import {
   slugify,
 } from '@ai-news/shared';
 import { WhatChangedDiffService } from './what-changed';
+
+/**
+ * Optional SSE broadcaster — injected when running with the API server.
+ * When null (e.g. in tests or MCP-only mode), events are silently skipped.
+ */
+export type BroadcastFn = (channel: string, eventName: string, data: unknown) => void;
+let _broadcast: BroadcastFn | null = null;
+
+export function setStoryBroadcaster(fn: BroadcastFn): void {
+  _broadcast = fn;
+}
+
+function broadcast(eventName: string, data: unknown): void {
+  if (_broadcast) {
+    try {
+      _broadcast('all', eventName, data);
+    } catch {
+      // SSE broadcast failure should never break story operations
+    }
+  }
+}
 
 export interface StoryContext {
   organizationId: string;
@@ -54,9 +75,9 @@ export class StoryService {
       uniqueSlug = `${baseSlug}-${counter++}`;
     }
 
-    // 3. Process blocks
+    // 3. Process and sanitize blocks (XSS protection)
     const validatedBlocks: StoryBlock[] = validated.blocks
-      ? validateBlocks(validated.blocks)
+      ? validateBlocks(validated.blocks).map(sanitizeBlock)
       : [];
 
     const storyId = generateId('sty');
@@ -76,9 +97,7 @@ export class StoryService {
       authorId: ctx.authorId,
       createdAt: now,
     };
-    await this.db.stories.createVersion(initialVersion);
 
-    // 5. Create Story entity
     const newStory: Story = {
       id: storyId,
       organizationId: ctx.organizationId,
@@ -103,34 +122,41 @@ export class StoryService {
       updatedAt: now,
     };
 
-    const savedStory = await this.db.stories.create(newStory);
+    const savedStory = await this.db.runInTransaction(async () => {
+      await this.db.stories.createVersion(initialVersion);
+      const created = await this.db.stories.create(newStory);
 
-    // 6. Audit Log
-    await this.db.audit.log({
-      id: generateId('aud'),
-      organizationId: ctx.organizationId,
-      userId: ctx.authorId,
-      clientType: ctx.clientType,
-      action: `${ctx.createdVia || 'mcp'}.create_story`,
-      resourceType: 'story',
-      resourceId: storyId,
-      payloadSummary: { title: validated.title, articleType: validated.articleType },
-      requestId: ctx.requestId,
-      status: 'SUCCESS',
-      timestamp: now,
+      // 6. Audit Log
+      await this.db.audit.log({
+        id: generateId('aud'),
+        organizationId: ctx.organizationId,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'mcp'}.create_story`,
+        resourceType: 'story',
+        resourceId: storyId,
+        payloadSummary: { title: validated.title, articleType: validated.articleType },
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: now,
+      });
+
+      // 7. Save Idempotency Record
+      if (validated.idempotencyKey) {
+        await this.db.idempotency.save({
+          id: generateId('idemp'),
+          organizationId: ctx.organizationId,
+          key: validated.idempotencyKey,
+          action: 'create_story',
+          responseJson: created,
+          createdAt: now,
+        });
+      }
+
+      return created;
     });
 
-    // 7. Save Idempotency Record
-    if (validated.idempotencyKey) {
-      await this.db.idempotency.save({
-        id: generateId('idemp'),
-        organizationId: ctx.organizationId,
-        key: validated.idempotencyKey,
-        action: 'create_story',
-        responseJson: savedStory,
-        createdAt: now,
-      });
-    }
+    broadcast('story.created', { storyId: savedStory.id, title: savedStory.title, slug: savedStory.slug });
 
     return savedStory;
   }
@@ -171,20 +197,24 @@ export class StoryService {
       updatedAt: new Date().toISOString(),
     };
 
-    const result = await this.db.stories.update(updated);
+    const result = await this.db.runInTransaction(async () => {
+      const res = await this.db.stories.update(updated);
 
-    await this.db.audit.log({
-      id: generateId('aud'),
-      organizationId: ctx.organizationId,
-      userId: ctx.authorId,
-      clientType: ctx.clientType,
-      action: `${ctx.createdVia || 'mcp'}.update_story`,
-      resourceType: 'story',
-      resourceId: id,
-      payloadSummary: validated as Record<string, unknown>,
-      requestId: ctx.requestId,
-      status: 'SUCCESS',
-      timestamp: new Date().toISOString(),
+      await this.db.audit.log({
+        id: generateId('aud'),
+        organizationId: ctx.organizationId,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'mcp'}.update_story`,
+        resourceType: 'story',
+        resourceId: id,
+        payloadSummary: validated as Record<string, unknown>,
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: new Date().toISOString(),
+      });
+
+      return res;
     });
 
     return result;
@@ -193,10 +223,11 @@ export class StoryService {
   async addBlock(storyId: string, rawBlock: unknown, ctx: StoryContext): Promise<StoryBlock> {
     await this.getStory(storyId, ctx.organizationId);
     const validated = validateBlock(rawBlock);
+    const sanitized = sanitizeBlock(validated);
 
     const currentBlocks = await this.db.stories.getBlocks(storyId);
-    validated.sortOrder = currentBlocks.length;
-    currentBlocks.push(validated);
+    sanitized.sortOrder = currentBlocks.length;
+    currentBlocks.push(sanitized);
 
     await this.db.stories.saveBlocks(storyId, currentBlocks);
 
@@ -207,14 +238,14 @@ export class StoryService {
       clientType: ctx.clientType,
       action: `${ctx.createdVia || 'mcp'}.add_story_block`,
       resourceType: 'story_block',
-      resourceId: validated.id,
-      payloadSummary: { storyId, blockType: validated.blockType },
+      resourceId: sanitized.id,
+      payloadSummary: { storyId, blockType: sanitized.blockType },
       requestId: ctx.requestId,
       status: 'SUCCESS',
       timestamp: new Date().toISOString(),
     });
 
-    return validated;
+    return sanitized;
   }
 
   async updateBlock(storyId: string, blockId: string, rawBlock: unknown, ctx: StoryContext): Promise<StoryBlock> {
@@ -325,41 +356,42 @@ export class StoryService {
       createdAt: now,
     };
 
-    await this.db.stories.createVersion(versionRecord);
-
-    // Update story pointers
     story.currentVersionNumber = nextVersionNumber;
     story.currentVersionId = versionId;
     if (validated.title) story.title = validated.title;
     if (validated.summary) story.summary = validated.summary;
     story.blocks = newBlocks;
     story.updatedAt = now;
-    await this.db.stories.update(story);
 
-    await this.db.audit.log({
-      id: generateId('aud'),
-      organizationId: ctx.organizationId,
-      userId: ctx.authorId,
-      clientType: ctx.clientType,
-      action: `${ctx.createdVia || 'mcp'}.create_story_version`,
-      resourceType: 'story_version',
-      resourceId: versionId,
-      payloadSummary: { storyId, versionNumber: nextVersionNumber, changeSummary: validated.changeSummary },
-      requestId: ctx.requestId,
-      status: 'SUCCESS',
-      timestamp: now,
-    });
+    await this.db.runInTransaction(async () => {
+      await this.db.stories.createVersion(versionRecord);
+      await this.db.stories.update(story);
 
-    if (validated.idempotencyKey) {
-      await this.db.idempotency.save({
-        id: generateId('idemp'),
+      await this.db.audit.log({
+        id: generateId('aud'),
         organizationId: ctx.organizationId,
-        key: validated.idempotencyKey,
-        action: 'create_story_version',
-        responseJson: versionRecord,
-        createdAt: now,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'mcp'}.create_story_version`,
+        resourceType: 'story_version',
+        resourceId: versionId,
+        payloadSummary: { storyId, versionNumber: nextVersionNumber, changeSummary: validated.changeSummary },
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: now,
       });
-    }
+
+      if (validated.idempotencyKey) {
+        await this.db.idempotency.save({
+          id: generateId('idemp'),
+          organizationId: ctx.organizationId,
+          key: validated.idempotencyKey,
+          action: 'create_story_version',
+          responseJson: versionRecord,
+          createdAt: now,
+        });
+      }
+    });
 
     return versionRecord;
   }
@@ -428,6 +460,13 @@ export class StoryService {
       });
     }
 
+    broadcast('story.published', {
+      storyId: saved.id,
+      title: saved.title,
+      slug: saved.slug,
+      publishedAt: saved.publishedAt,
+    });
+
     return saved;
   }
 
@@ -435,13 +474,173 @@ export class StoryService {
     const story = await this.getStory(storyId, ctx.organizationId);
     story.status = 'DRAFT';
     story.updatedAt = new Date().toISOString();
-    return this.db.stories.update(story);
+    const saved = await this.db.stories.update(story);
+    broadcast('story.unpublished', { storyId: saved.id, title: saved.title });
+    return saved;
   }
 
   async archiveStory(storyId: string, ctx: StoryContext): Promise<Story> {
     const story = await this.getStory(storyId, ctx.organizationId);
     story.status = 'ARCHIVED';
     story.updatedAt = new Date().toISOString();
-    return this.db.stories.update(story);
+    const saved = await this.db.stories.update(story);
+    broadcast('story.archived', { storyId: saved.id, title: saved.title });
+    return saved;
+  }
+
+  async submitForReview(storyId: string, ctx: StoryContext): Promise<Story> {
+    const story = await this.getStory(storyId, ctx.organizationId);
+    if (story.status === 'PUBLISHED') {
+      throw new ValidationError('Story is already published.');
+    }
+    const blocks = await this.db.stories.getBlocks(storyId);
+    if (blocks.length === 0) {
+      throw new ValidationError('Cannot submit for review: story has no content blocks.');
+    }
+
+    const now = new Date().toISOString();
+    story.status = 'IN_REVIEW';
+    story.updatedAt = now;
+    const saved = await this.db.runInTransaction(async () => {
+      const res = await this.db.stories.update(story);
+
+      await this.db.audit.log({
+        id: generateId('aud'),
+        organizationId: ctx.organizationId,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'api'}.submit_review`,
+        resourceType: 'story',
+        resourceId: storyId,
+        payloadSummary: { title: story.title, status: 'IN_REVIEW' },
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: now,
+      });
+
+      return res;
+    });
+
+    broadcast('story.in_review', { storyId: saved.id, title: saved.title });
+    return saved;
+  }
+
+  async reviewStory(
+    storyId: string,
+    review: { action: 'approve' | 'reject'; feedback?: string },
+    ctx: StoryContext
+  ): Promise<Story> {
+    const story = await this.getStory(storyId, ctx.organizationId);
+    const now = new Date().toISOString();
+
+    if (review.action === 'approve') {
+      const blocks = await this.db.stories.getBlocks(storyId);
+      if (blocks.length === 0) {
+        throw new ValidationError('Cannot approve story: 0 content blocks.');
+      }
+      story.status = 'PUBLISHED';
+      story.publishedAt = now;
+      story.updatedAt = now;
+      const saved = await this.db.runInTransaction(async () => {
+        const res = await this.db.stories.update(story);
+
+        await this.db.audit.log({
+          id: generateId('aud'),
+          organizationId: ctx.organizationId,
+          userId: ctx.authorId,
+          clientType: ctx.clientType,
+          action: `${ctx.createdVia || 'api'}.approve_story`,
+          resourceType: 'story',
+          resourceId: storyId,
+          payloadSummary: { title: story.title, approvedBy: ctx.authorId, feedback: review.feedback },
+          requestId: ctx.requestId,
+          status: 'SUCCESS',
+          timestamp: now,
+        });
+
+        return res;
+      });
+
+      broadcast('story.published', {
+        storyId: saved.id,
+        title: saved.title,
+        slug: saved.slug,
+        publishedAt: saved.publishedAt,
+      });
+      return saved;
+    } else {
+      story.status = 'DRAFT';
+      story.updatedAt = now;
+      const saved = await this.db.runInTransaction(async () => {
+        const res = await this.db.stories.update(story);
+
+        await this.db.audit.log({
+          id: generateId('aud'),
+          organizationId: ctx.organizationId,
+          userId: ctx.authorId,
+          clientType: ctx.clientType,
+          action: `${ctx.createdVia || 'api'}.reject_story`,
+          resourceType: 'story',
+          resourceId: storyId,
+          payloadSummary: { title: story.title, rejectedBy: ctx.authorId, feedback: review.feedback },
+          requestId: ctx.requestId,
+          status: 'SUCCESS',
+          timestamp: now,
+        });
+
+        return res;
+      });
+
+      broadcast('story.rejected', {
+        storyId: saved.id,
+        title: saved.title,
+        feedback: review.feedback,
+      });
+      return saved;
+    }
+  }
+
+  async getReviewQueue(orgId: string): Promise<Story[]> {
+    return this.db.stories.list({ status: 'IN_REVIEW' }, orgId);
+  }
+
+  /**
+   * Permanently deletes a story and all its blocks/versions.
+   * Previously this was done directly via db.stories.delete() in the MCP
+   * server, bypassing audit logging. Now it goes through the service layer.
+   */
+  async deleteStory(storyId: string, ctx: StoryContext): Promise<boolean> {
+    const story = await this.db.stories.findById(storyId, ctx.organizationId);
+    if (!story) {
+      return false;
+    }
+
+    const deleted = await this.db.runInTransaction(async () => {
+      const del = await this.db.stories.delete(storyId, ctx.organizationId);
+
+      if (del) {
+        await this.db.audit.log({
+          id: generateId('aud'),
+          organizationId: ctx.organizationId,
+          userId: ctx.authorId,
+          clientType: ctx.clientType,
+          action: `${ctx.createdVia || 'mcp'}.delete_story`,
+          resourceType: 'story',
+          resourceId: storyId,
+          payloadSummary: { title: story.title, permanently: true },
+          requestId: ctx.requestId,
+          status: 'SUCCESS',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return del;
+    });
+
+    if (deleted) {
+      broadcast('story.deleted', { storyId, title: story.title });
+    }
+
+    return deleted;
   }
 }

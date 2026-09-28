@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { StoryBlockSchema } from './blocks';
 
-export const StoryStatusSchema = z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']);
+export const StoryStatusSchema = z.enum(['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED']);
 export type StoryStatus = z.infer<typeof StoryStatusSchema>;
 
 export const ArticleTypeSchema = z.enum([
@@ -77,6 +77,7 @@ export const StorySchema = z.object({
   authorId: z.string().min(1),
   idempotencyKey: z.string().optional(),
   publishedAt: z.string().optional(),
+  scheduledPublishAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -14,6 +14,12 @@ import { MediaModule } from './modules/media/media.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { OpenApiModule } from './modules/docs/openapi.module';
+import { EngagementModule } from './modules/engagement/engagement.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { FeedsModule } from './modules/feeds/feeds.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -35,6 +41,12 @@ import { OpenApiModule } from './modules/docs/openapi.module';
     AuditModule,
     RealtimeModule,
     OpenApiModule,
+    EngagementModule,
+    CategoriesModule,
+    FeedsModule,
+    AnalyticsModule,
+    NotificationsModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

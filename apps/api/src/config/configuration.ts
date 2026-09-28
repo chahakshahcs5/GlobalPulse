@@ -43,4 +43,22 @@ export function getAppConfig(): AppConfig {
   };
 }
 
+export function validateConfig(config: AppConfig): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret || rawSecret.includes('dev-secret') || rawSecret.length < 32) {
+      throw new Error(
+        'SECURITY ALERT: Production deployment requires a custom, cryptographically secure JWT_SECRET of at least 32 characters.'
+      );
+    }
+    if (config.databaseEngine === 'prisma' && !config.databaseUrl) {
+      throw new Error(
+        'DATABASE CONFIG ERROR: DATABASE_URL must be specified when DATABASE_ENGINE is set to prisma in production.'
+      );
+    }
+  }
+}
+
 export const appConfig = getAppConfig();
+validateConfig(appConfig);

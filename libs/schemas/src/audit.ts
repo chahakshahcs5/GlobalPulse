@@ -26,5 +26,6 @@ export const IdempotencyRecordSchema = z.object({
   action: z.string().min(1),
   responseJson: z.unknown(),
   createdAt: z.string(),
+  expiresAt: z.string().optional(),
 });
 export type IdempotencyRecord = z.infer<typeof IdempotencyRecordSchema>;

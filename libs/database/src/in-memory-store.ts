@@ -503,6 +503,18 @@ export class InMemoryIdempotencyRepository implements IIdempotencyRepository {
   async delete(key: string, orgId: string): Promise<boolean> {
     return this.records.delete(this.makeKey(orgId, key));
   }
+
+  async pruneExpired(now: Date = new Date()): Promise<number> {
+    let pruned = 0;
+    const nowIso = now.toISOString();
+    for (const [k, r] of this.records.entries()) {
+      if (r.expiresAt && r.expiresAt <= nowIso) {
+        this.records.delete(k);
+        pruned++;
+      }
+    }
+    return pruned;
+  }
 }
 
 export class InMemoryAuditRepository implements IAuditRepository {

@@ -2,63 +2,103 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 6.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
+    --accent-red: #dc2626;
+    --accent-blue: #1d4ed8;
+    --accent-green: #15803d;
+  }
+
+  .dark {
+    --bg-main: #0b0f19;
+    --bg-card: #111827;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #1e293b;
+    --accent-red: #ef4444;
+    --accent-blue: #3b82f6;
+    --accent-green: #22c55e;
   }
 
   html, body {
-    background-color: #090d16;
-    color: #f1f5f9;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
-/* Glassmorphism Classes */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Editorial Serif & Sans Utilities */
+.font-serif-headline {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* Reader Font Size Scaling */
+.reader-size-sm {
+  font-size: 0.95rem;
+  line-height: 1.65;
 }
 
-.glass-card:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(59, 130, 246, 0.35);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.15);
+.reader-size-md {
+  font-size: 1.1rem;
+  line-height: 1.75;
 }
 
-/* Animated Breaking News Ticker */
-@keyframes ticker {
+.reader-size-lg {
+  font-size: 1.25rem;
+  line-height: 1.85;
+}
+
+/* Economic Times Scrolling Market Ticker */
+@keyframes tickerSlide {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-.ticker-track {
+.market-ticker-track {
   display: flex;
   width: max-content;
-  animation: ticker 35s linear infinite;
+  animation: tickerSlide 40s linear infinite;
 }
 
-.ticker-track:hover {
+.market-ticker-track:hover {
   animation-play-state: paused;
+}
+
+/* Breaking News Ticker Animation */
+@keyframes breakingMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.breaking-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: breakingMarquee 35s linear infinite;
+}
+
+.breaking-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Newspaper Grid Dividers */
+.news-border-b {
+  border-bottom: 1px solid #e2e8f0;
+}
+.dark .news-border-b {
+  border-bottom: 1px solid #1e293b;
+}
+
+.news-border-r {
+  border-right: 1px solid #e2e8f0;
+}
+.dark .news-border-r {
+  border-right: 1px solid #1e293b;
 }
 
 /* Custom Scrollbar */
@@ -68,14 +108,18 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb {
   background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

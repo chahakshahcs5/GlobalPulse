@@ -2,6 +2,14 @@ import dotenv from 'dotenv';
 import { startServer } from './server';
 import { db } from '@ai-news/database';
 import { createLogger } from '@ai-news/observability';
+import {
+  setStoryBroadcaster,
+  setEngagementBroadcaster,
+  setNotificationBroadcaster,
+  setSchedulingBroadcaster,
+  SchedulingService,
+} from '@ai-news/stories';
+import { RealtimeService } from './modules/realtime/realtime.service';
 
 dotenv.config();
 const logger = createLogger('main');
@@ -12,6 +20,35 @@ const host = process.env.HOST || '0.0.0.0';
 async function bootstrap() {
   logger.info('Initializing Database Engine...');
   await db.initialize();
+
+  // Wire SSE broadcasting: story, engagement, notification & scheduling events flow to connected clients
+  const realtime = RealtimeService.getInstance();
+  setStoryBroadcaster((channel, eventName, data) => {
+    realtime.broadcast(channel, eventName, data);
+  });
+  setEngagementBroadcaster((channel, eventName, data) => {
+    realtime.broadcast(channel, eventName, data);
+  });
+  setNotificationBroadcaster((channel, eventName, data) => {
+    realtime.broadcast(channel, eventName, data);
+  });
+  setSchedulingBroadcaster((channel, eventName, data) => {
+    realtime.broadcast(channel, eventName, data);
+  });
+
+  // Automated scheduled publishing background runner
+  const schedulingService = new SchedulingService(db);
+  const schedulerTimer = setInterval(async () => {
+    try {
+      const published = await schedulingService.publishDueStories('org_default');
+      if (published.length > 0) {
+        logger.info(`Automated scheduler released ${published.length} scheduled stories live.`);
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      logger.error(`Error in automated story scheduler: ${errorMsg}`);
+    }
+  }, 15000);
 
   const app = await startServer({ port, host });
 
@@ -36,6 +73,7 @@ async function bootstrap() {
   for (const signal of signals) {
     process.on(signal, async () => {
       logger.info(`Received ${signal}. Initiating graceful shutdown...`);
+      clearInterval(schedulerTimer);
       try {
         await app.close();
         logger.info('API Gateway closed successfully.');

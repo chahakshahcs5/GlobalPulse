@@ -5,3 +5,6 @@ export * from './entity.memory';
 export * from './source.memory';
 export * from './idempotency.memory';
 export * from './audit.memory';
+export * from './engagement.memory';
+export * from './user.memory';
+export * from './notification.memory';

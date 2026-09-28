@@ -192,4 +192,46 @@ describe('Story Lifecycle & Versioning Service (Unit Tests)', () => {
     const archived = await storyService.archiveStory(emptyStory.id, ctx);
     expect(archived.status).toBe('ARCHIVED');
   });
+
+  it('manages editorial review workflow: submit, review queue, approve and reject', async () => {
+    // 1. Create draft with a content block
+    const story = await storyService.createStory(
+      {
+        title: 'Quantum Sensor Breakthrough in Navigation',
+        summary: 'GPS-independent quantum accelerometers tested successfully.',
+        blocks: [
+          {
+            id: 'b1',
+            blockType: 'paragraph',
+            sortOrder: 0,
+            data: { text: 'Flight trials showed drift of less than 1 meter over 24 hours.' },
+          },
+        ],
+      },
+      ctx
+    );
+    expect(story.status).toBe('DRAFT');
+
+    // 2. Submit for review
+    const inReview = await storyService.submitForReview(story.id, ctx);
+    expect(inReview.status).toBe('IN_REVIEW');
+
+    // 3. Appears in Review Queue
+    const queue = await storyService.getReviewQueue(ctx.organizationId);
+    expect(queue.some((s) => s.id === story.id)).toBe(true);
+
+    // 4. Editor rejects with feedback -> returns to DRAFT
+    const rejected = await storyService.reviewStory(
+      story.id,
+      { action: 'reject', feedback: 'Please cite the university laboratory conducting the trial.' },
+      ctx
+    );
+    expect(rejected.status).toBe('DRAFT');
+
+    // 5. Re-submit and approve -> transitions to PUBLISHED
+    await storyService.submitForReview(story.id, ctx);
+    const approved = await storyService.reviewStory(story.id, { action: 'approve' }, ctx);
+    expect(approved.status).toBe('PUBLISHED');
+    expect(approved.publishedAt).toBeDefined();
+  });
 });

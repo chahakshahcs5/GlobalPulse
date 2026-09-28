@@ -24,6 +24,10 @@ import { registerMediaTools } from '../apps/mcp-server/src/tools/media.tools';
 import { registerSourceTools } from '../apps/mcp-server/src/tools/source.tools';
 import { registerTaxonomyTools } from '../apps/mcp-server/src/tools/taxonomy.tools';
 import { registerJobTools } from '../apps/mcp-server/src/tools/job.tools';
+import { registerAnalyticsTools } from '../apps/mcp-server/src/tools/analytics.tools';
+import { registerSchedulingTools } from '../apps/mcp-server/src/tools/scheduling.tools';
+import { registerNotificationTools } from '../apps/mcp-server/src/tools/notification.tools';
+import { registerUserTools } from '../apps/mcp-server/src/tools/user.tools';
 import { registerResources } from '../apps/mcp-server/src/resources/index';
 import { registerPrompts } from '../apps/mcp-server/src/prompts/index';
 import { defaultQueue } from '@ai-news/jobs';
@@ -78,6 +82,10 @@ export async function runEndToEndScenario() {
   registerSourceTools(server, db, getPrincipal);
   registerTaxonomyTools(server, db, getPrincipal);
   registerJobTools(server, db, getPrincipal);
+  registerAnalyticsTools(server, db, getPrincipal);
+  registerSchedulingTools(server, db, getPrincipal);
+  registerNotificationTools(server, db, getPrincipal);
+  registerUserTools(server, db, getPrincipal);
   registerResources(server, db, getPrincipal);
   registerPrompts(server);
 
@@ -245,9 +253,6 @@ export async function runEndToEndScenario() {
   const publishedStory = await storyService.getStory(publishData.storyId);
   console.log(`   Story status is now: [${publishedStory.status}], version: [${publishedStory.currentVersionNumber}]`);
 
-  // Close MCP Client & Server sessions
-  await client.close();
-  await server.close();
 
   // 7. Background Worker Processes Async Jobs
   console.log('\n⚙️  [Step 7] Background Worker processes asynchronous post-publication tasks...');
@@ -305,6 +310,81 @@ export async function runEndToEndScenario() {
   console.log(`   ✓ Total audit log entries recorded for gemini_spark: ${agentLogs.length}`);
   const counterVal = metrics.getCounterValue('worker_jobs_completed_total');
   console.log(`   ✓ Prometheus metrics counter worker_jobs_completed_total: ${counterVal}`);
+
+  // 10. AI Agent Inspects Real-time Performance & Trending Stories via MCP
+  console.log('\n📈 [Step 10] Agent queries real-time story analytics and trending leaderboard via MCP...');
+  const analyticsResult = await client.callTool({
+    name: 'get_story_analytics',
+    arguments: { story_id: targetStoryId },
+  });
+  const analyticsContent = analyticsResult.content as Array<{ type: string; text: string }>;
+  const analyticsData = JSON.parse(analyticsContent[0]?.text || '{}');
+  console.log(`   ✓ Story views: ${analyticsData.viewsCount}, virality score: ${analyticsData.viralityScore}/100, read time: ${Math.round((analyticsData.avgReadTimeSeconds || 180) / 60)}m`);
+
+  const trendingResult = await client.callTool({
+    name: 'get_trending_stories',
+    arguments: { limit: 3 },
+  });
+  const trendingContent = trendingResult.content as Array<{ type: string; text: string }>;
+  const trendingData = JSON.parse(trendingContent[0]?.text || '{}');
+  const trendingList = Array.isArray(trendingData) ? trendingData : (trendingData.trending || []);
+  console.log(`   ✓ Trending stories retrieved: ${trendingList.length} stories ranked by virality.`);
+
+  // 11. AI Agent Schedules an Embargoed Investigation via MCP
+  console.log('\n⏳ [Step 11] Agent schedules an embargoed investigative report via MCP [schedule_story_publish]...');
+  const scheduledTime = new Date(Date.now() + 7200000).toISOString(); // 2 hours from now
+  const schedResult = await client.callTool({
+    name: 'schedule_story_publish',
+    arguments: {
+      story_id: targetStoryId,
+      publish_at: scheduledTime,
+    },
+  });
+  const schedContent = schedResult.content as Array<{ type: string; text: string }>;
+  const schedData = JSON.parse(schedContent[0]?.text || '{}');
+  console.log(`   ✓ Story scheduled: status=[${schedData.status}], releaseTime=[${schedData.scheduled_publish_at || schedData.scheduledPublishAt}]`);
+
+  // 12. AI Agent Broadcasts Breaking Flash Alert via MCP
+  console.log('\n🚨 [Step 12] Agent broadcasts high-priority breaking news flash via MCP [broadcast_breaking_news]...');
+  const broadcastResult = await client.callTool({
+    name: 'broadcast_breaking_news',
+    arguments: {
+      story_id: targetStoryId,
+      headline: 'FLASH: BRICS Ministerial Leaders Ratify Final Accession Protocol',
+      urgency: 'urgent',
+    },
+  });
+  const broadcastContent = broadcastResult.content as Array<{ type: string; text: string }>;
+  const broadcastData = JSON.parse(broadcastContent[0]?.text || '{}');
+  console.log(`   ✓ Alert dispatched via SSE: [${broadcastData.headline}], severity=[${broadcastData.severity}]`);
+
+  // 13. AI Agent Inspects Staff Roster & Enrolls Co-pilot Agent via MCP
+  console.log('\n👥 [Step 13] Agent verifies newsroom staff roster and enrolls co-pilot agent via MCP...');
+  const usersResult = await client.callTool({
+    name: 'list_newsroom_users',
+    arguments: {},
+  });
+  const usersContent = usersResult.content as Array<{ type: string; text: string }>;
+  const usersData = JSON.parse(usersContent[0]?.text || '{}');
+  const userList = Array.isArray(usersData) ? usersData : (usersData.users || []);
+  console.log(`   ✓ Newsroom staff count: ${userList.length} active journalists & autonomous agents.`);
+
+  const inviteResult = await client.callTool({
+    name: 'invite_newsroom_user',
+    arguments: {
+      name: 'Claude 3.7 Sonnet Newsroom Agent',
+      email: 'claude.agent@globalpulse.news',
+      role: 'ai_agent',
+      clientType: 'claude_agent',
+    },
+  });
+  const inviteContent = inviteResult.content as Array<{ type: string; text: string }>;
+  const inviteData = JSON.parse(inviteContent[0]?.text || '{}');
+  console.log(`   ✓ New autonomous co-pilot enrolled: [${inviteData.name}] (${inviteData.user_id}) with role [${inviteData.role}]`);
+
+  // Close MCP Client & Server sessions
+  await client.close();
+  await server.close();
 
   console.log('\n=============================================================');
   console.log('✅ MULTI-AGENT E2E PUBLISHING SCENARIO COMPLETED SUCCESSFULLY');

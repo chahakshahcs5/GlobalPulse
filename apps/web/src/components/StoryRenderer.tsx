@@ -54,19 +54,19 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'heading': {
       const { level, text, subtext } = block.data;
       return (
-        <div className="my-2">
-          {level === 1 && <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-100 mt-8 mb-3">{text}</h1>}
-          {level === 2 && <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100 mt-6 mb-2">{text}</h2>}
-          {level === 3 && <h3 className="text-xl sm:text-2xl font-semibold text-slate-200 mt-4 mb-2">{text}</h3>}
-          {level === 4 && <h4 className="text-lg font-semibold text-slate-300 mt-3 mb-1">{text}</h4>}
-          {subtext && <p className="text-sm sm:text-base text-slate-400 mt-1">{subtext}</p>}
+        <div className="my-3">
+          {level === 1 && <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-3">{text}</h1>}
+          {level === 2 && <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-6 mb-2">{text}</h2>}
+          {level === 3 && <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2">{text}</h3>}
+          {level === 4 && <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1">{text}</h4>}
+          {subtext && <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">{subtext}</p>}
         </div>
       );
     }
 
     case 'paragraph': {
       return (
-        <p className="text-base sm:text-lg text-slate-300 leading-relaxed font-normal my-4">
+        <p className="text-base sm:text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-normal my-4">
           {block.data.text}
         </p>
       );
@@ -74,16 +74,16 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
 
     case 'summary': {
       return (
-        <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-5 my-6 backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-2 text-indigo-400 font-bold uppercase tracking-wider text-xs">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+        <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/30 p-5 sm:p-6 my-6 shadow-xs">
+          <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider text-xs">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
             Executive Briefing
           </div>
-          <h4 className="text-lg font-bold text-slate-100 mb-3">{block.data.headline}</h4>
-          <ul className="space-y-2">
+          <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">{block.data.headline}</h4>
+          <ul className="space-y-2.5">
             {block.data.bulletPoints.map((pt: string, idx: number) => (
-              <li key={idx} className="flex items-start gap-2.5 text-slate-300 text-sm sm:text-base">
-                <span className="text-indigo-400 font-bold mt-0.5">•</span>
+              <li key={idx} className="flex items-start gap-2.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium">
+                <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">•</span>
                 <span>{pt}</span>
               </li>
             ))}
@@ -94,12 +94,12 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
 
     case 'quote': {
       return (
-        <figure className="border-l-4 border-blue-500 pl-5 my-6 py-1 italic">
-          <blockquote className="text-lg sm:text-xl font-medium text-slate-200">
+        <figure className="rounded-r-2xl border-l-4 border-blue-600 bg-slate-100/70 dark:bg-slate-800/40 p-5 my-6">
+          <blockquote className="text-lg sm:text-xl font-medium font-serif-headline text-slate-900 dark:text-slate-100 italic leading-snug">
             "{block.data.quote}"
           </blockquote>
-          <figcaption className="mt-2 text-sm text-slate-400 not-italic font-sans">
-            — <span className="font-semibold text-slate-300">{block.data.attribution}</span>
+          <figcaption className="mt-2 text-sm text-slate-600 dark:text-slate-400 not-italic font-sans">
+            — <span className="font-bold text-slate-800 dark:text-slate-200">{block.data.attribution}</span>
             {block.data.title && <span className="text-slate-500">, {block.data.title}</span>}
           </figcaption>
         </figure>
@@ -109,7 +109,7 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'chart': {
       const svg = D3ChartRenderer.renderToSvg(block.data, { theme, width: 800, height: 420 });
       return (
-        <div className="my-8 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-xl">
+        <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3">
           <div dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
       );
@@ -118,7 +118,7 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'map': {
       const svg = MapRenderer.renderSvgFallback(block.data, 800, 420, theme);
       return (
-        <div className="my-8 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-xl">
+        <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3">
           <div dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
       );
@@ -127,7 +127,7 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'timeline': {
       const svg = TimelineRenderer.renderSvgTrack(block.data, 'horizontal', 800, 240, theme);
       return (
-        <div className="my-8 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-xl">
+        <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3">
           <div dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
       );
@@ -136,7 +136,7 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'diagram': {
       const svg = DiagramRenderer.renderDeclarativeSvg(block.data, 800, 340, theme);
       return (
-        <div className="my-8 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-xl">
+        <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3">
           <div dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
       );

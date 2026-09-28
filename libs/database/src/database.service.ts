@@ -6,6 +6,9 @@ import type {
   ISourceRepository,
   IIdempotencyRepository,
   IAuditRepository,
+  IEngagementRepository,
+  IUserRepository,
+  INotificationRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -15,6 +18,9 @@ import {
   MemorySourceRepository,
   MemoryIdempotencyRepository,
   MemoryAuditRepository,
+  MemoryEngagementRepository,
+  MemoryUserRepository,
+  MemoryNotificationRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -43,6 +49,9 @@ export class DatabaseService {
   public sources: ISourceRepository;
   public idempotency: IIdempotencyRepository;
   public audit: IAuditRepository;
+  public engagement: IEngagementRepository;
+  public users: IUserRepository;
+  public notifications: INotificationRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -51,6 +60,9 @@ export class DatabaseService {
   private memorySources = new MemorySourceRepository();
   private memoryIdempotency = new MemoryIdempotencyRepository();
   private memoryAudit = new MemoryAuditRepository();
+  private memoryEngagement = new MemoryEngagementRepository();
+  private memoryUsers = new MemoryUserRepository();
+  private memoryNotifications = new MemoryNotificationRepository();
 
   private isPrismaActive = false;
 
@@ -63,6 +75,9 @@ export class DatabaseService {
     this.sources = this.memorySources;
     this.idempotency = this.memoryIdempotency;
     this.audit = this.memoryAudit;
+    this.engagement = this.memoryEngagement;
+    this.users = this.memoryUsers;
+    this.notifications = this.memoryNotifications;
   }
 
   /**
@@ -103,7 +118,27 @@ export class DatabaseService {
   }
 
   public async runInTransaction<T>(work: (tx: unknown) => Promise<T>): Promise<T> {
-    return TransactionManager.execute(work);
+    if (this.isPrismaActive) {
+      return TransactionManager.execute(work);
+    }
+
+    // High-fidelity in-memory atomic transaction with automatic rollback
+    const storySnap = this.memoryStories.snapshot();
+    const auditSnap = this.memoryAudit.snapshot();
+    const idempSnap = this.memoryIdempotency.snapshot();
+    const userSnap = this.memoryUsers.snapshot();
+    const notifSnap = this.memoryNotifications.snapshot();
+    try {
+      const result = await work(null);
+      return result;
+    } catch (err) {
+      this.memoryStories.restore(storySnap);
+      this.memoryAudit.restore(auditSnap);
+      this.memoryIdempotency.restore(idempSnap);
+      this.memoryUsers.restore(userSnap);
+      this.memoryNotifications.restore(notifSnap);
+      throw err;
+    }
   }
 
   public clear(): void {
@@ -114,6 +149,8 @@ export class DatabaseService {
     this.memorySources.clear();
     this.memoryIdempotency.clear();
     this.memoryAudit.clear();
+    this.memoryUsers.clear();
+    this.memoryNotifications.clear();
   }
 }
 

@@ -269,6 +269,28 @@ export class MemoryStoryRepository implements IStoryRepository {
     return intersection / Math.max(set1.size, set2.size);
   }
 
+  snapshot(): {
+    stories: Map<string, Story>;
+    versions: Map<string, StoryVersion[]>;
+    blocks: Map<string, StoryBlock[]>;
+  } {
+    return {
+      stories: new Map(Array.from(this.stories.entries()).map(([k, v]) => [k, { ...v }])),
+      versions: new Map(Array.from(this.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])),
+      blocks: new Map(Array.from(this.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])),
+    };
+  }
+
+  restore(snap: {
+    stories: Map<string, Story>;
+    versions: Map<string, StoryVersion[]>;
+    blocks: Map<string, StoryBlock[]>;
+  }): void {
+    this.stories = new Map(Array.from(snap.stories.entries()).map(([k, v]) => [k, { ...v }]));
+    this.versions = new Map(Array.from(snap.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))]));
+    this.blocks = new Map(Array.from(snap.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))]));
+  }
+
   clear(): void {
     this.stories.clear();
     this.versions.clear();

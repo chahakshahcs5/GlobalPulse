@@ -57,13 +57,22 @@ export class NestAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      // Development principal for internal tests or unauthenticated read
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      // In production, require authentication on protected endpoints
+      if (isProduction && requiredScopes && requiredScopes.length > 0) {
+        throw new UnauthorizedException(
+          'Authentication required. Provide a valid Bearer token in the Authorization header.'
+        );
+      }
+
+      // Development fallback — limited to reader-level access (not admin)
       const fallbackPrincipal: AuthenticatedPrincipal = {
         id: (request.headers['x-actor-id'] as string) || 'usr_dev_guest',
         organizationId: (request.headers['x-organization-id'] as string) || 'org_default',
         role: 'editor',
         clientType: 'human_web',
-        scopes: ROLE_PERMISSIONS.admin,
+        scopes: ROLE_PERMISSIONS.editor,
       };
 
       request.principal = fallbackPrincipal;
@@ -71,6 +80,17 @@ export class NestAuthGuard implements CanActivate {
       if ((!requiredScopes || requiredScopes.length === 0) && (!requiredRoles || requiredRoles.length === 0)) {
         return true;
       }
+
+      // In development, still check scope/role requirements for the fallback principal
+      if (requiredRoles && requiredRoles.length > 0) {
+        AuthService.requireRole(fallbackPrincipal, ...requiredRoles);
+      }
+      if (requiredScopes && requiredScopes.length > 0) {
+        for (const scope of requiredScopes) {
+          AuthService.requireScope(fallbackPrincipal, scope);
+        }
+      }
+
       return true;
     }
 

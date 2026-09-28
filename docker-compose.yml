@@ -1,4 +1,6 @@
-version: '3.8'
+# Docker Compose: Production multi-service orchestration for GlobalPulse.
+# NOTE: Docker exposes services on 3000/3001/3002. For local dev (pnpm dev:*),
+# ports are configured via .env (default: 4000/4001).
 
 services:
   # 1. PostgreSQL 16 with pgvector extension (Sections 10, 152, 154)

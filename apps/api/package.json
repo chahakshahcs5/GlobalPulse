@@ -23,6 +23,7 @@
     "@ai-news/stories": "workspace:*",
     "@ai-news/topics": "workspace:*",
     "@fastify/cors": "^10.0.2",
+    "@fastify/rate-limit": "^11.2.0",
     "@nestjs/common": "^12.1.0",
     "@nestjs/core": "^12.1.0",
     "@nestjs/graphql": "^14.0.2",

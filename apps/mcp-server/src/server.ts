@@ -11,6 +11,11 @@ import { registerMediaTools } from './tools/media.tools';
 import { registerSourceTools } from './tools/source.tools';
 import { registerTaxonomyTools } from './tools/taxonomy.tools';
 import { registerJobTools } from './tools/job.tools';
+import { registerEngagementTools } from './tools/engagement.tools';
+import { registerAnalyticsTools } from './tools/analytics.tools';
+import { registerSchedulingTools } from './tools/scheduling.tools';
+import { registerNotificationTools } from './tools/notification.tools';
+import { registerUserTools } from './tools/user.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 
@@ -66,6 +71,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   registerSourceTools(server, database, getPrincipal);
   registerTaxonomyTools(server, database, getPrincipal);
   registerJobTools(server, database, getPrincipal);
+  registerEngagementTools(server, database, getPrincipal);
+  registerAnalyticsTools(server, database, getPrincipal);
+  registerSchedulingTools(server, database, getPrincipal);
+  registerNotificationTools(server, database, getPrincipal);
+  registerUserTools(server, database, getPrincipal);
 
   // Register resources and prompts
   registerResources(server, database, getPrincipal);
@@ -76,10 +86,43 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
 
   // Create HTTP server
   const httpServer = http.createServer(async (req, res) => {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    // Secure CORS handling
+    const reqOrigin = req.headers.origin;
+    const allowedEnv = process.env.ALLOWED_ORIGINS;
+    let allowOrigin = '*';
+
+    if (allowedEnv) {
+      const allowedList = allowedEnv.split(',').map((s) => s.trim()).filter(Boolean);
+      if (reqOrigin && (allowedList.includes(reqOrigin) || allowedList.includes('*'))) {
+        allowOrigin = reqOrigin;
+      } else if (!reqOrigin) {
+        allowOrigin = '*';
+      } else {
+        allowOrigin = '';
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      const defaultAllowed = [
+        'https://globalpulse.news',
+        'https://www.globalpulse.news',
+        'https://admin.globalpulse.news',
+        'http://localhost:3000',
+        'http://localhost:3002',
+      ];
+      if (reqOrigin && defaultAllowed.includes(reqOrigin)) {
+        allowOrigin = reqOrigin;
+      } else if (!reqOrigin) {
+        allowOrigin = '*';
+      } else {
+        allowOrigin = '';
+      }
+    }
+
+    if (allowOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);

@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Navigation } from '../components/Navigation';
-import { BreakingTicker } from '../components/BreakingTicker';
+import { GoogleNewsHeader } from '../components/GoogleNewsHeader';
 
 export const metadata: Metadata = {
-  title: 'GlobalPulse — AI-Operable Multimedia News Platform',
-  description: 'A modern, AI-agnostic multimedia publishing platform operated by human journalists and remote MCP AI agents.',
+  title: 'GlobalPulse — Independent Global News, Tech, Business & Science',
+  description: 'Comprehensive, real-time news coverage aggregated across global bureaus and verified sources by GlobalPulse.',
 };
 
 export default function RootLayout({
@@ -14,21 +13,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col bg-[#090d16] text-slate-100 selection:bg-blue-500/30 selection:text-blue-200">
-        <BreakingTicker />
-        <Navigation />
+    <html lang="en">
+      <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 selection:bg-blue-500/20 selection:text-blue-600 transition-colors">
+        <GoogleNewsHeader />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-800/80 bg-slate-950 py-10 mt-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-500">
-            <div className="flex items-center gap-3">
-              <span className="font-extrabold text-slate-400">GLOBALPULSE NEWSROOM</span>
-              <span>•</span>
-              <span>Model Context Protocol (MCP) Streamable HTTP Provider</span>
+        <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10 mt-16 text-xs text-slate-500 dark:text-slate-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-slate-900 dark:text-white flex items-center gap-1 text-sm">
+                  Global<span className="text-blue-600">Pulse</span>
+                </span>
+                <span>•</span>
+                <span>Modern High-Performance Publishing Platform</span>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <span className="hover:text-blue-600 cursor-pointer">Editorial Standards</span>
+                <span className="hover:text-blue-600 cursor-pointer">Privacy Policy</span>
+                <span className="hover:text-blue-600 cursor-pointer">Terms of Service</span>
+                <span className="hover:text-blue-600 cursor-pointer">Publisher Registry</span>
+              </div>
             </div>
-            <div className="flex items-center gap-6 font-mono text-[11px]">
-              <span>Remote MCP: <strong className="text-emerald-400">ONLINE (Port 4001)</strong></span>
-              <span>Architecture: <strong className="text-blue-400">AI Is Not The App</strong></span>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
+              <p>© 2026 GlobalPulse Platform. Verified news and multimedia intelligence.</p>
+              <div className="flex items-center gap-2">
+                <span>Edition:</span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  Global Edition (English)
+                </span>
+              </div>
             </div>
           </div>
         </footer>

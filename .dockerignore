@@ -1,0 +1,42 @@
+# Dependency directories
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Development artifacts
+.git/
+.gitignore
+.env
+.env.local
+.env.*.local
+*.md
+LICENSE
+
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tests & reports
+tests/
+test-results/
+playwright-report/
+coverage/
+
+# Nx cache
+.nx/
+.turbo/
+
+# Documentation
+docs/
+scripts/
+
+# OS
+.DS_Store
+Thumbs.db

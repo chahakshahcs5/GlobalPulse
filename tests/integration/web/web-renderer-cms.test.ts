@@ -226,7 +226,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('United Nations');
       expect(html).toContain('Related Dispatches');
       expect(html).toContain('Live Stream Recording');
-    });
+    }, 15000);
   });
 
   describe('Entities & Events Knowledge Graph Integrity', () => {

@@ -1,155 +1,222 @@
-import Link from 'next/link';
-import { DEMO_STORIES } from '../lib/demo-data';
-import { ProvenanceBadge } from '../components/ProvenanceBadge';
+'use client';
 
-export default function HomePage() {
-  const heroStory = DEMO_STORIES[0];
-  const secondaryStories = DEMO_STORIES.slice(1);
+import { useState } from 'react';
+import Link from 'next/link';
+import { GOOGLE_NEWS_CLUSTERS } from '../lib/news-data';
+import { GoogleNewsLeadCard } from '../components/GoogleNewsLeadCard';
+import { GoogleNewsClusterCard } from '../components/GoogleNewsClusterCard';
+import { WeatherWidget } from '../components/WeatherWidget';
+import { FactCheckWidget } from '../components/FactCheckWidget';
+import { TrendingTopicsWidget } from '../components/TrendingTopicsWidget';
+import { FullCoverageModal } from '../components/FullCoverageModal';
+import { useAllStories, useBookmarks, toggleBookmark } from '../lib/news-store';
+import { Sparkles, Bookmark, ArrowRight } from 'lucide-react';
+
+export default function GoogleNewsHomePage() {
+  const [activeFullCoverageSlug, setActiveFullCoverageSlug] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const { stories: userStories } = useAllStories();
+  const bookmarks = useBookmarks();
+
+  const leadCluster = GOOGLE_NEWS_CLUSTERS[0];
+  const secondaryClusters = GOOGLE_NEWS_CLUSTERS.slice(1);
+
+  // Today's formatted date
+  const todayFormatted = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date());
+
+  // Filter clusters if a topic is selected
+  const displayClusters = selectedTopic
+    ? secondaryClusters.filter(
+        (c) =>
+          c.title.toLowerCase().includes(selectedTopic.toLowerCase()) ||
+          c.category.toLowerCase().includes(selectedTopic.toLowerCase())
+      )
+    : secondaryClusters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-      {/* Editorial Platform Architecture Banner */}
-      <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-purple-950/30 p-6 sm:p-8 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-3xl">
-          <div className="flex items-center gap-2 text-xs font-bold font-mono tracking-widest text-blue-400 uppercase">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            Programmable AI Newsroom Active
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Operated by External AI Agents via Remote MCP
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Google Gemini Spark and ChatGPT research the web independently, reason over existing coverage, compose structured D3 charts, timelines, and citations, and publish to this platform over Streamable HTTP.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-          <Link
-            href="/display"
-            className="px-4 py-2.5 rounded-xl border border-purple-500/40 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-extrabold tracking-wider text-center transition"
-          >
-            LAUNCH 4K WALL
-          </Link>
-          <Link
-            href="/admin"
-            className="px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold tracking-wider text-center transition shadow-lg shadow-blue-500/20"
-          >
-            ENTER CMS DASHBOARD
-          </Link>
-        </div>
-      </div>
-
-      {/* Featured Hero Story */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
-            Lead Editorial Dispatch
-          </h2>
-          <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            LIVE UPDATING
-          </span>
-        </div>
-
-        <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 grid grid-cols-1 lg:grid-cols-12 shadow-2xl">
-          {/* Hero Visual Column */}
-          <div className="lg:col-span-7 relative min-h-[320px] lg:min-h-[480px] overflow-hidden">
-            <img
-              src={heroStory.heroImageUrl}
-              alt={heroStory.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-            <div className="absolute top-4 left-4 flex gap-2">
-              <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-rose-600 text-white shadow-lg">
-                DEVELOPING
-              </span>
-              <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-slate-900/80 backdrop-blur-md text-blue-400 border border-slate-700/60">
-                BRICS 2026
-              </span>
-            </div>
-          </div>
-
-          {/* Hero Text Column */}
-          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <ProvenanceBadge
-                clientType={heroStory.createdByClient}
-                createdVia={heroStory.createdVia}
-                versionNumber={heroStory.currentVersionNumber}
-                sourceCount={heroStory.sourceIds.length}
-                publishedAt={heroStory.publishedAt}
-              />
-              <Link href={`/stories/${heroStory.slug}`} className="group block">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight group-hover:text-blue-400 transition">
-                  {heroStory.title}
-                </h3>
-              </Link>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                {heroStory.summary}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Google News 2-Column Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Top Stories Stream (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Top stories
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                {todayFormatted}
               </p>
             </div>
 
-            <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-mono">
-                Includes D3 Bar Chart • MapLibre Map • Timeline
-              </span>
-              <Link
-                href={`/stories/${heroStory.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition"
-              >
-                Read Full Story →
-              </Link>
+            {selectedTopic && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Filtered by:</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                  #{selectedTopic}
+                </span>
+                <button
+                  onClick={() => setSelectedTopic(null)}
+                  className="text-xs text-blue-600 hover:underline font-semibold"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Lead Story with Multi-Source Perspectives & Full Coverage */}
+          {!selectedTopic && (
+            <GoogleNewsLeadCard
+              cluster={leadCluster}
+              onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+            />
+          )}
+
+          {/* Secondary Story Clusters */}
+          <div className="space-y-4">
+            {displayClusters.map((cluster) => (
+              <GoogleNewsClusterCard
+                key={cluster.id}
+                cluster={cluster}
+                onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+              />
+            ))}
+          </div>
+
+          {/* User-Published Stories from Human Newsroom / CMS */}
+          {userStories.filter((s) => s.createdVia === 'admin' || s.createdVia === 'web').length > 0 && (
+            <div className="pt-6 space-y-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                  <span>Dispatches from GlobalPulse Newsroom</span>
+                </h2>
+                <Link
+                  href="/admin"
+                  className="text-xs font-semibold text-blue-600 hover:underline"
+                >
+                  Manage in CMS →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {userStories
+                  .filter((s) => s.createdVia === 'admin' || s.createdVia === 'web')
+                  .slice(0, 4)
+                  .map((story) => (
+                    <div
+                      key={story.id}
+                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2 hover:shadow-md transition"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-blue-600 dark:text-blue-400">
+                          {story.articleType.replace('_', ' ').toUpperCase()}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString() : 'Just now'}
+                        </span>
+                      </div>
+
+                      <Link href={`/stories/${story.slug}`} className="block group">
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition line-clamp-2">
+                          {story.title}
+                        </h3>
+                      </Link>
+
+                      <p className="text-xs text-slate-500 line-clamp-2">
+                        {story.summary}
+                      </p>
+
+                      <div className="pt-1 flex items-center justify-between text-xs">
+                        <span className="text-slate-400 text-[11px]">
+                          By {story.authorId.replace('usr_', '').replace('_', ' ')}
+                        </span>
+                        <Link
+                          href={`/stories/${story.slug}`}
+                          className="font-bold text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          Read <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Google News Sidebar (Weather, Picks for you, Fact Check, In the news) (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Local Weather Widget */}
+          <WeatherWidget />
+
+          {/* "Picks for you" Curated Module */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Picks for you</span>
+              </div>
+              <span className="text-[11px] text-slate-400">Personalized</span>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {GOOGLE_NEWS_CLUSTERS.slice(1, 4).map((c) => {
+                const isBookmarked = bookmarks.includes(c.leadStory.slug);
+                return (
+                  <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">
+                        {c.leadStory.publisher}
+                      </span>
+                      <button
+                        onClick={() => toggleBookmark(c.leadStory.slug)}
+                        className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 ${
+                          isBookmarked ? 'text-blue-600' : 'text-slate-400'
+                        }`}
+                        title={isBookmarked ? 'Saved' : 'Save for later'}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`} />
+                      </button>
+                    </div>
+
+                    <Link
+                      href={`/stories/${c.leadStory.slug}`}
+                      className="block text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug"
+                    >
+                      {c.leadStory.headline}
+                    </Link>
+
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                      <span>{c.leadStory.timeAgo}</span>
+                      <span>•</span>
+                      <span>{c.category}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Secondary Story Grid */}
-      <section className="space-y-6">
-        <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
-          Recent Intelligence Reports
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {secondaryStories.map((story) => (
-            <div
-              key={story.id}
-              className="glass-card rounded-xl p-6 border border-slate-800 flex flex-col justify-between space-y-5"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                    {story.articleType.replace('_', ' ')}
-                  </span>
-                  <span className="text-xs font-mono text-slate-500">v{story.currentVersionNumber}</span>
-                </div>
-                <Link href={`/stories/${story.slug}`} className="group block">
-                  <h4 className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition leading-snug">
-                    {story.title}
-                  </h4>
-                </Link>
-                <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-                  {story.summary}
-                </p>
-              </div>
+          {/* In the News Trending Pills */}
+          <TrendingTopicsWidget onSelectTopic={(topic) => setSelectedTopic(topic)} />
 
-              <div className="pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                <ProvenanceBadge
-                  clientType={story.createdByClient}
-                  createdVia={story.createdVia}
-                  versionNumber={story.currentVersionNumber}
-                  sourceCount={story.sourceIds.length}
-                />
-                <Link
-                  href={`/stories/${story.slug}`}
-                  className="text-xs font-bold text-slate-300 hover:text-white transition shrink-0 ml-2"
-                >
-                  Explore →
-                </Link>
-              </div>
-            </div>
-          ))}
+          {/* Fact Check Widget */}
+          <FactCheckWidget />
         </div>
-      </section>
+      </div>
+
+      {/* Google News Full Coverage Modal */}
+      <FullCoverageModal
+        slug={activeFullCoverageSlug}
+        onClose={() => setActiveFullCoverageSlug(null)}
+      />
     </div>
   );
 }

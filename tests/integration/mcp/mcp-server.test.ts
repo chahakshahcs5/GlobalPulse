@@ -11,6 +11,7 @@ import { registerMediaTools } from '../../../apps/mcp-server/src/tools/media.too
 import { registerSourceTools } from '../../../apps/mcp-server/src/tools/source.tools.js';
 import { registerTaxonomyTools } from '../../../apps/mcp-server/src/tools/taxonomy.tools.js';
 import { registerJobTools } from '../../../apps/mcp-server/src/tools/job.tools.js';
+import { registerEngagementTools } from '../../../apps/mcp-server/src/tools/engagement.tools.js';
 import { registerResources } from '../../../apps/mcp-server/src/resources/index.js';
 import { registerPrompts } from '../../../apps/mcp-server/src/prompts/index.js';
 import { createMcpApp, mcpPrincipalStore } from '../../../apps/mcp-server/src/server.js';
@@ -70,6 +71,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     registerSourceTools(server, db, getPrincipal);
     registerTaxonomyTools(server, db, getPrincipal);
     registerJobTools(server, db, getPrincipal);
+    registerEngagementTools(server, db, getPrincipal);
     registerResources(server, db, getPrincipal);
     registerPrompts(server);
 
@@ -117,6 +119,14 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     expect(toolNames).toContain('unpublish_story');
     expect(toolNames).toContain('archive_story');
     expect(toolNames).toContain('delete_story');
+    expect(toolNames).toContain('submit_for_review');
+    expect(toolNames).toContain('review_story');
+    expect(toolNames).toContain('list_review_queue');
+
+    // Engagement & Moderation tools
+    expect(toolNames).toContain('get_story_comments');
+    expect(toolNames).toContain('moderate_comment');
+    expect(toolNames).toContain('get_story_reactions');
 
     // Content Block tools (§38)
     expect(toolNames).toContain('add_story_block');

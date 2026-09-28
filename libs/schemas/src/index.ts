@@ -6,3 +6,8 @@ export * from './entity';
 export * from './source';
 export * from './search';
 export * from './audit';
+export * from './engagement';
+export * from './category';
+export * from './analytics';
+export * from './user';
+export * from './notification';

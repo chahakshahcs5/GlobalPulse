@@ -1,6 +1,7 @@
 import 'reflect-metadata';
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { FastifyInstance, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
@@ -17,6 +18,85 @@ export interface ApiServerOptions {
   logger?: boolean;
 }
 
+export function getCorsOptions() {
+  const allowed = process.env.ALLOWED_ORIGINS;
+  if (allowed) {
+    const list = allowed.split(',').map((s) => s.trim()).filter(Boolean);
+    return {
+      origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
+        if (!origin || list.includes(origin) || list.includes('*')) {
+          return cb(null, true);
+        }
+        return cb(null, false);
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
+      credentials: true,
+    };
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const defaultAllowed = [
+      'https://globalpulse.news',
+      'https://www.globalpulse.news',
+      'https://admin.globalpulse.news',
+      'http://localhost:3000',
+      'http://localhost:3002',
+    ];
+    return {
+      origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
+        if (!origin || defaultAllowed.includes(origin)) {
+          return cb(null, true);
+        }
+        return cb(null, false);
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
+      credentials: true,
+    };
+  }
+
+  return {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
+  };
+}
+
+export function getRateLimitOptions() {
+  const isTest = process.env.NODE_ENV === 'test';
+  const max = process.env.RATE_LIMIT_MAX
+    ? parseInt(process.env.RATE_LIMIT_MAX, 10)
+    : (isTest ? 1000 : 100);
+  const timeWindow = process.env.RATE_LIMIT_WINDOW || '1 minute';
+  const allowList = process.env.RATE_LIMIT_ALLOW_LIST
+    ? process.env.RATE_LIMIT_ALLOW_LIST.split(',').map((s) => s.trim())
+    : [];
+
+  return {
+    max,
+    timeWindow,
+    allowList,
+    keyGenerator: (req: FastifyRequest) => {
+      const auth = req.headers.authorization;
+      if (auth && typeof auth === 'string') return auth;
+      const forwarded = req.headers['x-forwarded-for'];
+      if (forwarded) {
+        return Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
+      }
+      return req.ip || '127.0.0.1';
+    },
+    errorResponseBuilder: (req: FastifyRequest, context: { max: number; after: string }) => ({
+      type: 'https://news.platform/errors/rate-limit-exceeded',
+      title: 'Too Many Requests',
+      status: 429,
+      detail: `Rate limit of ${context.max} requests exceeded. Retry after ${context.after}`,
+      instance: req.url,
+      timestamp: new Date().toISOString(),
+    }),
+  };
+}
+
 /**
  * Builds and configures the production Fastify instance powered by NestJS.
  * Preserves 100% compatibility with test harnesses and Fastify injection.
@@ -24,12 +104,8 @@ export interface ApiServerOptions {
 export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
   const fastify = Fastify({ logger: options.logger ?? false });
 
-  fastify.register(cors, {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
-  });
-
+  fastify.register(cors, getCorsOptions() as any);
+  fastify.register(rateLimit, getRateLimitOptions());
   fastify.register(requestLoggerPlugin);
 
   // Hook NestJS bootstrap into fastify.ready()
@@ -62,11 +138,8 @@ export async function createNestApp(): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter();
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { logger: false });
 
-  await app.register(cors, {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-client-id'],
-  });
+  await app.register(cors, getCorsOptions() as any);
+  await app.register(rateLimit, getRateLimitOptions());
 
   app.useGlobalFilters(new Rfc7807ExceptionFilter());
   await app.init();
