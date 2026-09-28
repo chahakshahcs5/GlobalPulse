@@ -99,10 +99,10 @@ export default function AmpStoryPage() {
 
       {/* Story Body */}
       <div className="space-y-4 text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed">
-        {story.blocks?.map((b) => (
+        {story.blocks?.map((b: any) => (
           <div key={b.id}>
-            {b.data?.text && <p className="leading-relaxed">{String(b.data.text)}</p>}
-            {b.data?.quote && (
+            {b.data && 'text' in b.data && <p className="leading-relaxed">{String(b.data.text)}</p>}
+            {b.data && 'quote' in b.data && (
               <blockquote className="pl-4 border-l-4 border-blue-600 italic my-3 text-slate-600 dark:text-slate-300">
                 "{String(b.data.quote)}"
               </blockquote>

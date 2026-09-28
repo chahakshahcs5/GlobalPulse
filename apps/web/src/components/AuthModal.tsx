@@ -3,15 +3,12 @@
 import React, { useState } from 'react';
 import {
   X,
-  Lock,
   Mail,
   User,
   ShieldCheck,
-  CheckCircle2,
   LogIn,
   UserPlus,
   KeyRound,
-  Sparkles,
 } from 'lucide-react';
 
 export interface UserSession {
@@ -42,14 +39,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleCustomAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
 
     try {
       const endpoint = mode === 'signin' ? '/api/auth/login' : '/api/auth/register';

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Sparkles, Check, Lock, ArrowRight } from 'lucide-react';
+import { Sparkles, Check, Lock, ArrowRight } from 'lucide-react';
 
 interface PaywallBarrierProps {
   storyTitle: string;

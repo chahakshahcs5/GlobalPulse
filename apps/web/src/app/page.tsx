@@ -20,7 +20,6 @@ import {
   History,
   Globe2,
   ChevronDown,
-  Compass,
   Check,
 } from 'lucide-react';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';

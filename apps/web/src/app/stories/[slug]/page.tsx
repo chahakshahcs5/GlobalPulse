@@ -13,13 +13,9 @@ import {
   ShieldCheck,
   Volume2,
   VolumeX,
-  ExternalLink,
   Sparkles,
-  ArrowRight,
-  MessageCircle,
   Copy,
   X,
-  Radio,
   Zap,
 } from 'lucide-react';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
@@ -281,7 +277,7 @@ export default function StoryPage() {
         <ProvenanceBadge
           clientType={story.createdByClient || (story.createdVia === 'admin' ? 'human_web' : 'gemini')}
           createdVia={story.createdVia || 'api'}
-          versionNumber={story.version || 1}
+          versionNumber={(story as any).version || 1}
           sourceCount={
             story.blocks?.filter(
               (b: any) => b.blockType === 'source_citation' || b.blockType === 'quote'

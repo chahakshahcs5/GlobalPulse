@@ -2,19 +2,14 @@
 
 import React, { useState } from 'react';
 import {
-  Cpu,
   Bot,
   Sparkles,
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Send,
   Zap,
-  Layers,
   Terminal,
-  RefreshCw,
   Search,
-  Check,
 } from 'lucide-react';
 
 interface McpTool {
@@ -153,7 +148,7 @@ const INITIAL_AGENT_LOGS: AgentLog[] = [
 export function McpDiscoveryTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('ALL');
-  const [logs, setLogs] = useState<AgentLog[]>(INITIAL_AGENT_LOGS);
+  const [logs] = useState<AgentLog[]>(INITIAL_AGENT_LOGS);
   const [qualityTestResult, setQualityTestResult] = useState<string | null>(null);
 
   const domains = ['ALL', ...Array.from(new Set(MCP_TOOLS_CATALOG.map((t) => t.domain)))];
