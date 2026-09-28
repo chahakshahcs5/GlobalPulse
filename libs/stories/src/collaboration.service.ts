@@ -10,11 +10,82 @@ import type {
   StoryStatus,
 } from '@ai-news/schemas';
 
-export class CollaborationService {
+export interface DistributedLockStore {
+  get(storyId: string): Promise<StoryLock | undefined>;
+  set(storyId: string, lock: StoryLock, ttlSeconds: number): Promise<void>;
+  del(storyId: string): Promise<void>;
+}
+
+export class MemoryDistributedLockStore implements DistributedLockStore {
   private locks = new Map<string, StoryLock>();
+
+  async get(storyId: string): Promise<StoryLock | undefined> {
+    const existing = this.locks.get(storyId);
+    if (!existing) return undefined;
+    if (new Date(existing.expiresAt).getTime() <= Date.now()) {
+      this.locks.delete(storyId);
+      return undefined;
+    }
+    return existing;
+  }
+
+  async set(storyId: string, lock: StoryLock): Promise<void> {
+    this.locks.set(storyId, lock);
+  }
+
+  async del(storyId: string): Promise<void> {
+    this.locks.delete(storyId);
+  }
+}
+
+export class RedisDistributedLockStore implements DistributedLockStore {
+  constructor(
+    private readonly redisClient: {
+      get(key: string): Promise<string | null>;
+      set(key: string, value: string, mode?: string, duration?: number): Promise<unknown>;
+      del(key: string): Promise<number>;
+    },
+    private readonly prefix = 'gp:lock:story:'
+  ) {}
+
+  async get(storyId: string): Promise<StoryLock | undefined> {
+    const raw = await this.redisClient.get(`${this.prefix}${storyId}`);
+    if (!raw) return undefined;
+    try {
+      const lock: StoryLock = JSON.parse(raw);
+      if (new Date(lock.expiresAt).getTime() <= Date.now()) {
+        return undefined;
+      }
+      return lock;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async set(storyId: string, lock: StoryLock, ttlSeconds: number): Promise<void> {
+    await this.redisClient.set(
+      `${this.prefix}${storyId}`,
+      JSON.stringify(lock),
+      'EX',
+      Math.max(1, Math.floor(ttlSeconds))
+    );
+  }
+
+  async del(storyId: string): Promise<void> {
+    await this.redisClient.del(`${this.prefix}${storyId}`);
+  }
+}
+
+export class CollaborationService {
+  private readonly lockStore: DistributedLockStore;
   private presence = new Map<string, Map<string, StoryPresenceUser>>();
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    lockStore?: DistributedLockStore
+  ) {
+    this.lockStore = lockStore || new MemoryDistributedLockStore();
+  }
 
   /**
    * F8: Acquires an exclusive lease lock for editing a story.
@@ -32,12 +103,13 @@ export class CollaborationService {
     }
 
     const now = Date.now();
-    const existing = this.locks.get(storyId);
+    const existing = await this.lockStore.get(storyId);
 
     if (existing && new Date(existing.expiresAt).getTime() > now) {
       if (existing.lockedBy.id === user.id) {
         // Renew lease for the same user
         existing.expiresAt = new Date(now + ttlSeconds * 1000).toISOString();
+        await this.lockStore.set(storyId, existing, ttlSeconds);
         return { success: true, lock: existing };
       }
       return { success: false, lock: existing, heldBy: existing.lockedBy };
@@ -50,7 +122,7 @@ export class CollaborationService {
       expiresAt: new Date(now + ttlSeconds * 1000).toISOString(),
     };
 
-    this.locks.set(storyId, lock);
+    await this.lockStore.set(storyId, lock, ttlSeconds);
     this.pingPresence(storyId, { id: user.id, name: user.name });
     return { success: true, lock };
   }
@@ -59,11 +131,11 @@ export class CollaborationService {
    * Releases lease lock for a story.
    */
   async releaseLock(storyId: string, userId: string): Promise<boolean> {
-    const existing = this.locks.get(storyId);
+    const existing = await this.lockStore.get(storyId);
     if (!existing) return true;
 
     if (existing.lockedBy.id === userId) {
-      this.locks.delete(storyId);
+      await this.lockStore.del(storyId);
       return true;
     }
     return false;
@@ -77,11 +149,12 @@ export class CollaborationService {
     user: StoryLockUser,
     ttlSeconds: number = 300
   ): Promise<{ success: boolean; expiresAt?: string }> {
-    const existing = this.locks.get(storyId);
+    const existing = await this.lockStore.get(storyId);
     const now = Date.now();
 
     if (existing && existing.lockedBy.id === user.id && new Date(existing.expiresAt).getTime() > now) {
       existing.expiresAt = new Date(now + ttlSeconds * 1000).toISOString();
+      await this.lockStore.set(storyId, existing, ttlSeconds);
       this.pingPresence(storyId, { id: user.id, name: user.name });
       return { success: true, expiresAt: existing.expiresAt };
     }
