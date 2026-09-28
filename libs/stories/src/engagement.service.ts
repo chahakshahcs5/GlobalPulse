@@ -215,4 +215,42 @@ export class EngagementService {
   async listBookmarks(userId: string, orgId?: string): Promise<BookmarkItem[]> {
     return this.db.engagement.listBookmarks(userId, orgId);
   }
+
+  // ---------------------------------------------------------------------------
+  // Reading Progress & History
+  // ---------------------------------------------------------------------------
+
+  async saveReadingProgress(
+    storyId: string,
+    percentage: number,
+    ctx: { userId: string; organizationId: string; completed?: boolean }
+  ) {
+    const story = await this.db.stories.findById(storyId, ctx.organizationId);
+    if (!story) {
+      throw new NotFoundError('Story', storyId);
+    }
+    const record = await this.db.engagement.saveReadingProgress(
+      ctx.userId,
+      storyId,
+      percentage,
+      ctx.completed
+    );
+
+    broadcastEngagement('reading_progress.updated', {
+      storyId,
+      userId: ctx.userId,
+      percentage: record.percentage,
+      completed: record.completed,
+    });
+
+    return record;
+  }
+
+  async getReadingProgress(storyId: string, userId: string) {
+    return this.db.engagement.getReadingProgress(userId, storyId);
+  }
+
+  async listReadingHistory(userId: string, limit: number = 50) {
+    return this.db.engagement.listReadingHistory(userId, limit);
+  }
 }

@@ -6,12 +6,13 @@ import type {
   StoryReactionsSummary,
   BookmarkItem,
 } from '@ai-news/schemas';
-import type { IEngagementRepository } from '../../interfaces/engagement.repository';
+import type { IEngagementRepository, ReadingProgressRecord } from '../../interfaces/engagement.repository';
 
 export class MemoryEngagementRepository implements IEngagementRepository {
   private comments = new Map<string, Comment>(); // commentId -> Comment
   private reactions = new Map<string, StoryReaction>(); // reactionId -> Reaction
   private bookmarks = new Map<string, BookmarkItem>(); // bookmarkId -> BookmarkItem
+  private progress = new Map<string, ReadingProgressRecord>(); // `${userId}:${storyId}` -> ReadingProgressRecord
 
   // ---------------------------------------------------------------------------
   // Comments
@@ -168,15 +169,57 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  // ---------------------------------------------------------------------------
+  // Reading Progress & History
+  // ---------------------------------------------------------------------------
+
+  async saveReadingProgress(
+    userId: string,
+    storyId: string,
+    percentage: number,
+    completed?: boolean
+  ): Promise<ReadingProgressRecord> {
+    const key = `${userId}:${storyId}`;
+    const clamped = Math.max(0, Math.min(100, Math.round(percentage)));
+    const isCompleted = completed !== undefined ? completed : clamped >= 90;
+    const record: ReadingProgressRecord = {
+      userId,
+      storyId,
+      percentage: clamped,
+      completed: isCompleted,
+      updatedAt: new Date().toISOString(),
+    };
+    this.progress.set(key, record);
+    return { ...record };
+  }
+
+  async getReadingProgress(userId: string, storyId: string): Promise<ReadingProgressRecord | null> {
+    const record = this.progress.get(`${userId}:${storyId}`);
+    return record ? { ...record } : null;
+  }
+
+  async listReadingHistory(userId: string, limit: number = 50): Promise<ReadingProgressRecord[]> {
+    const list: ReadingProgressRecord[] = [];
+    for (const record of this.progress.values()) {
+      if (record.userId === userId) {
+        list.push({ ...record });
+      }
+    }
+    list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return list.slice(0, limit);
+  }
+
   snapshot(): {
     comments: Map<string, Comment>;
     reactions: Map<string, StoryReaction>;
     bookmarks: Map<string, BookmarkItem>;
+    progress: Map<string, ReadingProgressRecord>;
   } {
     return {
       comments: new Map(this.comments),
       reactions: new Map(this.reactions),
       bookmarks: new Map(this.bookmarks),
+      progress: new Map(this.progress),
     };
   }
 
@@ -184,15 +227,20 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     comments: Map<string, Comment>;
     reactions: Map<string, StoryReaction>;
     bookmarks: Map<string, BookmarkItem>;
+    progress?: Map<string, ReadingProgressRecord>;
   }): void {
     this.comments = new Map(snapshot.comments);
     this.reactions = new Map(snapshot.reactions);
     this.bookmarks = new Map(snapshot.bookmarks);
+    if (snapshot.progress) {
+      this.progress = new Map(snapshot.progress);
+    }
   }
 
   clear(): void {
     this.comments.clear();
     this.reactions.clear();
     this.bookmarks.clear();
+    this.progress.clear();
   }
 }

@@ -30,4 +30,22 @@ export interface IEngagementRepository {
     organizationId: string
   ): Promise<{ bookmarked: boolean; bookmark?: BookmarkItem }>;
   listBookmarks(userId: string, organizationId?: string): Promise<BookmarkItem[]>;
+
+  // Reading Progress & History
+  saveReadingProgress(
+    userId: string,
+    storyId: string,
+    percentage: number,
+    completed?: boolean
+  ): Promise<ReadingProgressRecord>;
+  getReadingProgress(userId: string, storyId: string): Promise<ReadingProgressRecord | null>;
+  listReadingHistory(userId: string, limit?: number): Promise<ReadingProgressRecord[]>;
+}
+
+export interface ReadingProgressRecord {
+  userId: string;
+  storyId: string;
+  percentage: number;
+  completed: boolean;
+  updatedAt: string;
 }

@@ -6,7 +6,7 @@ import type {
   StoryReactionsSummary,
   BookmarkItem,
 } from '@ai-news/schemas';
-import type { IEngagementRepository } from '../../interfaces/engagement.repository';
+import type { IEngagementRepository, ReadingProgressRecord } from '../../interfaces/engagement.repository';
 
 interface PrismaCommentRow {
   id: string;
@@ -273,5 +273,42 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       organizationId: r.organizationId,
       createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
     }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reading Progress & History
+  // ---------------------------------------------------------------------------
+  private progressMap = new Map<string, ReadingProgressRecord>();
+
+  async saveReadingProgress(
+    userId: string,
+    storyId: string,
+    percentage: number,
+    completed?: boolean
+  ): Promise<ReadingProgressRecord> {
+    const clamped = Math.max(0, Math.min(100, Math.round(percentage)));
+    const record: ReadingProgressRecord = {
+      userId,
+      storyId,
+      percentage: clamped,
+      completed: completed !== undefined ? completed : clamped >= 90,
+      updatedAt: new Date().toISOString(),
+    };
+    this.progressMap.set(`${userId}:${storyId}`, record);
+    return record;
+  }
+
+  async getReadingProgress(userId: string, storyId: string): Promise<ReadingProgressRecord | null> {
+    return this.progressMap.get(`${userId}:${storyId}`) || null;
+  }
+
+  async listReadingHistory(userId: string, limit: number = 50): Promise<ReadingProgressRecord[]> {
+    const list: ReadingProgressRecord[] = [];
+    for (const record of this.progressMap.values()) {
+      if (record.userId === userId) list.push(record);
+    }
+    return list
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, limit);
   }
 }

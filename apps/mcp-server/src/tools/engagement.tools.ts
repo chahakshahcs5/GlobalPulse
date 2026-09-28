@@ -79,4 +79,48 @@ export function registerEngagementTools(
       return mcpJsonResponse(reactions);
     }
   );
+
+  server.tool(
+    'record_reading_progress',
+    '[ENGAGEMENT] Track reader scroll progress or mark an article as completed/read.',
+    {
+      storyId: z.string().min(1).describe('The ID of the story'),
+      percentage: z.number().min(0).max(100).describe('Reading completion percentage (0-100)'),
+      completed: z.boolean().optional().describe('Whether reader reached end of story'),
+    },
+    async ({ storyId, percentage, completed }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const progress = await engagementService.saveReadingProgress(storyId, percentage, {
+        userId: principal.id,
+        organizationId: principal.organizationId,
+        completed,
+      });
+
+      return mcpJsonResponse({
+        message: 'Reading progress recorded successfully.',
+        progress,
+      });
+    }
+  );
+
+  server.tool(
+    'get_reading_history',
+    '[READ-ONLY] Retrieve recently read articles and completion percentages for the current user.',
+    {
+      limit: z.number().int().positive().max(100).default(20).describe('Max history items to retrieve'),
+    },
+    async ({ limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const history = await engagementService.listReadingHistory(principal.id, limit);
+      return mcpJsonResponse({
+        userId: principal.id,
+        totalItems: history.length,
+        history,
+      });
+    }
+  );
 }

@@ -154,4 +154,53 @@ export class EngagementController {
       organizationId: principal.organizationId,
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Reading Progress & History
+  // ---------------------------------------------------------------------------
+
+  @Post('stories/:id/progress')
+  @HttpCode(HttpStatus.OK)
+  @RequireScope('news:read')
+  async saveProgress(
+    @Param('id') storyId: string,
+    @Body() body: { percentage: number; completed?: boolean },
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    return await this.engagementService.saveReadingProgress(storyId, body.percentage, {
+      userId: principal.id,
+      organizationId: principal.organizationId,
+      completed: body.completed,
+    });
+  }
+
+  @Get('stories/:id/progress')
+  @RequireScope('news:read')
+  async getProgress(
+    @Param('id') storyId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const progress = await this.engagementService.getReadingProgress(storyId, principal.id);
+    return progress || { userId: principal.id, storyId, percentage: 0, completed: false };
+  }
+
+  @Post('stories/:id/mark-read')
+  @HttpCode(HttpStatus.OK)
+  @RequireScope('news:read')
+  async markRead(
+    @Param('id') storyId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    return await this.engagementService.saveReadingProgress(storyId, 100, {
+      userId: principal.id,
+      organizationId: principal.organizationId,
+      completed: true,
+    });
+  }
+
+  @Get('me/reading-history')
+  @RequireScope('news:read')
+  async getReadingHistory(@Principal() principal: AuthenticatedPrincipal) {
+    return await this.engagementService.listReadingHistory(principal.id);
+  }
 }

@@ -78,6 +78,8 @@ export const StorySchema = z.object({
   idempotencyKey: z.string().optional(),
   publishedAt: z.string().optional(),
   scheduledPublishAt: z.string().optional(),
+  wordCount: z.number().int().nonnegative().optional(),
+  readingTimeMinutes: z.number().int().nonnegative().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -20,6 +20,7 @@ import {
   ValidationError,
   generateId,
   slugify,
+  computeStoryReadingMetrics,
 } from '@ai-news/shared';
 import { WhatChangedDiffService } from './what-changed';
 
@@ -98,6 +99,12 @@ export class StoryService {
       createdAt: now,
     };
 
+    const metrics = computeStoryReadingMetrics({
+      title: validated.title,
+      summary: validated.summary,
+      blocks: validatedBlocks,
+    });
+
     const newStory: Story = {
       id: storyId,
       organizationId: ctx.organizationId,
@@ -114,6 +121,8 @@ export class StoryService {
       sourceIds: validated.sourceIds || [],
       blocks: validatedBlocks,
       heroImageUrl: validated.heroImageUrl,
+      wordCount: metrics.wordCount,
+      readingTimeMinutes: metrics.readingTimeMinutes,
       createdVia: ctx.createdVia || 'mcp',
       createdByClient: ctx.clientType,
       authorId: ctx.authorId,
@@ -201,6 +210,14 @@ export class StoryService {
       heroImageUrl: validated.heroImageUrl !== undefined ? validated.heroImageUrl : existing.heroImageUrl,
       updatedAt: new Date().toISOString(),
     };
+
+    const metrics = computeStoryReadingMetrics({
+      title: updated.title,
+      summary: updated.summary,
+      blocks: updated.blocks,
+    });
+    updated.wordCount = metrics.wordCount;
+    updated.readingTimeMinutes = metrics.readingTimeMinutes;
 
     const result = await this.db.runInTransaction(async () => {
       const res = await this.db.stories.update(updated);
