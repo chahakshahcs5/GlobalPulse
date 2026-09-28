@@ -61,14 +61,16 @@ export const GalleryBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('gallery'),
   data: z.object({
     title: z.string().optional(),
-    images: z.array(
-      z.object({
-        url: z.string().url(),
-        altText: z.string().min(1),
-        caption: z.string().optional(),
-        credit: z.string().optional(),
-      })
-    ).min(2),
+    images: z
+      .array(
+        z.object({
+          url: z.string().url(),
+          altText: z.string().min(1),
+          caption: z.string().optional(),
+          credit: z.string().optional(),
+        })
+      )
+      .min(2),
   }),
 });
 
@@ -105,13 +107,15 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
       min: z.number().optional(),
       max: z.number().optional(),
     }),
-    series: z.array(
-      z.object({
-        name: z.string().min(1),
-        key: z.string().min(1),
-        color: z.string().optional(),
-      })
-    ).min(1),
+    series: z
+      .array(
+        z.object({
+          name: z.string().min(1),
+          key: z.string().min(1),
+          color: z.string().optional(),
+        })
+      )
+      .min(1),
     values: z.array(z.record(z.unknown())).min(1),
     sourceAttribution: z.string().optional(),
   }),
@@ -131,16 +135,18 @@ export const TimelineBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('timeline'),
   data: z.object({
     title: z.string().optional(),
-    items: z.array(
-      z.object({
-        date: z.string().min(1),
-        headline: z.string().min(1),
-        body: z.string().min(1),
-        entityIds: z.array(z.string()).optional(),
-        sourceIds: z.array(z.string()).optional(),
-        mediaUrl: z.string().url().optional(),
-      })
-    ).min(1),
+    items: z
+      .array(
+        z.object({
+          date: z.string().min(1),
+          headline: z.string().min(1),
+          body: z.string().min(1),
+          entityIds: z.array(z.string()).optional(),
+          sourceIds: z.array(z.string()).optional(),
+          mediaUrl: z.string().url().optional(),
+        })
+      )
+      .min(1),
   }),
 });
 
@@ -151,21 +157,25 @@ export const MapBlockSchema = BaseBlockSchema.extend({
     center: z.tuple([z.number(), z.number()]), // [lng, lat]
     zoom: z.number().min(0).max(22),
     style: z.enum(['dark', 'light', 'satellite', 'streets']).default('dark'),
-    markers: z.array(
-      z.object({
-        coordinates: z.tuple([z.number(), z.number()]),
-        title: z.string().min(1),
-        description: z.string().optional(),
-        icon: z.string().optional(),
-      })
-    ).optional(),
-    layers: z.array(
-      z.object({
-        id: z.string().min(1),
-        type: z.enum(['fill', 'line', 'circle', 'heatmap']),
-        geojson: z.record(z.unknown()),
-      })
-    ).optional(),
+    markers: z
+      .array(
+        z.object({
+          coordinates: z.tuple([z.number(), z.number()]),
+          title: z.string().min(1),
+          description: z.string().optional(),
+          icon: z.string().optional(),
+        })
+      )
+      .optional(),
+    layers: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          type: z.enum(['fill', 'line', 'circle', 'heatmap']),
+          geojson: z.record(z.unknown()),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -183,14 +193,16 @@ export const FlowBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('flow'),
   data: z.object({
     title: z.string().optional(),
-    steps: z.array(
-      z.object({
-        stepNumber: z.number().int(),
-        title: z.string().min(1),
-        description: z.string().min(1),
-        status: z.enum(['pending', 'active', 'completed', 'blocked']).optional(),
-      })
-    ).min(2),
+    steps: z
+      .array(
+        z.object({
+          stepNumber: z.number().int(),
+          title: z.string().min(1),
+          description: z.string().min(1),
+          status: z.enum(['pending', 'active', 'completed', 'blocked']).optional(),
+        })
+      )
+      .min(2),
   }),
 });
 
@@ -222,16 +234,18 @@ export const SlideDeckBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('slide_deck'),
   data: z.object({
     title: z.string().min(1),
-    slides: z.array(
-      z.object({
-        slideNumber: z.number().int(),
-        title: z.string().min(1),
-        bullets: z.array(z.string()).optional(),
-        body: z.string().optional(),
-        imageUrl: z.string().url().optional(),
-        sourceAttribution: z.string().optional(),
-      })
-    ).min(2),
+    slides: z
+      .array(
+        z.object({
+          slideNumber: z.number().int(),
+          title: z.string().min(1),
+          bullets: z.array(z.string()).optional(),
+          body: z.string().optional(),
+          imageUrl: z.string().url().optional(),
+          sourceAttribution: z.string().optional(),
+        })
+      )
+      .min(2),
   }),
 });
 
@@ -307,13 +321,15 @@ export const WhatChangedBlockSchema = BaseBlockSchema.extend({
   data: z.object({
     previousVersionNumber: z.number().int().positive(),
     updatedAt: z.string().min(1),
-    items: z.array(
-      z.object({
-        changeType: z.enum(['added', 'updated', 'corrected', 'retracted']),
-        description: z.string().min(1),
-        affectedSection: z.string().optional(),
-      })
-    ).min(1),
+    items: z
+      .array(
+        z.object({
+          changeType: z.enum(['added', 'updated', 'corrected', 'retracted']),
+          description: z.string().min(1),
+          affectedSection: z.string().optional(),
+        })
+      )
+      .min(1),
   }),
 });
 

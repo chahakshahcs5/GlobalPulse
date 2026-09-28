@@ -23,7 +23,10 @@ export class MemoryIdempotencyRepository implements IIdempotencyRepository {
     return { ...record };
   }
 
-  async save(record: IdempotencyRecord, ttlSeconds: number = MemoryIdempotencyRepository.DEFAULT_TTL_SECONDS): Promise<void> {
+  async save(
+    record: IdempotencyRecord,
+    ttlSeconds: number = MemoryIdempotencyRepository.DEFAULT_TTL_SECONDS
+  ): Promise<void> {
     const expiresAt = record.expiresAt || new Date(Date.now() + ttlSeconds * 1000).toISOString();
     this.records.set(this.makeKey(record.key, record.organizationId), {
       ...record,

@@ -46,7 +46,12 @@ export function registerTemplateTools(
     'get_content_template',
     '[READ-ONLY] Get full block blueprint and structural guidance for a specific content template.',
     {
-      templateId: z.string().min(1).describe('Template identifier (e.g. breaking_news_alert, investigative_deep_dive, fact_check_report)'),
+      templateId: z
+        .string()
+        .min(1)
+        .describe(
+          'Template identifier (e.g. breaking_news_alert, investigative_deep_dive, fact_check_report)'
+        ),
     },
     async ({ templateId }) => {
       try {
@@ -70,7 +75,12 @@ export function registerTemplateTools(
     'instantiate_story_from_template',
     'Scaffold and create a new draft story using a pre-configured newsroom content template.',
     {
-      templateId: z.string().min(1).describe('Template identifier (e.g. breaking_news_alert, investigative_deep_dive, editorial_opinion, liveblog_event, fact_check_report)'),
+      templateId: z
+        .string()
+        .min(1)
+        .describe(
+          'Template identifier (e.g. breaking_news_alert, investigative_deep_dive, editorial_opinion, liveblog_event, fact_check_report)'
+        ),
       title: z.string().min(1).describe('Story title'),
       summary: z.string().min(1).describe('Executive summary'),
       topicIds: z.array(z.string()).default([]).describe('Associated topic identifiers'),

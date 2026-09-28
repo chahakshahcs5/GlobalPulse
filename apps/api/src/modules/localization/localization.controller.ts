@@ -1,8 +1,5 @@
 import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
-import {
-  SUPPORTED_REGIONAL_EDITIONS,
-  RegionalEdition,
-} from '@ai-news/schemas';
+import { SUPPORTED_REGIONAL_EDITIONS, RegionalEdition } from '@ai-news/schemas';
 
 @Controller('api/editions')
 export class LocalizationController {

@@ -71,7 +71,9 @@ export class RealtimeService implements OnModuleDestroy {
             });
           })
           .catch((err: Error) => {
-            logger.info(`Redis SSE connection deferred (${err.message}). Operating in standalone local mode.`);
+            logger.info(
+              `Redis SSE connection deferred (${err.message}). Operating in standalone local mode.`
+            );
             this.redisPub = null;
             this.redisSub = null;
           });
@@ -94,7 +96,9 @@ export class RealtimeService implements OnModuleDestroy {
     this.activeSubscriptionsCount++;
 
     return this.messageSubject.asObservable().pipe(
-      filter((msg) => channelSet.has(msg.channel) || channelSet.has('all') || msg.channel === 'all'),
+      filter(
+        (msg) => channelSet.has(msg.channel) || channelSet.has('all') || msg.channel === 'all'
+      ),
       map((msg) => ({
         type: msg.eventName,
         data: msg.data as object,

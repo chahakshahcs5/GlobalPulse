@@ -17,9 +17,16 @@ export function registerSearchTools(
     'search_stories',
     '[READ-ONLY] Search existing published and draft stories across the platform using keyword, status, topic, or date filters. ALWAYS call this tool before creating new stories to avoid duplicate reporting.',
     {
-      query: z.string().optional().describe('Keywords or event title to search for (e.g. "BRICS 2026")'),
-      status: StoryStatusSchema.optional().describe('Filter by story status: DRAFT, IN_REVIEW, PUBLISHED, ARCHIVED'),
-      articleType: ArticleTypeSchema.optional().describe('Filter by format (e.g. breaking_news, analysis, explainer)'),
+      query: z
+        .string()
+        .optional()
+        .describe('Keywords or event title to search for (e.g. "BRICS 2026")'),
+      status: StoryStatusSchema.optional().describe(
+        'Filter by story status: DRAFT, IN_REVIEW, PUBLISHED, ARCHIVED'
+      ),
+      articleType: ArticleTypeSchema.optional().describe(
+        'Filter by format (e.g. breaking_news, analysis, explainer)'
+      ),
       topicId: z.string().optional().describe('Filter by topic ID'),
       entityId: z.string().optional().describe('Filter by entity ID'),
       sourceId: z.string().optional().describe('Filter by source ID'),
@@ -167,7 +174,11 @@ export function registerSearchTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:search');
 
-      const suggestions = await searchService.getSuggestions(query, principal.organizationId, limit);
+      const suggestions = await searchService.getSuggestions(
+        query,
+        principal.organizationId,
+        limit
+      );
       return mcpJsonResponse({ query, suggestions });
     }
   );

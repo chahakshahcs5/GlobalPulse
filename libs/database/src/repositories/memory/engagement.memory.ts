@@ -6,7 +6,10 @@ import type {
   StoryReactionsSummary,
   BookmarkItem,
 } from '@ai-news/schemas';
-import type { IEngagementRepository, ReadingProgressRecord } from '../../interfaces/engagement.repository';
+import type {
+  IEngagementRepository,
+  ReadingProgressRecord,
+} from '../../interfaces/engagement.repository';
 
 export class MemoryEngagementRepository implements IEngagementRepository {
   private comments = new Map<string, Comment>(); // commentId -> Comment
@@ -212,7 +215,11 @@ export class MemoryEngagementRepository implements IEngagementRepository {
   // Social Shares (F15)
   private shares: Map<string, number> = new Map();
 
-  async recordShare(storyId: string, _platform?: string, _userId?: string): Promise<{ shareCount: number }> {
+  async recordShare(
+    storyId: string,
+    _platform?: string,
+    _userId?: string
+  ): Promise<{ shareCount: number }> {
     const current = this.shares.get(storyId) || 0;
     const next = current + 1;
     this.shares.set(storyId, next);

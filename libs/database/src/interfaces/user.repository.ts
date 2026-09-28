@@ -16,8 +16,23 @@ export interface IUserRepository {
   delete(id: string, orgId?: string): Promise<boolean>;
 
   // Following interests (F17)
-  followTarget(userId: string, targetType: 'topic' | 'entity' | 'author', targetId: string): Promise<FollowRecord>;
-  unfollowTarget(userId: string, targetType: 'topic' | 'entity' | 'author', targetId: string): Promise<boolean>;
-  listFollowing(userId: string, targetType?: 'topic' | 'entity' | 'author'): Promise<FollowRecord[]>;
-  isFollowing(userId: string, targetType: 'topic' | 'entity' | 'author', targetId: string): Promise<boolean>;
+  followTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<FollowRecord>;
+  unfollowTarget(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean>;
+  listFollowing(
+    userId: string,
+    targetType?: 'topic' | 'entity' | 'author'
+  ): Promise<FollowRecord[]>;
+  isFollowing(
+    userId: string,
+    targetType: 'topic' | 'entity' | 'author',
+    targetId: string
+  ): Promise<boolean>;
 }

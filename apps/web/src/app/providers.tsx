@@ -11,9 +11,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <ErrorBoundary name="root">
-        {children}
-      </ErrorBoundary>
+      <ErrorBoundary name="root">{children}</ErrorBoundary>
     </AuthProvider>
   );
 }

@@ -51,14 +51,17 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
       url: `/api/stories/${storyId}/comments`,
       headers: { authorization: 'Bearer dev-reader' },
       payload: {
-        content: 'This architecture breakthrough significantly reduces licensing friction! <script>alert("xss")</script>',
+        content:
+          'This architecture breakthrough significantly reduces licensing friction! <script>alert("xss")</script>',
         authorName: 'SiliconArchitect',
       },
     });
     expect(res.statusCode).toBe(201);
     const comment = JSON.parse(res.body);
     expect(comment.id).toMatch(/^cmt_/);
-    expect(comment.content).toBe('This architecture breakthrough significantly reduces licensing friction!');
+    expect(comment.content).toBe(
+      'This architecture breakthrough significantly reduces licensing friction!'
+    );
     expect(comment.authorName).toBe('SiliconArchitect');
     commentId = comment.id;
   });

@@ -15,14 +15,8 @@ import { CollectionService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
-import {
-  CreateCollectionInputSchema,
-  AddStoryToCollectionInputSchema,
-} from '@ai-news/schemas';
-import type {
-  StoryCollection,
-  StoryCollectionWithStories,
-} from '@ai-news/schemas';
+import { CreateCollectionInputSchema, AddStoryToCollectionInputSchema } from '@ai-news/schemas';
+import type { StoryCollection, StoryCollectionWithStories } from '@ai-news/schemas';
 
 @Controller('api/collections')
 export class CollectionsController {
@@ -40,11 +34,7 @@ export class CollectionsController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection> {
     const input = CreateCollectionInputSchema.parse(body);
-    return await this.collectionService.createCollection(
-      principal.id,
-      input,
-      principal.id
-    );
+    return await this.collectionService.createCollection(principal.id, input, principal.id);
   }
 
   @Get()
@@ -66,9 +56,7 @@ export class CollectionsController {
   }
 
   @Get(':id')
-  async getCollection(
-    @Param('id') id: string
-  ): Promise<StoryCollectionWithStories> {
+  async getCollection(@Param('id') id: string): Promise<StoryCollectionWithStories> {
     const collection = await this.collectionService.getCollectionWithStories(id);
     if (!collection) {
       throw new NotFoundException(`Collection with id "${id}" was not found.`);
@@ -100,9 +88,7 @@ export class CollectionsController {
   @Delete(':id')
   @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async deleteCollection(
-    @Param('id') id: string
-  ): Promise<{ success: boolean }> {
+  async deleteCollection(@Param('id') id: string): Promise<{ success: boolean }> {
     const success = await this.collectionService.deleteCollection(id);
     return { success };
   }

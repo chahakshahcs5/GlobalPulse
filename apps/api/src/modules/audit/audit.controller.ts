@@ -10,7 +10,10 @@ export class AuditController {
   @Get(['', 'logs'])
   @Roles('admin')
   @RequireScope('news:admin')
-  async queryAuditLogs(@Query() filter: Record<string, unknown>, @Principal() principal: AuthenticatedPrincipal) {
+  async queryAuditLogs(
+    @Query() filter: Record<string, unknown>,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
     const orgId = principal.organizationId;
     return await db.audit.query(orgId, filter);
   }

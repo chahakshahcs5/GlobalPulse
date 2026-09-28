@@ -76,7 +76,10 @@ export default function ExploreTopicsAndCategoriesPage() {
     );
   });
 
-  const parentCategoriesList = ['ALL', ...Array.from(new Set(topics.map((t) => t.parentCategory || 'General')))];
+  const parentCategoriesList = [
+    'ALL',
+    ...Array.from(new Set(topics.map((t) => t.parentCategory || 'General'))),
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -92,7 +95,8 @@ export default function ExploreTopicsAndCategoriesPage() {
         </h1>
 
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-          Follow beats, discover emerging intelligence clusters, and curate your personalized GlobalPulse newsroom feed. Followed topics dynamically customize your{' '}
+          Follow beats, discover emerging intelligence clusters, and curate your personalized
+          GlobalPulse newsroom feed. Followed topics dynamically customize your{' '}
           <Link href="/?tab=following" className="text-blue-600 hover:underline font-semibold">
             Following
           </Link>{' '}
@@ -175,7 +179,10 @@ export default function ExploreTopicsAndCategoriesPage() {
                     </button>
                   </div>
 
-                  <Link href={`/category/${cat.slug}`} className="block group-hover:text-blue-600 transition">
+                  <Link
+                    href={`/category/${cat.slug}`}
+                    className="block group-hover:text-blue-600 transition"
+                  >
                     <h3 className="font-bold text-base text-slate-900 dark:text-white leading-snug">
                       {cat.name}
                     </h3>
@@ -213,7 +220,8 @@ export default function ExploreTopicsAndCategoriesPage() {
               <span>Specialized Topic Index ({filteredTopics.length})</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Aggregated topics indexed by AI agent pipelines, semantic embeddings, and editorial curators.
+              Aggregated topics indexed by AI agent pipelines, semantic embeddings, and editorial
+              curators.
             </p>
           </div>
 
@@ -273,7 +281,10 @@ export default function ExploreTopicsAndCategoriesPage() {
                     </button>
                   </div>
 
-                  <Link href={`/topics/${top.slug}`} className="block group-hover:text-purple-600 transition">
+                  <Link
+                    href={`/topics/${top.slug}`}
+                    className="block group-hover:text-purple-600 transition"
+                  >
                     <h3 className="font-bold text-base text-slate-900 dark:text-white leading-snug">
                       {top.name}
                     </h3>
@@ -286,7 +297,9 @@ export default function ExploreTopicsAndCategoriesPage() {
 
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
                   <span className="font-mono text-slate-400 text-[11px]">
-                    {top.storyCount ? `${top.storyCount} indexed articles` : 'Continuous monitoring'}
+                    {top.storyCount
+                      ? `${top.storyCount} indexed articles`
+                      : 'Continuous monitoring'}
                   </span>
                   <Link
                     href={`/topics/${top.slug}`}
@@ -305,7 +318,9 @@ export default function ExploreTopicsAndCategoriesPage() {
           <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 space-y-2">
             <Tag className="w-8 h-8 mx-auto text-slate-300" />
             <p className="text-sm font-semibold">No topics found matching your query</p>
-            <p className="text-xs">Try searching for other keywords or select 'ALL' category above.</p>
+            <p className="text-xs">
+              Try searching for other keywords or select 'ALL' category above.
+            </p>
           </div>
         )}
       </section>
@@ -315,7 +330,9 @@ export default function ExploreTopicsAndCategoriesPage() {
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-2xl bg-slate-900 text-white border border-slate-700 shadow-xl text-xs font-semibold flex items-center gap-2 animate-in slide-in-from-bottom-3">
           <Sparkles className="w-4 h-4 text-amber-300" />
           <span>
-            {followedTopics.includes(justToggled) ? `Following ${justToggled}` : `Unfollowed ${justToggled}`}
+            {followedTopics.includes(justToggled)
+              ? `Following ${justToggled}`
+              : `Unfollowed ${justToggled}`}
           </span>
         </div>
       )}

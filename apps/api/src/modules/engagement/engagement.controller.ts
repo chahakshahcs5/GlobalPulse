@@ -16,11 +16,7 @@ import { EngagementService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
-import type {
-  CreateCommentInput,
-  ModerateCommentInput,
-  StoryReactionType,
-} from '@ai-news/schemas';
+import type { CreateCommentInput, ModerateCommentInput, StoryReactionType } from '@ai-news/schemas';
 import { generateOpenGraphMeta, generateSocialShareLinks } from '@ai-news/shared';
 
 @Controller('api')
@@ -38,10 +34,7 @@ export class EngagementController {
 
   @Get('stories/:id/comments')
   @RequireScope('news:read')
-  async getComments(
-    @Param('id') storyId: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async getComments(@Param('id') storyId: string, @Principal() principal: AuthenticatedPrincipal) {
     // Readers only see approved comments; editors/admins see all
     const isEditor = ['editor', 'admin'].includes(principal.role);
     return await this.engagementService.getComments(
@@ -92,10 +85,7 @@ export class EngagementController {
     @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
-    const deleted = await this.engagementService.deleteComment(
-      commentId,
-      principal.organizationId
-    );
+    const deleted = await this.engagementService.deleteComment(commentId, principal.organizationId);
     if (!deleted) {
       reply.status(HttpStatus.NOT_FOUND);
       return { success: false, message: 'Comment not found' };
@@ -109,10 +99,7 @@ export class EngagementController {
 
   @Get('stories/:id/reactions')
   @RequireScope('news:read')
-  async getReactions(
-    @Param('id') storyId: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async getReactions(@Param('id') storyId: string, @Principal() principal: AuthenticatedPrincipal) {
     return await this.engagementService.getReactions(storyId, principal.id);
   }
 
@@ -137,10 +124,7 @@ export class EngagementController {
   @Get('bookmarks')
   @RequireScope('news:read')
   async listBookmarks(@Principal() principal: AuthenticatedPrincipal) {
-    return await this.engagementService.listBookmarks(
-      principal.id,
-      principal.organizationId
-    );
+    return await this.engagementService.listBookmarks(principal.id, principal.organizationId);
   }
 
   @Post('bookmarks/:storyId')
@@ -177,10 +161,7 @@ export class EngagementController {
 
   @Get('stories/:id/progress')
   @RequireScope('news:read')
-  async getProgress(
-    @Param('id') storyId: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async getProgress(@Param('id') storyId: string, @Principal() principal: AuthenticatedPrincipal) {
     const progress = await this.engagementService.getReadingProgress(storyId, principal.id);
     return progress || { userId: principal.id, storyId, percentage: 0, completed: false };
   }
@@ -188,10 +169,7 @@ export class EngagementController {
   @Post('stories/:id/mark-read')
   @HttpCode(HttpStatus.OK)
   @RequireScope('news:read')
-  async markRead(
-    @Param('id') storyId: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async markRead(@Param('id') storyId: string, @Principal() principal: AuthenticatedPrincipal) {
     return await this.engagementService.saveReadingProgress(storyId, 100, {
       userId: principal.id,
       organizationId: principal.organizationId,
@@ -217,7 +195,11 @@ export class EngagementController {
     @Body() body: { platform?: string },
     @Principal() principal: AuthenticatedPrincipal
   ) {
-    const result = await db.engagement.recordShare(storyId, body?.platform || 'direct', principal.id);
+    const result = await db.engagement.recordShare(
+      storyId,
+      body?.platform || 'direct',
+      principal.id
+    );
     const story = await db.stories.findById(storyId, principal.organizationId);
     const baseUrl = process.env.BASE_URL || 'https://news.globalpulse.com';
     const slug = story ? story.slug : storyId;
@@ -236,10 +218,7 @@ export class EngagementController {
 
   @Get('stories/:id/share')
   @RequireScope('news:read')
-  async getShareMeta(
-    @Param('id') storyId: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async getShareMeta(@Param('id') storyId: string, @Principal() principal: AuthenticatedPrincipal) {
     const shareCount = await db.engagement.getShareCount(storyId);
     const story = await db.stories.findById(storyId, principal.organizationId);
     const baseUrl = process.env.BASE_URL || 'https://news.globalpulse.com';

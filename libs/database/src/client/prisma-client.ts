@@ -34,7 +34,9 @@ export class PrismaClientManager {
 
     try {
       // Dynamic import to prevent hard failure if prisma client is not yet generated
-      const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({ PrismaClient: null }));
+      const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({
+        PrismaClient: null,
+      }));
       if (!PrismaClientCtor) {
         logger.warn('@prisma/client not generated; falling back to memory repository.');
         return null;
@@ -70,7 +72,10 @@ export class PrismaClientManager {
         logger.info('Disconnected from PostgreSQL database.');
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : String(err);
-        logger.error(`Error disconnecting PrismaClient: ${errMsg}`, err instanceof Error ? err : undefined);
+        logger.error(
+          `Error disconnecting PrismaClient: ${errMsg}`,
+          err instanceof Error ? err : undefined
+        );
       }
     }
   }

@@ -66,8 +66,10 @@ export class WorkerService {
       'media.process_variant',
       async (job, updateProgress) => {
         const { mediaId, sourceUrl, formats, dimensions } = job.payload;
-        logger.info(`Processing authentic media variants for asset [${mediaId}] from [${sourceUrl}]`);
-        
+        logger.info(
+          `Processing authentic media variants for asset [${mediaId}] from [${sourceUrl}]`
+        );
+
         updateProgress(20);
         const variants: Array<{
           format: string;
@@ -88,7 +90,11 @@ export class WorkerService {
             await s3Storage.upload(
               variantKey,
               imageBuffer,
-              (format as string) === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg'
+              (format as string) === 'png'
+                ? 'image/png'
+                : format === 'webp'
+                  ? 'image/webp'
+                  : 'image/jpeg'
             );
             variants.push({
               format,
@@ -116,8 +122,10 @@ export class WorkerService {
       'search.index_story',
       async (job, updateProgress) => {
         const { storyId, versionNumber, title, summary, textContent } = job.payload;
-        logger.info(`Indexing story version [${storyId}] v${versionNumber} into semantic & full-text index`);
-        
+        logger.info(
+          `Indexing story version [${storyId}] v${versionNumber} into semantic & full-text index`
+        );
+
         updateProgress(30);
         const tokens = `${title} ${summary} ${textContent}`
           .toLowerCase()
@@ -145,11 +153,13 @@ export class WorkerService {
       'audio.generate_briefing',
       async (job, updateProgress) => {
         const { storyId, voice, scriptText } = job.payload;
-        logger.info(`Generating authentic audio briefing for story [${storyId}] with voice [${voice}]`);
+        logger.info(
+          `Generating authentic audio briefing for story [${storyId}] with voice [${voice}]`
+        );
 
         updateProgress(30);
         const estimatedSeconds = Math.max(10, Math.floor(scriptText.split(/\s+/).length / 2.5));
-        
+
         updateProgress(60);
         const audioBuffer = generateValidMp3(storyId, voice, estimatedSeconds);
         const s3Audio = await s3Storage.upload(
@@ -176,10 +186,17 @@ export class WorkerService {
       'export.generate_pdf',
       async (job, updateProgress) => {
         const { storyId, versionNumber, layout } = job.payload;
-        logger.info(`Generating valid PDF 1.4 archive export for story [${storyId}] v${versionNumber}`);
+        logger.info(
+          `Generating valid PDF 1.4 archive export for story [${storyId}] v${versionNumber}`
+        );
 
         updateProgress(50);
-        const pdfBuffer = generateValidPdf(storyId, versionNumber, layout, `Archived dispatch for story ${storyId}`);
+        const pdfBuffer = generateValidPdf(
+          storyId,
+          versionNumber,
+          layout,
+          `Archived dispatch for story ${storyId}`
+        );
         const s3Pdf = await s3Storage.upload(
           `archive/${storyId}_v${versionNumber}_${layout}.pdf`,
           pdfBuffer,

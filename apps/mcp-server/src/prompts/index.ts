@@ -7,7 +7,10 @@ export function registerPrompts(server: McpServer) {
     'Standard operating prompt for researching and drafting a new story via MCP tools.',
     {
       topic: z.string().describe('The subject or breaking event to cover'),
-      articleType: z.string().optional().describe('Preferred article genre (e.g. breaking_news, analysis, explainer)'),
+      articleType: z
+        .string()
+        .optional()
+        .describe('Preferred article genre (e.g. breaking_news, analysis, explainer)'),
     },
     async ({ topic, articleType }) => {
       return {

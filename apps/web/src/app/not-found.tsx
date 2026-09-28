@@ -20,7 +20,8 @@ export default function NotFound() {
             We couldn’t find that dispatch
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
-            The article, topic, or archive file you requested might have been moved, updated with breaking developments, or withdrawn by the editorial desk.
+            The article, topic, or archive file you requested might have been moved, updated with
+            breaking developments, or withdrawn by the editorial desk.
           </p>
         </div>
 

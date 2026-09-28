@@ -49,12 +49,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   api:
     build:
@@ -66,7 +66,7 @@ services:
       REDIS_URL: redis://redis:6379
       PORT: 3000
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - postgres
       - redis
@@ -79,7 +79,7 @@ services:
       PORT: 3001
       API_BASE_URL: http://api:3000
     ports:
-      - "3001:3001"
+      - '3001:3001'
     depends_on:
       - api
 
@@ -91,7 +91,7 @@ services:
       PORT: 3002
       NEXT_PUBLIC_API_URL: http://api:3000
     ports:
-      - "3002:3002"
+      - '3002:3002'
     depends_on:
       - api
 
@@ -105,18 +105,19 @@ volumes:
 
 ### 2.1 Pod Sizing & Resource Allocations
 
-| Service | CPU Request | CPU Limit | Memory Request | Memory Limit | Scaling Metric |
-|:---|:---|:---|:---|:---|:---|
-| `apps/api` | 250m | 1000m | 512Mi | 1024Mi | CPU > 75% or Active SSE Conns |
-| `apps/mcp-server` | 250m | 1500m | 512Mi | 2048Mi | Concurrent Tool Executions |
-| `apps/web` | 500m | 2000m | 1024Mi | 2048Mi | HTTP RPS > 1000 |
-| `apps/worker` | 500m | 2000m | 1024Mi | 4096Mi | BullMQ Queue Depth |
+| Service           | CPU Request | CPU Limit | Memory Request | Memory Limit | Scaling Metric                |
+| :---------------- | :---------- | :-------- | :------------- | :----------- | :---------------------------- |
+| `apps/api`        | 250m        | 1000m     | 512Mi          | 1024Mi       | CPU > 75% or Active SSE Conns |
+| `apps/mcp-server` | 250m        | 1500m     | 512Mi          | 2048Mi       | Concurrent Tool Executions    |
+| `apps/web`        | 500m        | 2000m     | 1024Mi         | 2048Mi       | HTTP RPS > 1000               |
+| `apps/worker`     | 500m        | 2000m     | 1024Mi         | 4096Mi       | BullMQ Queue Depth            |
 
 ### 2.2 Probes & Health Checks
 
 Every service exposes standardized Kubernetes probes:
-* **Liveness Probe**: `GET /health/live` (HTTP 200 if event loop is operational)
-* **Readiness Probe**: `GET /health/ready` (HTTP 200 only if database pool and Redis connection are verified healthy)
+
+- **Liveness Probe**: `GET /health/live` (HTTP 200 if event loop is operational)
+- **Readiness Probe**: `GET /health/ready` (HTTP 200 only if database pool and Redis connection are verified healthy)
 
 ---
 
@@ -125,10 +126,12 @@ Every service exposes standardized Kubernetes probes:
 For corporate lobbies, newsrooms, and conference venues:
 
 ### 3.1 Hardware Recommendations
-* **Display**: 4K UHD (3840×2160) or 32:9 Super Ultrawide (5120×1440) 60Hz+ HDR panel.
-* **Playback Hardware**: Intel NUC, Apple Mac Mini M2, or Raspberry Pi 5 with hardware-accelerated Chromium.
+
+- **Display**: 4K UHD (3840×2160) or 32:9 Super Ultrawide (5120×1440) 60Hz+ HDR panel.
+- **Playback Hardware**: Intel NUC, Apple Mac Mini M2, or Raspberry Pi 5 with hardware-accelerated Chromium.
 
 ### 3.2 Kiosk Chromium Launch Command
+
 Launch the dedicated `/kiosk` or `/wall` route in fullscreen kiosk mode:
 
 ```bash
@@ -143,6 +146,7 @@ google-chrome \
 ```
 
 ### 3.3 Display Features
-* **Auto-rotation**: Cycles lead stories every 25 seconds without page reload.
-* **Live Clock**: Synchronized UTC millisecond-precision clock display.
-* **Multi-Pane Layout**: Side-by-side D3 settlement bar charts, MapLibre geographic epicenters, and breaking ticker ribbons.
+
+- **Auto-rotation**: Cycles lead stories every 25 seconds without page reload.
+- **Live Clock**: Synchronized UTC millisecond-precision clock display.
+- **Multi-Pane Layout**: Side-by-side D3 settlement bar charts, MapLibre geographic epicenters, and breaking ticker ribbons.

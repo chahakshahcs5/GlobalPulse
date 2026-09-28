@@ -28,6 +28,7 @@ flowchart LR
 When an external agent (e.g. Gemini Spark) receives breaking news wires, it calls `search_stories` or `find_similar_stories` to determine if another reporter has already filed on this event.
 
 ### Similarity Algorithm
+
 The service calculates the Jaccard index over extracted lexical tokens:
 
 $$J(A, B) = \frac{|A \cap B|}{|A \cup B|}$$
@@ -47,15 +48,17 @@ export function calculateJaccardSimilarity(textA: string, textB: string): number
 ```
 
 ### Threshold Policies:
-* **Score >= 0.75**: Highly confident match. The agent should update the existing story rather than creating a new draft.
-* **Score between 0.40 and 0.74**: Related event. The agent should link the stories via `related_stories` blocks.
-* **Score < 0.40**: Distinct news item. The agent creates a new independent draft.
+
+- **Score >= 0.75**: Highly confident match. The agent should update the existing story rather than creating a new draft.
+- **Score between 0.40 and 0.74**: Related event. The agent should link the stories via `related_stories` blocks.
+- **Score < 0.40**: Distinct news item. The agent creates a new independent draft.
 
 ---
 
 ## 3. Asynchronous Vector Indexing
 
 When a story publishes:
+
 1. `WorkerService` picks up the `search.index_story` job.
 2. Extracts narrative text from `headline`, `summary`, and `paragraph` blocks.
 3. Generates a 1536-dimensional embedding vector.

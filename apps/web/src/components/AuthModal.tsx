@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  X,
-  Mail,
-  User,
-  ShieldCheck,
-  LogIn,
-  UserPlus,
-  KeyRound,
-} from 'lucide-react';
+import { X, Mail, User, ShieldCheck, LogIn, UserPlus, KeyRound } from 'lucide-react';
 
 export interface UserSession {
   id: string;
@@ -129,7 +121,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
-                {currentUser ? 'Your GlobalPulse Account' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+                {currentUser
+                  ? 'Your GlobalPulse Account'
+                  : mode === 'signin'
+                    ? 'Sign In'
+                    : 'Create Account'}
               </h3>
               <p className="text-[11px] text-slate-400">
                 {currentUser ? 'Role-Based Permissions & Profile' : 'Secure JWT Authentication'}
@@ -157,8 +153,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     currentUser.role === 'admin'
                       ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
                       : currentUser.role === 'editor'
-                      ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                        : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
                   }`}
                 >
                   {currentUser.role}
@@ -171,8 +167,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   {currentUser.role === 'admin'
                     ? 'Full Newsroom CMS + Autonomous MCP AI'
                     : currentUser.role === 'editor'
-                    ? 'Story Creation, Editing & Publishing'
-                    : 'Personalized Feeds & Reactions'}
+                      ? 'Story Creation, Editing & Publishing'
+                      : 'Personalized Feeds & Reactions'}
                 </span>
               </div>
             </div>
@@ -293,8 +289,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 disabled={isLoading}
                 className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {mode === 'signin' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                <span>{mode === 'signin' ? 'Sign In to GlobalPulse' : 'Create Reader Account'}</span>
+                {mode === 'signin' ? (
+                  <LogIn className="w-4 h-4" />
+                ) : (
+                  <UserPlus className="w-4 h-4" />
+                )}
+                <span>
+                  {mode === 'signin' ? 'Sign In to GlobalPulse' : 'Create Reader Account'}
+                </span>
               </button>
             </form>
 

@@ -5,13 +5,31 @@ export class VisualDiffRenderer {
    * Generates accessible structured HTML for the WhatChangedBlock.
    */
   static renderHtml(data: WhatChangedBlock['data'], isDark = true): string {
-    const bgClass = isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900';
-    
+    const bgClass = isDark
+      ? 'bg-slate-900 border-slate-800 text-slate-100'
+      : 'bg-slate-50 border-slate-200 text-slate-900';
+
     const badges: Record<string, { label: string; color: string; border: string }> = {
-      added: { label: 'ADDED', color: 'bg-emerald-500/10 text-emerald-400', border: 'border-emerald-500/20' },
-      updated: { label: 'UPDATED', color: 'bg-sky-500/10 text-sky-400', border: 'border-sky-500/20' },
-      corrected: { label: 'CORRECTION', color: 'bg-amber-500/10 text-amber-400', border: 'border-amber-500/20' },
-      retracted: { label: 'RETRACTED', color: 'bg-rose-500/10 text-rose-400', border: 'border-rose-500/20' },
+      added: {
+        label: 'ADDED',
+        color: 'bg-emerald-500/10 text-emerald-400',
+        border: 'border-emerald-500/20',
+      },
+      updated: {
+        label: 'UPDATED',
+        color: 'bg-sky-500/10 text-sky-400',
+        border: 'border-sky-500/20',
+      },
+      corrected: {
+        label: 'CORRECTION',
+        color: 'bg-amber-500/10 text-amber-400',
+        border: 'border-amber-500/20',
+      },
+      retracted: {
+        label: 'RETRACTED',
+        color: 'bg-rose-500/10 text-rose-400',
+        border: 'border-rose-500/20',
+      },
     };
 
     const itemsHtml = data.items
@@ -52,5 +70,9 @@ export class VisualDiffRenderer {
 
 function escapeXml(unsafe?: string): string {
   if (!unsafe) return '';
-  return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

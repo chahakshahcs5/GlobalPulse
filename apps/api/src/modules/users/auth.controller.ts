@@ -13,11 +13,7 @@ import { FastifyReply } from 'fastify';
 import { db } from '@ai-news/database';
 import { UserService } from '@ai-news/stories';
 import { NestAuthGuard, Principal } from '../../common/auth.guard';
-import {
-  RegisterUserInput,
-  LoginInput,
-  UpdatePreferencesInput,
-} from '@ai-news/schemas';
+import { RegisterUserInput, LoginInput, UpdatePreferencesInput } from '@ai-news/schemas';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('api/auth')
@@ -29,10 +25,7 @@ export class AuthController {
    */
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(
-    @Body() body: RegisterUserInput,
-    @Res({ passthrough: true }) reply: FastifyReply
-  ) {
+  async register(@Body() body: RegisterUserInput, @Res({ passthrough: true }) reply: FastifyReply) {
     const result = await this.userService.register(body);
 
     // Set secure cookie for browser sessions
@@ -49,10 +42,7 @@ export class AuthController {
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(
-    @Body() body: LoginInput,
-    @Res({ passthrough: true }) reply: FastifyReply
-  ) {
+  async login(@Body() body: LoginInput, @Res({ passthrough: true }) reply: FastifyReply) {
     const result = await this.userService.login(body);
 
     reply.header(

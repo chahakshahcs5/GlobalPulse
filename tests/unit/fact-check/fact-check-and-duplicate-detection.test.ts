@@ -47,7 +47,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       organizationId: testOrgId,
       slug: 'cern-quantum-entanglement-density',
       title: 'CERN Confirms Record Quantum Entanglement Density in Collisions',
-      summary: 'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
+      summary:
+        'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
       status: 'PUBLISHED',
       articleType: 'science',
       authorId: 'usr_editor_bob',
@@ -63,7 +64,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
           blockType: 'quote',
           sortOrder: 0,
           data: {
-            quote: 'This measurement exceeds all prior quantum entanglement thresholds observed in hadron colliders.',
+            quote:
+              'This measurement exceeds all prior quantum entanglement thresholds observed in hadron colliders.',
             attribution: 'Dr. Fabiola Gianotti',
             title: 'Director-General',
           },
@@ -75,7 +77,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
           data: {
             claim: 'Nature Physics, Vol 22, pp. 104-118 (2026)',
             sourceIds: ['src_nature_journal'],
-            quoteExcerpt: 'Record quantum entanglement density measured in 13 TeV hadron interactions.',
+            quoteExcerpt:
+              'Record quantum entanglement density measured in 13 TeV hadron interactions.',
           },
         },
       ],
@@ -92,8 +95,10 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       id: 'sty_low_cred_solar',
       organizationId: testOrgId,
       slug: 'solar-storm-destroys-undersea-cables',
-      title: 'Solar storms completely dismantled international undersea internet cables around the globe',
-      summary: 'Unverified blog rumors claim major deep sea fiber networks have been destroyed by space weather.',
+      title:
+        'Solar storms completely dismantled international undersea internet cables around the globe',
+      summary:
+        'Unverified blog rumors claim major deep sea fiber networks have been destroyed by space weather.',
       status: 'PUBLISHED',
       articleType: 'technology',
       authorId: 'usr_anon',
@@ -121,13 +126,18 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
   describe('F12: Credibility Scoring Engine', () => {
     it('awards high credibility score to well-sourced stories with verified quotes and claims', async () => {
       const factCheckService = new FactCheckService(db);
-      const assessment = await factCheckService.evaluateStoryCredibility(highCredStoryId, testOrgId);
+      const assessment = await factCheckService.evaluateStoryCredibility(
+        highCredStoryId,
+        testOrgId
+      );
 
       expect(assessment.storyId).toBe(highCredStoryId);
       expect(assessment.score).toBeGreaterThanOrEqual(75);
       expect(assessment.level).toBe('high');
       expect(assessment.factors.some((f) => f.factor.includes('Verified Sources'))).toBe(true);
-      expect(assessment.factors.some((f) => f.factor.includes('Attributed Primary Quotes'))).toBe(true);
+      expect(assessment.factors.some((f) => f.factor.includes('Attributed Primary Quotes'))).toBe(
+        true
+      );
     });
 
     it('penalizes stories containing debunked claims and missing primary citations', async () => {
@@ -139,7 +149,9 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       expect(assessment.level).toBe('low');
       expect(assessment.claims.length).toBeGreaterThanOrEqual(1);
       expect(assessment.claims[0].rating).toBe('FALSE');
-      expect(assessment.factors.some((f) => f.impact < 0 && f.factor.includes('Debunked Claim'))).toBe(true);
+      expect(
+        assessment.factors.some((f) => f.impact < 0 && f.factor.includes('Debunked Claim'))
+      ).toBe(true);
     });
   });
 
@@ -151,7 +163,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       const result = await factCheckService.checkDuplication(
         {
           title: 'CERN Confirms Record Quantum Entanglement Density in Collisions',
-          content: 'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks for particle colliders and quantum physics.',
+          content:
+            'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks for particle colliders and quantum physics.',
           threshold: 75,
         },
         testOrgId
@@ -170,7 +183,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       const result = await factCheckService.checkDuplication(
         {
           title: 'Deep Sea Hydrothermal Vent Flora Produces Novel Antibiotic Compound',
-          content: 'Marine microbiologists off the Galapagos rift uncover a completely unique peptide inhibiting antibiotic-resistant bacteria.',
+          content:
+            'Marine microbiologists off the Galapagos rift uncover a completely unique peptide inhibiting antibiotic-resistant bacteria.',
           threshold: 75,
         },
         testOrgId
@@ -218,7 +232,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
         headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           title: 'CERN Confirms Record Quantum Entanglement Density in Collisions',
-          content: 'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
+          content:
+            'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
         },
       });
 
@@ -247,7 +262,10 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       registerFactCheckTools(server, db, () => principal);
 
       const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-      const client = new Client({ name: 'mcp-test-client', version: '1.0.0' }, { capabilities: {} });
+      const client = new Client(
+        { name: 'mcp-test-client', version: '1.0.0' },
+        { capabilities: {} }
+      );
 
       await server.connect(serverTransport);
       await client.connect(clientTransport);
@@ -267,7 +285,8 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
           name: 'check_content_duplication',
           arguments: {
             title: 'CERN Confirms Record Quantum Entanglement Density in Collisions',
-            content: 'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
+            content:
+              'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
           },
         });
         const dupData = JSON.parse((dupRes as any).content[0].text);

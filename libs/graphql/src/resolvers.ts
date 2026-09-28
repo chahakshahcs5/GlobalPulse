@@ -40,7 +40,11 @@ export function createResolvers(database: DatabaseService = db) {
 
   return {
     Query: {
-      searchStories: async (_: unknown, { input }: { input?: Record<string, unknown> }, ctx?: GraphQLContext) => {
+      searchStories: async (
+        _: unknown,
+        { input }: { input?: Record<string, unknown> },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         const res = await searchService.searchStories(input || {}, orgId);
         return res.items || [];
@@ -51,7 +55,11 @@ export function createResolvers(database: DatabaseService = db) {
         return await storyService.getStory(id, orgId);
       },
 
-      getStoryVersions: async (_: unknown, { storyId }: { storyId: string }, ctx?: GraphQLContext) => {
+      getStoryVersions: async (
+        _: unknown,
+        { storyId }: { storyId: string },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await storyService.getStoryVersions(storyId, orgId);
       },
@@ -81,7 +89,11 @@ export function createResolvers(database: DatabaseService = db) {
     },
 
     Mutation: {
-      createStory: async (_: unknown, { input }: { input: CreateStoryInput }, ctx?: GraphQLContext) => {
+      createStory: async (
+        _: unknown,
+        { input }: { input: CreateStoryInput },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -103,7 +115,11 @@ export function createResolvers(database: DatabaseService = db) {
         return story;
       },
 
-      updateStory: async (_: unknown, { id, input }: { id: string; input: UpdateStoryInput }, ctx?: GraphQLContext) => {
+      updateStory: async (
+        _: unknown,
+        { id, input }: { id: string; input: UpdateStoryInput },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -127,7 +143,15 @@ export function createResolvers(database: DatabaseService = db) {
 
       createStoryVersion: async (
         _: unknown,
-        { input }: { input: CreateStoryVersionInput & { storyId: string; clientType?: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web' } },
+        {
+          input,
+        }: {
+          input: CreateStoryVersionInput & {
+            storyId: string;
+            clientType?:
+              'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web';
+          };
+        },
         ctx?: GraphQLContext
       ) => {
         const orgId = ctx?.organizationId || 'org_default';
@@ -196,7 +220,11 @@ export function createResolvers(database: DatabaseService = db) {
         return story;
       },
 
-      addStoryBlock: async (_: unknown, { storyId, block }: { storyId: string; block: Block }, ctx?: GraphQLContext) => {
+      addStoryBlock: async (
+        _: unknown,
+        { storyId, block }: { storyId: string; block: Block },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         const userId = ctx?.userId || 'usr_graphql_user';
         const clientType = ctx?.clientType || 'human_web';
@@ -219,13 +247,29 @@ export function createResolvers(database: DatabaseService = db) {
         return addedBlock;
       },
 
-      attachSource: async (_: unknown, { storyId, sourceId }: { storyId: string; sourceId: string }, ctx?: GraphQLContext) => {
+      attachSource: async (
+        _: unknown,
+        { storyId, sourceId }: { storyId: string; sourceId: string },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         await sourceService.attachSourceToStory(storyId, sourceId, orgId);
         return await storyService.getStory(storyId, orgId);
       },
 
-      createMedia: async (_: unknown, { input }: { input: { mediaType: string; title: string; url: string; metadata?: Record<string, unknown> } }) => {
+      createMedia: async (
+        _: unknown,
+        {
+          input,
+        }: {
+          input: {
+            mediaType: string;
+            title: string;
+            url: string;
+            metadata?: Record<string, unknown>;
+          };
+        }
+      ) => {
         const media = {
           id: generateId('med'),
           type: input.mediaType,
@@ -238,17 +282,29 @@ export function createResolvers(database: DatabaseService = db) {
         return media;
       },
 
-      createTopic: async (_: unknown, { input }: { input: CreateTopicInput }, ctx?: GraphQLContext) => {
+      createTopic: async (
+        _: unknown,
+        { input }: { input: CreateTopicInput },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await topicService.createTopic(input, orgId);
       },
 
-      createEvent: async (_: unknown, { input }: { input: CreateEventInput }, ctx?: GraphQLContext) => {
+      createEvent: async (
+        _: unknown,
+        { input }: { input: CreateEventInput },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await eventService.createEvent(input, orgId);
       },
 
-      createEntity: async (_: unknown, { input }: { input: CreateEntityInput }, ctx?: GraphQLContext) => {
+      createEntity: async (
+        _: unknown,
+        { input }: { input: CreateEntityInput },
+        ctx?: GraphQLContext
+      ) => {
         const orgId = ctx?.organizationId || 'org_default';
         return await entityService.createEntity(input, orgId);
       },
@@ -256,7 +312,11 @@ export function createResolvers(database: DatabaseService = db) {
 
     Subscription: {
       storyUpdated: {
-        subscribe: async (_: unknown, _args: { storyId?: string }, context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }) => {
+        subscribe: async (
+          _: unknown,
+          _args: { storyId?: string },
+          context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }
+        ) => {
           if (!context.pubsub) {
             throw new Error('PubSub is not configured');
           }
@@ -266,7 +326,11 @@ export function createResolvers(database: DatabaseService = db) {
       },
 
       jobUpdated: {
-        subscribe: async (_: unknown, _args: { jobId?: string }, context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }) => {
+        subscribe: async (
+          _: unknown,
+          _args: { jobId?: string },
+          context: { pubsub?: { subscribe: (t: string) => Promise<unknown> } }
+        ) => {
           if (!context.pubsub) {
             throw new Error('PubSub is not configured');
           }

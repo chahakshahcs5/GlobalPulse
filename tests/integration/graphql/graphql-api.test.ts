@@ -259,7 +259,9 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const json = JSON.parse(res.body);
       expect(json.errors).toBeUndefined();
       expect(json.data.createStoryVersion.versionNumber).toBe(2);
-      expect(json.data.createStoryVersion.changeSummary).toBe('Added foundry benchmark metrics and statistic block.');
+      expect(json.data.createStoryVersion.changeSummary).toBe(
+        'Added foundry benchmark metrics and statistic block.'
+      );
     });
 
     it('executes publishStory and unpublishStory mutations', async () => {

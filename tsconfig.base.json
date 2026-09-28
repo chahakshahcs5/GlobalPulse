@@ -56,8 +56,12 @@
       "react-dom": ["apps/web/node_modules/@types/react-dom"],
       "react-dom/server": ["apps/web/node_modules/@types/react-dom/server"],
       "react-dom/*": ["apps/web/node_modules/@types/react-dom/*"],
-      "@modelcontextprotocol/sdk": ["apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm/index"],
-      "@modelcontextprotocol/sdk/*": ["apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm/*"],
+      "@modelcontextprotocol/sdk": [
+        "apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm/index"
+      ],
+      "@modelcontextprotocol/sdk/*": [
+        "apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm/*"
+      ],
       "fastify": ["apps/api/node_modules/fastify"],
       "fastify/*": ["apps/api/node_modules/fastify/*"],
       "rxjs": ["apps/api/node_modules/rxjs"],

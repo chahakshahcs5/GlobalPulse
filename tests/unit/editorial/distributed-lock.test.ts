@@ -9,7 +9,12 @@ import {
 describe('Distributed Lock Store Unit Tests', () => {
   let db: DatabaseService;
   const user1 = { id: 'usr_sarah', name: 'Sarah Connor', clientType: 'human_web', role: 'editor' };
-  const user2 = { id: 'usr_john', name: 'John Connor', clientType: 'human_web', role: 'journalist' };
+  const user2 = {
+    id: 'usr_john',
+    name: 'John Connor',
+    clientType: 'human_web',
+    role: 'journalist',
+  };
   const storyId = 'sty_lock_test_1';
 
   beforeEach(async () => {

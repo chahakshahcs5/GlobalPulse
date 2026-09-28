@@ -54,9 +54,7 @@ describe('Block Model & Validation (Unit Tests)', () => {
         center: [77.209, 28.6139], // New Delhi [lng, lat]
         zoom: 3,
         style: 'dark',
-        markers: [
-          { coordinates: [77.209, 28.6139], title: 'Summit Host Venue' },
-        ],
+        markers: [{ coordinates: [77.209, 28.6139], title: 'Summit Host Venue' }],
       },
     };
     const block = validateBlock(raw);

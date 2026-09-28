@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Query, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { SearchService } from '@ai-news/search';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
@@ -16,7 +25,10 @@ export class SearchController {
 
   @Get('stories')
   @RequireScope('news:read')
-  async searchStories(@Query() query: SearchStoriesInput, @Principal() principal: AuthenticatedPrincipal) {
+  async searchStories(
+    @Query() query: SearchStoriesInput,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
     const orgId = principal.organizationId;
     return await this.searchService.searchStories(query, orgId);
   }
@@ -24,7 +36,10 @@ export class SearchController {
   @Post(['similar', 'stories/similar'])
   @HttpCode(HttpStatus.OK)
   @RequireScope('news:read')
-  async findSimilarStories(@Body() body: FindSimilarStoriesInput, @Principal() principal: AuthenticatedPrincipal) {
+  async findSimilarStories(
+    @Body() body: FindSimilarStoriesInput,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
     const orgId = principal.organizationId;
     return await this.searchService.findSimilarStories(body, orgId);
   }

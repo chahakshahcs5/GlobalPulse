@@ -19,7 +19,6 @@ import type {
   IStoryRepository,
   StoryFilter,
   PaginatedStories,
-
   IEventRepository,
   ITopicRepository,
   IEntityRepository,
@@ -30,8 +29,18 @@ import type {
 } from './interfaces/index';
 
 function computeTextSimilarity(s1: string, s2: string): number {
-  const set1 = new Set(s1.toLowerCase().split(/\s+/).filter(w => w.length > 2));
-  const set2 = new Set(s2.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  const set1 = new Set(
+    s1
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  );
+  const set2 = new Set(
+    s2
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  );
   if (set1.size === 0 || set2.size === 0) return 0;
   let intersection = 0;
   for (const word of set1) {
@@ -97,7 +106,10 @@ export class InMemoryStoryRepository implements IStoryRepository {
     return true;
   }
 
-  async listPaginated(filterOrOrgId?: StoryFilter | string, maybeOrgId?: string): Promise<PaginatedStories> {
+  async listPaginated(
+    filterOrOrgId?: StoryFilter | string,
+    maybeOrgId?: string
+  ): Promise<PaginatedStories> {
     const filter = typeof filterOrOrgId === 'object' ? filterOrOrgId : undefined;
     const orgId = typeof filterOrOrgId === 'string' ? filterOrOrgId : maybeOrgId;
 
@@ -160,7 +172,10 @@ export class InMemoryStoryRepository implements IStoryRepository {
           const cursorTime = new Date(decoded.updatedAt).getTime();
           startIndex = result.findIndex((s) => {
             const itemTime = new Date(s.publishedAt || s.updatedAt).getTime();
-            return itemTime < cursorTime || (itemTime === cursorTime && s.id.localeCompare(decoded.id) < 0);
+            return (
+              itemTime < cursorTime ||
+              (itemTime === cursorTime && s.id.localeCompare(decoded.id) < 0)
+            );
           });
           if (startIndex === -1) startIndex = result.length;
         }
@@ -172,7 +187,10 @@ export class InMemoryStoryRepository implements IStoryRepository {
     const pageSlice = result.slice(startIndex, startIndex + limit);
     const hasMore = startIndex + pageSlice.length < total;
     const lastItem = pageSlice[pageSlice.length - 1];
-    const nextCursor = hasMore && lastItem ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id }) : undefined;
+    const nextCursor =
+      hasMore && lastItem
+        ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id })
+        : undefined;
 
     return {
       items: pageSlice,
@@ -189,7 +207,6 @@ export class InMemoryStoryRepository implements IStoryRepository {
     const paginated = await this.listPaginated(filterOrOrgId, maybeOrgId);
     return paginated.items;
   }
-
 
   async createVersion(version: StoryVersion): Promise<StoryVersion> {
     const list = this.versions.get(version.storyId) || [];
@@ -224,8 +241,13 @@ export class InMemoryStoryRepository implements IStoryRepository {
     }
   }
 
-  async search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>> {
-    const all = Array.from(this.stories.values()).filter((s) => (orgId ? s.organizationId === orgId : true));
+  async search(
+    params: SearchStoriesInput,
+    orgId?: string
+  ): Promise<PaginatedResult<StorySearchResultItem>> {
+    const all = Array.from(this.stories.values()).filter((s) =>
+      orgId ? s.organizationId === orgId : true
+    );
     let filtered = all;
 
     if (params.status) {
@@ -279,7 +301,10 @@ export class InMemoryStoryRepository implements IStoryRepository {
     };
   }
 
-  async findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]> {
+  async findSimilar(
+    params: FindSimilarStoriesInput,
+    orgId: string
+  ): Promise<StorySearchResultItem[]> {
     const all = Array.from(this.stories.values()).filter((s) => s.organizationId === orgId);
     const scored: Array<{ story: Story; score: number }> = [];
 

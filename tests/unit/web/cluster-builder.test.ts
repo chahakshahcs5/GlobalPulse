@@ -9,7 +9,8 @@ describe('Google News Cluster Builder Unit Tests', () => {
     organizationId: 'org_pulse',
     slug: 'quantum-ai-supercomputing-deployed',
     title: 'Autonomous AI Discovers Novel Room-Temperature Superconductor Candidate',
-    summary: 'A multi-agent AI system synthesizes and validates high-pressure crystal lattice models.',
+    summary:
+      'A multi-agent AI system synthesizes and validates high-pressure crystal lattice models.',
     status: 'PUBLISHED',
     articleType: 'technology',
     currentVersionNumber: 1,
@@ -25,7 +26,8 @@ describe('Google News Cluster Builder Unit Tests', () => {
         blockType: 'quote',
         sortOrder: 1,
         data: {
-          quote: 'This computational breakthrough cuts material synthesis lead times from years to hours.',
+          quote:
+            'This computational breakthrough cuts material synthesis lead times from years to hours.',
           attribution: 'Dr. Aris Thorne, Lead Materials Physicist',
         },
       },

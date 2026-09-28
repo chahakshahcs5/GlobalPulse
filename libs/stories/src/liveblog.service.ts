@@ -1,10 +1,6 @@
 import { randomUUID } from 'crypto';
 import type { DatabaseService } from '@ai-news/database';
-import type {
-  LiveblogEntry,
-  LiveblogAuthor,
-  CreateLiveblogEntryInput,
-} from '@ai-news/schemas';
+import type { LiveblogEntry, LiveblogAuthor, CreateLiveblogEntryInput } from '@ai-news/schemas';
 
 export class LiveblogService {
   constructor(private readonly db: DatabaseService) {}

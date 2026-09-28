@@ -18,7 +18,9 @@ test.describe('Newsroom Editorial CMS Workflow E2E', () => {
     await page.goto('/admin');
 
     // Find the first toggle button
-    const firstButton = page.locator('button:has-text("PUBLISH"), button:has-text("UNPUBLISH")').first();
+    const firstButton = page
+      .locator('button:has-text("PUBLISH"), button:has-text("UNPUBLISH")')
+      .first();
     const initialText = await firstButton.textContent();
 
     // Click to toggle

@@ -104,8 +104,8 @@ export default function IntegrationsPage() {
               External AI Integrations & MCP Hub
             </h1>
             <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-3xl leading-relaxed">
-              Authenticate external models (Google Gemini, ChatGPT, Claude, custom agents) to operate
-              the newsroom over OAuth 2.1 and the remote Model Context Protocol (MCP).
+              Authenticate external models (Google Gemini, ChatGPT, Claude, custom agents) to
+              operate the newsroom over OAuth 2.1 and the remote Model Context Protocol (MCP).
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -138,9 +138,10 @@ export default function IntegrationsPage() {
               Foundational Principle: The Application Is Not The AI
             </h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              GlobalPulse does not autonomously scrape the web, invent facts, or run internal reasoning prompts.
-              All editorial decisions, investigative synthesis, and block assemblies originate from authenticated
-              external AI models acting with cryptographic provenance and audit accountability.
+              GlobalPulse does not autonomously scrape the web, invent facts, or run internal
+              reasoning prompts. All editorial decisions, investigative synthesis, and block
+              assemblies originate from authenticated external AI models acting with cryptographic
+              provenance and audit accountability.
             </p>
           </div>
         </div>
@@ -165,7 +166,9 @@ export default function IntegrationsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-white tracking-tight">{agent.name}</h3>
-                    <span className="text-xs font-mono text-slate-400">Provider: {agent.provider}</span>
+                    <span className="text-xs font-mono text-slate-400">
+                      Provider: {agent.provider}
+                    </span>
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase border ${agent.badgeColor}`}
@@ -184,7 +187,9 @@ export default function IntegrationsPage() {
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs text-slate-300">
-                  <span className="font-mono text-blue-400 font-bold block mb-1">Recent Activity:</span>
+                  <span className="font-mono text-blue-400 font-bold block mb-1">
+                    Recent Activity:
+                  </span>
                   {agent.recentAction}
                 </div>
               </div>
@@ -232,7 +237,9 @@ export default function IntegrationsPage() {
             </div>
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <span className="text-slate-400">Concurrency Model</span>
-              <span className="text-emerald-400 font-bold">AsyncLocalStorage Principal Isolation</span>
+              <span className="text-emerald-400 font-bold">
+                AsyncLocalStorage Principal Isolation
+              </span>
             </div>
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <span className="text-slate-400">Registered Tools</span>
@@ -255,8 +262,12 @@ export default function IntegrationsPage() {
                 <span className="text-white font-bold">Multi-Agent Ingestion Webhook</span>
                 <span className="text-emerald-400">ACTIVE</span>
               </div>
-              <div className="text-slate-400 truncate">https://agent-mesh.internal/webhooks/dispatch</div>
-              <div className="text-[10px] text-blue-400">Events: story.published, story.updated</div>
+              <div className="text-slate-400 truncate">
+                https://agent-mesh.internal/webhooks/dispatch
+              </div>
+              <div className="text-[10px] text-blue-400">
+                Events: story.published, story.updated
+              </div>
             </div>
             <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-1">
               <div className="flex items-center justify-between">
@@ -264,7 +275,9 @@ export default function IntegrationsPage() {
                 <span className="text-emerald-400">ACTIVE</span>
               </div>
               <div className="text-slate-400 truncate">https://syndication.wire.net/v1/urgent</div>
-              <div className="text-[10px] text-blue-400">Events: breaking.declared, retraction.issued</div>
+              <div className="text-[10px] text-blue-400">
+                Events: breaking.declared, retraction.issued
+              </div>
             </div>
           </div>
         </div>

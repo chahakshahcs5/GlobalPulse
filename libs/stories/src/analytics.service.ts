@@ -17,15 +17,22 @@ export class AnalyticsService {
     const rawComments = await this.db.engagement.findCommentsByStory(storyId);
     const comments = rawComments.filter((c) => c.status !== 'hidden');
     const reactions = await this.db.engagement.getReactions(storyId);
-    const totalReactions = Object.values(reactions.counts || {}).reduce((sum, n) => sum + (typeof n === 'number' ? n : 0), 0);
+    const totalReactions = Object.values(reactions.counts || {}).reduce(
+      (sum, n) => sum + (typeof n === 'number' ? n : 0),
+      0
+    );
     const bookmarks = await this.db.engagement.listBookmarks('usr_admin', orgId);
     const bookmarksCount = bookmarks.filter((b) => b.storyId === storyId).length;
 
     // Word count calculation to estimate read time (~200 words per minute)
-    let totalWords = (story.title.split(/\s+/).length) + (story.summary.split(/\s+/).length);
+    let totalWords = story.title.split(/\s+/).length + story.summary.split(/\s+/).length;
     if (story.blocks) {
       for (const block of story.blocks) {
-        if (block.blockType === 'paragraph' && block.data && typeof (block.data as any).text === 'string') {
+        if (
+          block.blockType === 'paragraph' &&
+          block.data &&
+          typeof (block.data as any).text === 'string'
+        ) {
           totalWords += (block.data as any).text.split(/\s+/).length;
         }
       }
@@ -33,12 +40,19 @@ export class AnalyticsService {
     const avgReadTimeSeconds = Math.max(30, Math.round((totalWords / 200) * 60));
 
     // Simulated views count baseline calibrated to story age and engagement
-    const storyAgeHours = Math.max(1, (Date.now() - new Date(story.createdAt).getTime()) / (1000 * 3600));
-    const viewsCount = Math.max(12, Math.round(totalReactions * 7 + comments.length * 15 + storyAgeHours * 3));
+    const storyAgeHours = Math.max(
+      1,
+      (Date.now() - new Date(story.createdAt).getTime()) / (1000 * 3600)
+    );
+    const viewsCount = Math.max(
+      12,
+      Math.round(totalReactions * 7 + comments.length * 15 + storyAgeHours * 3)
+    );
     const uniqueReaders = Math.round(viewsCount * 0.78);
 
     // Virality score: 0 to 100 based on reaction velocity and comment density
-    const rawVirality = (totalReactions * 3 + comments.length * 6) / Math.max(1, Math.log10(storyAgeHours + 2));
+    const rawVirality =
+      (totalReactions * 3 + comments.length * 6) / Math.max(1, Math.log10(storyAgeHours + 2));
     const viralityScore = Math.min(100, Math.max(5, Math.round(rawVirality)));
 
     return {
@@ -67,10 +81,18 @@ export class AnalyticsService {
       const rawComments = await this.db.engagement.findCommentsByStory(story.id);
       const comments = rawComments.filter((c) => c.status !== 'hidden');
       const reactions = await this.db.engagement.getReactions(story.id);
-      const totalReactions = Object.values(reactions.counts || {}).reduce((sum, n) => sum + (typeof n === 'number' ? n : 0), 0);
+      const totalReactions = Object.values(reactions.counts || {}).reduce(
+        (sum, n) => sum + (typeof n === 'number' ? n : 0),
+        0
+      );
 
-      const storyAgeHours = Math.max(0.5, (Date.now() - new Date(story.createdAt).getTime()) / (1000 * 3600));
-      const rawVirality = (totalReactions * 3 + comments.length * 6 + 10) / Math.max(1, Math.log10(storyAgeHours + 2));
+      const storyAgeHours = Math.max(
+        0.5,
+        (Date.now() - new Date(story.createdAt).getTime()) / (1000 * 3600)
+      );
+      const rawVirality =
+        (totalReactions * 3 + comments.length * 6 + 10) /
+        Math.max(1, Math.log10(storyAgeHours + 2));
       const viralityScore = Math.min(100, Math.max(1, Math.round(rawVirality)));
 
       trendingList.push({
@@ -107,7 +129,10 @@ export class AnalyticsService {
       const c = await this.db.engagement.findCommentsByStory(s.id);
       const r = await this.db.engagement.getReactions(s.id);
       totalComments += c.length;
-      totalReactions += Object.values(r.counts || {}).reduce((sum, n) => sum + (typeof n === 'number' ? n : 0), 0);
+      totalReactions += Object.values(r.counts || {}).reduce(
+        (sum, n) => sum + (typeof n === 'number' ? n : 0),
+        0
+      );
     }
 
     const categories = new Set(allStories.map((s) => s.articleType).filter(Boolean));

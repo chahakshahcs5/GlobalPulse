@@ -20,7 +20,9 @@ test.describe('Responsive & Mobile Viewport E2E', () => {
     await expect(page.locator('a:has-text("ENTER CMS DASHBOARD")')).toBeVisible();
   });
 
-  test('navigates to story detail and displays responsive multimedia elements', async ({ page }) => {
+  test('navigates to story detail and displays responsive multimedia elements', async ({
+    page,
+  }) => {
     await page.goto('/stories/brics-2026-summit-ratifies-landmark-trade-pact');
 
     // Verify story headline renders on mobile

@@ -10,11 +10,7 @@ interface AdminHeaderProps {
   onToggleEditor: () => void;
 }
 
-export function AdminHeader({
-  isApiConnected,
-  isEditorOpen,
-  onToggleEditor,
-}: AdminHeaderProps) {
+export function AdminHeader({ isApiConnected, isEditorOpen, onToggleEditor }: AdminHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
       <div>
@@ -30,7 +26,8 @@ export function AdminHeader({
           GlobalPulse Newsroom Control Center
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Real-time human-AI collaborative journalism: authoring, embargo scheduling, virality analytics, and breaking broadcasts.
+          Real-time human-AI collaborative journalism: authoring, embargo scheduling, virality
+          analytics, and breaking broadcasts.
         </p>
       </div>
 

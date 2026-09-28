@@ -33,7 +33,9 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
       registry.setGauge('active_websockets', 42);
       registry.recordHistogram('mcp_latency_ms', 35, { tool: 'create_story' });
 
-      expect(registry.getCounterValue('story_publications_total', { client: 'gemini_spark' })).toBe(3);
+      expect(registry.getCounterValue('story_publications_total', { client: 'gemini_spark' })).toBe(
+        3
+      );
       expect(registry.getGaugeValue('active_websockets')).toBe(42);
 
       const promOutput = registry.toPrometheusString();
@@ -48,11 +50,15 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
     it('simple tracer creates spans with timing and status', async () => {
       const tracer = new SimpleTracer();
 
-      const result = await tracer.traceAsync('mcp.tool.execution', { tool: 'search_stories' }, async (span) => {
-        expect(span.name).toBe('mcp.tool.execution');
-        expect(span.attributes.tool).toBe('search_stories');
-        return { count: 5 };
-      });
+      const result = await tracer.traceAsync(
+        'mcp.tool.execution',
+        { tool: 'search_stories' },
+        async (span) => {
+          expect(span.name).toBe('mcp.tool.execution');
+          expect(span.attributes.tool).toBe('search_stories');
+          return { count: 5 };
+        }
+      );
 
       expect(result.count).toBe(5);
       const completed = tracer.getCompletedSpans();
@@ -87,7 +93,8 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
       expect(processed?.progress).toBe(100);
-      const mediaResult = processed?.result as { totalVariants?: number; variants?: Array<{ url: string }> } | undefined;
+      const mediaResult = processed?.result as
+        { totalVariants?: number; variants?: Array<{ url: string }> } | undefined;
       expect(mediaResult?.totalVariants).toBe(4);
       expect(mediaResult?.variants?.[0]?.url).toContain('summit.jpg_thumb.webp');
     });
@@ -105,7 +112,8 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
 
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
-      const searchResult = processed?.result as { indexedTokens?: number; embeddingDimensions?: number } | undefined;
+      const searchResult = processed?.result as
+        { indexedTokens?: number; embeddingDimensions?: number } | undefined;
       expect(searchResult?.indexedTokens).toBeGreaterThan(10);
       expect(searchResult?.embeddingDimensions).toBe(1536);
     });
@@ -121,7 +129,8 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
 
       const processed = queue.getJob(job.id);
       expect(processed?.status).toBe('completed');
-      const audioResult = processed?.result as { voice?: string; audioUrl?: string; durationSeconds?: number } | undefined;
+      const audioResult = processed?.result as
+        { voice?: string; audioUrl?: string; durationSeconds?: number } | undefined;
       expect(audioResult?.voice).toBe('news_anchor_f');
       expect(audioResult?.audioUrl).toContain('sty_audio_01_briefing_news_anchor_f.mp3');
       expect(audioResult?.durationSeconds).toBeGreaterThanOrEqual(10);
@@ -143,7 +152,14 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
         summary: 'Global delegates agree on binding carbon thresholds.',
         articleType: 'breaking',
         currentVersionNumber: 1,
-        blocks: [{ id: 'b1', blockType: 'paragraph' as const, sortOrder: 0, data: { text: 'Article text', format: 'markdown' as const } }],
+        blocks: [
+          {
+            id: 'b1',
+            blockType: 'paragraph' as const,
+            sortOrder: 0,
+            data: { text: 'Article text', format: 'markdown' as const },
+          },
+        ],
         savedAt: new Date().toISOString(),
         readStatus: false,
       };
@@ -169,8 +185,18 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
     it('renders mobile blocks safely', () => {
       const blocks: StoryBlock[] = [
         { id: 'h1', blockType: 'heading', sortOrder: 0, data: { text: 'Headline', level: 1 } },
-        { id: 'p1', blockType: 'paragraph', sortOrder: 1, data: { text: 'Paragraph content', format: 'markdown' } },
-        { id: 'q1', blockType: 'quote', sortOrder: 2, data: { quote: 'Direct quote', attribution: 'Official' } },
+        {
+          id: 'p1',
+          blockType: 'paragraph',
+          sortOrder: 1,
+          data: { text: 'Paragraph content', format: 'markdown' },
+        },
+        {
+          id: 'q1',
+          blockType: 'quote',
+          sortOrder: 2,
+          data: { quote: 'Direct quote', attribution: 'Official' },
+        },
         {
           id: 'c1',
           blockType: 'chart',
@@ -193,7 +219,12 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
             items: [{ date: '2026-09-26', headline: 'Summit Begins', body: 'Delegates arrive' }],
           },
         },
-        { id: 'stat1', blockType: 'statistic', sortOrder: 5, data: { value: '41T', label: 'Total Output', trend: 'up', trendValue: '+12%' } },
+        {
+          id: 'stat1',
+          blockType: 'statistic',
+          sortOrder: 5,
+          data: { value: '41T', label: 'Total Output', trend: 'up', trendValue: '+12%' },
+        },
       ];
 
       const element = MobileBlockRenderer({ blocks });

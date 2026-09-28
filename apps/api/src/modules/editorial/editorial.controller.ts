@@ -104,7 +104,9 @@ export class EditorialController {
   @Get('editorial/calendar')
   @Roles('admin', 'editor', 'journalist', 'ai_agent')
   @RequireScope('news:read')
-  async getCalendarSchedule(@Principal() principal: AuthenticatedPrincipal): Promise<CalendarSchedule> {
+  async getCalendarSchedule(
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<CalendarSchedule> {
     return await this.collaborationService.getCalendarSchedule(principal.organizationId);
   }
 

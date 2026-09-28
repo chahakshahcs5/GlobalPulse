@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpStatus, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { EventService } from '@ai-news/events';
 import { db } from '@ai-news/database';

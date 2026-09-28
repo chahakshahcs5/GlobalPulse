@@ -127,7 +127,10 @@ export class NotificationService {
   /**
    * Lists recent notifications for display in the CMS or notification center.
    */
-  async listNotifications(orgId: string = 'org_default', limit = 50): Promise<EditorialNotification[]> {
+  async listNotifications(
+    orgId: string = 'org_default',
+    limit = 50
+  ): Promise<EditorialNotification[]> {
     return this.db.notifications.list(orgId, limit);
   }
 

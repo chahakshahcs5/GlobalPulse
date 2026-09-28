@@ -1,4 +1,8 @@
-import type { EditorialNotification, NotificationType, NotificationSeverity } from '@ai-news/schemas';
+import type {
+  EditorialNotification,
+  NotificationType,
+  NotificationSeverity,
+} from '@ai-news/schemas';
 import type { INotificationRepository } from '../../interfaces/notification.repository';
 
 interface PrismaNotificationRow {
@@ -24,10 +28,17 @@ export class PrismaNotificationRepository implements INotificationRepository {
 
   private get notificationClient(): {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaNotificationRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaNotificationRow>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaNotificationRow>;
     findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaNotificationRow | null>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaNotificationRow | null>;
-    findMany: (args: { where?: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaNotificationRow[]>;
+    findMany: (args: {
+      where?: Record<string, unknown>;
+      take?: number;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaNotificationRow[]>;
   } {
     return this.prisma.editorialNotification as any;
   }
@@ -44,7 +55,8 @@ export class PrismaNotificationRepository implements INotificationRepository {
       storyId: row.storyId || undefined,
       targetRole: row.targetRole || undefined,
       isRead: row.isRead,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     };
   }
 

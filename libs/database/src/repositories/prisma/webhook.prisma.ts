@@ -39,8 +39,14 @@ export class PrismaWebhookRepository implements IWebhookRepository {
         secret: created.secret,
         active: created.active,
         organizationId: created.organizationId,
-        createdAt: created.createdAt instanceof Date ? created.createdAt.toISOString() : String(created.createdAt),
-        updatedAt: created.updatedAt instanceof Date ? created.updatedAt.toISOString() : String(created.updatedAt),
+        createdAt:
+          created.createdAt instanceof Date
+            ? created.createdAt.toISOString()
+            : String(created.createdAt),
+        updatedAt:
+          created.updatedAt instanceof Date
+            ? created.updatedAt.toISOString()
+            : String(created.updatedAt),
       };
     } catch {
       return this.fallbackMemory.createSubscription(subscription);
@@ -86,8 +92,10 @@ export class PrismaWebhookRepository implements IWebhookRepository {
         secret: row.secret,
         active: row.active,
         organizationId: row.organizationId,
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       };
     } catch {
       return this.fallbackMemory.findSubscriptionById(id, orgId);

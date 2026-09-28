@@ -106,7 +106,8 @@ describe('Production Security Hardening & Secret Governance', () => {
 
     it('rejects startup in production mode if DATABASE_ENGINE is prisma but DATABASE_URL is missing', () => {
       (process.env as any).NODE_ENV = 'production';
-      process.env.JWT_SECRET = 'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
+      process.env.JWT_SECRET =
+        'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
       delete process.env.DATABASE_URL;
 
       expect(() => {
@@ -129,7 +130,8 @@ describe('Production Security Hardening & Secret Governance', () => {
 
     it('accepts valid configuration in production mode with strong secrets', () => {
       (process.env as any).NODE_ENV = 'production';
-      process.env.JWT_SECRET = 'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
+      process.env.JWT_SECRET =
+        'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
       process.env.DATABASE_URL = 'postgresql://usr:pwd@localhost:5432/db';
 
       expect(() => {

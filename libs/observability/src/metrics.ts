@@ -16,11 +16,7 @@ export class MetricsRegistry {
   }
 
   // Counter
-  public incrementCounter(
-    name: string,
-    value: number = 1,
-    labels?: MetricLabelSet
-  ): void {
+  public incrementCounter(name: string, value: number = 1, labels?: MetricLabelSet): void {
     if (!this.counters.has(name)) {
       this.counters.set(name, new Map());
     }
@@ -61,11 +57,7 @@ export class MetricsRegistry {
   }
 
   // Histogram / Summary
-  public recordHistogram(
-    name: string,
-    value: number,
-    labels?: MetricLabelSet
-  ): void {
+  public recordHistogram(name: string, value: number, labels?: MetricLabelSet): void {
     if (!this.histograms.has(name)) {
       this.histograms.set(name, new Map());
     }
@@ -76,10 +68,7 @@ export class MetricsRegistry {
     subMap.set(labelKey, list);
   }
 
-  public getHistogramValues(
-    name: string,
-    labels?: MetricLabelSet
-  ): number[] {
+  public getHistogramValues(name: string, labels?: MetricLabelSet): number[] {
     const subMap = this.histograms.get(name);
     if (!subMap) return [];
     const labelKey = this.serializeLabels(labels);

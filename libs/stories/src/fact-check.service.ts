@@ -114,7 +114,9 @@ export class FactCheckService {
     const matchedClaims: FactCheckClaim[] = [];
 
     // Factor 1: Citations and primary sources
-    const hasSources = (story.sourceIds && story.sourceIds.length > 0) || (story.blocks || []).some((b) => b.blockType === 'citation' || b.blockType === 'source');
+    const hasSources =
+      (story.sourceIds && story.sourceIds.length > 0) ||
+      (story.blocks || []).some((b) => b.blockType === 'citation' || b.blockType === 'source');
     if (hasSources) {
       score += 15;
       factors.push({
@@ -155,7 +157,10 @@ export class FactCheckService {
     // Factor 4: Check against known debunked assertions in the fact-check knowledge base
     const storyText = `${story.title} ${story.summary}`.toLowerCase();
     for (const fc of this.factChecks) {
-      const claimKeywords = fc.claim.toLowerCase().split(/\s+/).filter((w) => w.length > 4);
+      const claimKeywords = fc.claim
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 4);
       const matchesCount = claimKeywords.filter((w) => storyText.includes(w)).length;
       if (matchesCount >= 3) {
         matchedClaims.push(fc);
@@ -228,7 +233,9 @@ export class FactCheckService {
 
       // Check shared trigram phrases
       const otherTrigrams = extractTrigrams(otherText);
-      const sharedPhrases = Array.from(new Set(otherTrigrams.filter((t) => inputTrigrams.has(t)))).slice(0, 5);
+      const sharedPhrases = Array.from(
+        new Set(otherTrigrams.filter((t) => inputTrigrams.has(t)))
+      ).slice(0, 5);
 
       const roundedSimilarity = Math.round(jaccard * 10) / 10;
       if (roundedSimilarity > maxSimilarity) {

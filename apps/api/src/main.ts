@@ -91,7 +91,10 @@ async function bootstrap() {
         process.exit(0);
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.error(`Error during shutdown: ${errorMsg}`, err instanceof Error ? err : new Error(errorMsg));
+        logger.error(
+          `Error during shutdown: ${errorMsg}`,
+          err instanceof Error ? err : new Error(errorMsg)
+        );
         process.exit(1);
       }
     });

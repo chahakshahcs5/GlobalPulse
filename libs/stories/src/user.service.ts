@@ -127,10 +127,16 @@ export class UserService {
     };
 
     user.preferences = {
-      categories: validated.categories !== undefined ? validated.categories : currentPrefs.categories,
-      emailFrequency: validated.emailFrequency !== undefined ? validated.emailFrequency : currentPrefs.emailFrequency,
+      categories:
+        validated.categories !== undefined ? validated.categories : currentPrefs.categories,
+      emailFrequency:
+        validated.emailFrequency !== undefined
+          ? validated.emailFrequency
+          : currentPrefs.emailFrequency,
       readingHistoryEnabled:
-        validated.readingHistoryEnabled !== undefined ? validated.readingHistoryEnabled : currentPrefs.readingHistoryEnabled,
+        validated.readingHistoryEnabled !== undefined
+          ? validated.readingHistoryEnabled
+          : currentPrefs.readingHistoryEnabled,
       theme: validated.theme !== undefined ? validated.theme : currentPrefs.theme,
     };
     user.updatedAt = new Date().toISOString();

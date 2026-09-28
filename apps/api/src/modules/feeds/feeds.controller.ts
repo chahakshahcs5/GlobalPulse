@@ -32,7 +32,10 @@ export class FeedsController {
         const enclosure = s.heroImageUrl
           ? `\n      <enclosure url="${escapeXml(s.heroImageUrl)}" type="image/jpeg" length="0"/>`
           : '';
-        const keywords = s.topicIds && s.topicIds.length > 0 ? `<category>${escapeXml(s.topicIds.join(', '))}</category>` : '';
+        const keywords =
+          s.topicIds && s.topicIds.length > 0
+            ? `<category>${escapeXml(s.topicIds.join(', '))}</category>`
+            : '';
 
         return `
     <item>
@@ -105,10 +108,7 @@ export class FeedsController {
    * Category RSS 2.0 Feed
    */
   @Get(['feeds/:category/rss.xml', 'api/feeds/category/:category'])
-  async getCategoryRssFeed(
-    @Param('category') category: string,
-    @Res() reply: FastifyReply
-  ) {
+  async getCategoryRssFeed(@Param('category') category: string, @Res() reply: FastifyReply) {
     const normalized = category.toLowerCase();
     const allPublished = await db.stories.list({
       status: 'PUBLISHED',
@@ -166,10 +166,7 @@ export class FeedsController {
    * Topic-specific RSS Feed
    */
   @Get(['feeds/topics/:topic/rss.xml', 'api/feeds/topics/:topic'])
-  async getTopicRssFeed(
-    @Param('topic') topic: string,
-    @Res() reply: FastifyReply
-  ) {
+  async getTopicRssFeed(@Param('topic') topic: string, @Res() reply: FastifyReply) {
     const stories = await db.stories.list({
       status: 'PUBLISHED',
       topicId: topic,
@@ -277,17 +274,22 @@ export class FeedsController {
 
     // Filter to last 48 hours per Google News spec
     const recentStories = stories.filter((s) => {
-      const pubTime = s.publishedAt ? new Date(s.publishedAt).getTime() : new Date(s.createdAt).getTime();
+      const pubTime = s.publishedAt
+        ? new Date(s.publishedAt).getTime()
+        : new Date(s.createdAt).getTime();
       return pubTime >= fortyEightHoursAgo;
     });
 
     const newsUrlsXml = recentStories
       .map((s) => {
-        const pubDateIso = s.publishedAt ? new Date(s.publishedAt).toISOString() : new Date(s.createdAt).toISOString();
+        const pubDateIso = s.publishedAt
+          ? new Date(s.publishedAt).toISOString()
+          : new Date(s.createdAt).toISOString();
         const link = `${this.baseUrl}/stories/${s.slug}`;
-        const keywords = s.topicIds && s.topicIds.length > 0
-          ? `\n      <news:keywords>${escapeXml(s.topicIds.join(', '))}</news:keywords>`
-          : '';
+        const keywords =
+          s.topicIds && s.topicIds.length > 0
+            ? `\n      <news:keywords>${escapeXml(s.topicIds.join(', '))}</news:keywords>`
+            : '';
 
         return `
   <url>

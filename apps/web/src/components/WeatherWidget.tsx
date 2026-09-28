@@ -45,10 +45,15 @@ export const WeatherWidget: React.FC = () => {
       {/* 4-Day Mini Forecast */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-4 gap-1 text-center">
         {weather.forecast.map((f, idx) => (
-          <div key={idx} className="p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <div
+            key={idx}
+            className="p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
             <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{f.day}</div>
             <div className="text-sm my-0.5">{f.icon}</div>
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">{f.temp}°</div>
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {f.temp}°
+            </div>
           </div>
         ))}
       </div>

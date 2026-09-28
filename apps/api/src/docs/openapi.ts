@@ -5,7 +5,8 @@ export const openApiSpec = {
   info: {
     title: 'AI News Platform API Gateway',
     version: '1.0.0',
-    description: 'Enterprise Multimedia News Platform API designed for AI Agents (Gemini Spark, ChatGPT, Claude) and Multi-Device Clients.',
+    description:
+      'Enterprise Multimedia News Platform API designed for AI Agents (Gemini Spark, ChatGPT, Claude) and Multi-Device Clients.',
     contact: {
       name: 'News Platform Engineering',
       url: 'https://news.platform',

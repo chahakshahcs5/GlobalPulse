@@ -252,7 +252,9 @@ export const GoogleNewsHeader: React.FC = () => {
             <button
               onClick={() => setIsAuthOpen(true)}
               className="flex items-center gap-1.5 focus:outline-none cursor-pointer"
-              title={currentUser ? `${currentUser.name} (${currentUser.role})` : 'Sign in to GlobalPulse'}
+              title={
+                currentUser ? `${currentUser.name} (${currentUser.role})` : 'Sign in to GlobalPulse'
+              }
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
                 {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'GP'}
@@ -263,8 +265,8 @@ export const GoogleNewsHeader: React.FC = () => {
                     currentUser.role === 'admin'
                       ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
                       : currentUser.role === 'editor'
-                      ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                        : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
                   }`}
                 >
                   {currentUser.role}
@@ -297,7 +299,9 @@ export const GoogleNewsHeader: React.FC = () => {
         )}
 
         {/* Category Nav Strip wrapped in Suspense */}
-        <Suspense fallback={<div className="h-11 border-t border-slate-200 dark:border-slate-800" />}>
+        <Suspense
+          fallback={<div className="h-11 border-t border-slate-200 dark:border-slate-800" />}
+        >
           <CategoryNavStrip pathname={pathname} />
         </Suspense>
       </header>

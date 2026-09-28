@@ -23,11 +23,17 @@ export class PrismaLiveblogRepository implements ILiveblogRepository {
     return this.prismaGetter();
   }
 
-  private get liveblogClient(): {
-    create: (args: { data: Record<string, unknown> }) => Promise<PrismaLiveblogRow>;
-    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaLiveblogRow[]>;
-    delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
-  } | undefined {
+  private get liveblogClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaLiveblogRow>;
+        findMany: (args: {
+          where: Record<string, unknown>;
+          take?: number;
+          orderBy?: Record<string, unknown>;
+        }) => Promise<PrismaLiveblogRow[]>;
+        delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+      }
+    | undefined {
     return (this.prisma as any).liveblogEntry;
   }
 
@@ -43,7 +49,8 @@ export class PrismaLiveblogRepository implements ILiveblogRepository {
         name: row.authorName || 'Liveblog Reporter',
         avatarUrl: row.authorAvatar || undefined,
       },
-      timestamp: row.timestamp instanceof Date ? row.timestamp.toISOString() : String(row.timestamp),
+      timestamp:
+        row.timestamp instanceof Date ? row.timestamp.toISOString() : String(row.timestamp),
     };
   }
 

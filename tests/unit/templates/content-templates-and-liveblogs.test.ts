@@ -248,7 +248,10 @@ describe('Content Templates & Liveblog Dispatches (F10, F11)', () => {
       registerLiveblogTools(server, db, () => principal);
 
       const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-      const client = new Client({ name: 'mcp-test-client', version: '1.0.0' }, { capabilities: {} });
+      const client = new Client(
+        { name: 'mcp-test-client', version: '1.0.0' },
+        { capabilities: {} }
+      );
 
       await server.connect(serverTransport);
       await client.connect(clientTransport);

@@ -1,10 +1,5 @@
 import Redis from 'ioredis';
-import {
-  JobType,
-  JobStatus,
-  JobRecord,
-  JobHandler,
-} from './job-types';
+import { JobType, JobStatus, JobRecord, JobHandler } from './job-types';
 import { logger, metrics } from '@ai-news/observability';
 import { bullQueue } from './bull-queue.service';
 
@@ -36,13 +31,18 @@ export class QueueManager {
         this.redis.on('error', (err) => {
           logger.debug(`QueueManager Redis connection error: ${err.message}`);
         });
-        this.redis.connect().then(() => {
-          this.isRedisActive = true;
-          logger.info(`QueueManager connected to Redis at ${redisUrl}`);
-        }).catch((err) => {
-          logger.info(`Redis connection deferred for QueueManager (${err.message}). Running in memory fallback.`);
-          this.isRedisActive = false;
-        });
+        this.redis
+          .connect()
+          .then(() => {
+            this.isRedisActive = true;
+            logger.info(`QueueManager connected to Redis at ${redisUrl}`);
+          })
+          .catch((err) => {
+            logger.info(
+              `Redis connection deferred for QueueManager (${err.message}). Running in memory fallback.`
+            );
+            this.isRedisActive = false;
+          });
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         logger.debug(`Redis initialization skipped: ${errorMsg}`);
@@ -51,11 +51,7 @@ export class QueueManager {
     }
   }
 
-
-  public registerHandler<T = unknown, R = unknown>(
-    type: JobType,
-    handler: JobHandler<T, R>
-  ): void {
+  public registerHandler<T = unknown, R = unknown>(type: JobType, handler: JobHandler<T, R>): void {
     this.handlers.set(type, handler as JobHandler);
     logger.info(`Registered job handler for [${type}]`);
   }
@@ -65,8 +61,10 @@ export class QueueManager {
     payload: T,
     options: EnqueueOptions = {}
   ): Promise<JobRecord<T>> {
-    const id = options.id || `job_${type.replace('.', '_')}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    
+    const id =
+      options.id ||
+      `job_${type.replace('.', '_')}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     const record: JobRecord<T> = {
       id,
       type,
@@ -83,7 +81,12 @@ export class QueueManager {
       try {
         await this.redis.set(`globalpulse:jobs:${id}`, JSON.stringify(record));
         await this.redis.lpush(`globalpulse:queue:${type}`, id);
-        await bullQueue.enqueueJob(type, payload, { id, delayMs: options.delayMs, priority: options.priority, maxAttempts: options.maxAttempts });
+        await bullQueue.enqueueJob(type, payload, {
+          id,
+          delayMs: options.delayMs,
+          priority: options.priority,
+          maxAttempts: options.maxAttempts,
+        });
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         logger.debug(`Redis write error: ${errorMsg}`);
@@ -156,7 +159,9 @@ export class QueueManager {
       const errorMsg = err instanceof Error ? err.message : String(err);
       if (job.attempts < job.maxAttempts) {
         job.status = 'queued';
-        logger.warn(`Job [${id}] failed (attempt ${job.attempts}/${job.maxAttempts}): ${errorMsg}. Retrying...`);
+        logger.warn(
+          `Job [${id}] failed (attempt ${job.attempts}/${job.maxAttempts}): ${errorMsg}. Retrying...`
+        );
       } else {
         job.status = 'failed';
         job.error = errorMsg;
@@ -193,7 +198,13 @@ export class QueueManager {
     this.jobs.clear();
   }
 
-  public getMetrics(): { queued: number; running: number; completed: number; failed: number; total: number } {
+  public getMetrics(): {
+    queued: number;
+    running: number;
+    completed: number;
+    failed: number;
+    total: number;
+  } {
     let queued = 0;
     let running = 0;
     let completed = 0;
@@ -203,7 +214,6 @@ export class QueueManager {
       else if (job.status === 'active') running++;
       else if (job.status === 'completed') completed++;
       else if (job.status === 'failed') failed++;
-
     }
     return {
       queued,
@@ -214,6 +224,5 @@ export class QueueManager {
     };
   }
 }
-
 
 export const defaultQueue = new QueueManager();

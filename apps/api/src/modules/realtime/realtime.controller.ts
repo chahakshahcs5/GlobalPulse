@@ -12,9 +12,10 @@ export class RealtimeController {
 
   @Sse('stream')
   stream(@Query('channels') channelsQuery?: string): Observable<RealtimeMessageEvent> {
-    const channels = typeof channelsQuery === 'string' && channelsQuery.trim().length > 0
-      ? channelsQuery.split(',').map((c) => c.trim())
-      : ['all'];
+    const channels =
+      typeof channelsQuery === 'string' && channelsQuery.trim().length > 0
+        ? channelsQuery.split(',').map((c) => c.trim())
+        : ['all'];
 
     return this.service.getEventStream(channels);
   }

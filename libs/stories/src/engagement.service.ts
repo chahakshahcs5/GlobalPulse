@@ -8,10 +8,7 @@ import type {
   StoryReactionsSummary,
   BookmarkItem,
 } from '@ai-news/schemas';
-import {
-  CreateCommentInputSchema,
-  ModerateCommentInputSchema,
-} from '@ai-news/schemas';
+import { CreateCommentInputSchema, ModerateCommentInputSchema } from '@ai-news/schemas';
 import type { DatabaseService } from '@ai-news/database';
 import { NotFoundError, ValidationError, generateId } from '@ai-news/shared';
 

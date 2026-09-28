@@ -91,14 +91,20 @@ export class MemoryNewsletterRepository implements INewsletterRepository {
     return { ...all[0] };
   }
 
-  snapshot(): { subscriptions: Map<string, NewsletterSubscription>; digests: Map<string, NewsletterDigest> } {
+  snapshot(): {
+    subscriptions: Map<string, NewsletterSubscription>;
+    digests: Map<string, NewsletterDigest>;
+  } {
     return {
       subscriptions: new Map(this.subscriptions),
       digests: new Map(this.digests),
     };
   }
 
-  restore(snap: { subscriptions: Map<string, NewsletterSubscription>; digests: Map<string, NewsletterDigest> }): void {
+  restore(snap: {
+    subscriptions: Map<string, NewsletterSubscription>;
+    digests: Map<string, NewsletterDigest>;
+  }): void {
     this.subscriptions = new Map(snap.subscriptions);
     this.digests = new Map(snap.digests);
   }

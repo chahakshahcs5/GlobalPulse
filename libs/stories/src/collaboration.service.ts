@@ -152,7 +152,11 @@ export class CollaborationService {
     const existing = await this.lockStore.get(storyId);
     const now = Date.now();
 
-    if (existing && existing.lockedBy.id === user.id && new Date(existing.expiresAt).getTime() > now) {
+    if (
+      existing &&
+      existing.lockedBy.id === user.id &&
+      new Date(existing.expiresAt).getTime() > now
+    ) {
       existing.expiresAt = new Date(now + ttlSeconds * 1000).toISOString();
       await this.lockStore.set(storyId, existing, ttlSeconds);
       this.pingPresence(storyId, { id: user.id, name: user.name });
@@ -238,11 +242,18 @@ export class CollaborationService {
     const all = await this.db.stories.listPaginated({ limit: 500 }, orgId);
     const scheduledStories = all.items
       .filter((s) => s.status === 'SCHEDULED' && s.scheduledPublishAt)
-      .sort((a, b) => new Date(a.scheduledPublishAt!).getTime() - new Date(b.scheduledPublishAt!).getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.scheduledPublishAt!).getTime() - new Date(b.scheduledPublishAt!).getTime()
+      );
 
     const publishedStories = all.items
       .filter((s) => s.status === 'PUBLISHED')
-      .sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.publishedAt || b.createdAt).getTime() -
+          new Date(a.publishedAt || a.createdAt).getTime()
+      );
 
     return {
       scheduledStories,

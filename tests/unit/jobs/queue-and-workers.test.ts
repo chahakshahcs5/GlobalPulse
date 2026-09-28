@@ -28,8 +28,16 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
     });
 
     it('retrieves jobs filtered by status and by type', async () => {
-      await queue.enqueue('export.generate_pdf', { storyId: 'sty_1', versionNumber: 1, layout: 'standard' });
-      await queue.enqueue('audio.generate_briefing', { storyId: 'sty_2', voice: 'news_f', scriptText: 'Briefing' });
+      await queue.enqueue('export.generate_pdf', {
+        storyId: 'sty_1',
+        versionNumber: 1,
+        layout: 'standard',
+      });
+      await queue.enqueue('audio.generate_briefing', {
+        storyId: 'sty_2',
+        voice: 'news_f',
+        scriptText: 'Briefing',
+      });
 
       const pdfJobs = queue.getJobsByType('export.generate_pdf');
       expect(pdfJobs.length).toBe(1);
@@ -93,8 +101,16 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
     });
 
     it('drains entire queue sequentially with drain()', async () => {
-      await queue.enqueue('export.generate_pdf', { storyId: 'sty_1', versionNumber: 1, layout: 'digest' });
-      await queue.enqueue('export.generate_pdf', { storyId: 'sty_2', versionNumber: 2, layout: 'broadsheet' });
+      await queue.enqueue('export.generate_pdf', {
+        storyId: 'sty_1',
+        versionNumber: 1,
+        layout: 'digest',
+      });
+      await queue.enqueue('export.generate_pdf', {
+        storyId: 'sty_2',
+        versionNumber: 2,
+        layout: 'broadsheet',
+      });
 
       expect(queue.getJobsByStatus('queued').length).toBe(2);
 
@@ -120,7 +136,10 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
       expect(processed.progress).toBe(100);
-      const res = processed.result as { totalVariants: number; variants: Array<{ format: string; url: string }> };
+      const res = processed.result as {
+        totalVariants: number;
+        variants: Array<{ format: string; url: string }>;
+      };
       expect(res.totalVariants).toBe(4); // 2 formats * 2 dimensions
       expect(res.variants[0].format).toBe('webp');
       expect(res.variants[0].url).toContain('keynote.jpg_1080p.webp');
@@ -137,7 +156,11 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
 
       const processed = await queue.processJob(job.id);
       expect(processed.status).toBe('completed');
-      const res = processed.result as { storyId: string; indexedTokens: number; embeddingDimensions: number };
+      const res = processed.result as {
+        storyId: string;
+        indexedTokens: number;
+        embeddingDimensions: number;
+      };
       expect(res.storyId).toBe('sty_trade_2026');
       expect(res.indexedTokens).toBeGreaterThan(10);
       expect(res.embeddingDimensions).toBe(1536);

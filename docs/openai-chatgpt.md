@@ -45,11 +45,13 @@ Core Application Services & PostgreSQL Database
 OpenAI's MCP client distinguishes read-only actions from mutating actions. The News Platform structures tool metadata accordingly:
 
 ### 1. Read-Only Tools (Auto-approved by default)
+
 - `search_stories`, `search_events`, `search_topics`, `search_entities`, `search_sources`
 - `get_story`, `get_story_version`, `get_story_versions`, `get_story_sources`
 - `find_similar_stories`
 
 ### 2. Normal Write Tools (Standard modify permissions)
+
 - `create_story` (Creates draft)
 - `update_story`
 - `create_story_version`
@@ -59,6 +61,7 @@ OpenAI's MCP client distinguishes read-only actions from mutating actions. The N
 - `create_topic`, `create_event`, `create_entity`
 
 ### 3. High-Impact Write Tools (Approval prompt recommended)
+
 - `publish_story`: Moves story to live feeds.
 - `unpublish_story`: Reverts live story to draft.
 - `archive_story`: Permanently retires story.
@@ -98,5 +101,6 @@ To connect ChatGPT to your News Platform, register the MCP server endpoint in th
 ## Interactive App UI (Optional)
 
 Where supported by ChatGPT client environments, tool calls return structured data alongside interactive React component descriptors:
+
 - `search_stories`: Displays interactive story preview cards with topic pills and version badges.
 - `get_story`: Displays interactive article reader with rendered D3 charts, timelines, and expandable source footnotes.

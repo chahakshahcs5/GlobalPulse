@@ -24,7 +24,9 @@ export function registerSyndicationTools(
       const fortyEightHoursAgo = Date.now() - 48 * 60 * 60 * 1000;
 
       const recentStories = stories.filter((s) => {
-        const pubTime = s.publishedAt ? new Date(s.publishedAt).getTime() : new Date(s.createdAt).getTime();
+        const pubTime = s.publishedAt
+          ? new Date(s.publishedAt).getTime()
+          : new Date(s.createdAt).getTime();
         return pubTime >= fortyEightHoursAgo;
       });
 
@@ -84,7 +86,10 @@ export function registerSyndicationTools(
     'get_syndication_feed',
     '[READ-ONLY] Query stories formatted for RSS 2.0 / Atom syndication with category or topic filtering.',
     {
-      category: z.string().optional().describe('Article category to filter (e.g. technology, politics)'),
+      category: z
+        .string()
+        .optional()
+        .describe('Article category to filter (e.g. technology, politics)'),
       topicId: z.string().optional().describe('Topic ID or slug to filter'),
       limit: z.number().int().positive().max(50).default(20).describe('Max items'),
     },

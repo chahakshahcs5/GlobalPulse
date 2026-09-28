@@ -2,7 +2,6 @@
 
 import type { Story } from '@ai-news/schemas';
 
-
 export type FilterStatus = 'ALL' | 'IN_REVIEW' | 'PUBLISHED' | 'SCHEDULED' | 'DRAFT';
 
 interface StoryFilterBarProps {
@@ -11,11 +10,7 @@ interface StoryFilterBarProps {
   stories: Story[];
 }
 
-export function StoryFilterBar({
-  filterStatus,
-  onSelectFilter,
-  stories,
-}: StoryFilterBarProps) {
+export function StoryFilterBar({ filterStatus, onSelectFilter, stories }: StoryFilterBarProps) {
   const inReviewCount = stories.filter((s) => s.status === 'IN_REVIEW').length;
   const publishedCount = stories.filter((s) => s.status === 'PUBLISHED').length;
   const scheduledCount = stories.filter((s) => s.status === 'SCHEDULED').length;
@@ -33,7 +28,9 @@ export function StoryFilterBar({
     { id: 'DRAFT', label: `Drafts (${draftCount})` },
   ];
 
-  const displayedCount = stories.filter((s) => filterStatus === 'ALL' || s.status === filterStatus).length;
+  const displayedCount = stories.filter(
+    (s) => filterStatus === 'ALL' || s.status === filterStatus
+  ).length;
 
   return (
     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -55,9 +52,7 @@ export function StoryFilterBar({
           </button>
         ))}
       </div>
-      <span className="text-xs text-slate-500">
-        {displayedCount} stories displayed
-      </span>
+      <span className="text-xs text-slate-500">{displayedCount} stories displayed</span>
     </div>
   );
 }

@@ -78,7 +78,9 @@ export function registerMediaTools(
         unit: z.string().optional(),
         format: z.string().optional(),
       }),
-      series: z.array(z.object({ name: z.string(), key: z.string(), color: z.string().optional() })),
+      series: z.array(
+        z.object({ name: z.string(), key: z.string(), color: z.string().optional() })
+      ),
       values: z.array(z.record(z.unknown())).min(1).describe('Array of data points'),
       sourceAttribution: z.string().optional(),
     },
@@ -121,7 +123,9 @@ export function registerMediaTools(
     {
       storyId: z.string().optional().describe('Story ID to append map to'),
       title: z.string().optional(),
-      center: z.tuple([z.number(), z.number()]).describe('Center coordinates [longitude, latitude]'),
+      center: z
+        .tuple([z.number(), z.number()])
+        .describe('Center coordinates [longitude, latitude]'),
       zoom: z.number().min(0).max(22).default(3),
       style: z.enum(['dark', 'light', 'satellite', 'streets']).default('dark'),
       markers: z
@@ -172,7 +176,9 @@ export function registerMediaTools(
       title: z.string().optional().describe('Timeline title'),
       items: z.array(
         z.object({
-          date: z.string().describe('ISO date or formatted label (e.g. "2026-09-26" or "10:30 AM")'),
+          date: z
+            .string()
+            .describe('ISO date or formatted label (e.g. "2026-09-26" or "10:30 AM")'),
           headline: z.string(),
           body: z.string(),
           entityIds: z.array(z.string()).optional(),
@@ -275,10 +281,15 @@ export function registerMediaTools(
     'upload_media',
     '[WRITE] Register an external or generated media asset (image, video, audio, chart) in the media registry.',
     {
-      mediaType: z.enum(['image', 'video', 'audio', 'chart', 'document']).describe('Media MIME or category type'),
+      mediaType: z
+        .enum(['image', 'video', 'audio', 'chart', 'document'])
+        .describe('Media MIME or category type'),
       title: z.string().min(1).describe('Asset title or label'),
       url: z.string().url().describe('Public or storage URL'),
-      metadata: z.record(z.unknown()).optional().describe('Resolution, duration, bitrate, prompt, or provenance info'),
+      metadata: z
+        .record(z.unknown())
+        .optional()
+        .describe('Resolution, duration, bitrate, prompt, or provenance info'),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -327,7 +338,11 @@ export function registerMediaTools(
       };
       media.variants.push(variant);
 
-      return mcpJsonResponse({ message: 'Media variant registered.', mediaId: params.mediaId, variant });
+      return mcpJsonResponse({
+        message: 'Media variant registered.',
+        mediaId: params.mediaId,
+        variant,
+      });
     }
   );
 
@@ -336,7 +351,10 @@ export function registerMediaTools(
     '[WRITE] Remove media attachment from a story hero or detach an asset.',
     {
       storyId: z.string().min(1).describe('Story ID'),
-      removeHeroImage: z.boolean().default(true).describe('Whether to clear the story heroImageUrl'),
+      removeHeroImage: z
+        .boolean()
+        .default(true)
+        .describe('Whether to clear the story heroImageUrl'),
     },
     async ({ storyId, removeHeroImage }) => {
       const principal = getPrincipal();

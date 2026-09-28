@@ -148,14 +148,16 @@ export function registerBlockTools(
     {
       storyId: z.string().min(1),
       title: z.string().optional(),
-      images: z.array(
-        z.object({
-          url: z.string().url(),
-          altText: z.string().min(1),
-          caption: z.string().optional(),
-          credit: z.string().optional(),
-        })
-      ).min(2),
+      images: z
+        .array(
+          z.object({
+            url: z.string().url(),
+            altText: z.string().min(1),
+            caption: z.string().optional(),
+            credit: z.string().optional(),
+          })
+        )
+        .min(2),
     },
     async ({ storyId, title, images }) =>
       helperAdd(storyId, {
@@ -172,7 +174,21 @@ export function registerBlockTools(
     '[WRITE] Add a programmatic D3 chart (line, bar, stacked_bar, area, scatter, donut, kpi) directly to a story.',
     {
       storyId: z.string().min(1),
-      chartType: z.enum(['line', 'area', 'bar', 'stacked_bar', 'grouped_bar', 'scatter', 'heatmap', 'histogram', 'waterfall', 'donut', 'kpi', 'comparison', 'slope']),
+      chartType: z.enum([
+        'line',
+        'area',
+        'bar',
+        'stacked_bar',
+        'grouped_bar',
+        'scatter',
+        'heatmap',
+        'histogram',
+        'waterfall',
+        'donut',
+        'kpi',
+        'comparison',
+        'slope',
+      ]),
       title: z.string().min(1),
       xAxis: z.object({
         key: z.string(),
@@ -183,7 +199,9 @@ export function registerBlockTools(
         label: z.string(),
         unit: z.string().optional(),
       }),
-      series: z.array(z.object({ name: z.string(), key: z.string(), color: z.string().optional() })),
+      series: z.array(
+        z.object({ name: z.string(), key: z.string(), color: z.string().optional() })
+      ),
       values: z.array(z.record(z.unknown())).min(1),
       sourceAttribution: z.string().optional(),
     },
@@ -205,13 +223,15 @@ export function registerBlockTools(
       center: z.tuple([z.number(), z.number()]).describe('[longitude, latitude]'),
       zoom: z.number().min(0).max(22).default(4),
       style: z.enum(['dark', 'light', 'satellite', 'streets']).default('dark'),
-      markers: z.array(
-        z.object({
-          coordinates: z.tuple([z.number(), z.number()]),
-          title: z.string(),
-          description: z.string().optional(),
-        })
-      ).optional(),
+      markers: z
+        .array(
+          z.object({
+            coordinates: z.tuple([z.number(), z.number()]),
+            title: z.string(),
+            description: z.string().optional(),
+          })
+        )
+        .optional(),
       title: z.string().optional(),
     },
     async ({ storyId, ...mapData }) =>
@@ -230,14 +250,16 @@ export function registerBlockTools(
     {
       storyId: z.string().min(1),
       title: z.string().optional(),
-      items: z.array(
-        z.object({
-          date: z.string(),
-          headline: z.string(),
-          body: z.string(),
-          sourceIds: z.array(z.string()).optional(),
-        })
-      ).min(1),
+      items: z
+        .array(
+          z.object({
+            date: z.string(),
+            headline: z.string(),
+            body: z.string(),
+            sourceIds: z.array(z.string()).optional(),
+          })
+        )
+        .min(1),
     },
     async ({ storyId, title, items }) =>
       helperAdd(storyId, {
@@ -317,15 +339,17 @@ export function registerBlockTools(
     {
       storyId: z.string().min(1),
       title: z.string().min(1),
-      slides: z.array(
-        z.object({
-          slideNumber: z.number().int(),
-          title: z.string().min(1),
-          bullets: z.array(z.string()).optional(),
-          body: z.string().optional(),
-          imageUrl: z.string().url().optional(),
-        })
-      ).min(2),
+      slides: z
+        .array(
+          z.object({
+            slideNumber: z.number().int(),
+            title: z.string().min(1),
+            bullets: z.array(z.string()).optional(),
+            body: z.string().optional(),
+            imageUrl: z.string().url().optional(),
+          })
+        )
+        .min(2),
     },
     async ({ storyId, title, slides }) =>
       helperAdd(storyId, {
@@ -516,7 +540,10 @@ export function registerBlockTools(
         createdVia: 'mcp',
       });
 
-      return mcpJsonResponse({ message: removed ? 'Block removed.' : 'Block not found.', success: removed });
+      return mcpJsonResponse({
+        message: removed ? 'Block removed.' : 'Block not found.',
+        success: removed,
+      });
     }
   );
 

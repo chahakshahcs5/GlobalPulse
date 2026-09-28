@@ -63,7 +63,10 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
         title: 'EV Production Deliveries',
         xAxis: { key: 'quarter', label: 'Quarter' },
         yAxis: { label: 'Units (Thousands)' },
-        series: [{ name: 'Model A', key: 'a' }, { name: 'Model B', key: 'b' }],
+        series: [
+          { name: 'Model A', key: 'a' },
+          { name: 'Model B', key: 'b' },
+        ],
         values: [
           { quarter: 'Q1', a: 50, b: 70 },
           { quarter: 'Q2', a: 65, b: 90 },
@@ -324,7 +327,9 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
   describe('Diagram Engine', () => {
     it('validates Mermaid grammar prefixes', () => {
       expect(DiagramRenderer.validateMermaidDefinition('graph TD\nA-->B')).toBe(true);
-      expect(DiagramRenderer.validateMermaidDefinition('sequenceDiagram\nAlice->>Bob: Hello')).toBe(true);
+      expect(DiagramRenderer.validateMermaidDefinition('sequenceDiagram\nAlice->>Bob: Hello')).toBe(
+        true
+      );
       expect(DiagramRenderer.validateMermaidDefinition('invalid gibberish text')).toBe(false);
     });
 
@@ -348,9 +353,20 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
         previousVersionNumber: 2,
         updatedAt: '2026-09-26T21:00:00Z',
         items: [
-          { changeType: 'added', description: 'Added official joint statement excerpts.', affectedSection: 'quote' },
-          { changeType: 'updated', description: 'Updated bilateral trade chart with final 2026 numbers.', affectedSection: 'chart' },
-          { changeType: 'corrected', description: 'Corrected ministerial delegation count from 18 to 22.' },
+          {
+            changeType: 'added',
+            description: 'Added official joint statement excerpts.',
+            affectedSection: 'quote',
+          },
+          {
+            changeType: 'updated',
+            description: 'Updated bilateral trade chart with final 2026 numbers.',
+            affectedSection: 'chart',
+          },
+          {
+            changeType: 'corrected',
+            description: 'Corrected ministerial delegation count from 18 to 22.',
+          },
           { changeType: 'retracted', description: 'Removed unverified early report.' },
         ],
       };

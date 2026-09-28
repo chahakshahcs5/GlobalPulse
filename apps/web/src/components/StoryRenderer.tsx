@@ -56,11 +56,31 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
       const { level, text, subtext } = block.data;
       return (
         <div className="my-3">
-          {level === 1 && <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-3">{text}</h1>}
-          {level === 2 && <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-6 mb-2">{text}</h2>}
-          {level === 3 && <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2">{text}</h3>}
-          {level === 4 && <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1">{text}</h4>}
-          {subtext && <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">{subtext}</p>}
+          {level === 1 && (
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-3">
+              {text}
+            </h1>
+          )}
+          {level === 2 && (
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-6 mb-2">
+              {text}
+            </h2>
+          )}
+          {level === 3 && (
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2">
+              {text}
+            </h3>
+          )}
+          {level === 4 && (
+            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1">
+              {text}
+            </h4>
+          )}
+          {subtext && (
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">
+              {subtext}
+            </p>
+          )}
         </div>
       );
     }
@@ -80,10 +100,15 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
             <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
             Executive Briefing
           </div>
-          <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">{block.data.headline}</h4>
+          <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">
+            {block.data.headline}
+          </h4>
           <ul className="space-y-2.5">
             {block.data.bulletPoints.map((pt: string, idx: number) => (
-              <li key={idx} className="flex items-start gap-2.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium">
+              <li
+                key={idx}
+                className="flex items-start gap-2.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium"
+              >
                 <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">•</span>
                 <span>{pt}</span>
               </li>
@@ -100,7 +125,10 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
             "{block.data.quote}"
           </blockquote>
           <figcaption className="mt-2 text-sm text-slate-600 dark:text-slate-400 not-italic font-sans">
-            — <span className="font-bold text-slate-800 dark:text-slate-200">{block.data.attribution}</span>
+            —{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              {block.data.attribution}
+            </span>
             {block.data.title && <span className="text-slate-500">, {block.data.title}</span>}
           </figcaption>
         </figure>
@@ -153,14 +181,20 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
       return (
         <div className="my-6 p-6 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>
-            <div className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight mt-1">{value}</div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              {label}
+            </span>
+            <div className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight mt-1">
+              {value}
+            </div>
             {context && <p className="text-xs text-slate-400 mt-1">{context}</p>}
           </div>
           {trend && (
             <div
               className={`px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 self-start sm:self-center ${
-                trend === 'up' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                trend === 'up'
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'bg-rose-500/10 text-rose-400'
               }`}
             >
               <span>{trend === 'up' ? '↑' : '↓'}</span>
@@ -262,12 +296,18 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'table': {
       return (
         <div className="my-6 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
-          {block.data.title && <div className="p-3 font-bold text-sm text-slate-200 border-b border-slate-800">{block.data.title}</div>}
+          {block.data.title && (
+            <div className="p-3 font-bold text-sm text-slate-200 border-b border-slate-800">
+              {block.data.title}
+            </div>
+          )}
           <table className="w-full text-left text-sm text-slate-300">
             <thead className="bg-slate-800/60 text-slate-200 font-semibold border-b border-slate-700">
               <tr>
                 {block.data.headers.map((h: string, i: number) => (
-                  <th key={i} className="px-4 py-3">{h}</th>
+                  <th key={i} className="px-4 py-3">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -275,7 +315,9 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
               {block.data.rows.map((row: string[], rIdx: number) => (
                 <tr key={rIdx} className="hover:bg-slate-800/30">
                   {row.map((cell: string, cIdx: number) => (
-                    <td key={cIdx} className="px-4 py-2.5">{cell}</td>
+                    <td key={cIdx} className="px-4 py-2.5">
+                      {cell}
+                    </td>
                   ))}
                 </tr>
               ))}
@@ -314,7 +356,9 @@ const GalleryBlockView: React.FC<{ data: GalleryBlock['data'] }> = ({ data }) =>
             {(img.caption || img.credit) && (
               <figcaption className="p-3 text-xs bg-slate-900/90 text-slate-300 border-t border-slate-800/60">
                 {img.caption && <div className="line-clamp-2">{img.caption}</div>}
-                {img.credit && <div className="text-slate-500 font-mono mt-1">Credit: {img.credit}</div>}
+                {img.credit && (
+                  <div className="text-slate-500 font-mono mt-1">Credit: {img.credit}</div>
+                )}
               </figcaption>
             )}
           </figure>
@@ -328,7 +372,11 @@ const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) => {
   const statusBadge = (status?: string) => {
     switch (status) {
       case 'completed':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">COMPLETED</span>;
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            COMPLETED
+          </span>
+        );
       case 'active':
         return (
           <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1.5">
@@ -337,10 +385,18 @@ const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) => {
           </span>
         );
       case 'blocked':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">BLOCKED</span>;
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            BLOCKED
+          </span>
+        );
       case 'pending':
       default:
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">PENDING</span>;
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+            PENDING
+          </span>
+        );
     }
   };
 
@@ -370,8 +426,8 @@ const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data }) => {
     data.aspectRatio === '9:16'
       ? 'aspect-[9/16] max-w-sm mx-auto'
       : data.aspectRatio === '1:1'
-      ? 'aspect-square max-w-lg mx-auto'
-      : 'aspect-video w-full';
+        ? 'aspect-square max-w-lg mx-auto'
+        : 'aspect-video w-full';
 
   return (
     <div className="my-8 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-xl">
@@ -385,7 +441,8 @@ const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data }) => {
         />
         {data.durationSeconds && (
           <div className="absolute bottom-3 right-3 px-2 py-1 rounded bg-black/80 text-[11px] font-mono text-slate-200 backdrop-blur-sm pointer-events-none">
-            {Math.floor(data.durationSeconds / 60)}:{(data.durationSeconds % 60).toString().padStart(2, '0')}
+            {Math.floor(data.durationSeconds / 60)}:
+            {(data.durationSeconds % 60).toString().padStart(2, '0')}
           </div>
         )}
       </div>
@@ -421,7 +478,8 @@ const AudioBlockView: React.FC<{ data: AudioBlock['data'] }> = ({ data }) => {
         </div>
         {data.durationSeconds && (
           <span className="text-xs font-mono font-medium text-slate-400 bg-slate-800/80 px-2 py-1 rounded">
-            {Math.floor(data.durationSeconds / 60)}:{(data.durationSeconds % 60).toString().padStart(2, '0')}
+            {Math.floor(data.durationSeconds / 60)}:
+            {(data.durationSeconds % 60).toString().padStart(2, '0')}
           </span>
         )}
       </div>
@@ -455,7 +513,9 @@ const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({ data }
     <div className="my-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-md shadow-xl">
       <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Interactive Slide Deck</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+            Interactive Slide Deck
+          </span>
           <h4 className="text-xl font-bold text-slate-100">{data.title}</h4>
         </div>
         <div className="flex items-center gap-2">
@@ -579,7 +639,11 @@ const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
     <div className="my-4 p-4 rounded-xl border border-slate-800 bg-slate-900/40 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3.5">
         {data.avatarUrl ? (
-          <img src={data.avatarUrl} alt={data.name} className="w-12 h-12 rounded-full object-cover border border-slate-700" />
+          <img
+            src={data.avatarUrl}
+            alt={data.name}
+            className="w-12 h-12 rounded-full object-cover border border-slate-700"
+          />
         ) : (
           <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-lg">
             {data.name.slice(0, 2).toUpperCase()}
@@ -593,7 +657,9 @@ const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
             </span>
           </div>
           {data.description && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 max-w-xl">{data.description}</p>
+            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 max-w-xl">
+              {data.description}
+            </p>
           )}
         </div>
       </div>
@@ -653,7 +719,12 @@ const EmbedBlockView: React.FC<{ data: EmbedBlock['data'] }> = ({ data }) => {
       {data.title && <h5 className="font-semibold text-sm text-slate-100 mb-2">{data.title}</h5>}
       {data.provider === 'youtube' && data.url.includes('embed') ? (
         <div className="aspect-video w-full rounded-lg overflow-hidden border border-slate-800">
-          <iframe src={data.url} title={data.title || 'YouTube embed'} className="w-full h-full" allowFullScreen />
+          <iframe
+            src={data.url}
+            title={data.title || 'YouTube embed'}
+            className="w-full h-full"
+            allowFullScreen
+          />
         </div>
       ) : (
         <div className="p-3 rounded-lg border border-slate-800/80 bg-slate-950/60 font-mono text-xs text-slate-400 break-all">

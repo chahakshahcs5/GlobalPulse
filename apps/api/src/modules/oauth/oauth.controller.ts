@@ -10,7 +10,12 @@ import {
   Headers,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { OAuthService, AuthorizeRequest, TokenRequest, oauthService as defaultOAuthService } from './oauth.service';
+import {
+  OAuthService,
+  AuthorizeRequest,
+  TokenRequest,
+  oauthService as defaultOAuthService,
+} from './oauth.service';
 
 @Controller('.well-known')
 export class OAuthWellKnownController {
@@ -85,10 +90,7 @@ export class OAuthController {
 
   @Post('token')
   @HttpCode(HttpStatus.OK)
-  handleToken(
-    @Body() body: TokenRequest,
-    @Headers('authorization') authHeader?: string
-  ) {
+  handleToken(@Body() body: TokenRequest, @Headers('authorization') authHeader?: string) {
     let clientId = body.client_id;
     let clientSecret = body.client_secret;
 

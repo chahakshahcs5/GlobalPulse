@@ -69,13 +69,21 @@ describe('Domain Services Unit Tests', () => {
     });
 
     it('throws NotFoundError for non-existent topic ID or slug', async () => {
-      await expect(topicService.getTopic('top_nonexistent', 'org_test')).rejects.toThrow(NotFoundError);
-      await expect(topicService.getTopicBySlug('non-existent-slug', 'org_test')).rejects.toThrow(NotFoundError);
+      await expect(topicService.getTopic('top_nonexistent', 'org_test')).rejects.toThrow(
+        NotFoundError
+      );
+      await expect(topicService.getTopicBySlug('non-existent-slug', 'org_test')).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('searches topics matching name or aliases', async () => {
       await topicService.createTopic(
-        { name: 'Renewable Energy', description: 'Clean energy technologies', aliases: ['Green Power', 'Solar'] },
+        {
+          name: 'Renewable Energy',
+          description: 'Clean energy technologies',
+          aliases: ['Green Power', 'Solar'],
+        },
         'org_test'
       );
       await topicService.createTopic(
@@ -111,7 +119,11 @@ describe('Domain Services Unit Tests', () => {
 
     it('retrieves entity by ID and by slug', async () => {
       const created = await entityService.createEntity(
-        { name: 'Ursula von der Leyen', type: 'PERSON', description: 'European Commission President' },
+        {
+          name: 'Ursula von der Leyen',
+          type: 'PERSON',
+          description: 'European Commission President',
+        },
         'org_test'
       );
 
@@ -123,8 +135,12 @@ describe('Domain Services Unit Tests', () => {
     });
 
     it('throws NotFoundError for non-existent entity', async () => {
-      await expect(entityService.getEntity('ent_invalid', 'org_test')).rejects.toThrow(NotFoundError);
-      await expect(entityService.getEntityBySlug('invalid-entity-slug', 'org_test')).rejects.toThrow(NotFoundError);
+      await expect(entityService.getEntity('ent_invalid', 'org_test')).rejects.toThrow(
+        NotFoundError
+      );
+      await expect(
+        entityService.getEntityBySlug('invalid-entity-slug', 'org_test')
+      ).rejects.toThrow(NotFoundError);
     });
 
     it('searches entities by query across name and aliases', async () => {
@@ -223,7 +239,8 @@ describe('Domain Services Unit Tests', () => {
         storyId: 'sty_test_attachment',
         sourceId: 'src_test_1',
         blockId: 'blk_chart_1',
-        claimText: 'Trade volume surged by 42% year-over-year according to bilateral customs reports.',
+        claimText:
+          'Trade volume surged by 42% year-over-year according to bilateral customs reports.',
         confidenceScore: 0.98,
       });
 

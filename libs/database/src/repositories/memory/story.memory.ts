@@ -1,7 +1,17 @@
-import type { Story, StoryVersion, StoryBlock, SearchStoriesInput, FindSimilarStoriesInput, StorySearchResultItem } from '@ai-news/schemas';
+import type {
+  Story,
+  StoryVersion,
+  StoryBlock,
+  SearchStoriesInput,
+  FindSimilarStoriesInput,
+  StorySearchResultItem,
+} from '@ai-news/schemas';
 import { type PaginatedResult, encodeCursor, decodeCursor } from '@ai-news/shared';
-import type { IStoryRepository, StoryFilter, PaginatedStories } from '../../interfaces/story.repository';
-
+import type {
+  IStoryRepository,
+  StoryFilter,
+  PaginatedStories,
+} from '../../interfaces/story.repository';
 
 export class MemoryStoryRepository implements IStoryRepository {
   private stories = new Map<string, Story>();
@@ -108,9 +118,7 @@ export class MemoryStoryRepository implements IStoryRepository {
       if (filter.query) {
         const q = filter.query.toLowerCase();
         result = result.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            s.summary.toLowerCase().includes(q)
+          (s) => s.title.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q)
         );
       }
     }
@@ -137,7 +145,10 @@ export class MemoryStoryRepository implements IStoryRepository {
           const cursorTime = new Date(decoded.updatedAt).getTime();
           startIndex = result.findIndex((s) => {
             const itemTime = new Date(s.publishedAt || s.updatedAt).getTime();
-            return itemTime < cursorTime || (itemTime === cursorTime && s.id.localeCompare(decoded.id) < 0);
+            return (
+              itemTime < cursorTime ||
+              (itemTime === cursorTime && s.id.localeCompare(decoded.id) < 0)
+            );
           });
           if (startIndex === -1) startIndex = result.length;
         }
@@ -149,7 +160,10 @@ export class MemoryStoryRepository implements IStoryRepository {
     const pageSlice = result.slice(startIndex, startIndex + limit);
     const hasMore = startIndex + pageSlice.length < total;
     const lastItem = pageSlice[pageSlice.length - 1];
-    const nextCursor = hasMore && lastItem ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id }) : undefined;
+    const nextCursor =
+      hasMore && lastItem
+        ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id })
+        : undefined;
 
     const items = pageSlice.map((s) => ({
       ...s,
@@ -167,11 +181,13 @@ export class MemoryStoryRepository implements IStoryRepository {
     };
   }
 
-  async list(filterOrOrgId?: StoryFilter | string, maybeOrgIdOrFilter?: string | StoryFilter): Promise<Story[]> {
+  async list(
+    filterOrOrgId?: StoryFilter | string,
+    maybeOrgIdOrFilter?: string | StoryFilter
+  ): Promise<Story[]> {
     const paginated = await this.listPaginated(filterOrOrgId, maybeOrgIdOrFilter);
     return paginated.items;
   }
-
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
     this.blocks.set(storyId, [...blocks]);
@@ -225,7 +241,10 @@ export class MemoryStoryRepository implements IStoryRepository {
     }
   }
 
-  async search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>> {
+  async search(
+    params: SearchStoriesInput,
+    orgId?: string
+  ): Promise<PaginatedResult<StorySearchResultItem>> {
     let filtered = Array.from(this.stories.values());
     if (orgId) {
       filtered = filtered.filter((s) => s.organizationId === orgId);
@@ -281,7 +300,10 @@ export class MemoryStoryRepository implements IStoryRepository {
     };
   }
 
-  async findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]> {
+  async findSimilar(
+    params: FindSimilarStoriesInput,
+    orgId: string
+  ): Promise<StorySearchResultItem[]> {
     const all = Array.from(this.stories.values()).filter((s) => s.organizationId === orgId);
     const scored: Array<{ story: Story; score: number }> = [];
 
@@ -312,8 +334,18 @@ export class MemoryStoryRepository implements IStoryRepository {
   }
 
   private computeTextSimilarity(s1: string, s2: string): number {
-    const set1 = new Set(s1.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
-    const set2 = new Set(s2.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+    const set1 = new Set(
+      s1
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 2)
+    );
+    const set2 = new Set(
+      s2
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 2)
+    );
     if (set1.size === 0 || set2.size === 0) return 0;
     let intersection = 0;
     for (const word of set1) {
@@ -329,8 +361,12 @@ export class MemoryStoryRepository implements IStoryRepository {
   } {
     return {
       stories: new Map(Array.from(this.stories.entries()).map(([k, v]) => [k, { ...v }])),
-      versions: new Map(Array.from(this.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])),
-      blocks: new Map(Array.from(this.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])),
+      versions: new Map(
+        Array.from(this.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])
+      ),
+      blocks: new Map(
+        Array.from(this.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])
+      ),
     };
   }
 
@@ -340,8 +376,12 @@ export class MemoryStoryRepository implements IStoryRepository {
     blocks: Map<string, StoryBlock[]>;
   }): void {
     this.stories = new Map(Array.from(snap.stories.entries()).map(([k, v]) => [k, { ...v }]));
-    this.versions = new Map(Array.from(snap.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))]));
-    this.blocks = new Map(Array.from(snap.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))]));
+    this.versions = new Map(
+      Array.from(snap.versions.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])
+    );
+    this.blocks = new Map(
+      Array.from(snap.blocks.entries()).map(([k, v]) => [k, v.map((item) => ({ ...item }))])
+    );
   }
 
   clear(): void {

@@ -100,14 +100,24 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
       const collaborationService = new CollaborationService(db);
 
       // User 1 acquires lock
-      const user1 = { id: 'usr_editor_alice', name: 'Alice Editor', role: 'editor', clientType: 'human_web' };
+      const user1 = {
+        id: 'usr_editor_alice',
+        name: 'Alice Editor',
+        role: 'editor',
+        clientType: 'human_web',
+      };
       const lockRes1 = await collaborationService.acquireLock(testStoryId, user1, 300, testOrgId);
 
       expect(lockRes1.success).toBe(true);
       expect(lockRes1.lock?.lockedBy.id).toBe('usr_editor_alice');
 
       // User 2 attempts to acquire lock on the same story -> rejected
-      const user2 = { id: 'usr_editor_bob', name: 'Bob Editor', role: 'editor', clientType: 'human_web' };
+      const user2 = {
+        id: 'usr_editor_bob',
+        name: 'Bob Editor',
+        role: 'editor',
+        clientType: 'human_web',
+      };
       const lockRes2 = await collaborationService.acquireLock(testStoryId, user2, 300, testOrgId);
 
       expect(lockRes2.success).toBe(false);
@@ -260,7 +270,10 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
       registerEditorialTools(server, db, () => principal);
 
       const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-      const client = new Client({ name: 'mcp-test-client', version: '1.0.0' }, { capabilities: {} });
+      const client = new Client(
+        { name: 'mcp-test-client', version: '1.0.0' },
+        { capabilities: {} }
+      );
 
       await server.connect(serverTransport);
       await client.connect(clientTransport);

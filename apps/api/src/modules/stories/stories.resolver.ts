@@ -58,7 +58,10 @@ export class StoriesResolver {
   }
 
   @Mutation('updateStory')
-  async updateStory(@Args('id') id: string, @Args('input') input: UpdateStoryInput): Promise<Story> {
+  async updateStory(
+    @Args('id') id: string,
+    @Args('input') input: UpdateStoryInput
+  ): Promise<Story> {
     return await this.storyService.updateStory(id, input, {
       organizationId: 'org_default',
       authorId: 'usr_graphql',
@@ -68,7 +71,9 @@ export class StoriesResolver {
   }
 
   @Mutation('createStoryVersion')
-  async createStoryVersion(@Args('input') input: CreateStoryVersionInput & { storyId: string }): Promise<StoryVersion> {
+  async createStoryVersion(
+    @Args('input') input: CreateStoryVersionInput & { storyId: string }
+  ): Promise<StoryVersion> {
     return await this.storyService.createStoryVersion(input.storyId, input, {
       organizationId: 'org_default',
       authorId: 'usr_graphql',
@@ -98,7 +103,10 @@ export class StoriesResolver {
   }
 
   @Mutation('addStoryBlock')
-  async addStoryBlock(@Args('storyId') storyId: string, @Args('block') block: unknown): Promise<StoryBlock> {
+  async addStoryBlock(
+    @Args('storyId') storyId: string,
+    @Args('block') block: unknown
+  ): Promise<StoryBlock> {
     return await this.storyService.addBlock(storyId, block, {
       organizationId: 'org_default',
       authorId: 'usr_graphql',
@@ -108,7 +116,10 @@ export class StoriesResolver {
   }
 
   @Mutation('attachSource')
-  async attachSource(@Args('storyId') storyId: string, @Args('sourceId') sourceId: string): Promise<Story> {
+  async attachSource(
+    @Args('storyId') storyId: string,
+    @Args('sourceId') sourceId: string
+  ): Promise<Story> {
     await this.sourceService.attachSourceToStory(storyId, sourceId, 'org_default');
     return await this.storyService.getStory(storyId, 'org_default');
   }

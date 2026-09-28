@@ -103,11 +103,15 @@ describe('Shared Utilities & Domain Exceptions (Unit Tests)', () => {
     });
 
     it('strips punctuation, symbols, and leading/trailing dashes', () => {
-      expect(slugify('  -- AI: Breakthroughs, Risks & Regulations! -- ')).toBe('ai-breakthroughs-risks-regulations');
+      expect(slugify('  -- AI: Breakthroughs, Risks & Regulations! -- ')).toBe(
+        'ai-breakthroughs-risks-regulations'
+      );
     });
 
     it('collapses multiple spaces, underscores, and hyphens into single hyphens', () => {
-      expect(slugify('quantum____computing   advancements---2026')).toBe('quantum-computing-advancements-2026');
+      expect(slugify('quantum____computing   advancements---2026')).toBe(
+        'quantum-computing-advancements-2026'
+      );
     });
 
     it('handles empty or special-character-only strings gracefully', () => {

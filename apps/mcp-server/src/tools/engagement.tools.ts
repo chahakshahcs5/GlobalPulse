@@ -18,7 +18,10 @@ export function registerEngagementTools(
     '[READ-ONLY] Retrieve reader comments posted on a specific news story, optionally filtered by status.',
     {
       storyId: z.string().min(1).describe('The ID of the story (e.g. "sty_123")'),
-      status: z.enum(['pending', 'approved', 'flagged', 'hidden']).optional().describe('Filter by moderation status'),
+      status: z
+        .enum(['pending', 'approved', 'flagged', 'hidden'])
+        .optional()
+        .describe('Filter by moderation status'),
     },
     async ({ storyId, status }) => {
       const principal = getPrincipal();
@@ -44,7 +47,10 @@ export function registerEngagementTools(
     {
       commentId: z.string().min(1).describe('The unique comment ID (e.g. "cmt_123")'),
       status: z.enum(['approved', 'flagged', 'hidden']).describe('New moderation status'),
-      reason: z.string().optional().describe('Reason for moderation decision (e.g. policy violation, hate speech)'),
+      reason: z
+        .string()
+        .optional()
+        .describe('Reason for moderation decision (e.g. policy violation, hate speech)'),
     },
     async ({ commentId, status, reason }) => {
       const principal = getPrincipal();
@@ -110,7 +116,13 @@ export function registerEngagementTools(
     'get_reading_history',
     '[READ-ONLY] Retrieve recently read articles and completion percentages for the current user.',
     {
-      limit: z.number().int().positive().max(100).default(20).describe('Max history items to retrieve'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(100)
+        .default(20)
+        .describe('Max history items to retrieve'),
     },
     async ({ limit }) => {
       const principal = getPrincipal();
@@ -157,8 +169,14 @@ export function registerEngagementTools(
     '[EDITORIAL / AI] Aggregate top published stories and generate a curated newsletter digest.',
     {
       frequency: z.enum(['daily', 'weekly']).default('daily').describe('Digest frequency type'),
-      category: z.string().optional().describe('Filter by topic category (e.g. Technology, Politics)'),
-      targetDate: z.string().optional().describe('Target date string (YYYY-MM-DD), defaults to today'),
+      category: z
+        .string()
+        .optional()
+        .describe('Filter by topic category (e.g. Technology, Politics)'),
+      targetDate: z
+        .string()
+        .optional()
+        .describe('Target date string (YYYY-MM-DD), defaults to today'),
     },
     async ({ frequency, category, targetDate }) => {
       try {
@@ -190,7 +208,10 @@ export function registerEngagementTools(
     '[READ-ONLY] Generate complete OpenGraph, Twitter Card meta tags, and direct share URLs for a story.',
     {
       storyId: z.string().min(1).describe('Target story ID'),
-      baseUrl: z.string().optional().describe('Base domain URL (default: https://news.globalpulse.com)'),
+      baseUrl: z
+        .string()
+        .optional()
+        .describe('Base domain URL (default: https://news.globalpulse.com)'),
     },
     async ({ storyId, baseUrl = 'https://news.globalpulse.com' }) => {
       try {
@@ -227,7 +248,10 @@ export function registerEngagementTools(
     {
       name: z.string().min(1).describe('Name of the collection (e.g. "AI Revolution 2026")'),
       description: z.string().optional().describe('Editorial description or theme explainer'),
-      storyIds: z.array(z.string()).default([]).describe('List of story IDs included in the collection'),
+      storyIds: z
+        .array(z.string())
+        .default([])
+        .describe('List of story IDs included in the collection'),
       isPublic: z.boolean().default(true).describe('Whether the collection is publicly visible'),
     },
     async ({ name, description, storyIds, isPublic }) => {

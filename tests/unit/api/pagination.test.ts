@@ -152,7 +152,6 @@ describe('API & Repository Pagination (Cursor & Offset)', () => {
       expect(filtered.items).toHaveLength(1);
       expect(filtered.items[0].title).toBe('Draft Special Investigation');
       expect(filtered.hasMore).toBe(false);
-
     });
   });
 });

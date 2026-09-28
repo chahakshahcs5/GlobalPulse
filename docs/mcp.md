@@ -8,10 +8,10 @@ This document describes the remote **Model Context Protocol (MCP)** server archi
 
 Unlike local desktop MCP tools that communicate via standard input/output (`stdio`), GlobalPulse operates as a **Remote Enterprise MCP Server** over **Streamable HTTP**:
 
-* **Endpoint**: `POST /mcp`
-* **Content-Type**: `application/json`
-* **Protocol**: JSON-RPC 2.0
-* **Mutual Authentication**: OAuth 2.1 Bearer Token with PKCE S256 verification and RFC 8414 Protected Resource discovery.
+- **Endpoint**: `POST /mcp`
+- **Content-Type**: `application/json`
+- **Protocol**: JSON-RPC 2.0
+- **Mutual Authentication**: OAuth 2.1 Bearer Token with PKCE S256 verification and RFC 8414 Protected Resource discovery.
 
 ```mermaid
 flowchart TD
@@ -20,13 +20,13 @@ flowchart TD
     OAuth["OAuth 2.1 Guard (Bearer Token + Scopes)"]
     ALS["AsyncLocalStorage Context (mcpPrincipalStore)"]
     Router{"JSON-RPC 2.0 Method Router"}
-    
+
     Init["initialize (Handshake & Capabilities)"]
     ToolsList["tools/list (18 Section 38 Tools)"]
     ToolsCall["tools/call (Tool Execution)"]
     ResList["resources/list & resources/read"]
     Prompts["prompts/list & prompts/get"]
-    
+
     Domain["Domain Services (Stories, Events, Entities, Sources)"]
     Audit["Immutable Audit Log Entry"]
     Response["JSON-RPC 2.0 Response Result"]

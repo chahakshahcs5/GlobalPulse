@@ -17,9 +17,15 @@ export function registerLiveblogTools(
     'Post an immediate live dispatch or key update to an active liveblog event story.',
     {
       storyId: z.string().min(1).describe('The target story ID'),
-      headline: z.string().min(1).describe('Dispatch headline (e.g. Press Secretary takes the podium)'),
+      headline: z
+        .string()
+        .min(1)
+        .describe('Dispatch headline (e.g. Press Secretary takes the podium)'),
       content: z.string().min(1).describe('Dispatch body content or eyewitness observations'),
-      isKeyEvent: z.boolean().default(false).describe('Whether this update represents a major breaking milestone'),
+      isKeyEvent: z
+        .boolean()
+        .default(false)
+        .describe('Whether this update represents a major breaking milestone'),
     },
     async ({ storyId, headline, content, isKeyEvent }) => {
       try {

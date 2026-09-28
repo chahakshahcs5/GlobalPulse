@@ -29,10 +29,7 @@ interface StoryEngagementProps {
   storyTitle?: string;
 }
 
-export const StoryEngagement: React.FC<StoryEngagementProps> = ({
-  storyId,
-  storySlug,
-}) => {
+export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, storySlug }) => {
   const { comments, isLoading: commentsLoading, addComment } = useStoryComments(storyId);
   const { counts, userReactions, toggleReaction } = useStoryReactions(storyId);
   const bookmarks = useBookmarks();
@@ -63,10 +60,14 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
 
     setIsSubmitting(true);
     try {
-      await addComment(commentText.trim(), authorName.trim() || undefined, replyingToId || undefined);
+      await addComment(
+        commentText.trim(),
+        authorName.trim() || undefined,
+        replyingToId || undefined
+      );
       setCommentText('');
       setReplyingToId(null);
-    } catch (err) {
+    } catch {
       // Handled in store
     } finally {
       setIsSubmitting(false);
@@ -74,10 +75,34 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
   };
 
   const reactionConfigs = [
-    { type: 'like', label: 'Agree', icon: ThumbsUp, color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' },
-    { type: 'insightful', label: 'Insightful', icon: Lightbulb, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' },
-    { type: 'important', label: 'Urgent', icon: Flame, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800' },
-    { type: 'heart', label: 'Applaud', icon: Heart, color: 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/40 border-pink-200 dark:border-pink-800' },
+    {
+      type: 'like',
+      label: 'Agree',
+      icon: ThumbsUp,
+      color:
+        'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800',
+    },
+    {
+      type: 'insightful',
+      label: 'Insightful',
+      icon: Lightbulb,
+      color:
+        'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
+    },
+    {
+      type: 'important',
+      label: 'Urgent',
+      icon: Flame,
+      color:
+        'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800',
+    },
+    {
+      type: 'heart',
+      label: 'Applaud',
+      icon: Heart,
+      color:
+        'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/40 border-pink-200 dark:border-pink-800',
+    },
   ];
 
   // Organize comments into parent & child replies
@@ -161,9 +186,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              Reader Discussion
-            </h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Reader Discussion</h3>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-300">
               {comments.length}
             </span>
@@ -213,9 +236,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({
           />
 
           <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-slate-400">
-              {commentText.length}/2000 characters
-            </span>
+            <span className="text-[11px] text-slate-400">{commentText.length}/2000 characters</span>
             <button
               type="submit"
               disabled={!commentText.trim() || isSubmitting}

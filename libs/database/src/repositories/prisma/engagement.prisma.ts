@@ -6,7 +6,10 @@ import type {
   StoryReactionsSummary,
   BookmarkItem,
 } from '@ai-news/schemas';
-import type { IEngagementRepository, ReadingProgressRecord } from '../../interfaces/engagement.repository';
+import type {
+  IEngagementRepository,
+  ReadingProgressRecord,
+} from '../../interfaces/engagement.repository';
 
 interface PrismaCommentRow {
   id: string;
@@ -50,10 +53,16 @@ export class PrismaEngagementRepository implements IEngagementRepository {
 
   private get commentClient(): {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaCommentRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaCommentRow>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaCommentRow>;
     delete: (args: { where: Record<string, unknown> }) => Promise<PrismaCommentRow>;
     findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaCommentRow | null>;
-    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaCommentRow[]>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaCommentRow[]>;
   } {
     return this.prisma.comment as any;
   }
@@ -71,7 +80,10 @@ export class PrismaEngagementRepository implements IEngagementRepository {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaBookmarkRow>;
     delete: (args: { where: Record<string, unknown> }) => Promise<PrismaBookmarkRow>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaBookmarkRow | null>;
-    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaBookmarkRow[]>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaBookmarkRow[]>;
   } {
     return this.prisma.bookmark as any;
   }
@@ -89,8 +101,10 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       status: (row.status as CommentStatus) || 'approved',
       likesCount: row.likesCount || 0,
       moderationReason: row.moderationReason || undefined,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      updatedAt:
+        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
     };
   }
 
@@ -344,7 +358,8 @@ export class PrismaEngagementRepository implements IEngagementRepository {
             storyId: row.storyId,
             percentage: row.percentage,
             completed: row.completed,
-            updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+            updatedAt:
+              row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
           };
         }
       } catch {
@@ -368,7 +383,8 @@ export class PrismaEngagementRepository implements IEngagementRepository {
             storyId: r.storyId,
             percentage: r.percentage,
             completed: r.completed,
-            updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
+            updatedAt:
+              r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
           }));
         }
       } catch {
@@ -390,7 +406,11 @@ export class PrismaEngagementRepository implements IEngagementRepository {
   // ---------------------------------------------------------------------------
   private shareCounts = new Map<string, number>();
 
-  async recordShare(storyId: string, platform?: string, userId?: string): Promise<{ shareCount: number }> {
+  async recordShare(
+    storyId: string,
+    platform?: string,
+    userId?: string
+  ): Promise<{ shareCount: number }> {
     if (this.shareClient) {
       try {
         await this.shareClient.create({

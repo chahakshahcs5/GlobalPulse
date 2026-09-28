@@ -16,12 +16,11 @@ Host: news.example.com
 ```
 
 ### Response:
+
 ```json
 {
   "resource": "https://news.example.com/mcp",
-  "authorization_servers": [
-    "https://auth.example.com"
-  ],
+  "authorization_servers": ["https://auth.example.com"],
   "scopes_supported": [
     "news:read",
     "news:search",
@@ -32,9 +31,7 @@ Host: news.example.com
     "news:topics",
     "news:admin"
   ],
-  "bearer_methods_supported": [
-    "header"
-  ],
+  "bearer_methods_supported": ["header"],
   "resource_documentation": "https://news.example.com/docs/mcp"
 }
 ```
@@ -45,6 +42,7 @@ Host: news.example.com
 
 1. **Authorization Request**:
    ChatGPT directs the journalist/user to the authorization server:
+
    ```
    https://auth.example.com/authorize?
      response_type=code&
@@ -86,6 +84,7 @@ Content-Type: application/json
 ```
 
 The MCP Resource Server verifies:
+
 1. **Signature**: Verified against the authorization server's JWKS endpoint.
 2. **Issuer (`iss`)**: Matches `https://auth.example.com`.
 3. **Audience (`aud`)**: Matches `https://news.example.com/mcp`.

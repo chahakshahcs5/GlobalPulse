@@ -25,7 +25,10 @@ export function registerAnalyticsTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const analytics = await analyticsService.getStoryAnalytics(args.story_id, principal.organizationId);
+        const analytics = await analyticsService.getStoryAnalytics(
+          args.story_id,
+          principal.organizationId
+        );
         return successResponse(analytics);
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));
@@ -38,14 +41,23 @@ export function registerAnalyticsTools(
     'get_trending_stories',
     'List top trending stories ranked by virality velocity and reader engagement score.',
     {
-      limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of trending stories to return'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(10)
+        .describe('Maximum number of trending stories to return'),
     },
     async (args) => {
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const trending = await analyticsService.getTrendingStories(args.limit, principal.organizationId);
+        const trending = await analyticsService.getTrendingStories(
+          args.limit,
+          principal.organizationId
+        );
         return successResponse({ count: trending.length, trending });
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));

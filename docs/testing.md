@@ -56,27 +56,32 @@ tests/
 ## 3. Running Test Suites
 
 ### 3.1 Fast Local Unit Tests
+
 ```bash
 pnpm test:unit
 ```
 
 ### 3.2 Subsystem Integration Tests
+
 ```bash
 pnpm test:integration
 ```
 
 ### 3.3 Full Test Suite (17 Suites, 158 Tests)
+
 ```bash
 pnpm test
 ```
 
 ### 3.4 Multi-Agent End-to-End Demonstration Script
+
 ```bash
 pnpm demo:e2e
 # or: tsx scripts/demo-e2e.ts
 ```
 
 ### 3.5 Browser End-to-End Tests (Playwright)
+
 ```bash
 pnpm test:e2e:browser
 ```
@@ -110,13 +115,12 @@ flowchart LR
 
 ### Detailed Comparison
 
-| Feature | Automated E2E Tests (`tests/e2e/`) | Live Demonstration Script (`scripts/demo-e2e.ts`) |
-|:---|:---|:---|
-| **Location** | `tests/e2e/multi-agent-publishing.e2e.test.ts` | `scripts/demo-e2e.ts` |
-| **Execution Command** | `pnpm test:e2e` / `pnpm test` | `pnpm demo:e2e` |
-| **Target Audience** | Continuous Integration (CI/CD) runners, automated pull request gates | Human developers, architects, conference presentations, stakeholders |
-| **Output Style** | Silent, minimal TAP or dot progress, failure stack traces only | Verbose, colorful step-by-step console logs with emojis, formatted JSON payloads, and ASCII banners |
-| **Assertion Strategy** | Strict programmatic invariants (`expect(...).toBe(...)`) | Stepwise walkthrough displaying protocol lifecycle, background workers, and audit counts |
-| **Lifecycle** | Runs inside Vitest test harness with mock timers and test hooks | Standalone node execution booting ephemeral domain services, workers, and mobile caches |
-| **Failure Handling** | Immediately aborts test runner with non-zero exit code for CI | Clearly logs the exact failure step in human-readable terms for interactive troubleshooting |
-
+| Feature                | Automated E2E Tests (`tests/e2e/`)                                   | Live Demonstration Script (`scripts/demo-e2e.ts`)                                                   |
+| :--------------------- | :------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **Location**           | `tests/e2e/multi-agent-publishing.e2e.test.ts`                       | `scripts/demo-e2e.ts`                                                                               |
+| **Execution Command**  | `pnpm test:e2e` / `pnpm test`                                        | `pnpm demo:e2e`                                                                                     |
+| **Target Audience**    | Continuous Integration (CI/CD) runners, automated pull request gates | Human developers, architects, conference presentations, stakeholders                                |
+| **Output Style**       | Silent, minimal TAP or dot progress, failure stack traces only       | Verbose, colorful step-by-step console logs with emojis, formatted JSON payloads, and ASCII banners |
+| **Assertion Strategy** | Strict programmatic invariants (`expect(...).toBe(...)`)             | Stepwise walkthrough displaying protocol lifecycle, background workers, and audit counts            |
+| **Lifecycle**          | Runs inside Vitest test harness with mock timers and test hooks      | Standalone node execution booting ephemeral domain services, workers, and mobile caches             |
+| **Failure Handling**   | Immediately aborts test runner with non-zero exit code for CI        | Clearly logs the exact failure step in human-readable terms for interactive troubleshooting         |

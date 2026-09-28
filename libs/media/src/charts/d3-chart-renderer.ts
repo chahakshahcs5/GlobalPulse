@@ -174,15 +174,18 @@ export class D3ChartRenderer {
 
     // Legend
     let legendX = width - padding.right;
-    series.slice().reverse().forEach((s) => {
-      legendX -= 120;
-      svgElements += `
+    series
+      .slice()
+      .reverse()
+      .forEach((s) => {
+        legendX -= 120;
+        svgElements += `
         <g transform="translate(${legendX}, 30)">
           <rect width="12" height="12" rx="2" fill="${s.color}" />
           <text x="18" y="10" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
         </g>
       `;
-    });
+      });
 
     // Source Attribution Footnote
     if (chartData.sourceAttribution) {
@@ -492,7 +495,8 @@ export class D3ChartRenderer {
     maxBound = Math.max(10, maxBound * 1.15);
     minBound = Math.min(0, minBound * 1.15);
 
-    const scaleY = (val: number) => padding.top + chartH - ((val - minBound) / (maxBound - minBound)) * chartH;
+    const scaleY = (val: number) =>
+      padding.top + chartH - ((val - minBound) / (maxBound - minBound)) * chartH;
     const stepW = chartW / Math.max(1, steps.length);
     const barW = stepW * 0.65;
 
@@ -643,7 +647,8 @@ export class D3ChartRenderer {
     minVal -= pad;
     maxVal += pad;
 
-    const scaleY = (val: number) => padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
+    const scaleY = (val: number) =>
+      padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
 
     let elements = '';
     elements += `<text x="40" y="32" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.title)}</text>`;

@@ -51,7 +51,8 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
       organizationId: testOrgId,
       slug: 'autonomous-newsroom-agents',
       title: 'Autonomous AI Agents Transform 24/7 Global Newsrooms',
-      summary: 'Next-generation LLMs coordinate verification, clustering, and multi-format publishing.',
+      summary:
+        'Next-generation LLMs coordinate verification, clustering, and multi-format publishing.',
       status: 'PUBLISHED',
       articleType: 'analysis',
       authorId: 'usr_editor_elena',
@@ -76,12 +77,7 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
       const timestamp = new Date().toISOString();
       const model = 'gemini-1.5-pro';
 
-      const signature = generateProvenanceWatermark(
-        testStoryId,
-        promptHash,
-        model,
-        timestamp
-      );
+      const signature = generateProvenanceWatermark(testStoryId, promptHash, model, timestamp);
 
       const record = {
         id: 'prov_test_1',
@@ -117,7 +113,8 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
           prompt: 'Write in-depth analysis of autonomous newsroom agents',
           confidenceScore: 0.97,
           humanReviewedBy: 'usr_editor_elena',
-          c2paManifestUrl: 'https://credentials.globalpulse.news/manifests/sty_frontier_llm_01.json',
+          c2paManifestUrl:
+            'https://credentials.globalpulse.news/manifests/sty_frontier_llm_01.json',
         },
       });
       expect(postRes.statusCode).toBe(200);
@@ -279,7 +276,8 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
       const reviewResult = (await client.callTool({
         name: 'request_editorial_review',
         arguments: {
-          storyDraft: 'Global news platforms are experiencing unprecedented architectural consolidation under agentic workflows.',
+          storyDraft:
+            'Global news platforms are experiencing unprecedented architectural consolidation under agentic workflows.',
           styleGuide: 'AP',
         },
       })) as { content: Array<{ type: string; text: string }> };

@@ -57,10 +57,7 @@ export class WebhookService {
   /**
    * Register a new webhook endpoint for event subscriptions.
    */
-  async registerWebhook(
-    orgId: string,
-    input: RegisterWebhookInput
-  ): Promise<WebhookSubscription> {
+  async registerWebhook(orgId: string, input: RegisterWebhookInput): Promise<WebhookSubscription> {
     const now = new Date().toISOString();
     const secret = input.secret || randomBytes(24).toString('hex');
 

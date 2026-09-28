@@ -20,7 +20,10 @@ export function registerNotificationTools(
     {
       story_id: z.string().describe('ID of the breaking news story'),
       headline: z.string().describe('Brief, high-impact headline for the breaking alert'),
-      urgency: z.enum(['info', 'warning', 'urgent']).default('urgent').describe('Alert urgency level'),
+      urgency: z
+        .enum(['info', 'warning', 'urgent'])
+        .default('urgent')
+        .describe('Alert urgency level'),
     },
     async (args) => {
       try {
@@ -65,7 +68,10 @@ export function registerNotificationTools(
       message: z.string().describe('Detailed alert content or fact-checking notes'),
       story_id: z.string().optional().describe('Optional related story ID'),
       severity: z.enum(['info', 'warning', 'urgent']).default('warning').describe('Severity level'),
-      target_role: z.string().optional().describe('Target recipient role (e.g. editor, journalist)'),
+      target_role: z
+        .string()
+        .optional()
+        .describe('Target recipient role (e.g. editor, journalist)'),
     },
     async (args) => {
       try {
@@ -115,7 +121,10 @@ export function registerNotificationTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const notifications = await notificationService.listNotifications(principal.organizationId, args.limit);
+        const notifications = await notificationService.listNotifications(
+          principal.organizationId,
+          args.limit
+        );
         return successResponse({ count: notifications.length, notifications });
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));

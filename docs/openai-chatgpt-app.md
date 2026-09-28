@@ -38,6 +38,7 @@ OpenAI ChatGPT users and automated OpenAI Assistants operate GlobalPulse by addi
 Some external AI interfaces (e.g. advanced ChatGPT App sidecars or Claude desktop artifacts) support rendering custom iframe-based App UIs directly inside the conversation.
 
 ### Design Principles:
+
 1. **Zero Vendor Lock-in**: The MCP tools function 100% identically whether the UI iframe is rendered or ignored.
 2. **Read-Only Inspection**: The conversational App UI displays an interactive preview of the rendered article (with interactive D3 charts and SVG maps) inside ChatGPT.
 3. **Fallback Gracefulness**: If the AI client does not support HTML iframe extensions, the tool returns the standard JSON response:

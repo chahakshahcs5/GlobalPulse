@@ -25,6 +25,7 @@ Every service outputs structured, machine-parsable JSON lines to stdout:
 ```
 
 ### Contextual Correlation
+
 The logger automatically inherits correlation IDs (`x-correlation-id` / `traceId`) across Fastify plugins, domain repositories, and background worker queues.
 
 ---
@@ -32,21 +33,24 @@ The logger automatically inherits correlation IDs (`x-correlation-id` / `traceId
 ## 2. Prometheus Metrics Registry (`MetricsRegistry`)
 
 The platform instruments domain metrics conforming to OpenMetrics specifications, exposed on:
-* **Endpoint**: `GET /metrics`
+
+- **Endpoint**: `GET /metrics`
 
 ### Key Metric Counters & Gauges:
-* `mcp_tool_invocations_total`: Counter partitioned by `tool_name`, `client_id`, and `status`.
-* `stories_published_total`: Counter partitioned by `article_type` and `created_by_client`.
-* `worker_jobs_completed_total`: Counter tracking background queue throughput (`media.process_variant`, `search.index_story`, `audio.generate_briefing`).
-* `worker_jobs_failed_total`: Counter tracking unrecoverable worker failures.
-* `active_sse_connections`: Gauge tracking connected Web and 4K display wall clients.
-* `database_query_duration_seconds`: Summary tracking p50, p95, and p99 database query latencies.
+
+- `mcp_tool_invocations_total`: Counter partitioned by `tool_name`, `client_id`, and `status`.
+- `stories_published_total`: Counter partitioned by `article_type` and `created_by_client`.
+- `worker_jobs_completed_total`: Counter tracking background queue throughput (`media.process_variant`, `search.index_story`, `audio.generate_briefing`).
+- `worker_jobs_failed_total`: Counter tracking unrecoverable worker failures.
+- `active_sse_connections`: Gauge tracking connected Web and 4K display wall clients.
+- `database_query_duration_seconds`: Summary tracking p50, p95, and p99 database query latencies.
 
 ---
 
 ## 3. Distributed Tracing (`SimpleTracer`)
 
 OpenTelemetry-compatible spans track execution duration across boundaries:
+
 1. Client HTTP request -> Fastify Auth Guard
 2. Remote MCP JSON-RPC dispatch -> Domain transaction
 3. Background BullMQ queue enqueue -> Worker completion

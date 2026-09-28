@@ -33,20 +33,14 @@ export class UsersController {
   }
 
   @Get(':id')
-  async getUser(
-    @Param('id') id: string,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async getUser(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
     AuthService.requireScope(principal, 'news:read');
     return this.userService.getUser(id, principal.organizationId);
   }
 
   @Post('invite')
   @HttpCode(HttpStatus.CREATED)
-  async inviteUser(
-    @Body() body: unknown,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async inviteUser(@Body() body: unknown, @Principal() principal: AuthenticatedPrincipal) {
     AuthService.requireRole(principal, 'admin', 'editor');
 
     const validated = InviteUserInputSchema.parse(body);
@@ -87,10 +81,7 @@ export class UsersController {
 
   @Post('follow')
   @HttpCode(HttpStatus.OK)
-  async followTarget(
-    @Body() body: unknown,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async followTarget(@Body() body: unknown, @Principal() principal: AuthenticatedPrincipal) {
     AuthService.requireScope(principal, 'news:read');
     const validated = FollowTargetInputSchema.parse(body);
     return this.userService.followTarget(principal.id, validated.targetType, validated.targetId);

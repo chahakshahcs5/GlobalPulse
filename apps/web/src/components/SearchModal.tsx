@@ -16,7 +16,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [apiResults, setApiResults] = useState<any[] | null>(null);
-  const [suggestions, setSuggestions] = useState<Array<{ text: string; type: string; id: string; score: number }>>([]);
+  const [suggestions, setSuggestions] = useState<
+    Array<{ text: string; type: string; id: string; score: number }>
+  >([]);
   const { stories } = useAllStories();
 
   useEffect(() => {
@@ -140,7 +142,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             </span>
             {suggestions.map((item) => {
               const badgeColors: Record<string, string> = {
-                category: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400',
+                category:
+                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400',
                 topic: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400',
                 entity: 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400',
                 story: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400',
@@ -161,9 +164,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                   }}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap hover:opacity-85 transition cursor-pointer ${color}`}
                 >
-                  <span className="text-[10px] uppercase font-mono opacity-80">
-                    {item.type}:
-                  </span>
+                  <span className="text-[10px] uppercase font-mono opacity-80">{item.type}:</span>
                   <span>{item.text}</span>
                 </button>
               );
@@ -178,7 +179,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
               <BookOpen className="w-8 h-8 mx-auto text-slate-400 stroke-1" />
               <p>Type keywords to search live across the backend story database.</p>
               <div className="flex flex-wrap justify-center gap-2 pt-2">
-                {['BRICS 2026', 'Semiconductors', 'Artificial Intelligence', 'Green Hydrogen', 'Markets'].map((tag) => (
+                {[
+                  'BRICS 2026',
+                  'Semiconductors',
+                  'Artificial Intelligence',
+                  'Green Hydrogen',
+                  'Markets',
+                ].map((tag) => (
                   <button
                     key={tag}
                     onClick={() => setQuery(tag)}
@@ -193,7 +200,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
           {query && !isSearching && results.length === 0 && (
             <div className="py-8 text-center text-slate-500 text-sm">
-              No stories found matching <span className="font-semibold text-slate-700 dark:text-slate-300">"{query}"</span>.
+              No stories found matching{' '}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">"{query}"</span>.
             </div>
           )}
 
@@ -207,7 +215,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
               <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mb-1">
                 <span>{story.articleType.replace('_', ' ')}</span>
                 <span>•</span>
-                <span className="flex items-center gap-1 text-slate-400 font-normal" suppressHydrationWarning>
+                <span
+                  className="flex items-center gap-1 text-slate-400 font-normal"
+                  suppressHydrationWarning
+                >
                   <Clock className="w-3 h-3" />
                   {formatDeterministicDate(story.publishedAt)}
                 </span>

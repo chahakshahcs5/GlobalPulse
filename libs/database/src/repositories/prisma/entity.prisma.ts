@@ -25,14 +25,26 @@ export class PrismaEntityRepository implements IEntityRepository {
   private get entityClient(): {
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaEntityRow | null>;
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaEntityRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaEntityRow>;
-    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaEntityRow[]>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaEntityRow>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaEntityRow[]>;
   } {
     return this.prisma.entity as {
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaEntityRow | null>;
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaEntityRow>;
-      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaEntityRow>;
-      findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaEntityRow[]>;
+      update: (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => Promise<PrismaEntityRow>;
+      findMany: (args: {
+        where: Record<string, unknown>;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaEntityRow[]>;
     };
   }
 

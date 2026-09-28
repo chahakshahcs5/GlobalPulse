@@ -9,7 +9,7 @@ function calculateCrc32(buf: Buffer): number {
     const byte = buf[i];
     let cur = (crc ^ byte) & 0xff;
     for (let j = 0; j < 8; j++) {
-      cur = (cur & 1) ? (0xedb88320 ^ (cur >>> 1)) : (cur >>> 1);
+      cur = cur & 1 ? 0xedb88320 ^ (cur >>> 1) : cur >>> 1;
     }
     crc = (crc >>> 8) ^ cur;
   }

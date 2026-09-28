@@ -19,12 +19,22 @@ export class PrismaIdempotencyRepository implements IIdempotencyRepository {
 
   private get idempotencyClient(): {
     findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaIdempotencyRow | null>;
-    upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<PrismaIdempotencyRow>;
+    upsert: (args: {
+      where: Record<string, unknown>;
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    }) => Promise<PrismaIdempotencyRow>;
     deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
   } {
     return this.prisma.idempotencyRecord as {
-      findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaIdempotencyRow | null>;
-      upsert: (args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<PrismaIdempotencyRow>;
+      findUnique: (args: {
+        where: Record<string, unknown>;
+      }) => Promise<PrismaIdempotencyRow | null>;
+      upsert: (args: {
+        where: Record<string, unknown>;
+        create: Record<string, unknown>;
+        update: Record<string, unknown>;
+      }) => Promise<PrismaIdempotencyRow>;
       deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
     };
   }

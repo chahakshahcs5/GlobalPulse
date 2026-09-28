@@ -1,7 +1,8 @@
 import { createHash, createHmac } from 'crypto';
 import type { AIStoryProvenance } from '@ai-news/schemas';
 
-const DEFAULT_SECRET = process.env.PROVENANCE_HMAC_SECRET || 'globalpulse-ai-provenance-watermark-key-2026';
+const DEFAULT_SECRET =
+  process.env.PROVENANCE_HMAC_SECRET || 'globalpulse-ai-provenance-watermark-key-2026';
 
 /**
  * Creates a deterministic SHA-256 cryptographic hash of the input prompt.

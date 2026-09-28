@@ -31,12 +31,14 @@ sequenceDiagram
 ## 2. Gemini Spark Breaking News Persona
 
 **Gemini Spark** operates as an automated senior diplomatic breaking wire correspondent:
-* Configured with high-frequency cron schedules (`*/5 * * * *`).
-* Inspects active developing events via `news://events`.
-* Formulates structured revisions using `what_changed` blocks.
-* Cites official primary documents with high verification confidence ratings.
+
+- Configured with high-frequency cron schedules (`*/5 * * * *`).
+- Inspects active developing events via `news://events`.
+- Formulates structured revisions using `what_changed` blocks.
+- Cites official primary documents with high verification confidence ratings.
 
 For detailed skills and schedule configs, see:
-* [`docs/gemini-spark.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark.md)
-* [`docs/gemini-spark-skill.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark-skill.md)
-* [`docs/gemini-spark-schedules.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark-schedules.md)
+
+- [`docs/gemini-spark.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark.md)
+- [`docs/gemini-spark-skill.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark-skill.md)
+- [`docs/gemini-spark-schedules.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/gemini-spark-schedules.md)

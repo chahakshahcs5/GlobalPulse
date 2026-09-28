@@ -13,10 +13,7 @@ import {
 import { db } from '@ai-news/database';
 import { NotificationService, type StoryContext } from '@ai-news/stories';
 import { NestAuthGuard, Principal } from '../../common/auth.guard';
-import {
-  BroadcastBreakingNewsInputSchema,
-  SendEditorialAlertInputSchema,
-} from '@ai-news/schemas';
+import { BroadcastBreakingNewsInputSchema, SendEditorialAlertInputSchema } from '@ai-news/schemas';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('api/notifications')
@@ -62,10 +59,7 @@ export class NotificationsController {
   @Post('editorial')
   @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async sendEditorialAlert(
-    @Body() body: unknown,
-    @Principal() principal: AuthenticatedPrincipal
-  ) {
+  async sendEditorialAlert(@Body() body: unknown, @Principal() principal: AuthenticatedPrincipal) {
     AuthService.requireScope(principal, 'news:write');
 
     const validated = SendEditorialAlertInputSchema.parse(body);

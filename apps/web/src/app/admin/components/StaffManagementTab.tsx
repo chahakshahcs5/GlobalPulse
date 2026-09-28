@@ -14,7 +14,9 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'journalist' | 'editor' | 'ai_agent' | 'admin'>('journalist');
+  const [inviteRole, setInviteRole] = useState<'journalist' | 'editor' | 'ai_agent' | 'admin'>(
+    'journalist'
+  );
   const [inviteClientType, setInviteClientType] = useState<'human' | 'ai_agent'>('human');
 
   const handleInviteStaff = async (e: React.FormEvent) => {
@@ -48,7 +50,8 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
             Newsroom Contributors & Autonomous Agents
           </h2>
           <p className="text-xs text-slate-500">
-            Manage human editors, credentialed investigative journalists, and external AI agents connecting via Model Context Protocol.
+            Manage human editors, credentialed investigative journalists, and external AI agents
+            connecting via Model Context Protocol.
           </p>
         </div>
         <button
@@ -66,7 +69,10 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
           <h3 className="text-xs font-bold uppercase text-blue-700 dark:text-blue-300">
             Register New Newsroom Contributor / Autonomous Agent
           </h3>
-          <form onSubmit={handleInviteStaff} className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+          <form
+            onSubmit={handleInviteStaff}
+            className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs"
+          >
             <div>
               <label className="block text-slate-500 mb-1">Full Name / Agent Alias</label>
               <input
@@ -142,7 +148,10 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
               {staff.map((u) => {
                 const isAi = u.clientType === 'ai_agent' || u.id.includes('agent');
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                  <tr
+                    key={u.id}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                  >
                     <td className="p-3 font-semibold text-slate-900 dark:text-white">
                       <div className="flex items-center gap-2">
                         {isAi ? (
@@ -184,8 +193,8 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
                       {u.role === 'admin'
                         ? 'news:*'
                         : u.role === 'editor'
-                        ? 'news:read, news:write, news:publish'
-                        : 'news:read, news:write'}
+                          ? 'news:read, news:write, news:publish'
+                          : 'news:read, news:write'}
                     </td>
                   </tr>
                 );

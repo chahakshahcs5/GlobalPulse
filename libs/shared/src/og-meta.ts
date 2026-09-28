@@ -90,8 +90,10 @@ export function renderOpenGraphHtmlTags(meta: OpenGraphMeta): string {
 
   if (meta.image) {
     tags.push(`<meta property="og:image" content="${escapeHtml(meta.image)}" />`);
-    if (meta.imageWidth) tags.push(`<meta property="og:image:width" content="${meta.imageWidth}" />`);
-    if (meta.imageHeight) tags.push(`<meta property="og:image:height" content="${meta.imageHeight}" />`);
+    if (meta.imageWidth)
+      tags.push(`<meta property="og:image:width" content="${meta.imageWidth}" />`);
+    if (meta.imageHeight)
+      tags.push(`<meta property="og:image:height" content="${meta.imageHeight}" />`);
     tags.push(`<meta name="twitter:image" content="${escapeHtml(meta.image)}" />`);
   }
 

@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity } from 'react-native';
 import { OfflineStory } from '../services/storage';
 
 interface FeedScreenProps {
@@ -20,9 +13,10 @@ export function FeedScreen({ stories, onSelectStory, selectedStoryId }: FeedScre
 
   const categories = ['ALL', 'BREAKING', 'ANALYSIS', 'INVESTIGATION', 'EXPLAINER'];
 
-  const filtered = activeCategory === 'ALL'
-    ? stories
-    : stories.filter((s) => s.articleType.toUpperCase() === activeCategory);
+  const filtered =
+    activeCategory === 'ALL'
+      ? stories
+      : stories.filter((s) => s.articleType.toUpperCase() === activeCategory);
 
   return (
     <View style={styles.container}>

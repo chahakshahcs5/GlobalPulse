@@ -8,7 +8,9 @@ export const API_BASE_URL =
     ? 'http://localhost:4000'
     : 'http://localhost:4000');
 
-export function mapApiStoryToOffline(story: Partial<Story> & { id: string; title: string }): OfflineStory {
+export function mapApiStoryToOffline(
+  story: Partial<Story> & { id: string; title: string }
+): OfflineStory {
   return {
     id: story.id,
     slug: story.slug || story.id,
@@ -68,10 +70,10 @@ export class MobileApiService {
       const rawStories: Story[] = Array.isArray(json)
         ? json
         : Array.isArray(json.data)
-        ? json.data
-        : Array.isArray(json.items)
-        ? json.items
-        : [];
+          ? json.data
+          : Array.isArray(json.items)
+            ? json.items
+            : [];
 
       if (rawStories.length > 0) {
         const mapped = rawStories.map(mapApiStoryToOffline);

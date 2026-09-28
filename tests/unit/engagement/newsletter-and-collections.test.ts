@@ -93,7 +93,9 @@ describe('Newsletter System, Social Sharing & Reader Collections (F14, F15, F16)
       expect(digest.headline).toContain('Technology');
       expect(digest.curatedStoryIds).toContain(testStoryId);
       expect(digest.stories.length).toBeGreaterThanOrEqual(1);
-      expect(digest.stories[0].title).toBe('Quantum Computing Breakthrough Achieves Fault Tolerance');
+      expect(digest.stories[0].title).toBe(
+        'Quantum Computing Breakthrough Achieves Fault Tolerance'
+      );
 
       // Check latest digest retrieval
       const latest = await service.getLatestDigest('daily', 'technology');
@@ -168,7 +170,9 @@ describe('Newsletter System, Social Sharing & Reader Collections (F14, F15, F16)
       // Populate full stories
       const populated = await service.getCollectionWithStories(collection.id, testOrgId);
       expect(populated?.stories.length).toBe(1);
-      expect(populated?.stories[0].title).toBe('Quantum Computing Breakthrough Achieves Fault Tolerance');
+      expect(populated?.stories[0].title).toBe(
+        'Quantum Computing Breakthrough Achieves Fault Tolerance'
+      );
 
       // Remove story
       const removed = await service.removeStory(collection.id, 'sty_another_story');

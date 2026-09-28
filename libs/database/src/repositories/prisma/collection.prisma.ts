@@ -48,8 +48,10 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         curatorName: row.curatorName || undefined,
         isPublic: row.isPublic,
         storyIds: row.storyIds as string[],
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       };
     } catch {
       return this.fallbackMemory.create(data);
@@ -72,8 +74,10 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         curatorName: row.curatorName || undefined,
         isPublic: row.isPublic,
         storyIds: row.storyIds as string[],
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       };
     } catch {
       return this.fallbackMemory.findById(id);
@@ -96,8 +100,10 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         curatorName: row.curatorName || undefined,
         isPublic: row.isPublic,
         storyIds: row.storyIds as string[],
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       };
     } catch {
       return this.fallbackMemory.findBySlug(slug);
@@ -125,8 +131,10 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         curatorName: row.curatorName || undefined,
         isPublic: row.isPublic,
         storyIds: row.storyIds as string[],
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       }));
     } catch {
       return this.fallbackMemory.listPublic(limit, offset);
@@ -152,8 +160,10 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         curatorName: row.curatorName || undefined,
         isPublic: row.isPublic,
         storyIds: row.storyIds as string[],
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       }));
     } catch {
       return this.fallbackMemory.listByUser(userId);

@@ -67,9 +67,7 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
   for (const other of otherStories) {
     if (other.id === story.id) continue;
     const sharesTopic =
-      story.topicIds &&
-      other.topicIds &&
-      story.topicIds.some((t) => other.topicIds.includes(t));
+      story.topicIds && other.topicIds && story.topicIds.some((t) => other.topicIds.includes(t));
     const sharesEvent = story.eventId && other.eventId && story.eventId === other.eventId;
 
     if (sharesTopic || sharesEvent) {
@@ -79,8 +77,8 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
           other.createdVia === 'admin'
             ? 'GlobalPulse Staff'
             : other.createdByClient === 'gemini'
-            ? 'Gemini Wire'
-            : 'Associated News',
+              ? 'Gemini Wire'
+              : 'Associated News',
         headline: other.title,
         timeAgo: formatTimeAgo(other.publishedAt || other.createdAt),
         url: `/stories/${other.slug}`,
@@ -98,7 +96,9 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
           related.push({
             id: `quote_${block.id}`,
             publisher: String(d.attribution),
-            headline: d.quote ? `Perspective: "${String(d.quote).slice(0, 70)}..."` : 'Key Perspective',
+            headline: d.quote
+              ? `Perspective: "${String(d.quote).slice(0, 70)}..."`
+              : 'Key Perspective',
             timeAgo: 'Analysis',
             url: `/stories/${story.slug}#${block.id}`,
           });
@@ -114,9 +114,7 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
  * Dynamically converts published stories into GoogleNewsCluster objects
  */
 export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] {
-  const publishedStories = stories.filter(
-    (s) => s.status === 'PUBLISHED' || s.status === 'DRAFT'
-  );
+  const publishedStories = stories.filter((s) => s.status === 'PUBLISHED' || s.status === 'DRAFT');
 
   // Track existing slugs from seed clusters so we don't duplicate
   const seedSlugs = new Set<string>();
@@ -137,10 +135,10 @@ export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] 
       story.createdVia === 'admin'
         ? 'GlobalPulse Newsroom'
         : story.createdByClient === 'gemini' || story.createdByClient === 'gemini_spark'
-        ? 'Gemini AI Wire'
-        : story.createdByClient === 'chatgpt'
-        ? 'GPT Research Bureau'
-        : 'GlobalPulse Dispatch';
+          ? 'Gemini AI Wire'
+          : story.createdByClient === 'chatgpt'
+            ? 'GPT Research Bureau'
+            : 'GlobalPulse Dispatch';
 
     const relatedArticles = extractRelatedSources(story, publishedStories);
 

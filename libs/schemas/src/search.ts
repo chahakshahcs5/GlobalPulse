@@ -49,4 +49,3 @@ export interface PaginatedResult<T> {
   nextCursor?: string;
   hasMore: boolean;
 }
-

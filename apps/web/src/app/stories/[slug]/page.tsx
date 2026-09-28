@@ -169,7 +169,9 @@ export default function StoryPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-        <p className="text-slate-500 text-sm font-medium">Resolving dispatch and structured blocks...</p>
+        <p className="text-slate-500 text-sm font-medium">
+          Resolving dispatch and structured blocks...
+        </p>
       </div>
     );
   }
@@ -179,7 +181,10 @@ export default function StoryPage() {
       <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Article Not Found</h2>
         <p className="text-slate-500 text-sm">The requested story could not be found.</p>
-        <Link href="/" className="inline-flex items-center gap-1.5 text-blue-600 font-bold hover:underline">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-blue-600 font-bold hover:underline"
+        >
           <ArrowLeft className="w-4 h-4" /> Back to Top Stories
         </Link>
       </div>
@@ -287,7 +292,10 @@ export default function StoryPage() {
     )
     .slice(0, 3);
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://globalpulse.news/stories/${story.slug}`;
+  const currentUrl =
+    typeof window !== 'undefined'
+      ? window.location.href
+      : `https://globalpulse.news/stories/${story.slug}`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -349,7 +357,10 @@ export default function StoryPage() {
               GlobalPulse Dispatch
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="flex items-center gap-1 text-slate-500 font-medium" suppressHydrationWarning>
+            <span
+              className="flex items-center gap-1 text-slate-500 font-medium"
+              suppressHydrationWarning
+            >
               <Clock className="w-3.5 h-3.5" />
               {story.publishedAt ? formatDeterministicDateTime(story.publishedAt) : 'Recent'}
             </span>
@@ -390,7 +401,9 @@ export default function StoryPage() {
 
         {/* F22: AI Content Attribution & Provenance Badge */}
         <ProvenanceBadge
-          clientType={story.createdByClient || (story.createdVia === 'admin' ? 'human_web' : 'gemini')}
+          clientType={
+            story.createdByClient || (story.createdVia === 'admin' ? 'human_web' : 'gemini')
+          }
           createdVia={story.createdVia || 'api'}
           versionNumber={(story as any).version || 1}
           sourceCount={
@@ -432,7 +445,11 @@ export default function StoryPage() {
               }`}
               title="Listen to story"
             >
-              {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              {isSpeaking ? (
+                <VolumeX className="w-3.5 h-3.5" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5" />
+              )}
               <span>{isSpeaking ? 'Stop Audio' : 'Listen'}</span>
             </button>
 
@@ -521,11 +538,7 @@ export default function StoryPage() {
       {/* Hero Visual Asset */}
       {story.heroImageUrl && (
         <div className="rounded-2xl overflow-hidden shadow-md max-h-[460px] relative border border-slate-200 dark:border-slate-800">
-          <img
-            src={story.heroImageUrl}
-            alt={story.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={story.heroImageUrl} alt={story.title} className="w-full h-full object-cover" />
         </div>
       )}
 
@@ -535,8 +548,8 @@ export default function StoryPage() {
           fontSize === 'sm'
             ? 'reader-size-sm'
             : fontSize === 'lg'
-            ? 'reader-size-lg'
-            : 'reader-size-md'
+              ? 'reader-size-lg'
+              : 'reader-size-md'
         }`}
       >
         <StoryRenderer
@@ -602,9 +615,7 @@ export default function StoryPage() {
                   <span className="font-bold text-blue-600 uppercase">
                     {rel.articleType.replace('_', ' ')}
                   </span>
-                  <span suppressHydrationWarning>
-                    {formatDeterministicDate(rel.publishedAt)}
-                  </span>
+                  <span suppressHydrationWarning>{formatDeterministicDate(rel.publishedAt)}</span>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 line-clamp-2">
                   {rel.title}
@@ -617,11 +628,7 @@ export default function StoryPage() {
       )}
 
       {/* Reader Engagement: Reactions & Threaded Discussion (F18, F19) */}
-      <StoryEngagement
-        storyId={story.id}
-        storySlug={story.slug}
-        storyTitle={story.title}
-      />
+      <StoryEngagement storyId={story.id} storySlug={story.slug} storyTitle={story.title} />
 
       {/* Full Coverage Modal */}
       <FullCoverageModal
@@ -645,9 +652,7 @@ export default function StoryPage() {
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-              {story.title}
-            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{story.title}</p>
 
             <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
               <a
@@ -697,7 +702,11 @@ export default function StoryPage() {
                 onClick={copyStoryLink}
                 className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <Check className="w-4 h-4 text-emerald-300" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
                 <span>{copied ? 'Link Copied to Clipboard!' : 'Copy Permanent Link'}</span>
               </button>
             </div>
@@ -711,7 +720,9 @@ export default function StoryPage() {
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 ${isSpeaking ? '' : 'hidden'}`}></span>
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 ${isSpeaking ? '' : 'hidden'}`}
+                ></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
               <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
@@ -736,7 +747,7 @@ export default function StoryPage() {
                     isSpeaking ? 'opacity-90' : 'opacity-30'
                   }`}
                   style={{
-                    height: isSpeaking ? `${Math.max(20, (h * (i % 2 === 0 ? 1 : 0.7)))}%` : '20%',
+                    height: isSpeaking ? `${Math.max(20, h * (i % 2 === 0 ? 1 : 0.7))}%` : '20%',
                   }}
                 />
               ))}

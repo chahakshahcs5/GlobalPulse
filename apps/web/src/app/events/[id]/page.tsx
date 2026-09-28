@@ -27,7 +27,8 @@ export default async function EventPage({ params }: EventPageProps) {
       id,
       organizationId: 'org_default',
       title: formattedTitle,
-      summary: 'Developing international event tracked continuously across multi-agent dispatches and real-time wire feeds.',
+      summary:
+        'Developing international event tracked continuously across multi-agent dispatches and real-time wire feeds.',
       status: 'ACTIVE',
       occurredAt: new Date().toISOString(),
       location: 'Global Intelligence Feed',
@@ -111,9 +112,7 @@ export default async function EventPage({ params }: EventPageProps) {
               {event.title}
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-              {event.summary}
-            </p>
+            <p className="text-base sm:text-lg text-slate-300 leading-relaxed">{event.summary}</p>
           </div>
 
           <div className="flex flex-col sm:items-end gap-2 shrink-0">

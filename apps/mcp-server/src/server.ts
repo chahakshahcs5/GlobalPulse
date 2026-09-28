@@ -170,20 +170,26 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     }
 
     // Rate limiting — keyed by auth token or IP
-    const rateLimitKey = req.headers.authorization || req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
+    const rateLimitKey =
+      req.headers.authorization ||
+      req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      '127.0.0.1';
     const rateResult = rateLimiter.check(rateLimitKey);
     res.setHeader('X-RateLimit-Limit', String(mcpRateMax));
     res.setHeader('X-RateLimit-Remaining', String(rateResult.remaining));
     if (!rateResult.allowed) {
       res.setHeader('Retry-After', String(Math.ceil(rateResult.retryAfterMs / 1000)));
       res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: `Rate limit exceeded. Max ${mcpRateMax} requests per ${mcpRateWindowMs / 1000}s. Retry after ${Math.ceil(rateResult.retryAfterMs / 1000)}s.`,
-        },
-      }));
+      res.end(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: `Rate limit exceeded. Max ${mcpRateMax} requests per ${mcpRateWindowMs / 1000}s. Retry after ${Math.ceil(rateResult.retryAfterMs / 1000)}s.`,
+          },
+        })
+      );
       return;
     }
 
@@ -239,7 +245,8 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
         res.end(
           JSON.stringify({
             error: 'Unauthorized',
-            message: 'Authentication required. Authorization Bearer token must be provided to access MCP endpoints in production.',
+            message:
+              'Authentication required. Authorization Bearer token must be provided to access MCP endpoints in production.',
           })
         );
         return;
@@ -268,7 +275,9 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
             const errorMsg = e instanceof Error ? e.message : String(e);
             if (!res.headersSent) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: errorMsg } }));
+              res.end(
+                JSON.stringify({ jsonrpc: '2.0', error: { code: -32603, message: errorMsg } })
+              );
             }
           }
         });

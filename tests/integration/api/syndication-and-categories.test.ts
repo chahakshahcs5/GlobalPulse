@@ -23,7 +23,10 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
             id: 'blk_fus_01',
             blockType: 'paragraph',
             sortOrder: 0,
-            data: { text: 'Diagnostic sensors confirmed peak temperature stability.', format: 'markdown' },
+            data: {
+              text: 'Diagnostic sensors confirmed peak temperature stability.',
+              format: 'markdown',
+            },
           },
         ],
       },

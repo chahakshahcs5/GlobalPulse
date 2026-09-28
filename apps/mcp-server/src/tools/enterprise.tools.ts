@@ -25,7 +25,10 @@ export function registerEnterpriseTools(
     '[MCP SAMPLING] Request AI editorial assistance to review a draft article for AP style guidelines, flow, and tone.',
     {
       storyDraft: z.string().min(10).describe('Article draft text to be evaluated'),
-      styleGuide: z.enum(['AP', 'Reuters', 'Chicago', 'In-House']).default('AP').describe('Target style guide'),
+      styleGuide: z
+        .enum(['AP', 'Reuters', 'Chicago', 'In-House'])
+        .default('AP')
+        .describe('Target style guide'),
     },
     async ({ storyDraft, styleGuide }) => {
       try {
@@ -39,7 +42,8 @@ export function registerEnterpriseTools(
           styleGuide,
           evaluatedWords: wordCount,
           readabilityScore: 'Grade 9 - Accessible to broad news consumers',
-          leadSentenceAssessment: 'Strong informative hook with clear subject-action-result alignment.',
+          leadSentenceAssessment:
+            'Strong informative hook with clear subject-action-result alignment.',
           recommendations: [
             'Ensure second paragraph explicitly attributes primary data source.',
             'Maintain active voice in the concluding analysis sentence.',
@@ -63,7 +67,13 @@ export function registerEnterpriseTools(
     '[MCP SAMPLING] Request alternative headline variations for a breaking or developing story.',
     {
       currentHeadline: z.string().min(3).describe('Current headline'),
-      count: z.number().int().positive().max(10).default(3).describe('Number of alternatives to generate'),
+      count: z
+        .number()
+        .int()
+        .positive()
+        .max(10)
+        .default(3)
+        .describe('Number of alternatives to generate'),
       tone: z.enum(['urgent', 'analytical', 'conversational', 'explainer']).default('urgent'),
     },
     async ({ currentHeadline, count, tone }) => {
@@ -97,13 +107,32 @@ export function registerEnterpriseTools(
     '[AI GOVERNANCE] Record cryptographic provenance and attach an HMAC-SHA256 watermark signature to an AI-assisted story.',
     {
       storyId: z.string().min(1).describe('Story ID'),
-      generatorModel: z.string().min(1).describe('Model identifier (e.g. "gemini-1.5-pro", "gpt-4o")'),
+      generatorModel: z
+        .string()
+        .min(1)
+        .describe('Model identifier (e.g. "gemini-1.5-pro", "gpt-4o")'),
       prompt: z.string().min(1).describe('Input prompt or instruction used during generation'),
-      confidenceScore: z.number().min(0).max(1).default(0.95).describe('Model generation confidence (0.0 - 1.0)'),
+      confidenceScore: z
+        .number()
+        .min(0)
+        .max(1)
+        .default(0.95)
+        .describe('Model generation confidence (0.0 - 1.0)'),
       humanReviewedBy: z.string().optional().describe('Staff editor ID who verified the content'),
-      c2paManifestUrl: z.string().url().optional().describe('Optional C2PA content credential manifest URL'),
+      c2paManifestUrl: z
+        .string()
+        .url()
+        .optional()
+        .describe('Optional C2PA content credential manifest URL'),
     },
-    async ({ storyId, generatorModel, prompt, confidenceScore, humanReviewedBy, c2paManifestUrl }) => {
+    async ({
+      storyId,
+      generatorModel,
+      prompt,
+      confidenceScore,
+      humanReviewedBy,
+      c2paManifestUrl,
+    }) => {
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
@@ -154,7 +183,11 @@ export function registerEnterpriseTools(
     {
       url: z.string().url().describe('HTTPS webhook receiver endpoint URL'),
       events: z.array(WebhookEventEnum).min(1).describe('List of events to subscribe to'),
-      secret: z.string().min(16).optional().describe('Secret used to sign X-Hub-Signature-256 HMAC headers'),
+      secret: z
+        .string()
+        .min(16)
+        .optional()
+        .describe('Secret used to sign X-Hub-Signature-256 HMAC headers'),
     },
     async ({ url, events, secret }) => {
       try {
@@ -249,7 +282,9 @@ export function registerEnterpriseTools(
     'get_regional_stories',
     '[READ-ONLY] Retrieve stories filtered for a specific regional news edition.',
     {
-      region: RegionalEditionCodeSchema.describe('Target regional edition code (global, us, uk, eu, in, apac)'),
+      region: RegionalEditionCodeSchema.describe(
+        'Target regional edition code (global, us, uk, eu, in, apac)'
+      ),
       limit: z.number().int().positive().max(50).default(10).describe('Max stories to retrieve'),
     },
     async ({ region, limit }) => {
@@ -257,7 +292,10 @@ export function registerEnterpriseTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const allStories = await db.stories.list({ status: 'PUBLISHED', limit }, principal.organizationId);
+        const allStories = await db.stories.list(
+          { status: 'PUBLISHED', limit },
+          principal.organizationId
+        );
         return mcpJsonResponse({
           region,
           count: allStories.length,

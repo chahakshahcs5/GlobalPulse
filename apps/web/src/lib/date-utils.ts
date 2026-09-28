@@ -4,7 +4,9 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
  * Formats a date deterministically using UTC to guarantee 100% SSR-client hydration parity.
  * Output example: "Sep 27, 2026"
  */
-export function formatDeterministicDate(dateInput: string | number | Date | null | undefined): string {
+export function formatDeterministicDate(
+  dateInput: string | number | Date | null | undefined
+): string {
   if (!dateInput) return 'Recent';
   const d = new Date(dateInput);
   if (isNaN(d.getTime())) return 'Recent';
@@ -15,7 +17,9 @@ export function formatDeterministicDate(dateInput: string | number | Date | null
  * Formats date and time deterministically using UTC.
  * Output example: "Sep 27, 2026 14:30 UTC"
  */
-export function formatDeterministicDateTime(dateInput: string | number | Date | null | undefined): string {
+export function formatDeterministicDateTime(
+  dateInput: string | number | Date | null | undefined
+): string {
   if (!dateInput) return 'Recent';
   const d = new Date(dateInput);
   if (isNaN(d.getTime())) return 'Recent';

@@ -12,7 +12,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       organizationId: 'org_default',
       slug: 'geopolitics',
       name: 'Global Geopolitics',
-      description: 'International treaties, multilateral summits, sanctions, and diplomatic affairs.',
+      description:
+        'International treaties, multilateral summits, sanctions, and diplomatic affairs.',
       aliases: ['diplomacy', 'foreign-policy', 'summits'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -90,7 +91,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       retrievedAt: new Date().toISOString(),
       language: 'en',
       sourceType: 'NEWS_ARTICLE' as const,
-      permissibleExcerpt: 'The member states formally adopt the New Delhi multilateral settlement framework.',
+      permissibleExcerpt:
+        'The member states formally adopt the New Delhi multilateral settlement framework.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -106,7 +108,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       retrievedAt: new Date().toISOString(),
       language: 'en',
       sourceType: 'OFFICIAL_DOCUMENT' as const,
-      permissibleExcerpt: 'Article 4: Cross-border clearing among member states shall be denominated in local currencies.',
+      permissibleExcerpt:
+        'Article 4: Cross-border clearing among member states shall be denominated in local currencies.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -122,14 +125,16 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     organizationId: 'org_default',
     slug: 'brics-expansion-2026-global-economic-realignment',
     title: 'BRICS Expansion 2026: Historic Geoeconomic Shift Finalized in New Delhi',
-    summary: 'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
+    summary:
+      'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
     status: 'PUBLISHED',
     articleType: 'breaking_news',
     authorId: 'usr_spark_agent',
     createdByClient: 'gemini_spark',
     createdVia: 'mcp',
     currentVersionNumber: 2,
-    heroImageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80',
     publishedAt: '2026-09-26T10:00:00Z',
     createdAt: '2026-09-26T07:00:00Z',
     updatedAt: '2026-09-26T10:00:00Z',
@@ -151,7 +156,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
             },
             {
               changeType: 'updated',
-              description: 'Updated D3 economic projection chart reflecting revised purchasing-power output.',
+              description:
+                'Updated D3 economic projection chart reflecting revised purchasing-power output.',
             },
           ],
         },
@@ -228,7 +234,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     versionNumber: 2,
     title: story.title,
     summary: story.summary,
-    changeSummary: 'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
+    changeSummary:
+      'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
     blocks: story.blocks,
     authorId: 'usr_spark_agent',
     clientType: 'gemini_spark',

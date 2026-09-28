@@ -3,11 +3,7 @@ import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
 import { StoryService, PersonalizationService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
-import {
-  ArticleTypeSchema,
-  StoryBlockSchema,
-  StoryStatusSchema,
-} from '@ai-news/schemas';
+import { ArticleTypeSchema, StoryBlockSchema, StoryStatusSchema } from '@ai-news/schemas';
 import { mcpJsonResponse } from './tool-helpers';
 
 export function registerStoryTools(
@@ -55,7 +51,11 @@ export function registerStoryTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const version = await storyService.getStoryVersion(storyId, versionNumber, principal.organizationId);
+      const version = await storyService.getStoryVersion(
+        storyId,
+        versionNumber,
+        principal.organizationId
+      );
       return mcpJsonResponse(version);
     }
   );
@@ -86,9 +86,16 @@ export function registerStoryTools(
       topicIds: z.array(z.string()).optional().default([]).describe('List of topic IDs'),
       entityIds: z.array(z.string()).optional().default([]).describe('List of entity IDs'),
       sourceIds: z.array(z.string()).optional().default([]).describe('List of source IDs cited'),
-      blocks: z.array(StoryBlockSchema).optional().default([]).describe('Initial structured blocks'),
+      blocks: z
+        .array(StoryBlockSchema)
+        .optional()
+        .default([])
+        .describe('Initial structured blocks'),
       heroImageUrl: z.string().url().optional().describe('URL for hero image'),
-      idempotencyKey: z.string().optional().describe('Unique key from client to prevent duplicate execution'),
+      idempotencyKey: z
+        .string()
+        .optional()
+        .describe('Unique key from client to prevent duplicate execution'),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -148,10 +155,16 @@ export function registerStoryTools(
     '[WRITE] Commit a new immutable version snapshot for an existing story. Automatically diffs blocks and generates a WhatChangedBlock if not provided.',
     {
       storyId: z.string().min(1).describe('Story ID to snapshot'),
-      changeSummary: z.string().min(1).describe('Editorial explanation of what changed in this version'),
+      changeSummary: z
+        .string()
+        .min(1)
+        .describe('Editorial explanation of what changed in this version'),
       title: z.string().optional().describe('Updated headline if modified'),
       summary: z.string().optional().describe('Updated summary if modified'),
-      blocks: z.array(StoryBlockSchema).optional().describe('Full updated array of structured blocks'),
+      blocks: z
+        .array(StoryBlockSchema)
+        .optional()
+        .describe('Full updated array of structured blocks'),
       idempotencyKey: z.string().optional().describe('Idempotency key'),
     },
     async ({ storyId, ...input }) => {
@@ -224,7 +237,11 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return mcpJsonResponse({ message: 'Story unpublished to DRAFT.', storyId: story.id, status: story.status });
+      return mcpJsonResponse({
+        message: 'Story unpublished to DRAFT.',
+        storyId: story.id,
+        status: story.status,
+      });
     }
   );
 
@@ -245,7 +262,11 @@ export function registerStoryTools(
         createdVia: 'mcp',
       });
 
-      return mcpJsonResponse({ message: 'Story ARCHIVED.', storyId: story.id, status: story.status });
+      return mcpJsonResponse({
+        message: 'Story ARCHIVED.',
+        storyId: story.id,
+        status: story.status,
+      });
     }
   );
 
@@ -265,7 +286,10 @@ export function registerStoryTools(
         clientType: principal.clientType,
         createdVia: 'mcp',
       });
-      return mcpJsonResponse({ message: deleted ? 'Story deleted.' : 'Story not found.', success: deleted });
+      return mcpJsonResponse({
+        message: deleted ? 'Story deleted.' : 'Story not found.',
+        success: deleted,
+      });
     }
   );
 
@@ -318,7 +342,8 @@ export function registerStoryTools(
       );
 
       return mcpJsonResponse({
-        message: action === 'approve' ? 'Story APPROVED and PUBLISHED.' : 'Story REJECTED back to draft.',
+        message:
+          action === 'approve' ? 'Story APPROVED and PUBLISHED.' : 'Story REJECTED back to draft.',
         storyId: story.id,
         status: story.status,
         feedback,
@@ -330,8 +355,12 @@ export function registerStoryTools(
     'list_stories',
     '[READ-ONLY] List stories with pagination (cursor or offset based), status filtering, and category/topic filtering.',
     {
-      status: StoryStatusSchema.optional().describe('Filter by story status: DRAFT, IN_REVIEW, PUBLISHED, ARCHIVED'),
-      articleType: ArticleTypeSchema.optional().describe('Filter by format (e.g. developing_story, breaking_news, explainer)'),
+      status: StoryStatusSchema.optional().describe(
+        'Filter by story status: DRAFT, IN_REVIEW, PUBLISHED, ARCHIVED'
+      ),
+      articleType: ArticleTypeSchema.optional().describe(
+        'Filter by format (e.g. developing_story, breaking_news, explainer)'
+      ),
       topicId: z.string().optional().describe('Filter by topic ID'),
       entityId: z.string().optional().describe('Filter by entity ID'),
       sourceId: z.string().optional().describe('Filter by source ID'),
@@ -347,7 +376,9 @@ export function registerStoryTools(
         .boolean()
         .optional()
         .default(false)
-        .describe('Whether to include full content blocks in each story (defaults to false to preserve LLM context)'),
+        .describe(
+          'Whether to include full content blocks in each story (defaults to false to preserve LLM context)'
+        ),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -384,7 +415,13 @@ export function registerStoryTools(
     'list_review_queue',
     '[READ-ONLY] Fetch stories currently waiting in the editorial review queue with pagination support.',
     {
-      limit: z.number().int().min(1).max(100).default(20).describe('Maximum number of review queue items to return'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(20)
+        .describe('Maximum number of review queue items to return'),
       offset: z.number().int().min(0).optional().describe('Zero-based offset for pagination'),
     },
     async ({ limit, offset }) => {
@@ -453,4 +490,3 @@ export function registerStoryTools(
     }
   );
 }
-

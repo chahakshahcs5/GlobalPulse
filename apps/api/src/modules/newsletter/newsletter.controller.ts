@@ -29,7 +29,9 @@ export class NewsletterController {
 
   @Post('subscribe')
   @HttpCode(HttpStatus.OK)
-  async subscribe(@Body() body: unknown): Promise<{ success: boolean; subscription: NewsletterSubscription }> {
+  async subscribe(
+    @Body() body: unknown
+  ): Promise<{ success: boolean; subscription: NewsletterSubscription }> {
     const input = SubscribeNewsletterInputSchema.parse(body);
     const subscription = await this.newsletterService.subscribe(
       input.email,

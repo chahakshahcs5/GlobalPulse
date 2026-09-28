@@ -33,7 +33,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'news_publish_story',
     domain: 'Stories & Publishing',
-    description: 'Promotes an editorial or autonomous story to live PUBLISHED status with idempotency keys',
+    description:
+      'Promotes an editorial or autonomous story to live PUBLISHED status with idempotency keys',
     parameters: ['storyId', 'idempotencyKey'],
     latencyMs: 98,
     callCount: 890,
@@ -41,7 +42,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'collab_acquire_lock',
     domain: 'Editorial Collaboration',
-    description: 'Acquires exclusive distributed Redis/Memory lease lock preventing concurrent edit collisions',
+    description:
+      'Acquires exclusive distributed Redis/Memory lease lock preventing concurrent edit collisions',
     parameters: ['storyId', 'userId', 'ttlSeconds'],
     latencyMs: 24,
     callCount: 420,
@@ -49,7 +51,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'factcheck_verify',
     domain: 'Integrity & Verification',
-    description: 'Cross-references story claims against sovereign primary registries and official dispatches',
+    description:
+      'Cross-references story claims against sovereign primary registries and official dispatches',
     parameters: ['storyId', 'claim', 'verdict', 'confidence'],
     latencyMs: 310,
     callCount: 654,
@@ -57,7 +60,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'provenance_record',
     domain: 'AI Governance & Provenance',
-    description: 'Cryptographically watermarks story dispatches with HMAC-SHA256 model provenance tags',
+    description:
+      'Cryptographically watermarks story dispatches with HMAC-SHA256 model provenance tags',
     parameters: ['storyId', 'generatorModel', 'promptHash'],
     latencyMs: 45,
     callCount: 1120,
@@ -65,7 +69,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'webhook_dispatch',
     domain: 'Enterprise Webhooks',
-    description: 'Dispatches real outbound HTTP webhooks with HMAC-SHA256 signature and retry logic',
+    description:
+      'Dispatches real outbound HTTP webhooks with HMAC-SHA256 signature and retry logic',
     parameters: ['event', 'payload', 'organizationId'],
     latencyMs: 115,
     callCount: 312,
@@ -73,7 +78,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'mcp_batch_publish',
     domain: 'Batch Operations (F24)',
-    description: 'Batch processes and promotes multiple story drafts simultaneously with transaction safety',
+    description:
+      'Batch processes and promotes multiple story drafts simultaneously with transaction safety',
     parameters: ['storyIds', 'batchPriority'],
     latencyMs: 240,
     callCount: 84,
@@ -81,7 +87,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'ai_generate_summary',
     domain: 'AI Summaries (F25)',
-    description: 'Generates executive TL;DR bullet points and 1-sentence synopsis from rich story blocks',
+    description:
+      'Generates executive TL;DR bullet points and 1-sentence synopsis from rich story blocks',
     parameters: ['storyId', 'maxWords', 'readingLevel'],
     latencyMs: 180,
     callCount: 780,
@@ -89,7 +96,8 @@ const MCP_TOOLS_CATALOG: McpTool[] = [
   {
     name: 'editorial_validate_quality_gates',
     domain: 'Content Quality Gates (F26)',
-    description: 'Evaluates pre-publish quality: readability index, minimum word length, and citation thresholds',
+    description:
+      'Evaluates pre-publish quality: readability index, minimum word length, and citation thresholds',
     parameters: ['storyId', 'strictMode'],
     latencyMs: 65,
     callCount: 540,
@@ -162,7 +170,9 @@ export function McpDiscoveryTab() {
   });
 
   const runQualityGateTest = () => {
-    setQualityTestResult('Validating story against F26 Quality Gates: Readability Grade 9.2 (Pass) | Citations: 4 (Pass) | Length: 840 words (Pass) -> STATUS: APPROVED FOR PUBLICATION');
+    setQualityTestResult(
+      'Validating story against F26 Quality Gates: Readability Grade 9.2 (Pass) | Citations: 4 (Pass) | Length: 840 words (Pass) -> STATUS: APPROVED FOR PUBLICATION'
+    );
     setTimeout(() => setQualityTestResult(null), 7000);
   };
 
@@ -305,7 +315,10 @@ export function McpDiscoveryTab() {
 
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-xs">
             {logs.map((log) => (
-              <div key={log.id} className="p-4 space-y-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <div
+                key={log.id}
+                className="p-4 space-y-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+              >
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-blue-600" /> {log.agent}
@@ -339,7 +352,8 @@ export function McpDiscoveryTab() {
               <span>AI Autonomous Editorial Calendar (F28)</span>
             </div>
             <p className="text-xs text-slate-500">
-              AI agents automatically manage embargo release windows and schedule daily digest dispatches via MCP tool scheduling endpoints.
+              AI agents automatically manage embargo release windows and schedule daily digest
+              dispatches via MCP tool scheduling endpoints.
             </p>
           </div>
         </div>

@@ -16,7 +16,10 @@ export function registerClusteringTools(
     'get_full_coverage',
     '[READ-ONLY] Retrieve Google News style "Full Coverage" for a story, including multi-source editorial perspectives and a chronological timeline.',
     {
-      storyId: z.string().min(1).describe('The story ID or identifier to retrieve full coverage for'),
+      storyId: z
+        .string()
+        .min(1)
+        .describe('The story ID or identifier to retrieve full coverage for'),
     },
     async ({ storyId }) => {
       try {
@@ -47,14 +50,24 @@ export function registerClusteringTools(
     'list_story_clusters',
     '[READ-ONLY] List active multi-source story clusters in the organization.',
     {
-      limit: z.number().int().positive().max(100).default(20).optional().describe('Maximum clusters to return'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(100)
+        .default(20)
+        .optional()
+        .describe('Maximum clusters to return'),
     },
     async ({ limit }) => {
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const clusters = await clusteringService.listClusters(principal.organizationId, limit || 20);
+        const clusters = await clusteringService.listClusters(
+          principal.organizationId,
+          limit || 20
+        );
         return mcpJsonResponse({
           total: clusters.length,
           clusters,
@@ -73,7 +86,10 @@ export function registerClusteringTools(
       title: z.string().min(1).describe('Cluster title or event headline'),
       summary: z.string().optional().describe('Brief summary of the clustered event'),
       leadStoryId: z.string().min(1).describe('ID of the primary lead story in the cluster'),
-      storyIds: z.array(z.string()).default([]).describe('Additional related story IDs to associate'),
+      storyIds: z
+        .array(z.string())
+        .default([])
+        .describe('Additional related story IDs to associate'),
       topic: z.string().optional().describe('Primary topic tag'),
       category: z.string().optional().describe('Primary canonical category'),
     },

@@ -2,16 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import {
-  Layers,
-  Tag,
-  Plus,
-  Trash2,
-  ExternalLink,
-  FolderPlus,
-  BookOpen,
-  Hash,
-} from 'lucide-react';
+import { Layers, Tag, Plus, Trash2, ExternalLink, FolderPlus, BookOpen, Hash } from 'lucide-react';
 import { useTaxonomy } from '../../../lib/news-store';
 
 interface TaxonomyManagementTabProps {
@@ -79,9 +70,15 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">News Categories</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{categories.length}</div>
-            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Top-level navigation hubs</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              News Categories
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+              {categories.length}
+            </div>
+            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
+              Top-level navigation hubs
+            </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <Layers className="w-6 h-6" />
@@ -90,9 +87,15 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
 
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Indexed Topics</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{topics.length}</div>
-            <div className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5">Semantic clustering tags</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Indexed Topics
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+              {topics.length}
+            </div>
+            <div className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5">
+              Semantic clustering tags
+            </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
             <Tag className="w-6 h-6" />
@@ -101,7 +104,9 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
 
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Reader Hub</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Reader Hub
+            </div>
             <Link
               href="/topics"
               className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline mt-2"
@@ -195,7 +200,13 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                 value={catName}
                 onChange={(e) => {
                   setCatName(e.target.value);
-                  if (!catSlug) setCatSlug(e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-'));
+                  if (!catSlug)
+                    setCatSlug(
+                      e.target.value
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, '-')
+                    );
                 }}
                 placeholder="e.g. Geopolitics"
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500"
@@ -291,7 +302,13 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                 value={topicName}
                 onChange={(e) => {
                   setTopicName(e.target.value);
-                  if (!topicSlug) setTopicSlug(e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-'));
+                  if (!topicSlug)
+                    setTopicSlug(
+                      e.target.value
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, '-')
+                    );
                 }}
                 placeholder="e.g. Neuromorphic Chips"
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-purple-500"
@@ -367,7 +384,9 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Active Category Taxonomy ({categories.length})
             </span>
-            <span className="text-xs text-slate-400">Public routes accessible via /category/[slug]</span>
+            <span className="text-xs text-slate-400">
+              Public routes accessible via /category/[slug]
+            </span>
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -379,7 +398,9 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{cat.icon || '📁'}</span>
-                    <span className="font-bold text-sm text-slate-900 dark:text-white">{cat.name}</span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">
+                      {cat.name}
+                    </span>
                     <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                       /{cat.slug}
                     </span>
@@ -428,7 +449,9 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Active Topic Index ({topics.length})
             </span>
-            <span className="text-xs text-slate-400">Semantic topics available to MCP AI agents & readers</span>
+            <span className="text-xs text-slate-400">
+              Semantic topics available to MCP AI agents & readers
+            </span>
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -440,7 +463,9 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Hash className="w-4 h-4 text-purple-600" />
-                    <span className="font-bold text-sm text-slate-900 dark:text-white">{t.name}</span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t.name}
+                    </span>
                     <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                       #{t.slug}
                     </span>

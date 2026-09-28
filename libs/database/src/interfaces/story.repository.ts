@@ -56,7 +56,9 @@ export interface IStoryRepository {
   linkSource(storyId: string, sourceId: string): Promise<void>;
 
   // Search & Similarity
-  search(params: SearchStoriesInput, orgId?: string): Promise<PaginatedResult<StorySearchResultItem>>;
+  search(
+    params: SearchStoriesInput,
+    orgId?: string
+  ): Promise<PaginatedResult<StorySearchResultItem>>;
   findSimilar(params: FindSimilarStoriesInput, orgId: string): Promise<StorySearchResultItem[]>;
 }
-

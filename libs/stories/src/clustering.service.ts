@@ -47,7 +47,10 @@ export class ClusteringService {
    * Retrieves Google News style "Full Coverage" for a story, dynamically constructing
    * a cluster with multi-source perspectives and chronological timeline if one does not exist.
    */
-  async getFullCoverage(storyId: string, orgId: string = 'org_default'): Promise<FullCoverageResult> {
+  async getFullCoverage(
+    storyId: string,
+    orgId: string = 'org_default'
+  ): Promise<FullCoverageResult> {
     const leadStory = await this.db.stories.findById(storyId, orgId);
     if (!leadStory) {
       throw new Error(`Story with id ${storyId} was not found`);
@@ -62,7 +65,12 @@ export class ClusteringService {
 
       // Score relevance
       const scored: Array<{ story: Story; score: number }> = [];
-      const leadTitleWords = new Set(leadStory.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3));
+      const leadTitleWords = new Set(
+        leadStory.title
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((w) => w.length > 3)
+      );
 
       for (const other of otherStories) {
         let score = 0;
@@ -70,17 +78,24 @@ export class ClusteringService {
           score += 60;
         }
 
-        const sharedTopics = (leadStory.topicIds || []).filter((t) => (other.topicIds || []).includes(t));
+        const sharedTopics = (leadStory.topicIds || []).filter((t) =>
+          (other.topicIds || []).includes(t)
+        );
         score += sharedTopics.length * 25;
 
-        const sharedEntities = (leadStory.entityIds || []).filter((e) => (other.entityIds || []).includes(e));
+        const sharedEntities = (leadStory.entityIds || []).filter((e) =>
+          (other.entityIds || []).includes(e)
+        );
         score += sharedEntities.length * 20;
 
         if (leadStory.articleType === other.articleType) {
           score += 10;
         }
 
-        const otherWords = other.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+        const otherWords = other.title
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((w) => w.length > 3);
         const overlap = otherWords.filter((w) => leadTitleWords.has(w)).length;
         score += overlap * 15;
 
@@ -192,7 +207,10 @@ export class ClusteringService {
     return this.db.clusters.getById(id, orgId);
   }
 
-  async createCluster(input: CreateClusterInput, orgId: string = 'org_default'): Promise<StoryCluster> {
+  async createCluster(
+    input: CreateClusterInput,
+    orgId: string = 'org_default'
+  ): Promise<StoryCluster> {
     const now = new Date().toISOString();
     const cluster: StoryCluster = {
       id: `cls_${randomUUID().replace(/-/g, '').slice(0, 16)}`,
@@ -200,7 +218,9 @@ export class ClusteringService {
       title: input.title,
       summary: input.summary,
       leadStoryId: input.leadStoryId,
-      storyIds: input.storyIds ? Array.from(new Set([input.leadStoryId, ...input.storyIds])) : [input.leadStoryId],
+      storyIds: input.storyIds
+        ? Array.from(new Set([input.leadStoryId, ...input.storyIds]))
+        : [input.leadStoryId],
       topic: input.topic,
       category: input.category,
       perspectives: input.perspectives || [],

@@ -28,7 +28,9 @@ export class PersonalizationService {
    * 4. Recency exponential decay (half-life = 24h)
    * 5. Read history penalty (downranks read stories)
    */
-  async getPersonalizedFeed(options: PersonalizedFeedOptions = {}): Promise<PaginatedResult<Story>> {
+  async getPersonalizedFeed(
+    options: PersonalizedFeedOptions = {}
+  ): Promise<PaginatedResult<Story>> {
     const orgId = options.organizationId || 'org_default';
     const limit = Math.min(options.limit || 20, 50);
 
@@ -43,10 +45,10 @@ export class PersonalizationService {
     }
 
     // 2. Fetch reader profile & engagement signals if userId is present
-    let followedTopics = new Set<string>();
-    let followedEntities = new Set<string>();
-    let followedAuthors = new Set<string>();
-    let preferredCategories = new Set<string>();
+    const followedTopics = new Set<string>();
+    const followedEntities = new Set<string>();
+    const followedAuthors = new Set<string>();
+    const preferredCategories = new Set<string>();
     const readStoryIds = new Map<string, boolean>(); // storyId -> completed
 
     if (options.userId) {
@@ -91,7 +93,9 @@ export class PersonalizationService {
       const reasons: string[] = [];
 
       // Recency decay: score *= 2^(-age / halfLife)
-      const pubTime = story.publishedAt ? new Date(story.publishedAt).getTime() : new Date(story.createdAt).getTime();
+      const pubTime = story.publishedAt
+        ? new Date(story.publishedAt).getTime()
+        : new Date(story.createdAt).getTime();
       const ageHours = Math.max(0, (now - pubTime) / (1000 * 60 * 60));
       const recencyBoost = Math.max(0.1, Math.exp(-ageHours / 24));
       score *= recencyBoost;
@@ -158,7 +162,8 @@ export class PersonalizationService {
     const paged = scored.slice(startIndex, startIndex + limit);
     const items = paged.map((s) => s.story);
     const hasMore = startIndex + limit < scored.length;
-    const nextCursor = hasMore && items.length > 0 ? encodeCursor(items[items.length - 1]) : undefined;
+    const nextCursor =
+      hasMore && items.length > 0 ? encodeCursor(items[items.length - 1]) : undefined;
 
     return {
       items,

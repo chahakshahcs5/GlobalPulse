@@ -91,7 +91,10 @@ export async function runEndToEndScenario() {
 
   // Link Client and Server over JSON-RPC 2.0 transport
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const client = new Client({ name: 'gemini-spark-client', version: '1.0.0' }, { capabilities: {} });
+  const client = new Client(
+    { name: 'gemini-spark-client', version: '1.0.0' },
+    { capabilities: {} }
+  );
 
   await server.connect(serverTransport);
   await client.connect(clientTransport);
@@ -135,10 +138,14 @@ export async function runEndToEndScenario() {
     clientType: 'gemini_spark',
     createdVia: 'mcp',
   });
-  console.log(`   Created story: "${storyV1.title}" (ID: ${storyV1.id}, v${storyV1.currentVersionNumber})`);
+  console.log(
+    `   Created story: "${storyV1.title}" (ID: ${storyV1.id}, v${storyV1.currentVersionNumber})`
+  );
 
   // 3. Agent Searches Existing Stories via Remote MCP
-  console.log('\n🔍 [Step 3] Gemini Spark calls MCP [search_stories] to inspect current coverage...');
+  console.log(
+    '\n🔍 [Step 3] Gemini Spark calls MCP [search_stories] to inspect current coverage...'
+  );
   const searchCall = await client.callTool({
     name: 'search_stories',
     arguments: { query: 'BRICS', limit: 5 },
@@ -148,8 +155,11 @@ export async function runEndToEndScenario() {
   const matchedStories = (searchData.items as Array<Record<string, unknown>>) || [];
   console.log(`   MCP returned ${matchedStories.length} matching stories.`);
   const targetStory = matchedStories[0];
-  const targetStoryId = (targetStory?.id as string) || (targetStory?.storyId as string) || storyV1.id;
-  console.log(`   Target story found: "${targetStory?.title || 'BRICS'}" (ID: ${targetStoryId}, v${targetStory?.currentVersionNumber ?? 1})`);
+  const targetStoryId =
+    (targetStory?.id as string) || (targetStory?.storyId as string) || storyV1.id;
+  console.log(
+    `   Target story found: "${targetStory?.title || 'BRICS'}" (ID: ${targetStoryId}, v${targetStory?.currentVersionNumber ?? 1})`
+  );
 
   // 4. Agent Discovers New Facts & Registers Primary Source via MCP
   console.log('\n📚 [Step 4] Agent registers verified primary source via MCP [create_source]...');
@@ -161,7 +171,8 @@ export async function runEndToEndScenario() {
       publisher: 'Ministry of External Affairs',
       author: 'Summit Secretariat',
       sourceType: 'OFFICIAL_DOCUMENT',
-      permissibleExcerpt: 'The member states formally adopt the 2026 New Delhi multilateral clearing mechanism.',
+      permissibleExcerpt:
+        'The member states formally adopt the 2026 New Delhi multilateral clearing mechanism.',
     },
   });
   const sourceContent = sourceCall.content as Array<{ type: string; text: string }>;
@@ -180,14 +191,17 @@ export async function runEndToEndScenario() {
   console.log(`   Attached source [${sourceId}] to story [${targetStoryId}] via MCP`);
 
   // 5. Agent Creates Version 2 with WhatChangedBlock and D3 Chart via MCP
-  console.log('\n✍️  [Step 5] Agent updates coverage with WhatChangedBlock and D3 Chart via MCP [create_story_version]...');
+  console.log(
+    '\n✍️  [Step 5] Agent updates coverage with WhatChangedBlock and D3 Chart via MCP [create_story_version]...'
+  );
   const versionCall = await client.callTool({
     name: 'create_story_version',
     arguments: {
       storyId: targetStoryId,
       title: 'BRICS 2026 Accord Signed: 4 New Members Inducted in New Delhi',
       summary: 'Summit concludes with formal accession treaties and a $41T joint settlement pact.',
-      changeSummary: 'Added finalized member accession details, D3 economic chart, and official treaty citations.',
+      changeSummary:
+        'Added finalized member accession details, D3 economic chart, and official treaty citations.',
       blocks: [
         {
           id: 'blk_what_changed_v2',
@@ -199,7 +213,8 @@ export async function runEndToEndScenario() {
             items: [
               {
                 changeType: 'added',
-                description: 'Full text of New Delhi Declaration accession protocol ratified by 10 member states.',
+                description:
+                  'Full text of New Delhi Declaration accession protocol ratified by 10 member states.',
               },
               {
                 changeType: 'updated',
@@ -243,7 +258,9 @@ export async function runEndToEndScenario() {
   console.log(`   Updated story via MCP to Version ${versionData.versionNumber}`);
 
   // 6. Agent Publishes the Story via MCP
-  console.log('\n📢 [Step 6] Agent calls MCP [publish_story] to broadcast to Web & 4K Display Wall...');
+  console.log(
+    '\n📢 [Step 6] Agent calls MCP [publish_story] to broadcast to Web & 4K Display Wall...'
+  );
   const publishCall = await client.callTool({
     name: 'publish_story',
     arguments: { storyId: targetStoryId },
@@ -251,8 +268,9 @@ export async function runEndToEndScenario() {
   const publishContent = publishCall.content as Array<{ type: string; text: string }>;
   const publishData = JSON.parse(publishContent[0]?.text || '{}');
   const publishedStory = await storyService.getStory(publishData.storyId);
-  console.log(`   Story status is now: [${publishedStory.status}], version: [${publishedStory.currentVersionNumber}]`);
-
+  console.log(
+    `   Story status is now: [${publishedStory.status}], version: [${publishedStory.currentVersionNumber}]`
+  );
 
   // 7. Background Worker Processes Async Jobs
   console.log('\n⚙️  [Step 7] Background Worker processes asynchronous post-publication tasks...');
@@ -283,9 +301,15 @@ export async function runEndToEndScenario() {
   const searchRes = searchJob.result as Record<string, unknown> | undefined;
   const mediaRes = mediaJob.result as Record<string, unknown> | undefined;
   const audioRes = audioJob.result as Record<string, unknown> | undefined;
-  console.log(`   ✓ Search index job completed: status=[${searchJob.status}], tokens=[${searchRes?.indexedTokens}]`);
-  console.log(`   ✓ Media variants job completed: status=[${mediaJob.status}], variants=[${mediaRes?.totalVariants}]`);
-  console.log(`   ✓ Audio briefing job completed: status=[${audioJob.status}], duration=[${audioRes?.durationSeconds}s]`);
+  console.log(
+    `   ✓ Search index job completed: status=[${searchJob.status}], tokens=[${searchRes?.indexedTokens}]`
+  );
+  console.log(
+    `   ✓ Media variants job completed: status=[${mediaJob.status}], variants=[${mediaRes?.totalVariants}]`
+  );
+  console.log(
+    `   ✓ Audio briefing job completed: status=[${audioJob.status}], duration=[${audioRes?.durationSeconds}s]`
+  );
 
   // 8. Mobile App Offline Caching Verification
   console.log('\n📱 [Step 8] Mobile App reads published story and saves to offline cache...');
@@ -301,7 +325,9 @@ export async function runEndToEndScenario() {
     readStatus: false,
   });
   const cachedStory = offlineStorage.getStory(publishedStory.id);
-  console.log(`   ✓ Mobile cached story: "${cachedStory?.title}" (v${cachedStory?.currentVersionNumber})`);
+  console.log(
+    `   ✓ Mobile cached story: "${cachedStory?.title}" (v${cachedStory?.currentVersionNumber})`
+  );
 
   // 9. Observability & Audit Verification
   console.log('\n📊 [Step 9] Observability & Audit Verification:');
@@ -312,14 +338,18 @@ export async function runEndToEndScenario() {
   console.log(`   ✓ Prometheus metrics counter worker_jobs_completed_total: ${counterVal}`);
 
   // 10. AI Agent Inspects Real-time Performance & Trending Stories via MCP
-  console.log('\n📈 [Step 10] Agent queries real-time story analytics and trending leaderboard via MCP...');
+  console.log(
+    '\n📈 [Step 10] Agent queries real-time story analytics and trending leaderboard via MCP...'
+  );
   const analyticsResult = await client.callTool({
     name: 'get_story_analytics',
     arguments: { story_id: targetStoryId },
   });
   const analyticsContent = analyticsResult.content as Array<{ type: string; text: string }>;
   const analyticsData = JSON.parse(analyticsContent[0]?.text || '{}');
-  console.log(`   ✓ Story views: ${analyticsData.viewsCount}, virality score: ${analyticsData.viralityScore}/100, read time: ${Math.round((analyticsData.avgReadTimeSeconds || 180) / 60)}m`);
+  console.log(
+    `   ✓ Story views: ${analyticsData.viewsCount}, virality score: ${analyticsData.viralityScore}/100, read time: ${Math.round((analyticsData.avgReadTimeSeconds || 180) / 60)}m`
+  );
 
   const trendingResult = await client.callTool({
     name: 'get_trending_stories',
@@ -327,11 +357,15 @@ export async function runEndToEndScenario() {
   });
   const trendingContent = trendingResult.content as Array<{ type: string; text: string }>;
   const trendingData = JSON.parse(trendingContent[0]?.text || '{}');
-  const trendingList = Array.isArray(trendingData) ? trendingData : (trendingData.trending || []);
-  console.log(`   ✓ Trending stories retrieved: ${trendingList.length} stories ranked by virality.`);
+  const trendingList = Array.isArray(trendingData) ? trendingData : trendingData.trending || [];
+  console.log(
+    `   ✓ Trending stories retrieved: ${trendingList.length} stories ranked by virality.`
+  );
 
   // 11. AI Agent Schedules an Embargoed Investigation via MCP
-  console.log('\n⏳ [Step 11] Agent schedules an embargoed investigative report via MCP [schedule_story_publish]...');
+  console.log(
+    '\n⏳ [Step 11] Agent schedules an embargoed investigative report via MCP [schedule_story_publish]...'
+  );
   const scheduledTime = new Date(Date.now() + 7200000).toISOString(); // 2 hours from now
   const schedResult = await client.callTool({
     name: 'schedule_story_publish',
@@ -342,10 +376,14 @@ export async function runEndToEndScenario() {
   });
   const schedContent = schedResult.content as Array<{ type: string; text: string }>;
   const schedData = JSON.parse(schedContent[0]?.text || '{}');
-  console.log(`   ✓ Story scheduled: status=[${schedData.status}], releaseTime=[${schedData.scheduled_publish_at || schedData.scheduledPublishAt}]`);
+  console.log(
+    `   ✓ Story scheduled: status=[${schedData.status}], releaseTime=[${schedData.scheduled_publish_at || schedData.scheduledPublishAt}]`
+  );
 
   // 12. AI Agent Broadcasts Breaking Flash Alert via MCP
-  console.log('\n🚨 [Step 12] Agent broadcasts high-priority breaking news flash via MCP [broadcast_breaking_news]...');
+  console.log(
+    '\n🚨 [Step 12] Agent broadcasts high-priority breaking news flash via MCP [broadcast_breaking_news]...'
+  );
   const broadcastResult = await client.callTool({
     name: 'broadcast_breaking_news',
     arguments: {
@@ -356,18 +394,24 @@ export async function runEndToEndScenario() {
   });
   const broadcastContent = broadcastResult.content as Array<{ type: string; text: string }>;
   const broadcastData = JSON.parse(broadcastContent[0]?.text || '{}');
-  console.log(`   ✓ Alert dispatched via SSE: [${broadcastData.headline}], severity=[${broadcastData.severity}]`);
+  console.log(
+    `   ✓ Alert dispatched via SSE: [${broadcastData.headline}], severity=[${broadcastData.severity}]`
+  );
 
   // 13. AI Agent Inspects Staff Roster & Enrolls Co-pilot Agent via MCP
-  console.log('\n👥 [Step 13] Agent verifies newsroom staff roster and enrolls co-pilot agent via MCP...');
+  console.log(
+    '\n👥 [Step 13] Agent verifies newsroom staff roster and enrolls co-pilot agent via MCP...'
+  );
   const usersResult = await client.callTool({
     name: 'list_newsroom_users',
     arguments: {},
   });
   const usersContent = usersResult.content as Array<{ type: string; text: string }>;
   const usersData = JSON.parse(usersContent[0]?.text || '{}');
-  const userList = Array.isArray(usersData) ? usersData : (usersData.users || []);
-  console.log(`   ✓ Newsroom staff count: ${userList.length} active journalists & autonomous agents.`);
+  const userList = Array.isArray(usersData) ? usersData : usersData.users || [];
+  console.log(
+    `   ✓ Newsroom staff count: ${userList.length} active journalists & autonomous agents.`
+  );
 
   const inviteResult = await client.callTool({
     name: 'invite_newsroom_user',
@@ -380,7 +424,9 @@ export async function runEndToEndScenario() {
   });
   const inviteContent = inviteResult.content as Array<{ type: string; text: string }>;
   const inviteData = JSON.parse(inviteContent[0]?.text || '{}');
-  console.log(`   ✓ New autonomous co-pilot enrolled: [${inviteData.name}] (${inviteData.user_id}) with role [${inviteData.role}]`);
+  console.log(
+    `   ✓ New autonomous co-pilot enrolled: [${inviteData.name}] (${inviteData.user_id}) with role [${inviteData.role}]`
+  );
 
   // Close MCP Client & Server sessions
   await client.close();

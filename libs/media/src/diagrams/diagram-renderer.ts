@@ -74,5 +74,9 @@ export class DiagramRenderer {
 
 function escapeXml(unsafe?: string): string {
   if (!unsafe) return '';
-  return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

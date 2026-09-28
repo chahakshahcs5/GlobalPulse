@@ -19,7 +19,12 @@ import http from 'http';
 import type { AddressInfo } from 'net';
 
 function getText(result: unknown): string {
-  if (result && typeof result === 'object' && 'content' in result && Array.isArray((result as { content: unknown }).content)) {
+  if (
+    result &&
+    typeof result === 'object' &&
+    'content' in result &&
+    Array.isArray((result as { content: unknown }).content)
+  ) {
     const content = (result as { content: Array<{ type?: string; text?: string }> }).content;
     return content[0]?.text || '';
   }
@@ -247,7 +252,11 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
         title: 'Mission Flight Path Milestones',
         items: [
           { date: '2026-04-12', headline: 'Orbital Insertion', body: 'Enters 100km polar orbit' },
-          { date: '2026-09-20', headline: 'Plume Flythrough', body: 'Ion trap captures vapor samples' },
+          {
+            date: '2026-09-20',
+            headline: 'Plume Flythrough',
+            body: 'Ion trap captures vapor samples',
+          },
         ],
       },
     });
@@ -275,7 +284,9 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
       name: 'list_stories',
       arguments: { includeBlocks: true },
     });
-    const listData = parseJson<{ stories: Array<{ id: string; blocks?: unknown[]; summary?: string }> }>(listRes);
+    const listData = parseJson<{
+      stories: Array<{ id: string; blocks?: unknown[]; summary?: string }>;
+    }>(listRes);
     const target = listData.stories.find((s) => s.id === storyId);
     expect(target?.blocks).toBeDefined();
     expect(target?.summary).toBeDefined();
@@ -330,7 +341,8 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
       arguments: {
         sourceId,
         author: 'Dr. Elena Rostova',
-        permissibleExcerpt: 'Vapor composition reveals organic signatures consistent with hydrothermal activity.',
+        permissibleExcerpt:
+          'Vapor composition reveals organic signatures consistent with hydrothermal activity.',
       },
     });
     expect(getText(updateSrc)).toContain('Source updated successfully');
@@ -414,11 +426,13 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const port = address.port;
 
     const res = await new Promise<{ statusCode: number; data: string }>((resolve, reject) => {
-      http.get(`http://localhost:${port}/.well-known/oauth-protected-resource`, (res) => {
-        let data = '';
-        res.on('data', (c) => (data += c));
-        res.on('end', () => resolve({ statusCode: res.statusCode || 200, data }));
-      }).on('error', reject);
+      http
+        .get(`http://localhost:${port}/.well-known/oauth-protected-resource`, (res) => {
+          let data = '';
+          res.on('data', (c) => (data += c));
+          res.on('end', () => resolve({ statusCode: res.statusCode || 200, data }));
+        })
+        .on('error', reject);
     });
 
     expect(res.statusCode).toBe(200);

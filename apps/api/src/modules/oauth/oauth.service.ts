@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { AuthService, type ClientType, type NewsScope, type UserRole } from '@ai-news/auth';
 import { appConfig } from '../../config/configuration';
@@ -115,7 +115,11 @@ export class OAuthService {
   /**
    * RFC 7636 / RFC 6749: Authorize endpoint
    */
-  createAuthorizationCode(req: AuthorizeRequest): { code: string; state?: string; redirect_uri?: string } {
+  createAuthorizationCode(req: AuthorizeRequest): {
+    code: string;
+    state?: string;
+    redirect_uri?: string;
+  } {
     if (req.response_type !== 'code') {
       throw new BadRequestException({
         error: 'unsupported_response_type',
@@ -236,11 +240,16 @@ export class OAuthService {
         });
       }
 
-      const isValid = this.verifyPkce(req.code_verifier, entry.codeChallenge, entry.codeChallengeMethod);
+      const isValid = this.verifyPkce(
+        req.code_verifier,
+        entry.codeChallenge,
+        entry.codeChallengeMethod
+      );
       if (!isValid) {
         throw new BadRequestException({
           error: 'invalid_grant',
-          error_description: 'PKCE verification failed: code_verifier does not match code_challenge.',
+          error_description:
+            'PKCE verification failed: code_verifier does not match code_challenge.',
         });
       }
     }
@@ -255,7 +264,14 @@ export class OAuthService {
         scopes: entry.scopes,
         agentMetadata: {
           model: 'external-ai-model',
-          provider: entry.clientType === 'claude' ? 'anthropic' : entry.clientType === 'gemini' ? 'google' : entry.clientType === 'chatgpt' ? 'openai' : 'custom',
+          provider:
+            entry.clientType === 'claude'
+              ? 'anthropic'
+              : entry.clientType === 'gemini'
+                ? 'google'
+                : entry.clientType === 'chatgpt'
+                  ? 'openai'
+                  : 'custom',
         },
       },
       undefined,
@@ -292,7 +308,14 @@ export class OAuthService {
         scopes: requestedScopes,
         agentMetadata: {
           model: 'autonomous-agent-daemon',
-          provider: clientType === 'claude' ? 'anthropic' : clientType === 'gemini' ? 'google' : clientType === 'chatgpt' ? 'openai' : 'custom',
+          provider:
+            clientType === 'claude'
+              ? 'anthropic'
+              : clientType === 'gemini'
+                ? 'google'
+                : clientType === 'chatgpt'
+                  ? 'openai'
+                  : 'custom',
         },
       },
       undefined,
@@ -318,4 +341,3 @@ export class OAuthService {
 }
 
 export const oauthService = new OAuthService();
-

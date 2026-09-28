@@ -15,7 +15,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
 
   // Filter demo stories matching topic
   const matchingStories = DEMO_STORIES.filter(
-    (s) => s.slug.includes(slug) || s.topicIds.some((t: string) => t.includes(slug.replace('-', '_')))
+    (s) =>
+      s.slug.includes(slug) || s.topicIds.some((t: string) => t.includes(slug.replace('-', '_')))
   );
   const storiesToDisplay = matchingStories.length > 0 ? matchingStories : DEMO_STORIES;
 
@@ -36,7 +37,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
               {topicName}
             </h1>
             <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-2xl">
-              Real-time editorial monitoring, timeline milestones, and data analytics on {topicName}.
+              Real-time editorial monitoring, timeline milestones, and data analytics on {topicName}
+              .
             </p>
           </div>
           <span className="self-start sm:self-center px-3.5 py-1.5 rounded-full text-xs font-bold font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/30">
@@ -61,7 +63,9 @@ export default async function TopicPage({ params }: TopicPageProps) {
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     {story.articleType.replace('_', ' ')}
                   </span>
-                  <span className="text-xs font-mono text-slate-500">Version {story.currentVersionNumber}</span>
+                  <span className="text-xs font-mono text-slate-500">
+                    Version {story.currentVersionNumber}
+                  </span>
                 </div>
                 <Link href={`/stories/${story.slug}`} className="group block">
                   <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition leading-snug">

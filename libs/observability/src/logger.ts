@@ -41,10 +41,7 @@ export class StructuredLogger {
   }
 
   public child(childContext: LogContext): StructuredLogger {
-    const logger = new StructuredLogger(
-      { ...this.baseContext, ...childContext },
-      this.minLevel
-    );
+    const logger = new StructuredLogger({ ...this.baseContext, ...childContext }, this.minLevel);
     return logger;
   }
 
@@ -61,10 +58,7 @@ export class StructuredLogger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    return (
-      StructuredLogger.levelOrder[level] >=
-      StructuredLogger.levelOrder[this.minLevel]
-    );
+    return StructuredLogger.levelOrder[level] >= StructuredLogger.levelOrder[this.minLevel];
   }
 
   private formatEntry(

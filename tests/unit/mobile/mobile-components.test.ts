@@ -40,7 +40,11 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
         {
           id: 'b4',
           blockType: 'quote',
-          data: { quote: 'Historic milestone.', attribution: 'Chief Economist', title: 'Advisory Board' },
+          data: {
+            quote: 'Historic milestone.',
+            attribution: 'Chief Economist',
+            title: 'Advisory Board',
+          },
         },
         {
           id: 'b5',
@@ -48,7 +52,10 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
           data: {
             chartType: 'bar',
             title: 'GDP Comparison',
-            values: [{ year: '2024', val: 100 }, { year: '2026', val: 140 }],
+            values: [
+              { year: '2024', val: 100 },
+              { year: '2026', val: 140 },
+            ],
             sourceAttribution: 'IMF',
           },
         },
@@ -87,12 +94,21 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
         {
           id: 'b10',
           blockType: 'video',
-          data: { url: 'https://example.com/video.mp4', caption: 'Press Conference', durationSeconds: 120 },
+          data: {
+            url: 'https://example.com/video.mp4',
+            caption: 'Press Conference',
+            durationSeconds: 120,
+          },
         },
         {
           id: 'b11',
           blockType: 'audio',
-          data: { title: 'Daily Briefing', narrator: 'Anchor F', durationSeconds: 90, transcript: 'Welcome to the update.' },
+          data: {
+            title: 'Daily Briefing',
+            narrator: 'Anchor F',
+            durationSeconds: 90,
+            transcript: 'Welcome to the update.',
+          },
         },
         {
           id: 'b12',
@@ -118,12 +134,19 @@ describe('React Native & Expo Mobile Application (Unit Tests)', () => {
           data: {
             title: 'Tariff Matrix',
             headers: ['Sector', 'Rate'],
-            rows: [['Agriculture', '0%'], ['Tech', '2%']],
+            rows: [
+              ['Agriculture', '0%'],
+              ['Tech', '2%'],
+            ],
           },
         },
       ];
 
-      const html = renderToString(React.createElement(MobileBlockRenderer, { blocks: sampleBlocks as unknown as StoryBlock[] }));
+      const html = renderToString(
+        React.createElement(MobileBlockRenderer, {
+          blocks: sampleBlocks as unknown as StoryBlock[],
+        })
+      );
       expect(html).toContain('Breaking Headlines');
       expect(html).toContain('Global impact analysis');
       expect(html).toContain('Key international developments');

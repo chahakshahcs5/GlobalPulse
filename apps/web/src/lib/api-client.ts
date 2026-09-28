@@ -22,8 +22,8 @@ import type {
 
 const API_BASE_URL =
   typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000');
+    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // Auth token stored in memory with sessionStorage fallback (isolated per session, prevents persistent XSS token theft)
 let _authToken: string | null = null;
@@ -43,7 +43,9 @@ export function setAuthToken(token: string | null): void {
 export function getAuthToken(): string | null {
   if (_authToken) return _authToken;
   if (typeof window !== 'undefined') {
-    _authToken = sessionStorage.getItem('globalpulse_auth_token') || localStorage.getItem('globalpulse_auth_token');
+    _authToken =
+      sessionStorage.getItem('globalpulse_auth_token') ||
+      localStorage.getItem('globalpulse_auth_token');
   }
   return _authToken;
 }
@@ -56,24 +58,21 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly body?: unknown,
+    public readonly body?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const token = getAuthToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers as Record<string, string> ?? {}),
+    ...((options.headers as Record<string, string>) ?? {}),
   };
 
   const res = await fetch(url, {
@@ -92,7 +91,7 @@ async function request<T>(
     throw new ApiError(
       `API ${options.method || 'GET'} ${path} failed with status ${res.status}`,
       res.status,
-      body,
+      body
     );
   }
 
@@ -128,7 +127,7 @@ export async function listStories(params?: ListStoriesParams): Promise<Story[]> 
 
   const qs = searchParams.toString();
   const response = await request<{ data: Story[]; total: number }>(
-    `/api/stories${qs ? `?${qs}` : ''}`,
+    `/api/stories${qs ? `?${qs}` : ''}`
   );
 
   // The API may return { data: [...] } or an array directly depending on wrapper
@@ -198,7 +197,7 @@ export async function addBlock(storyId: string, block: Partial<StoryBlock>): Pro
 export async function updateBlock(
   storyId: string,
   blockId: string,
-  block: Partial<StoryBlock>,
+  block: Partial<StoryBlock>
 ): Promise<StoryBlock> {
   return request<StoryBlock>(`/api/stories/${storyId}/blocks/${blockId}`, {
     method: 'PUT',
@@ -218,7 +217,7 @@ export async function removeBlock(storyId: string, blockId: string): Promise<voi
 
 export async function createStoryVersion(
   storyId: string,
-  input: { changeSummary: string; title?: string; summary?: string; blocks?: StoryBlock[] },
+  input: { changeSummary: string; title?: string; summary?: string; blocks?: StoryBlock[] }
 ): Promise<StoryVersion> {
   return request<StoryVersion>(`/api/stories/${storyId}/versions`, {
     method: 'POST',
@@ -243,7 +242,7 @@ export interface RealtimeEvent {
 export function subscribeToRealtimeEvents(
   channels: string[] = ['all'],
   onEvent: (event: RealtimeEvent) => void,
-  onError?: (error: Event) => void,
+  onError?: (error: Event) => void
 ): () => void {
   const channelParam = channels.join(',');
   const url = `${API_BASE_URL}/api/realtime/stream?channels=${encodeURIComponent(channelParam)}`;
@@ -365,13 +364,13 @@ export async function getStoryReactions(storyId: string) {
 }
 
 export async function toggleStoryReaction(storyId: string, reactionType: string) {
-  return request<{ active: boolean; summary: { storyId: string; counts: Record<string, number>; userReactions: string[] } }>(
-    `/api/stories/${encodeURIComponent(storyId)}/reactions`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ reactionType }),
-    }
-  );
+  return request<{
+    active: boolean;
+    summary: { storyId: string; counts: Record<string, number>; userReactions: string[] };
+  }>(`/api/stories/${encodeURIComponent(storyId)}/reactions`, {
+    method: 'POST',
+    body: JSON.stringify({ reactionType }),
+  });
 }
 
 export async function listServerBookmarks() {
@@ -410,9 +409,14 @@ export async function searchStories(query: string, limit = 20) {
 }
 
 export async function getSearchSuggestions(query: string, limit = 8) {
-  return request<Array<{ text: string; type: 'category' | 'topic' | 'entity' | 'story'; id: string; score: number }>>(
-    `/api/search/suggestions?q=${encodeURIComponent(query)}&limit=${limit}`
-  );
+  return request<
+    Array<{
+      text: string;
+      type: 'category' | 'topic' | 'entity' | 'story';
+      id: string;
+      score: number;
+    }>
+  >(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=${limit}`);
 }
 
 export async function searchFederated(q: string) {
@@ -475,7 +479,12 @@ export async function assignUserRole(userId: string, role: string) {
   });
 }
 
-export async function inviteNewsroomUser(input: { email: string; name: string; role: string; clientType?: string }) {
+export async function inviteNewsroomUser(input: {
+  email: string;
+  name: string;
+  role: string;
+  clientType?: string;
+}) {
   return request<any>('/api/users/invite', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -494,10 +503,17 @@ export async function listScheduledStories(): Promise<Story[]> {
   return res?.data || [];
 }
 
-export async function sweepScheduledStories(): Promise<{ success: boolean; count: number; published: Story[] }> {
-  return request<{ success: boolean; count: number; published: Story[] }>('/api/stories/scheduled/sweep', {
-    method: 'POST',
-  });
+export async function sweepScheduledStories(): Promise<{
+  success: boolean;
+  count: number;
+  published: Story[];
+}> {
+  return request<{ success: boolean; count: number; published: Story[] }>(
+    '/api/stories/scheduled/sweep',
+    {
+      method: 'POST',
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -513,7 +529,12 @@ export async function listTopics(): Promise<any[]> {
   }
 }
 
-export async function createTopic(input: { name: string; slug?: string; description?: string; parentId?: string }): Promise<any> {
+export async function createTopic(input: {
+  name: string;
+  slug?: string;
+  description?: string;
+  parentId?: string;
+}): Promise<any> {
   return request<any>('/api/topics', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -542,7 +563,11 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
   });
 }
 
-export async function registerUser(name: string, email: string, password: string): Promise<AuthResponse> {
+export async function registerUser(
+  name: string,
+  email: string,
+  password: string
+): Promise<AuthResponse> {
   return request<AuthResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({ name, email, password }),

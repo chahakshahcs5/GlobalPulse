@@ -49,7 +49,8 @@ export const CANONICAL_CONTENT_TEMPLATES: ContentTemplate[] = [
         blockType: 'quote',
         sortOrder: 2,
         data: {
-          quote: 'We are closely assessing the situation in real time and taking all necessary precautionary measures.',
+          quote:
+            'We are closely assessing the situation in real time and taking all necessary precautionary measures.',
           attribution: 'Official Incident Response Lead',
           title: 'Emergency Directorate',
         },
@@ -165,11 +166,19 @@ export const CANONICAL_CONTENT_TEMPLATES: ContentTemplate[] = [
           title: 'Core Tradeoffs in Perspective',
           subjectA: {
             name: 'Proponents Argue',
-            points: ['Rapid innovation cycle', 'Decentralized efficiency gains', 'Competitive global agility'],
+            points: [
+              'Rapid innovation cycle',
+              'Decentralized efficiency gains',
+              'Competitive global agility',
+            ],
           },
           subjectB: {
             name: 'Critics Caution',
-            points: ['Concentration of power', 'Erosion of public transparency', 'Labor displacement vulnerabilities'],
+            points: [
+              'Concentration of power',
+              'Erosion of public transparency',
+              'Labor displacement vulnerabilities',
+            ],
           },
         },
       },

@@ -8,16 +8,16 @@ This document describes the read-only URI resources and dynamic templates expose
 
 External AI agents read real-time newsroom context using standardized URI templates:
 
-| Resource URI | Description | MIME Type |
-|:---|:---|:---|
-| `news://stories` | Real-time list of latest published stories | `application/json` |
-| `news://stories/{id}` | Full story document with structured blocks and revision metadata | `application/json` |
-| `news://events` | Catalog of active developing events | `application/json` |
-| `news://events/{id}` | Event milestone tracker and geographic coordinates | `application/json` |
-| `news://entities/{id}` | Named entity profile, aliases, and cited stories | `application/json` |
-| `news://topics/{slug}` | Topic taxonomy graph and covered dispatches | `application/json` |
-| `news://sources/{id}` | Primary source fact-check citation with permissible excerpt | `application/json` |
-| `news://audit/latest` | Recent agent publication actions for compliance inspection | `application/json` |
+| Resource URI           | Description                                                      | MIME Type          |
+| :--------------------- | :--------------------------------------------------------------- | :----------------- |
+| `news://stories`       | Real-time list of latest published stories                       | `application/json` |
+| `news://stories/{id}`  | Full story document with structured blocks and revision metadata | `application/json` |
+| `news://events`        | Catalog of active developing events                              | `application/json` |
+| `news://events/{id}`   | Event milestone tracker and geographic coordinates               | `application/json` |
+| `news://entities/{id}` | Named entity profile, aliases, and cited stories                 | `application/json` |
+| `news://topics/{slug}` | Topic taxonomy graph and covered dispatches                      | `application/json` |
+| `news://sources/{id}`  | Primary source fact-check citation with permissible excerpt      | `application/json` |
+| `news://audit/latest`  | Recent agent publication actions for compliance inspection       | `application/json` |
 
 ---
 

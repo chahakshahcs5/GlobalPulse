@@ -89,7 +89,9 @@ export default async function EntityPage({ params }: EntityPageProps) {
           </div>
 
           <div className="flex flex-col sm:items-end gap-2 shrink-0">
-            <span className="text-[11px] font-mono uppercase text-slate-400">Catalogued via MCP</span>
+            <span className="text-[11px] font-mono uppercase text-slate-400">
+              Catalogued via MCP
+            </span>
             <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               KNOWLEDGE GRAPH ACTIVE
@@ -157,9 +159,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
                 <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition">
                   {evt.title}
                 </h3>
-                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                  {evt.summary}
-                </p>
+                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{evt.summary}</p>
                 <div className="text-xs font-bold text-blue-400 pt-2 flex items-center gap-1">
                   View Event Timeline →
                 </div>

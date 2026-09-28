@@ -26,60 +26,63 @@ function isPublicCacheable(url: string, method: string): boolean {
 }
 
 export const httpCachePlugin: FastifyPluginAsync = async (fastify) => {
-  fastify.addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
-    const method = request.method.toUpperCase();
-    const url = request.raw.url || request.url;
+  fastify.addHook(
+    'onSend',
+    async (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
+      const method = request.method.toUpperCase();
+      const url = request.raw.url || request.url;
 
-    // Invalidate caches on mutation
-    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-      reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-      if (url.startsWith('/api/stories')) {
-        await cacheService.delByPrefix('stories:');
+      // Invalidate caches on mutation
+      if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        if (url.startsWith('/api/stories')) {
+          await cacheService.delByPrefix('stories:');
+        }
+        return payload;
       }
-      return payload;
-    }
 
-    // Public GET endpoints
-    if (isPublicCacheable(url, method)) {
-      reply.header('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=60');
+      // Public GET endpoints
+      if (isPublicCacheable(url, method)) {
+        reply.header(
+          'Cache-Control',
+          'public, max-age=60, s-maxage=300, stale-while-revalidate=60'
+        );
 
-      if (typeof payload === 'string' || Buffer.isBuffer(payload)) {
-        let contentToHash: string = payload.toString();
-        try {
-          const parsed = JSON.parse(contentToHash);
-          if (parsed && typeof parsed === 'object' && 'data' in parsed) {
-            contentToHash = JSON.stringify({ data: parsed.data, meta: parsed.meta });
+        if (typeof payload === 'string' || Buffer.isBuffer(payload)) {
+          let contentToHash: string = payload.toString();
+          try {
+            const parsed = JSON.parse(contentToHash);
+            if (parsed && typeof parsed === 'object' && 'data' in parsed) {
+              contentToHash = JSON.stringify({ data: parsed.data, meta: parsed.meta });
+            }
+          } catch {
+            // not JSON, use raw payload
           }
-        } catch {
-          // not JSON, use raw payload
-        }
 
-        const hash = crypto
-          .createHash('sha256')
-          .update(contentToHash)
-          .digest('hex')
-          .substring(0, 16);
-        const etag = `W/"${hash}"`;
-        reply.header('ETag', etag);
+          const hash = crypto
+            .createHash('sha256')
+            .update(contentToHash)
+            .digest('hex')
+            .substring(0, 16);
+          const etag = `W/"${hash}"`;
+          reply.header('ETag', etag);
 
-        const clientEtag = request.headers['if-none-match'];
-        if (clientEtag && (clientEtag === etag || clientEtag === `"${hash}"`)) {
-          reply.status(304);
-          reply.raw.statusCode = 304;
-          return '';
+          const clientEtag = request.headers['if-none-match'];
+          if (clientEtag && (clientEtag === etag || clientEtag === `"${hash}"`)) {
+            reply.status(304);
+            reply.raw.statusCode = 304;
+            return '';
+          }
         }
+        return payload;
       }
+
+      // Default to private/no-cache for sensitive or dynamic endpoints
+      reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
       return payload;
-
     }
-
-    // Default to private/no-cache for sensitive or dynamic endpoints
-    reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    return payload;
-  });
+  );
 };
 
 // Break Fastify plugin encapsulation so hooks apply globally across all routes
 (httpCachePlugin as any)[Symbol.for('skip-override')] = true;
-
-

@@ -25,7 +25,7 @@ export async function checkDatabaseHealth(): Promise<DatabaseHealthStatus> {
         timestamp: new Date().toISOString(),
       };
     }
-  } catch (err) {
+  } catch {
     return {
       status: 'error',
       engine: 'in_memory',

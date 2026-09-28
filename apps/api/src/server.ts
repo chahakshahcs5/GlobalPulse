@@ -19,11 +19,7 @@ export interface ApiServerOptions {
   logger?: boolean;
 }
 
-import {
-  isOriginAllowed,
-  ALLOWED_CORS_HEADERS,
-  ALLOWED_CORS_METHODS,
-} from '@ai-news/shared';
+import { isOriginAllowed, ALLOWED_CORS_HEADERS, ALLOWED_CORS_METHODS } from '@ai-news/shared';
 
 export function getCorsOptions() {
   return {
@@ -43,7 +39,9 @@ export function getRateLimitOptions() {
   const isTest = process.env.NODE_ENV === 'test';
   const max = process.env.RATE_LIMIT_MAX
     ? parseInt(process.env.RATE_LIMIT_MAX, 10)
-    : (isTest ? 1000 : 100);
+    : isTest
+      ? 1000
+      : 100;
   const timeWindow = process.env.RATE_LIMIT_WINDOW || '1 minute';
   const allowList = process.env.RATE_LIMIT_ALLOW_LIST
     ? process.env.RATE_LIMIT_ALLOW_LIST.split(',').map((s) => s.trim())
@@ -90,12 +88,11 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
   const nestPromise = NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
     logger: ['error', 'warn'],
     abortOnError: false,
-  })
-    .then(async (nestApp) => {
-      nestApp.useGlobalFilters(new Rfc7807ExceptionFilter());
-      await nestApp.init();
-      return nestApp;
-    });
+  }).then(async (nestApp) => {
+    nestApp.useGlobalFilters(new Rfc7807ExceptionFilter());
+    await nestApp.init();
+    return nestApp;
+  });
 
   const origReady = fastify.ready.bind(fastify);
   fastify.ready = ((cb?: (err: Error | null) => void) => {
@@ -113,7 +110,9 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
  */
 export async function createNestApp(): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter();
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { logger: false });
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
+    logger: false,
+  });
 
   await app.register(cors, getCorsOptions() as any);
   await app.register(rateLimit, getRateLimitOptions());
@@ -139,7 +138,10 @@ export async function startServer(options: ApiServerOptions = {}): Promise<NestF
     return app;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    logger.error(`Failed to start NestJS API Gateway: ${errorMsg}`, err instanceof Error ? err : new Error(errorMsg));
+    logger.error(
+      `Failed to start NestJS API Gateway: ${errorMsg}`,
+      err instanceof Error ? err : new Error(errorMsg)
+    );
     throw err;
   }
 }

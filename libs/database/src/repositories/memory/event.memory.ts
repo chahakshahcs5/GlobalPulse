@@ -47,8 +47,7 @@ export class MemoryEventRepository implements IEventRepository {
     return Array.from(this.events.values()).filter(
       (e) =>
         e.organizationId === orgId &&
-        (e.title.toLowerCase().includes(q) ||
-          (e.summary && e.summary.toLowerCase().includes(q)))
+        (e.title.toLowerCase().includes(q) || (e.summary && e.summary.toLowerCase().includes(q)))
     );
   }
 

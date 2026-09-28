@@ -81,7 +81,9 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
             id: 'b1',
             blockType: 'paragraph',
             sortOrder: 0,
-            data: { text: 'Solar and wind accounted for 34% of global electrical generation this quarter.' },
+            data: {
+              text: 'Solar and wind accounted for 34% of global electrical generation this quarter.',
+            },
           },
         ],
       },
@@ -97,7 +99,9 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
       arguments: { story_id: createdStoryId },
     });
 
-    const analytics = parseJson<{ storyId: string; viralityScore: number; viewsCount: number }>(analyticsRes);
+    const analytics = parseJson<{ storyId: string; viralityScore: number; viewsCount: number }>(
+      analyticsRes
+    );
     expect(analytics.storyId).toBe(createdStoryId);
     expect(analytics.viewsCount).toBeGreaterThan(0);
     expect(analytics.viralityScore).toBeGreaterThanOrEqual(0);
@@ -132,7 +136,9 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
       },
     });
 
-    const scheduled = parseJson<{ story_id: string; status: string; scheduled_publish_at: string }>(scheduleRes);
+    const scheduled = parseJson<{ story_id: string; status: string; scheduled_publish_at: string }>(
+      scheduleRes
+    );
     expect(scheduled.story_id).toBe(createdStoryId);
     expect(scheduled.status).toBe('SCHEDULED');
     expect(scheduled.scheduled_publish_at).toBe(futureTime);
@@ -157,7 +163,9 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
       },
     });
 
-    const breaking = parseJson<{ alert_id: string; severity: string; headline: string }>(breakingRes);
+    const breaking = parseJson<{ alert_id: string; severity: string; headline: string }>(
+      breakingRes
+    );
     expect(breaking.alert_id).toBeDefined();
     expect(breaking.severity).toBe('urgent');
 
@@ -190,7 +198,9 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
       arguments: {},
     });
 
-    const usersData = parseJson<{ count: number; users: Array<{ id: string; role: string }> }>(listUsersRes);
+    const usersData = parseJson<{ count: number; users: Array<{ id: string; role: string }> }>(
+      listUsersRes
+    );
     expect(usersData.count).toBeGreaterThanOrEqual(1);
 
     // AI agent invites a specialized investigative reporter

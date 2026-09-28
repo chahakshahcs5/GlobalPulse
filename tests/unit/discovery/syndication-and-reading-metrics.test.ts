@@ -27,7 +27,8 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       organizationId: testOrgId,
       slug: 'autonomous-quantum-breakthrough',
       title: 'Autonomous Quantum Breakthrough Announced by Global Research Consortium',
-      summary: 'Scientists reveal breakthrough room-temperature superconductor and quantum computing chip architecture.',
+      summary:
+        'Scientists reveal breakthrough room-temperature superconductor and quantum computing chip architecture.',
       status: 'PUBLISHED',
       articleType: 'technology',
       authorId: 'usr_editor_1',
@@ -84,7 +85,10 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       const blocks = [
         { blockType: 'heading', data: { text: 'Key Findings and Discoveries' } },
         { blockType: 'paragraph', data: { text: 'First paragraph with some text.' } },
-        { blockType: 'quote', data: { quote: 'This is a notable quotation.', caption: 'By John Doe' } },
+        {
+          blockType: 'quote',
+          data: { quote: 'This is a notable quotation.', caption: 'By John Doe' },
+        },
       ];
       // 4 + 5 + 5 + 3 = 17 words
       expect(calculateWordCount(blocks)).toBe(17);
@@ -139,7 +143,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       expect(jsonLd['@context']).toBe('https://schema.org');
       expect(jsonLd['@type']).toBe('NewsArticle');
       expect(jsonLd.headline).toBe('Autonomous Quantum Breakthrough');
-      expect(jsonLd.mainEntityOfPage['@id']).toBe('https://globalpulse.news/stories/autonomous-quantum-breakthrough');
+      expect(jsonLd.mainEntityOfPage['@id']).toBe(
+        'https://globalpulse.news/stories/autonomous-quantum-breakthrough'
+      );
       expect(jsonLd.timeRequired).toBe('PT2M');
       expect(jsonLd.wordCount).toBe(150);
       expect(jsonLd.keywords).toContain('quantum');
@@ -173,7 +179,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       expect(res.body).toContain('<news:publication>');
       expect(res.body).toContain('<news:name>GlobalPulse News</news:name>');
       expect(res.body).toContain('<news:language>en</news:language>');
-      expect(res.body).toContain('<news:title>Autonomous Quantum Breakthrough Announced by Global Research Consortium</news:title>');
+      expect(res.body).toContain(
+        '<news:title>Autonomous Quantum Breakthrough Announced by Global Research Consortium</news:title>'
+      );
     });
 
     it('GET /feeds/topics/:topic/rss.xml returns topic-filtered RSS feed with media enclosure', async () => {
@@ -186,7 +194,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       expect(res.headers['content-type']).toContain('application/rss+xml');
       expect(res.body).toContain('<rss version="2.0"');
       expect(res.body).toContain('Topic: quantum');
-      expect(res.body).toContain('<enclosure url="https://images.platform.org/hero-quantum.jpg" type="image/jpeg"');
+      expect(res.body).toContain(
+        '<enclosure url="https://images.platform.org/hero-quantum.jpg" type="image/jpeg"'
+      );
     });
 
     it('GET /api/feeds/atom returns valid Atom 1.0 feed', async () => {
@@ -268,8 +278,10 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
       const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
       const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js');
       const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
-      const { registerSyndicationTools } = await import('../../../apps/mcp-server/src/tools/syndication.tools');
-      const { registerEngagementTools } = await import('../../../apps/mcp-server/src/tools/engagement.tools');
+      const { registerSyndicationTools } =
+        await import('../../../apps/mcp-server/src/tools/syndication.tools');
+      const { registerEngagementTools } =
+        await import('../../../apps/mcp-server/src/tools/engagement.tools');
 
       const server = new McpServer({
         name: 'test-syndication-server',

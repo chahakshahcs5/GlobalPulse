@@ -63,14 +63,20 @@ export class ProvenanceService {
   ): Promise<{ valid: boolean; provenance: AIStoryProvenance | null; error?: string }> {
     const record = await this.db.provenance.getProvenance(storyId);
     if (!record) {
-      return { valid: false, provenance: null, error: 'No provenance record found for this story.' };
+      return {
+        valid: false,
+        provenance: null,
+        error: 'No provenance record found for this story.',
+      };
     }
 
     const isValid = verifyProvenanceWatermark(record);
     return {
       valid: isValid,
       provenance: record,
-      error: isValid ? undefined : 'Watermark signature verification failed: record has been tampered with.',
+      error: isValid
+        ? undefined
+        : 'Watermark signature verification failed: record has been tampered with.',
     };
   }
 }

@@ -25,7 +25,8 @@ export type ViewStyle = React.CSSProperties & {
 
 export type TextStyle = ViewStyle & {
   fontSize?: number;
-  fontWeight?: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+  fontWeight?:
+    'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
   lineHeight?: number;
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
 };
@@ -73,7 +74,13 @@ export interface ViewProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 's
   onLayout?: (event: LayoutEvent) => void;
 }
 
-export const View: React.FC<ViewProps> = ({ style, children, testID, onLayout: _onLayout, ...props }) => {
+export const View: React.FC<ViewProps> = ({
+  style,
+  children,
+  testID,
+  onLayout: _onLayout,
+  ...props
+}) => {
   const flattened = StyleSheet.flatten(style);
   return (
     <div
@@ -150,7 +157,10 @@ export const Text: React.FC<TextProps> = ({ style, children, numberOfLines, test
   );
 };
 
-export interface TouchableOpacityProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'style'> {
+export interface TouchableOpacityProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'style'
+> {
   style?: ViewStyle | (ViewStyle | undefined | null | false)[];
   onPress?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
   activeOpacity?: number;
@@ -287,28 +297,23 @@ export function FlatList<T = unknown>({
           ...contentFlattened,
         }}
       >
-        {ListHeaderComponent && (
-          React.isValidElement(ListHeaderComponent)
+        {ListHeaderComponent &&
+          (React.isValidElement(ListHeaderComponent)
             ? ListHeaderComponent
             : typeof ListHeaderComponent === 'function'
-            ? React.createElement(ListHeaderComponent as React.ComponentType)
-            : (ListHeaderComponent as React.ReactNode)
-        )}
-        {safeData.length === 0 && ListEmptyComponent && (
-          React.isValidElement(ListEmptyComponent)
+              ? React.createElement(ListHeaderComponent as React.ComponentType)
+              : (ListHeaderComponent as React.ReactNode))}
+        {safeData.length === 0 &&
+          ListEmptyComponent &&
+          (React.isValidElement(ListEmptyComponent)
             ? ListEmptyComponent
             : typeof ListEmptyComponent === 'function'
-            ? React.createElement(ListEmptyComponent as React.ComponentType)
-            : (ListEmptyComponent as React.ReactNode)
-        )}
+              ? React.createElement(ListEmptyComponent as React.ComponentType)
+              : (ListEmptyComponent as React.ReactNode))}
         {renderItem &&
           safeData.map((item: T, index: number) => {
             const key = keyExtractor(item, index);
-            return (
-              <React.Fragment key={key}>
-                {renderItem({ item, index })}
-              </React.Fragment>
-            );
+            return <React.Fragment key={key}>{renderItem({ item, index })}</React.Fragment>;
           })}
       </div>
     </div>
@@ -329,7 +334,11 @@ export interface ActivityIndicatorProps {
   style?: ViewStyle | (ViewStyle | undefined | null | false)[];
 }
 
-export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({ size = 'small', color = '#3b82f6', style }) => {
+export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
+  size = 'small',
+  color = '#3b82f6',
+  style,
+}) => {
   const flattened = StyleSheet.flatten(style);
   const dim = size === 'large' ? 36 : 20;
   return (
@@ -355,11 +364,21 @@ export interface ImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElemen
   testID?: string;
 }
 
-export const Image: React.FC<ImageProps> = ({ source, style, resizeMode = 'cover', testID, ...props }) => {
+export const Image: React.FC<ImageProps> = ({
+  source,
+  style,
+  resizeMode = 'cover',
+  testID,
+  ...props
+}) => {
   const flattened = StyleSheet.flatten(style);
   const uri = typeof source === 'string' ? source : source?.uri;
   const objectFitVal: React.CSSProperties['objectFit'] =
-    resizeMode === 'center' || resizeMode === 'contain' ? 'contain' : resizeMode === 'stretch' ? 'fill' : 'cover';
+    resizeMode === 'center' || resizeMode === 'contain'
+      ? 'contain'
+      : resizeMode === 'stretch'
+        ? 'fill'
+        : 'cover';
 
   return (
     <img

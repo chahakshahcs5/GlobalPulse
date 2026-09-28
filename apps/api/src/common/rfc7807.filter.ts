@@ -1,10 +1,4 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { DomainError } from '@ai-news/shared';
 import { ApiError } from './errors/api-error';
@@ -58,7 +52,8 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
-      const resObj = typeof res === 'object' && res !== null ? (res as Record<string, unknown>) : null;
+      const resObj =
+        typeof res === 'object' && res !== null ? (res as Record<string, unknown>) : null;
       code = resObj && typeof resObj.error === 'string' ? resObj.error : 'HTTP_EXCEPTION';
       title = exception.name;
       detail = resObj && typeof resObj.message === 'string' ? resObj.message : exception.message;
@@ -84,9 +79,6 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
 
     logger.warn(`Handled error [${status} ${code}]: ${detail} on ${request.url}`);
 
-    response
-      .status(status)
-      .header('Content-Type', 'application/problem+json')
-      .send(problemDetails);
+    response.status(status).header('Content-Type', 'application/problem+json').send(problemDetails);
   }
 }

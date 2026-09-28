@@ -1,6 +1,11 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { DEMO_STORIES, DEMO_SOURCES, DEMO_ENTITIES, DEMO_EVENTS } from '../../../apps/web/src/lib/demo-data.js';
+import {
+  DEMO_STORIES,
+  DEMO_SOURCES,
+  DEMO_ENTITIES,
+  DEMO_EVENTS,
+} from '../../../apps/web/src/lib/demo-data.js';
 import { D3ChartRenderer, MapRenderer, TimelineRenderer, VisualDiffRenderer } from '@ai-news/media';
 import { StoryBlockSchema, EntitySchema, EventSchema, type StoryBlock } from '@ai-news/schemas';
 
@@ -105,8 +110,17 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
           data: {
             title: 'On-Site Photography',
             images: [
-              { url: 'https://images.unsplash.com/photo-1', altText: 'Photo 1', caption: 'Plenary hall', credit: 'Reuters' },
-              { url: 'https://images.unsplash.com/photo-2', altText: 'Photo 2', caption: 'Press conference' },
+              {
+                url: 'https://images.unsplash.com/photo-1',
+                altText: 'Photo 1',
+                caption: 'Plenary hall',
+                credit: 'Reuters',
+              },
+              {
+                url: 'https://images.unsplash.com/photo-2',
+                altText: 'Photo 2',
+                caption: 'Press conference',
+              },
             ],
           },
         },
@@ -117,8 +131,18 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
           data: {
             title: 'Diplomatic Approval Flow',
             steps: [
-              { stepNumber: 1, title: 'Draft Protocol', description: 'Working groups assemble.', status: 'completed' },
-              { stepNumber: 2, title: 'Ministerial Signoff', description: 'Foreign ministers vote.', status: 'active' },
+              {
+                stepNumber: 1,
+                title: 'Draft Protocol',
+                description: 'Working groups assemble.',
+                status: 'completed',
+              },
+              {
+                stepNumber: 2,
+                title: 'Ministerial Signoff',
+                description: 'Foreign ministers vote.',
+                status: 'active',
+              },
             ],
           },
         },
@@ -155,7 +179,11 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
           data: {
             title: 'Consortium Roadmap Slides',
             slides: [
-              { slideNumber: 1, title: 'Phase 1: Architecture', bullets: ['Decentralized messaging', 'Audit trails'] },
+              {
+                slideNumber: 1,
+                title: 'Phase 1: Architecture',
+                bullets: ['Decentralized messaging', 'Audit trails'],
+              },
               { slideNumber: 2, title: 'Phase 2: Deployment', body: 'Global rollout schedule.' },
             ],
           },
@@ -166,8 +194,14 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
           sortOrder: 6,
           data: {
             title: 'Policy Comparison',
-            subjectA: { name: 'Proposal Alpha', points: ['Decentralized governance', 'Zero tariffs'] },
-            subjectB: { name: 'Proposal Beta', points: ['Central regulatory council', 'Targeted quotas'] },
+            subjectA: {
+              name: 'Proposal Alpha',
+              points: ['Decentralized governance', 'Zero tariffs'],
+            },
+            subjectB: {
+              name: 'Proposal Beta',
+              points: ['Central regulatory council', 'Targeted quotas'],
+            },
           },
         },
         {
@@ -214,7 +248,9 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
         },
       ];
 
-      const html = renderToString(React.createElement(StoryRenderer, { blocks: allBlocks, theme: 'dark' }));
+      const html = renderToString(
+        React.createElement(StoryRenderer, { blocks: allBlocks, theme: 'dark' })
+      );
       expect(html).toContain('Breaking Development');
       expect(html).toContain('On-Site Photography');
       expect(html).toContain('Diplomatic Approval Flow');
@@ -292,7 +328,9 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
 
     it('renders External AI Integrations Hub with registered agents and MCP specs', async () => {
       const { renderToString } = await import('react-dom/server');
-      const IntegrationsPage = (await import('../../../apps/web/src/app/settings/integrations/page.js')).default;
+      const IntegrationsPage = (
+        await import('../../../apps/web/src/app/settings/integrations/page.js')
+      ).default;
 
       const html = renderToString(React.createElement(IntegrationsPage));
 

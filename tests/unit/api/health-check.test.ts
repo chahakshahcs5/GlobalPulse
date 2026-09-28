@@ -91,7 +91,6 @@ describe('Deep Health Check Probes (/health, /health/live, /health/ready)', () =
       latencyMs: 999,
     });
 
-
     const res = await app.inject({
       method: 'GET',
       url: '/health/ready',

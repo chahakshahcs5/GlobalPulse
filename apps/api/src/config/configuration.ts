@@ -21,7 +21,8 @@ export function getAppConfig(): AppConfig {
   const apiBaseUrl = process.env.API_BASE_URL || `http://localhost:${port}`;
   const mcpPort = parseInt(process.env.MCP_PORT || '4001', 10);
   const mcpBaseUrl = process.env.MCP_BASE_URL || `http://localhost:${mcpPort}`;
-  const s3Endpoint = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://localhost:9000';
+  const s3Endpoint =
+    process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://localhost:9000';
   const s3Bucket = process.env.S3_BUCKET || 'news-media';
   const s3PublicUrl = process.env.S3_PUBLIC_URL || `${s3Endpoint}/${s3Bucket}`;
 
@@ -37,8 +38,10 @@ export function getAppConfig(): AppConfig {
     s3Bucket,
     s3PublicUrl,
     jwtSecret: process.env.JWT_SECRET || 'dev-secret-minimum-32-chars-globalpulse-key',
-    jwtIssuer: process.env.JWT_ISSUER || process.env.OAUTH_ISSUER || 'https://auth.globalpulse.news',
-    jwtAudience: process.env.JWT_AUDIENCE || process.env.OAUTH_AUDIENCE || 'https://api.globalpulse.news',
+    jwtIssuer:
+      process.env.JWT_ISSUER || process.env.OAUTH_ISSUER || 'https://auth.globalpulse.news',
+    jwtAudience:
+      process.env.JWT_AUDIENCE || process.env.OAUTH_AUDIENCE || 'https://api.globalpulse.news',
     docsUrl: process.env.DOCS_URL || `${apiBaseUrl}/docs`,
   };
 }

@@ -37,7 +37,9 @@ export function registerUserTools(
     'Assign or modify the newsroom role of a user (admin, editor, journalist, reader, ai_agent).',
     {
       user_id: z.string().describe('ID of the user to modify'),
-      role: z.enum(['admin', 'editor', 'journalist', 'reader', 'ai_agent']).describe('New role to assign'),
+      role: z
+        .enum(['admin', 'editor', 'journalist', 'reader', 'ai_agent'])
+        .describe('New role to assign'),
     },
     async (args) => {
       try {
@@ -73,7 +75,10 @@ export function registerUserTools(
     {
       name: z.string().describe('Full name or Agent identifier'),
       email: z.string().email().describe('Staff or service email address'),
-      role: z.enum(['admin', 'editor', 'journalist', 'reader', 'ai_agent']).default('journalist').describe('Role'),
+      role: z
+        .enum(['admin', 'editor', 'journalist', 'reader', 'ai_agent'])
+        .default('journalist')
+        .describe('Role'),
       bio: z.string().optional().describe('Staff bio or AI agent capability description'),
     },
     async (args) => {
@@ -126,7 +131,11 @@ export function registerUserTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const record = await userService.followTarget(principal.id, args.target_type, args.target_id);
+        const record = await userService.followTarget(
+          principal.id,
+          args.target_type,
+          args.target_id
+        );
         return successResponse({
           message: `Successfully followed ${args.target_type} "${args.target_id}".`,
           follow: record,
@@ -150,7 +159,11 @@ export function registerUserTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const removed = await userService.unfollowTarget(principal.id, args.target_type, args.target_id);
+        const removed = await userService.unfollowTarget(
+          principal.id,
+          args.target_type,
+          args.target_id
+        );
         return successResponse({
           success: removed,
           message: removed
@@ -168,7 +181,10 @@ export function registerUserTools(
     'list_user_following',
     'Retrieve all topics, entities, and authors followed by the active user/agent.',
     {
-      target_type: z.enum(['topic', 'entity', 'author']).optional().describe('Filter by target type'),
+      target_type: z
+        .enum(['topic', 'entity', 'author'])
+        .optional()
+        .describe('Filter by target type'),
     },
     async (args) => {
       try {

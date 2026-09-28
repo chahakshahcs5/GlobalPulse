@@ -91,9 +91,7 @@ export const GoogleNewsClusterCard: React.FC<GoogleNewsClusterCardProps> = ({
               >
                 {rel.headline}
               </Link>
-              <span className="text-slate-400 text-[10px] shrink-0 font-mono">
-                {rel.timeAgo}
-              </span>
+              <span className="text-slate-400 text-[10px] shrink-0 font-mono">{rel.timeAgo}</span>
             </div>
           ))}
         </div>
@@ -127,7 +125,11 @@ export const GoogleNewsClusterCard: React.FC<GoogleNewsClusterCardProps> = ({
             className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition"
             title="Share"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5" />
+            )}
           </button>
         </div>
       </div>

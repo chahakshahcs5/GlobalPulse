@@ -39,12 +39,15 @@ export default defineConfig({
       '@ai-news/jobs': path.resolve(__dirname, 'libs/jobs/src/index.ts'),
       '@ai-news/graphql': path.resolve(__dirname, 'libs/graphql/src/index.ts'),
       'react-native': path.resolve(__dirname, 'apps/mobile/src/react-native-compat.tsx'),
-      '@modelcontextprotocol/sdk': path.resolve(__dirname, 'apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm'),
+      '@modelcontextprotocol/sdk': path.resolve(
+        __dirname,
+        'apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm'
+      ),
       'react-dom': path.resolve(__dirname, 'apps/web/node_modules/react-dom'),
-      'react': path.resolve(__dirname, 'apps/web/node_modules/react'),
-      'zod': path.resolve(__dirname, 'libs/schemas/node_modules/zod'),
-      'rxjs': path.resolve(__dirname, 'apps/api/node_modules/rxjs'),
-      'fastify': path.resolve(__dirname, 'apps/api/node_modules/fastify'),
+      react: path.resolve(__dirname, 'apps/web/node_modules/react'),
+      zod: path.resolve(__dirname, 'libs/schemas/node_modules/zod'),
+      rxjs: path.resolve(__dirname, 'apps/api/node_modules/rxjs'),
+      fastify: path.resolve(__dirname, 'apps/api/node_modules/fastify'),
     },
   },
 });

@@ -31,7 +31,7 @@ export const Principal = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): AuthenticatedPrincipal => {
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
     return request.principal;
-  },
+  }
 );
 
 @Injectable()
@@ -85,7 +85,10 @@ export class NestAuthGuard implements CanActivate {
 
       request.principal = fallbackPrincipal;
 
-      if ((!requiredScopes || requiredScopes.length === 0) && (!requiredRoles || requiredRoles.length === 0)) {
+      if (
+        (!requiredScopes || requiredScopes.length === 0) &&
+        (!requiredRoles || requiredRoles.length === 0)
+      ) {
         return true;
       }
 

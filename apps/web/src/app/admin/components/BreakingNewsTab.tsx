@@ -12,16 +12,14 @@ interface BreakingNewsTabProps {
   onSuccess: (message: string) => void;
 }
 
-export function BreakingNewsTab({
-  stories,
-  notifications,
-  onSuccess,
-}: BreakingNewsTabProps) {
+export function BreakingNewsTab({ stories, notifications, onSuccess }: BreakingNewsTabProps) {
   const { broadcastBreaking } = useEditorialNotifications(20);
 
   const [breakingStoryId, setBreakingStoryId] = useState('');
   const [breakingHeadline, setBreakingHeadline] = useState('');
-  const [breakingUrgency, setBreakingUrgency] = useState<'urgent' | 'critical' | 'breaking'>('urgent');
+  const [breakingUrgency, setBreakingUrgency] = useState<'urgent' | 'critical' | 'breaking'>(
+    'urgent'
+  );
   const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const handleBroadcastBreaking = async (e: React.FormEvent) => {
@@ -61,8 +59,9 @@ export function BreakingNewsTab({
         </div>
 
         <p className="text-xs text-slate-500 leading-relaxed">
-          Dispatches an immediate high-priority breaking news flash across all active reader sessions via the SSE Realtime Gateway.
-          The alert banner appears instantaneously on every connected device without a page reload.
+          Dispatches an immediate high-priority breaking news flash across all active reader
+          sessions via the SSE Realtime Gateway. The alert banner appears instantaneously on every
+          connected device without a page reload.
         </p>
 
         <form onSubmit={handleBroadcastBreaking} className="space-y-4">
@@ -82,11 +81,13 @@ export function BreakingNewsTab({
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:outline-none focus:border-rose-500"
             >
               <option value="">-- Standalone Alert (No Story Link) --</option>
-              {stories.filter((s) => s.status === 'PUBLISHED').map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
-              ))}
+              {stories
+                .filter((s) => s.status === 'PUBLISHED')
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -176,7 +177,9 @@ export function BreakingNewsTab({
                   <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
                     <span>Dispatched by {n.senderId || 'editor'}</span>
                     <span>•</span>
-                    <span suppressHydrationWarning>{formatDeterministicDateTime(n.sentAt || n.createdAt || Date.now())}</span>
+                    <span suppressHydrationWarning>
+                      {formatDeterministicDateTime(n.sentAt || n.createdAt || Date.now())}
+                    </span>
                   </div>
                 </div>
 

@@ -9,11 +9,7 @@ import {
 export const StoryFilterSchema = SearchStoriesInputSchema;
 export type StoryFilter = z.infer<typeof StoryFilterSchema>;
 
-export {
-  CreateStoryInputSchema,
-  UpdateStoryInputSchema,
-  CreateStoryVersionInputSchema,
-};
+export { CreateStoryInputSchema, UpdateStoryInputSchema, CreateStoryVersionInputSchema };
 
 export const PublishStoryInputSchema = z.object({
   idempotencyKey: z.string().optional(),

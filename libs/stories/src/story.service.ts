@@ -61,7 +61,10 @@ export class StoryService {
 
     // 1. Idempotency Check
     if (validated.idempotencyKey) {
-      const existingRecord = await this.db.idempotency.get(validated.idempotencyKey, ctx.organizationId);
+      const existingRecord = await this.db.idempotency.get(
+        validated.idempotencyKey,
+        ctx.organizationId
+      );
       if (existingRecord) {
         return existingRecord.responseJson as Story;
       }
@@ -165,7 +168,11 @@ export class StoryService {
       return created;
     });
 
-    broadcast('story.created', { storyId: savedStory.id, title: savedStory.title, slug: savedStory.slug });
+    broadcast('story.created', {
+      storyId: savedStory.id,
+      title: savedStory.title,
+      slug: savedStory.slug,
+    });
 
     return savedStory;
   }
@@ -174,10 +181,12 @@ export class StoryService {
     return this.db.stories.list(filter, orgId);
   }
 
-  async listStoriesPaginated(filter?: StoryFilter, orgId: string = 'org_default'): Promise<PaginatedStories> {
+  async listStoriesPaginated(
+    filter?: StoryFilter,
+    orgId: string = 'org_default'
+  ): Promise<PaginatedStories> {
     return this.db.stories.listPaginated(filter, orgId);
   }
-
 
   async getStory(id: string, orgId?: string): Promise<Story> {
     const story = await this.db.stories.findById(id, orgId);
@@ -207,7 +216,8 @@ export class StoryService {
       eventId: validated.eventId !== undefined ? validated.eventId : existing.eventId,
       topicIds: validated.topicIds ?? existing.topicIds,
       entityIds: validated.entityIds ?? existing.entityIds,
-      heroImageUrl: validated.heroImageUrl !== undefined ? validated.heroImageUrl : existing.heroImageUrl,
+      heroImageUrl:
+        validated.heroImageUrl !== undefined ? validated.heroImageUrl : existing.heroImageUrl,
       updatedAt: new Date().toISOString(),
     };
 
@@ -270,7 +280,12 @@ export class StoryService {
     return sanitized;
   }
 
-  async updateBlock(storyId: string, blockId: string, rawBlock: unknown, ctx: StoryContext): Promise<StoryBlock> {
+  async updateBlock(
+    storyId: string,
+    blockId: string,
+    rawBlock: unknown,
+    ctx: StoryContext
+  ): Promise<StoryBlock> {
     await this.getStory(storyId, ctx.organizationId);
     const validated = validateBlock(rawBlock);
 
@@ -304,7 +319,11 @@ export class StoryService {
     return true;
   }
 
-  async reorderBlocks(storyId: string, blockIdsInOrder: string[], ctx: StoryContext): Promise<StoryBlock[]> {
+  async reorderBlocks(
+    storyId: string,
+    blockIdsInOrder: string[],
+    ctx: StoryContext
+  ): Promise<StoryBlock[]> {
     await this.getStory(storyId, ctx.organizationId);
     const currentBlocks = await this.db.stories.getBlocks(storyId);
     const blockMap = new Map(currentBlocks.map((b) => [b.id, b]));
@@ -397,7 +416,11 @@ export class StoryService {
         action: `${ctx.createdVia || 'mcp'}.create_story_version`,
         resourceType: 'story_version',
         resourceId: versionId,
-        payloadSummary: { storyId, versionNumber: nextVersionNumber, changeSummary: validated.changeSummary },
+        payloadSummary: {
+          storyId,
+          versionNumber: nextVersionNumber,
+          changeSummary: validated.changeSummary,
+        },
         requestId: ctx.requestId,
         status: 'SUCCESS',
         timestamp: now,
@@ -423,7 +446,11 @@ export class StoryService {
     return this.db.stories.getVersions(storyId);
   }
 
-  async getStoryVersion(storyId: string, versionNumber: number, orgId?: string): Promise<StoryVersion> {
+  async getStoryVersion(
+    storyId: string,
+    versionNumber: number,
+    orgId?: string
+  ): Promise<StoryVersion> {
     await this.getStory(storyId, orgId);
     const version = await this.db.stories.getVersion(storyId, versionNumber);
     if (!version) {
@@ -432,11 +459,7 @@ export class StoryService {
     return version;
   }
 
-  async publishStory(
-    storyId: string,
-    ctx: StoryContext,
-    idempotencyKey?: string
-  ): Promise<Story> {
+  async publishStory(storyId: string, ctx: StoryContext, idempotencyKey?: string): Promise<Story> {
     if (idempotencyKey) {
       const existing = await this.db.idempotency.get(idempotencyKey, ctx.organizationId);
       if (existing) {
@@ -574,7 +597,11 @@ export class StoryService {
           action: `${ctx.createdVia || 'api'}.approve_story`,
           resourceType: 'story',
           resourceId: storyId,
-          payloadSummary: { title: story.title, approvedBy: ctx.authorId, feedback: review.feedback },
+          payloadSummary: {
+            title: story.title,
+            approvedBy: ctx.authorId,
+            feedback: review.feedback,
+          },
           requestId: ctx.requestId,
           status: 'SUCCESS',
           timestamp: now,
@@ -604,7 +631,11 @@ export class StoryService {
           action: `${ctx.createdVia || 'api'}.reject_story`,
           resourceType: 'story',
           resourceId: storyId,
-          payloadSummary: { title: story.title, rejectedBy: ctx.authorId, feedback: review.feedback },
+          payloadSummary: {
+            title: story.title,
+            rejectedBy: ctx.authorId,
+            feedback: review.feedback,
+          },
           requestId: ctx.requestId,
           status: 'SUCCESS',
           timestamp: now,

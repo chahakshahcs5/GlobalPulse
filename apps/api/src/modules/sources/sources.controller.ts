@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpStatus, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
@@ -47,15 +57,29 @@ export class SourcesController {
 
   @Post('attach')
   @RequireScope('news:write')
-  async attachSource(@Body() body: { storyId: string; sourceId: string }, @Principal() principal: AuthenticatedPrincipal) {
-    await this.sourceService.attachSourceToStory(body.storyId, body.sourceId, principal.organizationId);
+  async attachSource(
+    @Body() body: { storyId: string; sourceId: string },
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    await this.sourceService.attachSourceToStory(
+      body.storyId,
+      body.sourceId,
+      principal.organizationId
+    );
     return { success: true, storyId: body.storyId, sourceId: body.sourceId };
   }
 
   @Post('citations')
   @RequireScope('news:write')
   async createCitation(
-    @Body() body: { storyId: string; sourceId: string; claimText: string; blockId?: string; confidenceScore?: number },
+    @Body()
+    body: {
+      storyId: string;
+      sourceId: string;
+      claimText: string;
+      blockId?: string;
+      confidenceScore?: number;
+    },
     @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {

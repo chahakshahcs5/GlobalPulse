@@ -122,7 +122,8 @@ describe('Modular Production API Gateway Integration Tests', () => {
         headers: { authorization: 'Bearer dev-test' },
         payload: {
           title: 'Quantum Advantage Milestone Confirmed: Verified in Peer Review',
-          summary: 'Neutral-atom processor benchmark verified across 4 independent national laboratories.',
+          summary:
+            'Neutral-atom processor benchmark verified across 4 independent national laboratories.',
           changeSummary: 'Updated title and confirmed laboratory peer review corroboration.',
           blocks: [
             {
@@ -202,7 +203,9 @@ describe('Modular Production API Gateway Integration Tests', () => {
       });
       expect(listRes.statusCode).toBe(200);
       const topics = JSON.parse(listRes.body);
-      expect(topics.some((t: { name?: string }) => t.name === 'Artificial Intelligence & Robotics')).toBe(true);
+      expect(
+        topics.some((t: { name?: string }) => t.name === 'Artificial Intelligence & Robotics')
+      ).toBe(true);
     });
 
     it('creates and lists entities', async () => {
@@ -590,7 +593,9 @@ describe('Modular Production API Gateway Integration Tests', () => {
       expect(res.statusCode).toBe(200);
       const event = JSON.parse(res.body);
       expect(event.id).toBe(createdEventId);
-      expect(event.summary).toBe('Multilateral agreement establishing quantum non-proliferation norms');
+      expect(event.summary).toBe(
+        'Multilateral agreement establishing quantum non-proliferation norms'
+      );
     });
   });
 

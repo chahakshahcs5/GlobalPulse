@@ -27,7 +27,9 @@ export function registerJobTools(
     'create_job',
     '[WRITE] Queue an asynchronous long-running task such as media transcoding, video derivative rendering, or bulk export. Returns a jobId to poll.',
     {
-      jobType: z.enum(['media_transcode', 'video_render', 'pdf_export', 'bulk_import']).describe('Type of job'),
+      jobType: z
+        .enum(['media_transcode', 'video_render', 'pdf_export', 'bulk_import'])
+        .describe('Type of job'),
       payload: z.record(z.unknown()).describe('Job parameters'),
     },
     async ({ jobType, payload: _payload }) => {
@@ -40,7 +42,10 @@ export function registerJobTools(
         type: jobType,
         status: 'completed' as const, // In test environment it resolves immediately
         progress: 100,
-        result: { message: `Job ${jobType} completed successfully.`, outputUrl: `https://storage.platform/jobs/${jobId}/output` },
+        result: {
+          message: `Job ${jobType} completed successfully.`,
+          outputUrl: `https://storage.platform/jobs/${jobId}/output`,
+        },
         createdAt: new Date().toISOString(),
       };
       jobs.set(jobId, record);
@@ -95,7 +100,10 @@ export function registerJobTools(
     'list_jobs',
     '[READ-ONLY] List recent and active background jobs with status and progress.',
     {
-      status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled']).optional().describe('Filter by job status'),
+      status: z
+        .enum(['queued', 'running', 'completed', 'failed', 'cancelled'])
+        .optional()
+        .describe('Filter by job status'),
       limit: z.number().int().min(1).max(50).default(10).describe('Max jobs to return'),
     },
     async ({ status, limit }) => {

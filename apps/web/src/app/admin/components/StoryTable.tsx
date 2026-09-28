@@ -2,17 +2,7 @@
 
 import Link from 'next/link';
 
-import {
-  Eye,
-  Trash2,
-  Clock,
-  Bot,
-  Check,
-  XCircle,
-  Send,
-  Zap,
-  Edit3,
-} from 'lucide-react';
+import { Eye, Trash2, Clock, Bot, Check, XCircle, Send, Zap, Edit3 } from 'lucide-react';
 import type { Story } from '@ai-news/schemas';
 import {
   deleteUserStory,
@@ -57,7 +47,10 @@ export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: St
             const isDraft = story.status === 'DRAFT';
 
             return (
-              <tr key={story.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <tr
+                key={story.id}
+                className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+              >
                 <td className="p-3 font-semibold text-slate-900 dark:text-white max-w-sm truncate">
                   <Link href={`/stories/${story.slug}`} className="hover:text-blue-600">
                     {story.title}
@@ -74,7 +67,9 @@ export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: St
                 </td>
                 <td className="p-3 text-slate-500">
                   <div className="flex items-center gap-1">
-                    {story.authorId.includes('gemini') || story.authorId.includes('chatgpt') || story.authorId.includes('agent') ? (
+                    {story.authorId.includes('gemini') ||
+                    story.authorId.includes('chatgpt') ||
+                    story.authorId.includes('agent') ? (
                       <Bot className="w-3 h-3 text-indigo-500" />
                     ) : null}
                     <span>{story.authorId.replace('usr_', '').replace('_', ' ')}</span>
@@ -119,7 +114,8 @@ export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: St
                       </button>
                       <button
                         onClick={async () => {
-                          const feedback = prompt('Provide feedback for revision (optional):') || undefined;
+                          const feedback =
+                            prompt('Provide feedback for revision (optional):') || undefined;
                           await reviewUserStory(story.id, 'reject', feedback);
                           onSuccess(`Returned "${story.title}" to draft with feedback`);
                         }}

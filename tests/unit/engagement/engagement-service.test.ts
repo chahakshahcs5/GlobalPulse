@@ -78,7 +78,11 @@ describe('EngagementService Unit Tests (Comments, Reactions, Bookmarks)', () => 
 
       expect(reply.parentId).toBe(comment1.id);
 
-      const allComments = await engagementService.getComments(storyId, undefined, ctx.organizationId);
+      const allComments = await engagementService.getComments(
+        storyId,
+        undefined,
+        ctx.organizationId
+      );
       expect(allComments.length).toBe(2);
     });
 
@@ -159,7 +163,10 @@ describe('EngagementService Unit Tests (Comments, Reactions, Bookmarks)', () => 
       });
       expect(res2.bookmarked).toBe(false);
 
-      const emptyBookmarks = await engagementService.listBookmarks('usr_reader_99', ctx.organizationId);
+      const emptyBookmarks = await engagementService.listBookmarks(
+        'usr_reader_99',
+        ctx.organizationId
+      );
       expect(emptyBookmarks.length).toBe(0);
     });
   });

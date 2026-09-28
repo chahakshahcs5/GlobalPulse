@@ -47,7 +47,8 @@ export class TimelineRenderer {
 
     const items = this.transformItems(data);
     let elements = '';
-    const effectiveHeight = layout === 'vertical' ? Math.max(height, 70 + items.length * 90 + 30) : height;
+    const effectiveHeight =
+      layout === 'vertical' ? Math.max(height, 70 + items.length * 90 + 30) : height;
 
     if (layout === 'horizontal') {
       const lineY = 80;
@@ -113,5 +114,9 @@ export class TimelineRenderer {
 
 function escapeXml(unsafe?: string): string {
   if (!unsafe) return '';
-  return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

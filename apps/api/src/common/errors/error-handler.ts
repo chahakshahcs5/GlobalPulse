@@ -80,7 +80,8 @@ export function globalErrorHandler(
 
   // Handle Fastify Validation / HTTP Errors
   if ('statusCode' in error && typeof error.statusCode === 'number') {
-    const problemCode = 'code' in error && typeof error.code === 'string' ? error.code : 'HTTP_ERROR';
+    const problemCode =
+      'code' in error && typeof error.code === 'string' ? error.code : 'HTTP_ERROR';
     const problem: ProblemDetails = {
       type: 'https://news.platform/errors/http-error',
       title: error.name || 'HTTP Error',

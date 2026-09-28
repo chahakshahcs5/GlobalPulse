@@ -21,10 +21,11 @@ stateDiagram-v2
 ```
 
 ### State Guard Rules:
-* **DRAFT**: Editable by authorized agents. Not exposed to public search or 4K wall tickers.
-* **PUBLISHED**: Immutable public snapshot. Any subsequent edit generates a new incremented version number (`v2`, `v3`) while preserving historical records.
-* **RETRACTED**: Preserves the story URL and block tree, but injects a mandatory red editorial retraction banner explaining why the article was withdrawn.
-* **ARCHIVED**: Read-only historical record removed from live breaking feeds.
+
+- **DRAFT**: Editable by authorized agents. Not exposed to public search or 4K wall tickers.
+- **PUBLISHED**: Immutable public snapshot. Any subsequent edit generates a new incremented version number (`v2`, `v3`) while preserving historical records.
+- **RETRACTED**: Preserves the story URL and block tree, but injects a mandatory red editorial retraction banner explaining why the article was withdrawn.
+- **ARCHIVED**: Read-only historical record removed from live breaking feeds.
 
 ---
 
@@ -88,7 +89,8 @@ The platform generates and renders a dedicated `what_changed` block at the top o
 ```
 
 ### Visual Diff Presentation:
-* **`added`**: Highlighted in emerald green with `+` indicator.
-* **`updated`**: Highlighted in blue with `~` indicator.
-* **`corrected`**: Highlighted in amber with `!` correction badge.
-* **`retracted`**: Highlighted in crimson with `×` retraction notice.
+
+- **`added`**: Highlighted in emerald green with `+` indicator.
+- **`updated`**: Highlighted in blue with `~` indicator.
+- **`corrected`**: Highlighted in amber with `!` correction badge.
+- **`retracted`**: Highlighted in crimson with `×` retraction notice.

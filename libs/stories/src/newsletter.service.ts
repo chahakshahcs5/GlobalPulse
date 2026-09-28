@@ -132,13 +132,20 @@ export class NewsletterService {
       htmlBody: string;
       textBody: string;
     }) => Promise<{ success: boolean; messageId?: string; error?: string }>
-  ): Promise<{ sentCount: number; errors: number; logs: Array<{ email: string; success: boolean }> }> {
+  ): Promise<{
+    sentCount: number;
+    errors: number;
+    logs: Array<{ email: string; success: boolean }>;
+  }> {
     const digest = await this.db.newsletters.getDigest(digestId);
     if (!digest) {
       throw new Error(`Newsletter digest with id "${digestId}" was not found`);
     }
 
-    const subscriptions = await this.db.newsletters.listActiveSubscriptions(digest.frequency, digest.category);
+    const subscriptions = await this.db.newsletters.listActiveSubscriptions(
+      digest.frequency,
+      digest.category
+    );
     const activeSubs = subscriptions.filter((s) => s.active);
 
     const defaultSender = async () => ({

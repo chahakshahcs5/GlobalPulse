@@ -48,11 +48,13 @@ describe('Tier 4: Advanced & Google News Differentiation Unit Tests', () => {
 
       // 4. Dispatch with mock email sender
       const sentEmails: string[] = [];
-      const mockSender = vi.fn(async (params: { to: string; subject: string; htmlBody: string }) => {
-        sentEmails.push(params.to);
-        expect(params.htmlBody).toContain('Breakthrough in Solid-State Battery Density');
-        return { success: true, messageId: 'msg_123' };
-      });
+      const mockSender = vi.fn(
+        async (params: { to: string; subject: string; htmlBody: string }) => {
+          sentEmails.push(params.to);
+          expect(params.htmlBody).toContain('Breakthrough in Solid-State Battery Density');
+          return { success: true, messageId: 'msg_123' };
+        }
+      );
 
       const dispatchResult = await service.dispatchDigest(digest.id, mockSender);
 

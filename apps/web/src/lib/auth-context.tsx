@@ -86,43 +86,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistUser(authUser);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const result = await api.loginUser(email, password);
-      handleAuthResponse(
-        {
-          id: result.user.id,
-          name: result.user.name,
-          email: result.user.email,
-          role: result.user.role,
-          avatarUrl: result.user.avatarUrl,
-        },
-        result.token
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [handleAuthResponse]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      setIsLoading(true);
+      try {
+        const result = await api.loginUser(email, password);
+        handleAuthResponse(
+          {
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.role,
+            avatarUrl: result.user.avatarUrl,
+          },
+          result.token
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [handleAuthResponse]
+  );
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const result = await api.registerUser(name, email, password);
-      handleAuthResponse(
-        {
-          id: result.user.id,
-          name: result.user.name,
-          email: result.user.email,
-          role: result.user.role,
-          avatarUrl: result.user.avatarUrl,
-        },
-        result.token
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [handleAuthResponse]);
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      setIsLoading(true);
+      try {
+        const result = await api.registerUser(name, email, password);
+        handleAuthResponse(
+          {
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.role,
+            avatarUrl: result.user.avatarUrl,
+          },
+          result.token
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [handleAuthResponse]
+  );
 
   const logout = useCallback(() => {
     setUser(null);

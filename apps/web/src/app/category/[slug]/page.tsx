@@ -24,9 +24,7 @@ export default function CategoryPage() {
   const { clusters: allClusters } = useNewsClusters();
 
   // Match category clusters
-  const clusters = allClusters.filter(
-    (c) => c.category.toLowerCase() === slug.toLowerCase()
-  );
+  const clusters = allClusters.filter((c) => c.category.toLowerCase() === slug.toLowerCase());
   const fallbackClusters = clusters.length > 0 ? clusters : allClusters;
   const leadCluster = fallbackClusters[0];
   const secondaryClusters = fallbackClusters.slice(1);
@@ -91,7 +89,10 @@ export default function CategoryPage() {
                         <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide text-[10px]">
                           {story.articleType.replace('_', ' ')}
                         </span>
-                        <span className="flex items-center gap-1 text-[11px]" suppressHydrationWarning>
+                        <span
+                          className="flex items-center gap-1 text-[11px]"
+                          suppressHydrationWarning
+                        >
                           <Clock className="w-3 h-3" />
                           {formatDeterministicDate(story.publishedAt)}
                         </span>

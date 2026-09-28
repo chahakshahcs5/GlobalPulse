@@ -50,7 +50,10 @@ export class MemoryWebhookRepository implements IWebhookRepository {
     };
   }
 
-  restore(snap: { subscriptions: Map<string, WebhookSubscription>; logs: WebhookDispatchLog[] }): void {
+  restore(snap: {
+    subscriptions: Map<string, WebhookSubscription>;
+    logs: WebhookDispatchLog[];
+  }): void {
     this.subscriptions = new Map(snap.subscriptions);
     this.logs = [...snap.logs];
   }

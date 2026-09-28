@@ -24,7 +24,10 @@ export const ALLOWED_CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
 export function getAllowedOrigins(): string[] {
   const envAllowed = process.env.ALLOWED_ORIGINS;
   if (envAllowed) {
-    return envAllowed.split(',').map((s) => s.trim()).filter(Boolean);
+    return envAllowed
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
   if (process.env.NODE_ENV === 'production') {
     return DEFAULT_ALLOWED_ORIGINS;

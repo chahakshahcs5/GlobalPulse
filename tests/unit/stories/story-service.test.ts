@@ -85,7 +85,10 @@ describe('Story Lifecycle & Versioning Service (Unit Tests)', () => {
           xAxis: { key: 'month', label: 'Month', type: 'category' },
           yAxis: { label: 'GW' },
           series: [{ name: 'Capacity', key: 'gw' }],
-          values: [{ month: 'Jan', gw: 12 }, { month: 'Jun', gw: 19 }],
+          values: [
+            { month: 'Jan', gw: 12 },
+            { month: 'Jun', gw: 19 },
+          ],
         },
       },
       ctx
@@ -129,13 +132,19 @@ describe('Story Lifecycle & Versioning Service (Unit Tests)', () => {
             id: 'b_intro',
             blockType: 'paragraph',
             sortOrder: 0,
-            data: { text: 'Initial 10-second plasma test completed with 1.3x Q-factor.', format: 'markdown' },
+            data: {
+              text: 'Initial 10-second plasma test completed with 1.3x Q-factor.',
+              format: 'markdown',
+            },
           },
           {
             id: 'b_quote',
             blockType: 'quote',
             sortOrder: 1,
-            data: { quote: 'This is a monumental milestone for clean energy.', attribution: 'Lead Physicist' },
+            data: {
+              quote: 'This is a monumental milestone for clean energy.',
+              attribution: 'Lead Physicist',
+            },
           },
         ],
       },

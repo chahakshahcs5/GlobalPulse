@@ -127,9 +127,7 @@ export default function EditorialCMSPage() {
         </div>
       )}
 
-      {activeTab === 'pulse' && (
-        <NewsroomPulseTab metrics={metrics} trending={trending} />
-      )}
+      {activeTab === 'pulse' && <NewsroomPulseTab metrics={metrics} trending={trending} />}
 
       {activeTab === 'breaking' && (
         <BreakingNewsTab
@@ -139,17 +137,11 @@ export default function EditorialCMSPage() {
         />
       )}
 
-      {activeTab === 'staff' && (
-        <StaffManagementTab onSuccess={triggerSuccess} />
-      )}
+      {activeTab === 'staff' && <StaffManagementTab onSuccess={triggerSuccess} />}
 
-      {activeTab === 'mcp' && (
-        <McpDiscoveryTab />
-      )}
+      {activeTab === 'mcp' && <McpDiscoveryTab />}
 
-      {activeTab === 'taxonomy' && (
-        <TaxonomyManagementTab onSuccess={triggerSuccess} />
-      )}
+      {activeTab === 'taxonomy' && <TaxonomyManagementTab onSuccess={triggerSuccess} />}
     </div>
   );
 }

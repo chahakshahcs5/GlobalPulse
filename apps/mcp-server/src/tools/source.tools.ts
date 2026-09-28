@@ -19,11 +19,18 @@ export function registerSourceTools(
     {
       url: z.string().url().describe('The direct URL of the external source'),
       title: z.string().min(1).describe('The article or document title'),
-      publisher: z.string().min(1).describe('The publisher or news organization (e.g. "Reuters", "Bloomberg")'),
+      publisher: z
+        .string()
+        .min(1)
+        .describe('The publisher or news organization (e.g. "Reuters", "Bloomberg")'),
       author: z.string().optional().describe('Author or reporter name'),
       publishedAt: z.string().optional().describe('Publication date ISO string'),
       sourceType: SourceTypeSchema.default('NEWS_ARTICLE').describe('Type of source'),
-      permissibleExcerpt: z.string().max(1000).optional().describe('Short permissible factual quote or excerpt'),
+      permissibleExcerpt: z
+        .string()
+        .max(1000)
+        .optional()
+        .describe('Short permissible factual quote or excerpt'),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -67,7 +74,11 @@ export function registerSourceTools(
         updatedAt: new Date().toISOString(),
       });
 
-      return mcpJsonResponse({ message: 'Source updated successfully.', sourceId: updated.id, updated });
+      return mcpJsonResponse({
+        message: 'Source updated successfully.',
+        sourceId: updated.id,
+        updated,
+      });
     }
   );
 
@@ -118,7 +129,12 @@ export function registerSourceTools(
       sourceId: z.string().min(1).describe('Source ID'),
       claimText: z.string().min(1).describe('The specific factual statement or number being cited'),
       blockId: z.string().optional().describe('Optional block ID where this claim appears'),
-      confidenceScore: z.number().min(0).max(1).optional().describe('Confidence rating from 0.0 to 1.0'),
+      confidenceScore: z
+        .number()
+        .min(0)
+        .max(1)
+        .optional()
+        .describe('Confidence rating from 0.0 to 1.0'),
     },
     async (params) => {
       const principal = getPrincipal();
@@ -129,7 +145,11 @@ export function registerSourceTools(
         orgId: principal.organizationId,
       });
 
-      return mcpJsonResponse({ message: 'Citation attached.', citationId: citation.id, claimText: citation.claimText });
+      return mcpJsonResponse({
+        message: 'Citation attached.',
+        citationId: citation.id,
+        claimText: citation.claimText,
+      });
     }
   );
 

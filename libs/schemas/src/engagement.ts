@@ -30,7 +30,10 @@ export const CommentSchema = z.object({
 export type Comment = z.infer<typeof CommentSchema>;
 
 export const CreateCommentInputSchema = z.object({
-  content: z.string().min(1, 'Comment cannot be empty').max(2000, 'Comment exceeds 2000 characters'),
+  content: z
+    .string()
+    .min(1, 'Comment cannot be empty')
+    .max(2000, 'Comment exceeds 2000 characters'),
   authorName: z.string().min(1).max(100).optional(),
   parentId: z.string().optional(),
 });

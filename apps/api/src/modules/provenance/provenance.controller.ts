@@ -35,11 +35,7 @@ export class ProvenanceController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<AIStoryProvenance> {
     const input = RecordStoryProvenanceInputSchema.parse(body);
-    return await this.provenanceService.recordProvenance(
-      storyId,
-      input,
-      principal.organizationId
-    );
+    return await this.provenanceService.recordProvenance(storyId, input, principal.organizationId);
   }
 
   @Get(':id/provenance')

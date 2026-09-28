@@ -26,14 +26,23 @@ export class PrismaClusterRepository implements IClusterRepository {
     return this.prismaGetter();
   }
 
-  private get clusterClient(): {
-    create: (args: { data: Record<string, unknown> }) => Promise<PrismaClusterRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaClusterRow>;
-    findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaClusterRow | null>;
-    findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaClusterRow | null>;
-    findMany: (args: { where?: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaClusterRow[]>;
-    delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
-  } | undefined {
+  private get clusterClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaClusterRow>;
+        update: (args: {
+          where: Record<string, unknown>;
+          data: Record<string, unknown>;
+        }) => Promise<PrismaClusterRow>;
+        findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaClusterRow | null>;
+        findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaClusterRow | null>;
+        findMany: (args: {
+          where?: Record<string, unknown>;
+          take?: number;
+          orderBy?: Record<string, unknown>;
+        }) => Promise<PrismaClusterRow[]>;
+        delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+      }
+    | undefined {
     return (this.prisma as any).storyCluster;
   }
 
@@ -82,8 +91,10 @@ export class PrismaClusterRepository implements IClusterRepository {
       category: row.category || undefined,
       perspectives,
       timeline,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      updatedAt:
+        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
     };
   }
 

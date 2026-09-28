@@ -12,7 +12,9 @@ interface FullCoverageModalProps {
 export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onClose }) => {
   if (!slug) return null;
 
-  const cluster = DEMO_FULL_COVERAGE[slug] || DEMO_FULL_COVERAGE['brics-2026-summit-ratifies-landmark-trade-pact'];
+  const cluster =
+    DEMO_FULL_COVERAGE[slug] ||
+    DEMO_FULL_COVERAGE['brics-2026-summit-ratifies-landmark-trade-pact'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md transition-opacity">
@@ -63,9 +65,7 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
                     <span className="font-extrabold text-blue-700 dark:text-blue-400">
                       {p.publisher}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {p.timeAgo}
-                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono">{p.timeAgo}</span>
                   </div>
 
                   <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-snug">
@@ -105,7 +105,9 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
                 <span>Fact-Check Verification</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-600 dark:text-slate-300">Official Verdict:</span>
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  Official Verdict:
+                </span>
                 <span className="px-2 py-0.5 rounded text-xs font-black bg-emerald-600 text-white uppercase tracking-wider">
                   {cluster.factCheck.verdict} ({Math.round(cluster.factCheck.confidence * 100)}%)
                 </span>
@@ -114,7 +116,9 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
                 {cluster.factCheck.verificationNote}
               </p>
               <div className="text-[11px] text-slate-500 pt-1 space-y-1">
-                <div className="font-semibold text-slate-700 dark:text-slate-300">Audited Sources:</div>
+                <div className="font-semibold text-slate-700 dark:text-slate-300">
+                  Audited Sources:
+                </div>
                 <ul className="list-disc list-inside space-y-0.5 pl-1">
                   {cluster.factCheck.officialSources.map((s, idx) => (
                     <li key={idx}>{s}</li>

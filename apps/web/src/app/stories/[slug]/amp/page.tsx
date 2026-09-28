@@ -1,6 +1,5 @@
 'use client';
 
-
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Clock, ShieldCheck, Zap } from 'lucide-react';
@@ -89,11 +88,7 @@ export default function AmpStoryPage() {
 
       {story.heroImageUrl && (
         <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-          <img
-            src={story.heroImageUrl}
-            alt={story.title}
-            className="w-full h-auto object-cover"
-          />
+          <img src={story.heroImageUrl} alt={story.title} className="w-full h-auto object-cover" />
         </div>
       )}
 

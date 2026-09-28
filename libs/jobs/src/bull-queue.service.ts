@@ -27,10 +27,14 @@ export class BullQueueService {
           password: parsed.password || undefined,
         };
         this.isConnected = true;
-        logger.info(`Initialized BullMQ Redis connection targeting [${this.redisConnectionOptions.host}:${this.redisConnectionOptions.port}]`);
+        logger.info(
+          `Initialized BullMQ Redis connection targeting [${this.redisConnectionOptions.host}:${this.redisConnectionOptions.port}]`
+        );
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.debug(`BullMQ Redis URL parsing failed: ${errorMsg}. Operating in resilient fallback mode.`);
+        logger.debug(
+          `BullMQ Redis URL parsing failed: ${errorMsg}. Operating in resilient fallback mode.`
+        );
         this.isConnected = false;
       }
     }
@@ -70,7 +74,9 @@ export class BullQueueService {
     payload: T,
     opts: { id?: string; delayMs?: number; priority?: number; maxAttempts?: number } = {}
   ): Promise<{ id: string; bullJobId?: string }> {
-    const fallbackId = opts.id || `job_${type.replace('.', '_')}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const fallbackId =
+      opts.id ||
+      `job_${type.replace('.', '_')}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const queue = this.getQueue();
 
     if (queue) {
@@ -81,7 +87,9 @@ export class BullQueueService {
           priority: opts.priority,
           attempts: opts.maxAttempts || 3,
         });
-        logger.info(`[BullMQ] Enqueued job ${bullJob.id} on queue [${queue.name}] for type [${type}]`);
+        logger.info(
+          `[BullMQ] Enqueued job ${bullJob.id} on queue [${queue.name}] for type [${type}]`
+        );
         return { id: fallbackId, bullJobId: String(bullJob.id) };
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);

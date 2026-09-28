@@ -31,8 +31,9 @@ export const PaywallBarrier: React.FC<PaywallBarrierProps> = ({
         </h3>
         <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
           You have enjoyed <strong className="text-blue-600">{monthlyReads}</strong> of your{' '}
-          <strong className="text-slate-900 dark:text-white">{readLimit} free articles</strong> this month.
-          Subscribe to GlobalPulse Digital for unmetered access to verified investigations, autonomous AI dispatches, and audio briefings.
+          <strong className="text-slate-900 dark:text-white">{readLimit} free articles</strong> this
+          month. Subscribe to GlobalPulse Digital for unmetered access to verified investigations,
+          autonomous AI dispatches, and audio briefings.
         </p>
       </div>
 

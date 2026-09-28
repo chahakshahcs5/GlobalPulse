@@ -29,7 +29,9 @@ export class SchedulingService {
   async scheduleStory(storyId: string, publishAt: string, ctx: StoryContext): Promise<Story> {
     const targetTime = new Date(publishAt).getTime();
     if (isNaN(targetTime)) {
-      throw new ValidationError('Invalid scheduled publication timestamp format. Must be valid ISO-8601.');
+      throw new ValidationError(
+        'Invalid scheduled publication timestamp format. Must be valid ISO-8601.'
+      );
     }
     if (targetTime <= Date.now()) {
       throw new ValidationError('Scheduled publication timestamp must be set in the future.');

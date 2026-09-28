@@ -67,8 +67,12 @@ describe('Google News Parity & Advanced Production Features Unit Tests', () => {
 
       const filterByEdition = (list: typeof items, edition: string) => {
         if (edition === 'global') return list;
-        if (edition === 'india') return list.filter((i) => i.category === 'India' || i.title.toLowerCase().includes('india'));
-        if (edition === 'us') return list.filter((i) => i.category === 'World' || i.category === 'Business');
+        if (edition === 'india')
+          return list.filter(
+            (i) => i.category === 'India' || i.title.toLowerCase().includes('india')
+          );
+        if (edition === 'us')
+          return list.filter((i) => i.category === 'World' || i.category === 'Business');
         if (edition === 'europe') return list.filter((i) => i.category === 'Science');
         return list;
       };
@@ -85,25 +89,40 @@ describe('Google News Parity & Advanced Production Features Unit Tests', () => {
     it('classifies story creator between AI models, hybrid dispatches, and human staff', () => {
       const classifyAttribution = (clientType?: string, createdVia?: string) => {
         if (createdVia === 'admin') return { label: 'Human Editorial Staff', isAi: false };
-        if (clientType === 'gemini_spark' || clientType === 'gemini') return { label: 'Google Gemini via MCP', isAi: true };
+        if (clientType === 'gemini_spark' || clientType === 'gemini')
+          return { label: 'Google Gemini via MCP', isAi: true };
         if (clientType === 'chatgpt') return { label: 'ChatGPT Agent via MCP', isAi: true };
         if (clientType === 'claude') return { label: 'Claude via MCP', isAi: true };
         return { label: 'GlobalPulse Wire', isAi: false };
       };
 
-      expect(classifyAttribution('gemini', 'mcp')).toEqual({ label: 'Google Gemini via MCP', isAi: true });
-      expect(classifyAttribution('chatgpt', 'mcp')).toEqual({ label: 'ChatGPT Agent via MCP', isAi: true });
-      expect(classifyAttribution(undefined, 'admin')).toEqual({ label: 'Human Editorial Staff', isAi: false });
+      expect(classifyAttribution('gemini', 'mcp')).toEqual({
+        label: 'Google Gemini via MCP',
+        isAi: true,
+      });
+      expect(classifyAttribution('chatgpt', 'mcp')).toEqual({
+        label: 'ChatGPT Agent via MCP',
+        isAi: true,
+      });
+      expect(classifyAttribution(undefined, 'admin')).toEqual({
+        label: 'Human Editorial Staff',
+        isAi: false,
+      });
     });
   });
 
   describe('F26: Content Quality Gate Validation Rules', () => {
     it('enforces readability, minimum word count, and required citations before publication', () => {
-      const validateStoryGates = (story: { wordCount: number; citations: number; readabilityGrade: number }) => {
+      const validateStoryGates = (story: {
+        wordCount: number;
+        citations: number;
+        readabilityGrade: number;
+      }) => {
         const issues: string[] = [];
         if (story.wordCount < 150) issues.push('Word count below 150 words');
         if (story.citations < 1) issues.push('No sources cited');
-        if (story.readabilityGrade > 14) issues.push('Readability exceeds standard news grade level');
+        if (story.readabilityGrade > 14)
+          issues.push('Readability exceeds standard news grade level');
         return {
           passed: issues.length === 0,
           issues,

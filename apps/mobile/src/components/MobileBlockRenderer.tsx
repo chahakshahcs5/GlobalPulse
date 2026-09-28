@@ -87,7 +87,9 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             return (
               <View key={key} style={styles.mediaCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardTypeBadge}>{(data.chartType || 'CHART').toUpperCase()}</Text>
+                  <Text style={styles.cardTypeBadge}>
+                    {(data.chartType || 'CHART').toUpperCase()}
+                  </Text>
                   <Text style={styles.cardMetaText}>Data Visual</Text>
                 </View>
                 <Text style={styles.cardTitle}>{data.title || 'Chart'}</Text>
@@ -96,8 +98,13 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 {/* Values summary list */}
                 <View style={styles.chartValuesContainer}>
                   {values.slice(0, 4).map((row: Record<string, unknown>, rIdx: number) => {
-                    const label = (row[data.xAxis?.key] as string) || (row.name as string) || `Row ${rIdx + 1}`;
-                    const val = (row[data.series?.[0]?.key] as number) || (row.value as number) || (row.val as number) || 0;
+                    const label =
+                      (row[data.xAxis?.key] as string) || (row.name as string) || `Row ${rIdx + 1}`;
+                    const val =
+                      (row[data.series?.[0]?.key] as number) ||
+                      (row.value as number) ||
+                      (row.val as number) ||
+                      0;
                     return (
                       <View key={rIdx} style={styles.chartValueRow}>
                         <Text style={styles.chartValueLabel}>{String(label)}</Text>
@@ -125,20 +132,22 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 </View>
                 <Text style={styles.cardTitle}>{data.title || 'Timeline'}</Text>
                 <View style={styles.timelineList}>
-                  {items.map((item: { date?: string; headline?: string; body?: string }, idx: number) => (
-                    <View key={idx} style={styles.timelineItem}>
-                      <View style={styles.timelineStepBadge}>
-                        <Text style={styles.timelineStepText}>{idx + 1}</Text>
+                  {items.map(
+                    (item: { date?: string; headline?: string; body?: string }, idx: number) => (
+                      <View key={idx} style={styles.timelineItem}>
+                        <View style={styles.timelineStepBadge}>
+                          <Text style={styles.timelineStepText}>{idx + 1}</Text>
+                        </View>
+                        <View style={styles.timelineContent}>
+                          <Text style={styles.timelineDate}>{item.date}</Text>
+                          <Text style={styles.timelineHeadline}>{item.headline}</Text>
+                          <Text style={styles.timelineBody} numberOfLines={2}>
+                            {item.body}
+                          </Text>
+                        </View>
                       </View>
-                      <View style={styles.timelineContent}>
-                        <Text style={styles.timelineDate}>{item.date}</Text>
-                        <Text style={styles.timelineHeadline}>{item.headline}</Text>
-                        <Text style={styles.timelineBody} numberOfLines={2}>
-                          {item.body}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
+                    )
+                  )}
                 </View>
               </View>
             );
@@ -156,7 +165,8 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 <Text style={styles.cardTitle}>{data.title || 'Location Overview'}</Text>
                 {data.center && (
                   <Text style={styles.cardSubtitle}>
-                    Coordinates: {Number(data.center[1]).toFixed(2)}°N, {Number(data.center[0]).toFixed(2)}°E
+                    Coordinates: {Number(data.center[1]).toFixed(2)}°N,{' '}
+                    {Number(data.center[0]).toFixed(2)}°E
                   </Text>
                 )}
                 {markers.length > 0 && (
@@ -183,7 +193,9 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                   <Text style={styles.statValue}>{data.value}</Text>
                   {data.trend && (
                     <View style={[styles.trendPill, isUp ? styles.trendUp : styles.trendDown]}>
-                      <Text style={[styles.trendText, isUp ? styles.trendTextUp : styles.trendTextDown]}>
+                      <Text
+                        style={[styles.trendText, isUp ? styles.trendTextUp : styles.trendTextDown]}
+                      >
                         {isUp ? '↑' : '↓'} {data.trendValue || data.trend}
                       </Text>
                     </View>
@@ -212,13 +224,16 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                   <Text style={styles.cardTypeBadge}>VIDEO DISPATCH</Text>
                   {data.durationSeconds && (
                     <Text style={styles.cardMetaText}>
-                      {Math.floor(data.durationSeconds / 60)}:{(data.durationSeconds % 60).toString().padStart(2, '0')}
+                      {Math.floor(data.durationSeconds / 60)}:
+                      {(data.durationSeconds % 60).toString().padStart(2, '0')}
                     </Text>
                   )}
                 </View>
                 <View style={styles.videoPlaceholder}>
                   <Text style={styles.videoIcon}>▶</Text>
-                  <Text style={styles.videoUrlText} numberOfLines={1}>{data.url}</Text>
+                  <Text style={styles.videoUrlText} numberOfLines={1}>
+                    {data.url}
+                  </Text>
                 </View>
                 {data.caption && <Text style={styles.captionText}>{data.caption}</Text>}
               </View>
@@ -233,12 +248,15 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                   <Text style={styles.cardTypeBadge}>AUDIO BRIEFING</Text>
                   {data.durationSeconds && (
                     <Text style={styles.cardMetaText}>
-                      {Math.floor(data.durationSeconds / 60)}:{(data.durationSeconds % 60).toString().padStart(2, '0')}
+                      {Math.floor(data.durationSeconds / 60)}:
+                      {(data.durationSeconds % 60).toString().padStart(2, '0')}
                     </Text>
                   )}
                 </View>
                 <Text style={styles.cardTitle}>{data.title}</Text>
-                {data.narrator && <Text style={styles.narratorText}>Narrated by: {data.narrator}</Text>}
+                {data.narrator && (
+                  <Text style={styles.narratorText}>Narrated by: {data.narrator}</Text>
+                )}
                 {data.transcript && (
                   <Text style={styles.transcriptSnippet} numberOfLines={2}>
                     "{data.transcript}"
@@ -255,7 +273,9 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
                 <View style={styles.badgeRow}>
                   <Text style={styles.sourcePublisher}>{data.publisher}</Text>
                   {data.publishedAt && (
-                    <Text style={styles.sourceDate}>{new Date(data.publishedAt).toLocaleDateString()}</Text>
+                    <Text style={styles.sourceDate}>
+                      {new Date(data.publishedAt).toLocaleDateString()}
+                    </Text>
                   )}
                 </View>
                 <Text style={styles.sourceTitle}>{data.title}</Text>
@@ -268,7 +288,9 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             return (
               <View key={key} style={styles.entityCard}>
                 <View style={styles.entityAvatar}>
-                  <Text style={styles.entityAvatarText}>{(data.name || 'EN').slice(0, 2).toUpperCase()}</Text>
+                  <Text style={styles.entityAvatarText}>
+                    {(data.name || 'EN').slice(0, 2).toUpperCase()}
+                  </Text>
                 </View>
                 <View style={styles.entityInfo}>
                   <View style={styles.badgeRow}>
@@ -290,10 +312,14 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             const items = data.items || [];
             return (
               <View key={key} style={styles.diffCard}>
-                <Text style={styles.diffHeader}>What Changed in Version {data.previousVersionNumber + 1}</Text>
+                <Text style={styles.diffHeader}>
+                  What Changed in Version {data.previousVersionNumber + 1}
+                </Text>
                 {items.map((item: { changeType?: string; description?: string }, idx: number) => (
                   <View key={idx} style={styles.diffItem}>
-                    <Text style={styles.diffBadge}>{String(item.changeType || 'UPDATED').toUpperCase()}</Text>
+                    <Text style={styles.diffBadge}>
+                      {String(item.changeType || 'UPDATED').toUpperCase()}
+                    </Text>
                     <Text style={styles.diffText}>{item.description || ''}</Text>
                   </View>
                 ))}
@@ -308,17 +334,25 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
             return (
               <View key={key} style={styles.mediaCard}>
                 {data.title && <Text style={styles.cardTitle}>{data.title}</Text>}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.tableScroll}
+                >
                   <View style={styles.table}>
                     <View style={styles.tableHeaderRow}>
                       {headers.map((h: string, hIdx: number) => (
-                        <Text key={hIdx} style={styles.tableHeaderCell}>{h}</Text>
+                        <Text key={hIdx} style={styles.tableHeaderCell}>
+                          {h}
+                        </Text>
                       ))}
                     </View>
                     {rows.map((row: string[], rIdx: number) => (
                       <View key={rIdx} style={styles.tableRow}>
                         {row.map((cell: string, cIdx: number) => (
-                          <Text key={cIdx} style={styles.tableCell}>{cell}</Text>
+                          <Text key={cIdx} style={styles.tableCell}>
+                            {cell}
+                          </Text>
                         ))}
                       </View>
                     ))}

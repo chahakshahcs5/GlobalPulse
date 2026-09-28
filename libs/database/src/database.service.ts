@@ -301,4 +301,3 @@ export function getDatabaseService(): DatabaseService {
  * Kept for backward compatibility — this is a lazy singleton accessor.
  */
 export const db = getDatabaseService();
-

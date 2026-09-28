@@ -21,9 +21,11 @@ graph TD
 ```
 
 ### Engine Selection
+
 The active engine is governed dynamically by the `DATABASE_ENGINE` environment variable:
-* `DATABASE_ENGINE=prisma`: Connects to PostgreSQL using Prisma Client with connection pooling, retry policies, and slow-query telemetry.
-* `DATABASE_ENGINE=memory` (default): Allocates isolated in-memory hash maps with indexing, Jaccard token similarity searching, and automatic demo seeder initialization.
+
+- `DATABASE_ENGINE=prisma`: Connects to PostgreSQL using Prisma Client with connection pooling, retry policies, and slow-query telemetry.
+- `DATABASE_ENGINE=memory` (default): Allocates isolated in-memory hash maps with indexing, Jaccard token similarity searching, and automatic demo seeder initialization.
 
 ---
 
@@ -39,11 +41,11 @@ erDiagram
     Story ||--o{ StorySource : "cites primary sources"
     Story ||--o{ AuditLog : "tracks provenance"
     Story }o--o{ Event : "belongs to"
-    
+
     Topic ||--o{ StoryTopic : "classifies"
     Entity ||--o{ StoryEntity : "participates in"
     Source ||--o{ StorySource : "provides evidence"
-    
+
     StoryVersion ||--o{ Block : "contains 22 block types (JSON)"
     MediaAsset ||--o{ Job : "dispatches BullMQ jobs"
 

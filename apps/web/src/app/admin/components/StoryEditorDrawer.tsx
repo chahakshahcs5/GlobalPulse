@@ -12,7 +12,6 @@ import {
   Send,
   Calendar,
   Trash2,
-  Save,
   Table as TableIcon,
   AlertCircle,
   TrendingUp,
@@ -49,13 +48,17 @@ export function StoryEditorDrawer({
   const { scheduleStory } = useScheduledStories();
 
   const [viewMode, setViewMode] = useState<'compose' | 'preview'>('compose');
-  const [submitMode, setSubmitMode] = useState<'PUBLISH' | 'REVIEW' | 'DRAFT' | 'SCHEDULE'>('PUBLISH');
+  const [submitMode, setSubmitMode] = useState<'PUBLISH' | 'REVIEW' | 'DRAFT' | 'SCHEDULE'>(
+    'PUBLISH'
+  );
   const [scheduledAtInput, setScheduledAtInput] = useState('');
 
   // Story Form State
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
-  const [category, setCategory] = useState<'technology' | 'business' | 'world' | 'science' | 'sports' | 'health'>('technology');
+  const [category, setCategory] = useState<
+    'technology' | 'business' | 'world' | 'science' | 'sports' | 'health'
+  >('technology');
   const [authorName, setAuthorName] = useState('Senior Staff Journalist');
   const [heroImageUrl, setHeroImageUrl] = useState(
     'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80'
@@ -82,12 +85,13 @@ export function StoryEditorDrawer({
 
       const blocks = editingStory.blocks || [];
       const leadBlock = blocks.find((b: any) => b.blockType === 'paragraph');
-      setLeadParagraph(leadBlock?.data?.text || '');
+      setLeadParagraph((leadBlock?.data as any)?.text || '');
 
       const bulletBlock = blocks.find(
         (b: any) => b.blockType === 'bullet_list' || b.blockType === 'summary'
       );
-      const items = bulletBlock?.data?.items || bulletBlock?.data?.bulletPoints || [];
+      const items =
+        (bulletBlock?.data as any)?.items || (bulletBlock?.data as any)?.bulletPoints || [];
       setBullet1(items[0] || '');
       setBullet2(items[1] || '');
       setBullet3(items[2] || '');
@@ -110,7 +114,9 @@ export function StoryEditorDrawer({
             type: 'table',
             data: {
               title: b.data.title || '',
-              headers: Array.isArray(b.data.headers) ? b.data.headers.join(', ') : (b.data.headers || ''),
+              headers: Array.isArray(b.data.headers)
+                ? b.data.headers.join(', ')
+                : b.data.headers || '',
               rowsText: Array.isArray(b.data.rows)
                 ? b.data.rows.map((r: any[]) => r.join(', ')).join('\n')
                 : '',
@@ -202,8 +208,16 @@ export function StoryEditorDrawer({
         data: {
           title: 'Key Milestones & Timeline',
           items: [
-            { date: 'Phase 1 • 09:00 AM', headline: 'Working Group Formal Convening', body: 'Delegations confirm multilateral agenda.' },
-            { date: 'Phase 2 • 02:30 PM', headline: 'Technical Framework Approved', body: 'All parties ratify operational protocol.' },
+            {
+              date: 'Phase 1 • 09:00 AM',
+              headline: 'Working Group Formal Convening',
+              body: 'Delegations confirm multilateral agenda.',
+            },
+            {
+              date: 'Phase 2 • 02:30 PM',
+              headline: 'Technical Framework Approved',
+              body: 'All parties ratify operational protocol.',
+            },
           ],
         },
       },
@@ -234,7 +248,8 @@ export function StoryEditorDrawer({
         data: {
           title: 'Comparative Benchmark Matrix',
           headers: 'Metric / Indicator, Baseline 2024, Current 2025, Target 2026',
-          rowsText: 'Throughput (TFLOPS), 14.2, 48.9, 120.0\nThermal Dissipation (W), 280, 210, 165\nLatency (μs), 4.2, 1.8, 0.9',
+          rowsText:
+            'Throughput (TFLOPS), 14.2, 48.9, 120.0\nThermal Dissipation (W), 280, 210, 165\nLatency (μs), 4.2, 1.8, 0.9',
           footer: 'Source: Official Engineering Audit and Independent Laboratory Validation.',
         },
       },
@@ -367,7 +382,10 @@ export function StoryEditorDrawer({
       } else if (m.type === 'table') {
         const rawHeaders = Array.isArray(m.data.headers)
           ? m.data.headers
-          : (m.data.headers || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+          : (m.data.headers || '')
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean);
         const rawRows = Array.isArray(m.data.rows)
           ? m.data.rows
           : (m.data.rowsText || '')
@@ -477,10 +495,10 @@ export function StoryEditorDrawer({
           submitMode === 'REVIEW'
             ? `Story "${title}" submitted to the Editorial Review Queue!`
             : submitMode === 'SCHEDULE'
-            ? `Story "${title}" embargo scheduled for ${new Date(scheduledAtInput).toLocaleString()}!`
-            : submitMode === 'DRAFT'
-            ? `Draft saved successfully!`
-            : `Story "${title}" published immediately to live reader feeds!`
+              ? `Story "${title}" embargo scheduled for ${new Date(scheduledAtInput).toLocaleString()}!`
+              : submitMode === 'DRAFT'
+                ? `Draft saved successfully!`
+                : `Story "${title}" published immediately to live reader feeds!`
         );
       }
 
@@ -497,7 +515,9 @@ export function StoryEditorDrawer({
       setScheduledAtInput('');
     } catch (err) {
       console.error('Failed to submit story:', err);
-      alert(`Failed to ${editingStory ? 'update' : 'create'} story. Please check the console for details.`);
+      alert(
+        `Failed to ${editingStory ? 'update' : 'create'} story. Please check the console for details.`
+      );
     }
   };
 
@@ -510,10 +530,7 @@ export function StoryEditorDrawer({
             {editingStory ? `Edit Story: "${editingStory.title}"` : 'Draft a New Story Dispatch'}
           </h2>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 cursor-pointer"
-        >
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -717,7 +734,8 @@ export function StoryEditorDrawer({
                     Rich Media & Interactive Block Engine
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Add supporting data charts, pull quotes, photo credits, timeline milestones, comparison tables, or callouts.
+                    Add supporting data charts, pull quotes, photo credits, timeline milestones,
+                    comparison tables, or callouts.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -807,7 +825,9 @@ export function StoryEditorDrawer({
                             <input
                               type="url"
                               value={block.data.url}
-                              onChange={(e) => updateMediaBlockData(block.id, 'url', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'url', e.target.value)
+                              }
                               placeholder="https://..."
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -817,7 +837,9 @@ export function StoryEditorDrawer({
                             <input
                               type="text"
                               value={block.data.credit}
-                              onChange={(e) => updateMediaBlockData(block.id, 'credit', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'credit', e.target.value)
+                              }
                               placeholder="e.g. Reuters / Bureau Staff"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -827,7 +849,9 @@ export function StoryEditorDrawer({
                             <input
                               type="text"
                               value={block.data.caption}
-                              onChange={(e) => updateMediaBlockData(block.id, 'caption', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'caption', e.target.value)
+                              }
                               placeholder="Caption describing the image..."
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -842,7 +866,9 @@ export function StoryEditorDrawer({
                               <label className="block text-slate-500 mb-1">Chart Type</label>
                               <select
                                 value={block.data.chartType}
-                                onChange={(e) => updateMediaBlockData(block.id, 'chartType', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'chartType', e.target.value)
+                                }
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               >
                                 <option value="bar">Bar Chart</option>
@@ -855,17 +881,23 @@ export function StoryEditorDrawer({
                               <input
                                 type="text"
                                 value={block.data.title}
-                                onChange={(e) => updateMediaBlockData(block.id, 'title', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'title', e.target.value)
+                                }
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
                             </div>
                           </div>
                           <div>
-                            <label className="block text-slate-500 mb-1">Data Rows (Label: Value)</label>
+                            <label className="block text-slate-500 mb-1">
+                              Data Rows (Label: Value)
+                            </label>
                             <textarea
                               rows={3}
                               value={block.data.dataRows}
-                              onChange={(e) => updateMediaBlockData(block.id, 'dataRows', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'dataRows', e.target.value)
+                              }
                               placeholder="2024: 15&#10;2025: 35&#10;2026: 72"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-[11px]"
                             />
@@ -880,7 +912,9 @@ export function StoryEditorDrawer({
                             <textarea
                               rows={2}
                               value={block.data.quote}
-                              onChange={(e) => updateMediaBlockData(block.id, 'quote', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'quote', e.target.value)
+                              }
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
                           </div>
@@ -890,16 +924,22 @@ export function StoryEditorDrawer({
                               <input
                                 type="text"
                                 value={block.data.attribution}
-                                onChange={(e) => updateMediaBlockData(block.id, 'attribution', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'attribution', e.target.value)
+                                }
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
                             </div>
                             <div>
-                              <label className="block text-slate-500 mb-1">Speaker Role / Title</label>
+                              <label className="block text-slate-500 mb-1">
+                                Speaker Role / Title
+                              </label>
                               <input
                                 type="text"
                                 value={block.data.title}
-                                onChange={(e) => updateMediaBlockData(block.id, 'title', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'title', e.target.value)
+                                }
                                 placeholder="e.g. Chief Economist"
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
@@ -915,7 +955,9 @@ export function StoryEditorDrawer({
                             <input
                               type="text"
                               value={block.data.title}
-                              onChange={(e) => updateMediaBlockData(block.id, 'title', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'title', e.target.value)
+                              }
                               placeholder="e.g. Summit Timeline"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -930,37 +972,51 @@ export function StoryEditorDrawer({
                             <input
                               type="text"
                               value={block.data.title}
-                              onChange={(e) => updateMediaBlockData(block.id, 'title', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'title', e.target.value)
+                              }
                               placeholder="e.g. Sovereign AI Supercluster Specs"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-500 mb-1">Column Headers (Comma-separated)</label>
+                            <label className="block text-slate-500 mb-1">
+                              Column Headers (Comma-separated)
+                            </label>
                             <input
                               type="text"
                               value={block.data.headers}
-                              onChange={(e) => updateMediaBlockData(block.id, 'headers', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'headers', e.target.value)
+                              }
                               placeholder="Metric, Baseline 2024, Target 2026"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-500 mb-1">Table Rows (One row per line, comma-separated)</label>
+                            <label className="block text-slate-500 mb-1">
+                              Table Rows (One row per line, comma-separated)
+                            </label>
                             <textarea
                               rows={3}
                               value={block.data.rowsText}
-                              onChange={(e) => updateMediaBlockData(block.id, 'rowsText', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'rowsText', e.target.value)
+                              }
                               placeholder="Latency (ms), 4.2, 0.9&#10;Bandwidth (TB/s), 12.5, 48.0"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-[11px]"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-500 mb-1">Footer / Attribution</label>
+                            <label className="block text-slate-500 mb-1">
+                              Footer / Attribution
+                            </label>
                             <input
                               type="text"
                               value={block.data.footer}
-                              onChange={(e) => updateMediaBlockData(block.id, 'footer', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'footer', e.target.value)
+                              }
                               placeholder="Source: Technical Benchmark Commission"
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -975,7 +1031,9 @@ export function StoryEditorDrawer({
                               <label className="block text-slate-500 mb-1">Callout Tone</label>
                               <select
                                 value={block.data.style || 'info'}
-                                onChange={(e) => updateMediaBlockData(block.id, 'style', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'style', e.target.value)
+                                }
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               >
                                 <option value="info">Info (Blue)</option>
@@ -989,7 +1047,9 @@ export function StoryEditorDrawer({
                               <input
                                 type="text"
                                 value={block.data.title}
-                                onChange={(e) => updateMediaBlockData(block.id, 'title', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'title', e.target.value)
+                                }
                                 placeholder="e.g. Strategic Regulatory Context"
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
@@ -1000,7 +1060,9 @@ export function StoryEditorDrawer({
                             <textarea
                               rows={2}
                               value={block.data.text}
-                              onChange={(e) => updateMediaBlockData(block.id, 'text', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'text', e.target.value)
+                              }
                               placeholder="Important context or takeaway note..."
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -1016,7 +1078,9 @@ export function StoryEditorDrawer({
                               <input
                                 type="text"
                                 value={block.data.label}
-                                onChange={(e) => updateMediaBlockData(block.id, 'label', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'label', e.target.value)
+                                }
                                 placeholder="e.g. Projected Market Capitalization"
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
@@ -1026,7 +1090,9 @@ export function StoryEditorDrawer({
                               <input
                                 type="text"
                                 value={block.data.value}
-                                onChange={(e) => updateMediaBlockData(block.id, 'value', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'value', e.target.value)
+                                }
                                 placeholder="e.g. $1.4 Trillion"
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
                               />
@@ -1037,7 +1103,9 @@ export function StoryEditorDrawer({
                               <label className="block text-slate-500 mb-1">Trend Direction</label>
                               <select
                                 value={block.data.trend || 'up'}
-                                onChange={(e) => updateMediaBlockData(block.id, 'trend', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'trend', e.target.value)
+                                }
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               >
                                 <option value="up">Upward (↑)</option>
@@ -1046,11 +1114,15 @@ export function StoryEditorDrawer({
                               </select>
                             </div>
                             <div>
-                              <label className="block text-slate-500 mb-1">Trend Value / Delta</label>
+                              <label className="block text-slate-500 mb-1">
+                                Trend Value / Delta
+                              </label>
                               <input
                                 type="text"
                                 value={block.data.trendValue}
-                                onChange={(e) => updateMediaBlockData(block.id, 'trendValue', e.target.value)}
+                                onChange={(e) =>
+                                  updateMediaBlockData(block.id, 'trendValue', e.target.value)
+                                }
                                 placeholder="e.g. +24.8% YoY"
                                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                               />
@@ -1061,7 +1133,9 @@ export function StoryEditorDrawer({
                             <input
                               type="text"
                               value={block.data.context}
-                              onChange={(e) => updateMediaBlockData(block.id, 'context', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'context', e.target.value)
+                              }
                               placeholder="e.g. Based on verified multilateral fiscal disclosures."
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -1076,7 +1150,9 @@ export function StoryEditorDrawer({
                             <input
                               type="url"
                               value={block.data.url}
-                              onChange={(e) => updateMediaBlockData(block.id, 'url', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'url', e.target.value)
+                              }
                               placeholder="https://..."
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
@@ -1086,7 +1162,9 @@ export function StoryEditorDrawer({
                             <input
                               type="number"
                               value={block.data.durationSeconds}
-                              onChange={(e) => updateMediaBlockData(block.id, 'durationSeconds', e.target.value)}
+                              onChange={(e) =>
+                                updateMediaBlockData(block.id, 'durationSeconds', e.target.value)
+                              }
                               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                             />
                           </div>
@@ -1115,7 +1193,8 @@ export function StoryEditorDrawer({
               className="w-full px-3 py-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-xs font-medium focus:outline-none"
             />
             <p className="text-[11px] text-purple-600 dark:text-purple-400">
-              The automated background scheduler will automatically flip this story to PUBLISHED and broadcast it over SSE the moment this timestamp arrives.
+              The automated background scheduler will automatically flip this story to PUBLISHED and
+              broadcast it over SSE the moment this timestamp arrives.
             </p>
           </div>
         )}

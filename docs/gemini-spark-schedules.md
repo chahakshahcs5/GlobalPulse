@@ -3,6 +3,7 @@
 ## Recurring Workflow Blueprints
 
 ### 1. Daily Morning Newsroom Briefing (07:00 AM)
+
 - **Schedule**: Daily at 07:00 AM
 - **Objective**: Monitor overnight geopolitical, economic, and scientific news.
 - **Workflow**:
@@ -15,6 +16,7 @@
 ---
 
 ### 2. Topic Watcher: BRICS 2026 Expansion
+
 - **Schedule**: Every 6 hours
 - **Objective**: Track bilateral negotiations, summit logistics, and joint trade agreements.
 - **Workflow**:
@@ -30,6 +32,7 @@
 ---
 
 ### 3. Weekly Technology & Semiconductor Briefing
+
 - **Schedule**: Every Sunday at 18:00
 - **Objective**: Synthesize the week's key technological advancements.
 - **Workflow**:

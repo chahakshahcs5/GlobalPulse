@@ -27,19 +27,31 @@ export class PrismaUserRepository implements IUserRepository {
 
   private get userClient(): {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaUserRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaUserRow>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaUserRow>;
     delete: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow>;
     findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow | null>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow | null>;
-    findMany: (args: { where?: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaUserRow[]>;
+    findMany: (args: {
+      where?: Record<string, unknown>;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaUserRow[]>;
   } {
     return this.prisma.user as {
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaUserRow>;
-      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaUserRow>;
+      update: (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => Promise<PrismaUserRow>;
       delete: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow>;
       findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow | null>;
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaUserRow | null>;
-      findMany: (args: { where?: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaUserRow[]>;
+      findMany: (args: {
+        where?: Record<string, unknown>;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaUserRow[]>;
     };
   }
 
@@ -60,8 +72,10 @@ export class PrismaUserRepository implements IUserRepository {
       preferences: row.preferences || undefined,
       bio: row.bio || undefined,
       avatarUrl: row.avatarUrl || undefined,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      updatedAt:
+        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
     };
   }
 
@@ -260,4 +274,3 @@ export class PrismaUserRepository implements IUserRepository {
     return this.follows.has(key);
   }
 }
-

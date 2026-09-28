@@ -40,6 +40,7 @@ Application Persistence & Multi-Device Real-Time Broadcast
 Gemini Spark supports recurring schedules (e.g. hourly or daily topic monitors). In production cloud environments, scheduled invocations are not guaranteed to fire at the exact millisecond of schedule expiry.
 
 The News Publishing Platform is designed to tolerate delayed or out-of-order execution:
+
 1. **Timestamp Normalization**: The platform records real creation timestamps alongside source publication timestamps.
 2. **Idempotency Keys**: Scheduled executions use date-based idempotency keys (e.g. `spark:brics:2026-09-26`) so retries never create duplicate drafts.
 3. **Optimistic Version Checks**: When updating existing stories, Gemini inspects `currentVersionNumber` to ensure edits build sequentially on historical versions.

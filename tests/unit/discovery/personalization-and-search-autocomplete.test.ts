@@ -203,12 +203,16 @@ describe('Personalized "For You" Feed & Search Autocomplete (F2, F3)', () => {
       // 1. Query for "tech" (matches Technology category)
       const catSuggestions = await searchService.getSuggestions('tech', testOrgId);
       expect(catSuggestions.length).toBeGreaterThanOrEqual(1);
-      expect(catSuggestions.some((s) => s.text === 'Technology' && s.type === 'category')).toBe(true);
+      expect(catSuggestions.some((s) => s.text === 'Technology' && s.type === 'category')).toBe(
+        true
+      );
 
       // 2. Query for "quantum" (matches headline CERN Achieves Unprecedented Quantum...)
       const quantumSuggestions = await searchService.getSuggestions('quantum', testOrgId);
       expect(quantumSuggestions.length).toBeGreaterThanOrEqual(1);
-      expect(quantumSuggestions.some((s) => s.type === 'story' && s.text.includes('Quantum'))).toBe(true);
+      expect(quantumSuggestions.some((s) => s.type === 'story' && s.text.includes('Quantum'))).toBe(
+        true
+      );
     });
 
     it('exposes suggestions via HTTP GET /api/search/suggestions', async () => {
@@ -244,7 +248,10 @@ describe('Personalized "For You" Feed & Search Autocomplete (F2, F3)', () => {
       registerSearchTools(server, db, () => principal);
 
       const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-      const client = new Client({ name: 'mcp-test-client', version: '1.0.0' }, { capabilities: {} });
+      const client = new Client(
+        { name: 'mcp-test-client', version: '1.0.0' },
+        { capabilities: {} }
+      );
 
       await server.connect(serverTransport);
       await client.connect(clientTransport);

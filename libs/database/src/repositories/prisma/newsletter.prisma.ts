@@ -35,7 +35,9 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
 
       const now = new Date();
       if (existing) {
-        const mergedCategories = Array.from(new Set([...(existing.categories as string[]), ...categories]));
+        const mergedCategories = Array.from(
+          new Set([...(existing.categories as string[]), ...categories])
+        );
         const updated = await this.subscriptionClient.update({
           where: { id: existing.id },
           data: {
@@ -51,8 +53,14 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
           frequency: updated.frequency as 'daily' | 'weekly',
           categories: updated.categories as string[],
           active: updated.active,
-          createdAt: updated.createdAt instanceof Date ? updated.createdAt.toISOString() : String(updated.createdAt),
-          updatedAt: updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : String(updated.updatedAt),
+          createdAt:
+            updated.createdAt instanceof Date
+              ? updated.createdAt.toISOString()
+              : String(updated.createdAt),
+          updatedAt:
+            updated.updatedAt instanceof Date
+              ? updated.updatedAt.toISOString()
+              : String(updated.updatedAt),
         };
       }
 
@@ -75,8 +83,14 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         frequency: created.frequency as 'daily' | 'weekly',
         categories: created.categories as string[],
         active: created.active,
-        createdAt: created.createdAt instanceof Date ? created.createdAt.toISOString() : String(created.createdAt),
-        updatedAt: created.updatedAt instanceof Date ? created.updatedAt.toISOString() : String(created.updatedAt),
+        createdAt:
+          created.createdAt instanceof Date
+            ? created.createdAt.toISOString()
+            : String(created.createdAt),
+        updatedAt:
+          created.updatedAt instanceof Date
+            ? created.updatedAt.toISOString()
+            : String(created.updatedAt),
       };
     } catch {
       return this.fallbackMemory.subscribe(email, frequency, categories);
@@ -119,8 +133,10 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         frequency: row.frequency as 'daily' | 'weekly',
         categories: row.categories as string[],
         active: row.active,
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt:
+          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       };
     } catch {
       return this.fallbackMemory.getSubscription(email);
@@ -196,7 +212,8 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         headline: row.headline,
         curatedStoryIds: row.curatedStoryIds as string[],
         stories: row.stories as any[],
-        generatedAt: row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
+        generatedAt:
+          row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
       };
     } catch {
       return this.fallbackMemory.getDigest(id);
@@ -228,7 +245,8 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         headline: row.headline,
         curatedStoryIds: row.curatedStoryIds as string[],
         stories: row.stories as any[],
-        generatedAt: row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
+        generatedAt:
+          row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
       };
     } catch {
       return this.fallbackMemory.getLatestDigest(frequency, category);

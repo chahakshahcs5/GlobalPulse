@@ -27,12 +27,20 @@ export class PrismaAuditRepository implements IAuditRepository {
 
   private get auditClient(): {
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaAuditLogRow>;
-    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaAuditLogRow[]>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      take?: number;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaAuditLogRow[]>;
     findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaAuditLogRow | null>;
   } {
     return this.prisma.auditLog as {
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaAuditLogRow>;
-      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaAuditLogRow[]>;
+      findMany: (args: {
+        where: Record<string, unknown>;
+        take?: number;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaAuditLogRow[]>;
       findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaAuditLogRow | null>;
     };
   }

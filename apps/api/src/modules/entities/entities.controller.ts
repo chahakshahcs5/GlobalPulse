@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpStatus, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { EntityService } from '@ai-news/entities';
 import { db } from '@ai-news/database';
@@ -18,7 +28,10 @@ export class EntitiesController {
 
   @Get()
   @RequireScope('news:read')
-  async listEntities(@Query('query') query: string, @Principal() principal: AuthenticatedPrincipal) {
+  async listEntities(
+    @Query('query') query: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
     const orgId = principal.organizationId;
     if (query) {
       const entities = await this.entityService.searchEntities(query, orgId);

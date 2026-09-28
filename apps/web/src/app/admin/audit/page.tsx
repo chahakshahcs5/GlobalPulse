@@ -129,15 +129,9 @@ export default function AuditLogsPage() {
                     {log.client}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 font-bold text-white">
-                  {log.action}
-                </td>
-                <td className="px-5 py-3.5 text-slate-300">
-                  {log.resource}
-                </td>
-                <td className="px-5 py-3.5 text-slate-400">
-                  {log.durationMs}ms
-                </td>
+                <td className="px-5 py-3.5 font-bold text-white">{log.action}</td>
+                <td className="px-5 py-3.5 text-slate-300">{log.resource}</td>
+                <td className="px-5 py-3.5 text-slate-400">{log.durationMs}ms</td>
                 <td className="px-5 py-3.5 text-right">
                   <span
                     className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${

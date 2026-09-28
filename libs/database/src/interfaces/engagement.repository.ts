@@ -8,7 +8,10 @@ import type {
 
 export interface IEngagementRepository {
   // Comments
-  findCommentsByStory(storyId: string, options?: { status?: CommentStatus; organizationId?: string }): Promise<Comment[]>;
+  findCommentsByStory(
+    storyId: string,
+    options?: { status?: CommentStatus; organizationId?: string }
+  ): Promise<Comment[]>;
   findCommentById(id: string): Promise<Comment | null>;
   createComment(comment: Comment): Promise<Comment>;
   updateComment(comment: Comment): Promise<Comment>;

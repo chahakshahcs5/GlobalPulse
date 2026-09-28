@@ -18,7 +18,14 @@ export function registerEditorialTools(
     'Acquire an exclusive editing lease lock (5-minute TTL) on a story to prevent concurrent collision.',
     {
       storyId: z.string().min(1).describe('The target story ID to lock'),
-      ttlSeconds: z.number().int().positive().max(1800).default(300).optional().describe('Lease lock duration in seconds (default 300)'),
+      ttlSeconds: z
+        .number()
+        .int()
+        .positive()
+        .max(1800)
+        .default(300)
+        .optional()
+        .describe('Lease lock duration in seconds (default 300)'),
     },
     async ({ storyId, ttlSeconds }) => {
       try {
@@ -138,7 +145,10 @@ export function registerEditorialTools(
     {
       storyId: z.string().min(1).describe('The target story ID'),
       status: StoryStatusSchema.describe('Target workflow status'),
-      scheduledPublishAt: z.string().optional().describe('ISO timestamp required if target status is SCHEDULED'),
+      scheduledPublishAt: z
+        .string()
+        .optional()
+        .describe('ISO timestamp required if target status is SCHEDULED'),
     },
     async ({ storyId, status, scheduledPublishAt }) => {
       try {

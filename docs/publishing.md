@@ -40,9 +40,9 @@ sequenceDiagram
 
 Network blips or timeout retries from external AI clients could inadvertently trigger duplicate publish operations. GlobalPulse implements RFC 7231 compliant idempotency filtering:
 
-* Callers provide a unique UUID `Idempotency-Key` header (or input property).
-* The key is hashed and checked against `IdempotencyRecord` table.
-* Subsequent calls within the 24-hour retention window return the identical response payload without re-running side effects.
+- Callers provide a unique UUID `Idempotency-Key` header (or input property).
+- The key is hashed and checked against `IdempotencyRecord` table.
+- Subsequent calls within the 24-hour retention window return the identical response payload without re-running side effects.
 
 ---
 
@@ -50,8 +50,8 @@ Network blips or timeout retries from external AI clients could inadvertently tr
 
 The platform streams real-time news updates directly to Web readers and 4K display walls:
 
-* **Endpoint**: `GET /api/v1/realtime/stream?channels=stories:published,breaking:declared`
-* **Features**:
-  * Channel-based subscriptions (`stories`, `topics`, `breaking`).
-  * Automatic 15-second heartbeat keepalives (`:keepalive\n\n`) to prevent proxy timeout disconnections.
-  * Instant UI reconciliation on the 4K display wall when an external AI submits a breaking dispatch.
+- **Endpoint**: `GET /api/v1/realtime/stream?channels=stories:published,breaking:declared`
+- **Features**:
+  - Channel-based subscriptions (`stories`, `topics`, `breaking`).
+  - Automatic 15-second heartbeat keepalives (`:keepalive\n\n`) to prevent proxy timeout disconnections.
+  - Instant UI reconciliation on the 4K display wall when an external AI submits a breaking dispatch.

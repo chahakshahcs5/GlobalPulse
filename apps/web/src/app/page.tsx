@@ -364,7 +364,8 @@ function GoogleNewsContent() {
                       Curated For Your Reading Habits
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Intelligence ranked by your interests in {followedTopics.slice(0, 3).join(', ')}
+                      Intelligence ranked by your interests in{' '}
+                      {followedTopics.slice(0, 3).join(', ')}
                     </p>
                   </div>
                 </div>
@@ -399,17 +400,21 @@ function GoogleNewsContent() {
               <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4 shadow-xs">
                 <div>
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                    <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics ({followedTopics.length})
+                    <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics (
+                    {followedTopics.length})
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Click any tag to toggle following or unfollowing. Stories below filter dynamically.
+                    Click any tag to toggle following or unfollowing. Stories below filter
+                    dynamically.
                   </p>
                 </div>
 
                 {/* Followed Topics Chips */}
                 <div className="flex flex-wrap gap-2">
                   {followedTopics.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">No topics followed yet. Choose suggestions below:</span>
+                    <span className="text-xs text-slate-400 italic">
+                      No topics followed yet. Choose suggestions below:
+                    </span>
                   ) : (
                     followedTopics.map((top) => (
                       <button
@@ -463,8 +468,12 @@ function GoogleNewsContent() {
               ) : (
                 <div className="p-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 space-y-2">
                   <BookmarkCheck className="w-8 h-8 mx-auto text-slate-300" />
-                  <p className="text-sm font-semibold">No dispatches match your current followed topics</p>
-                  <p className="text-xs">Follow more topics from the recommended panel above to populate your stream.</p>
+                  <p className="text-sm font-semibold">
+                    No dispatches match your current followed topics
+                  </p>
+                  <p className="text-xs">
+                    Follow more topics from the recommended panel above to populate your stream.
+                  </p>
                 </div>
               )}
             </div>
@@ -540,7 +549,10 @@ function GoogleNewsContent() {
                             <span className="font-extrabold text-blue-600 dark:text-blue-400">
                               {story.articleType.replace('_', ' ').toUpperCase()}
                             </span>
-                            <span className="text-[11px] text-slate-400 font-mono" suppressHydrationWarning>
+                            <span
+                              className="text-[11px] text-slate-400 font-mono"
+                              suppressHydrationWarning
+                            >
                               {formatDeterministicDate(story.publishedAt)}
                             </span>
                           </div>
@@ -551,9 +563,7 @@ function GoogleNewsContent() {
                             </h3>
                           </Link>
 
-                          <p className="text-xs text-slate-500 line-clamp-2">
-                            {story.summary}
-                          </p>
+                          <p className="text-xs text-slate-500 line-clamp-2">{story.summary}</p>
 
                           <div className="pt-1 flex items-center justify-between text-xs">
                             <span className="text-slate-400 text-[11px]">
@@ -606,7 +616,9 @@ function GoogleNewsContent() {
                         }`}
                         title={isBookmarked ? 'Saved' : 'Save for later'}
                       >
-                        <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`} />
+                        <Bookmark
+                          className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`}
+                        />
                       </button>
                     </div>
 

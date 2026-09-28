@@ -17,28 +17,48 @@ export const Navigation: React.FC = () => {
               <span className="font-extrabold text-lg tracking-tight text-white leading-none">
                 GLOBAL<span className="text-blue-500">PULSE</span>
               </span>
-              <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">AI-Operable Newsroom</span>
+              <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+                AI-Operable Newsroom
+              </span>
             </div>
           </Link>
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-300">
-            <Link href="/" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               Feed
             </Link>
-            <Link href="/topics/brics-2026" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/topics/brics-2026"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               BRICS 2026
             </Link>
-            <Link href="/topics/semiconductors" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/topics/semiconductors"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               Semiconductors
             </Link>
-            <Link href="/topics/ai-policy" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/topics/ai-policy"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               AI Policy
             </Link>
-            <Link href="/sources" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/sources"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               Sources
             </Link>
-            <Link href="/settings/integrations" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition">
+            <Link
+              href="/settings/integrations"
+              className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/60 transition"
+            >
               AI Integrations
             </Link>
           </nav>

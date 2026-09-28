@@ -15,7 +15,8 @@ export default function SourcesPage() {
           Verified Sources & Documentation
         </h1>
         <p className="text-sm sm:text-base text-slate-300 max-w-2xl">
-          External AI agents register every consulted publication and official filing before citing claims or updating stories.
+          External AI agents register every consulted publication and official filing before citing
+          claims or updating stories.
         </p>
       </div>
 
@@ -34,9 +35,7 @@ export default function SourcesPage() {
                 <span className="text-[11px] font-mono text-slate-500">{src.sourceType}</span>
               </div>
 
-              <h2 className="text-base font-bold text-white leading-snug">
-                {src.title}
-              </h2>
+              <h2 className="text-base font-bold text-white leading-snug">{src.title}</h2>
 
               {src.permissibleExcerpt && (
                 <p className="text-xs text-slate-400 italic line-clamp-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">

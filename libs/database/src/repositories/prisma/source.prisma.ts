@@ -50,14 +50,28 @@ export class PrismaSourceRepository implements ISourceRepository {
   private get sourceClient(): {
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaSourceRow | null>;
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
-    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaSourceRow[]>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaSourceRow>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      take?: number;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaSourceRow[]>;
   } {
     return this.prisma.source as {
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaSourceRow | null>;
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
-      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaSourceRow>;
-      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaSourceRow[]>;
+      update: (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => Promise<PrismaSourceRow>;
+      findMany: (args: {
+        where: Record<string, unknown>;
+        take?: number;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaSourceRow[]>;
     };
   }
 

@@ -53,8 +53,12 @@ export class PrismaProvenanceRepository implements IProvenanceRepository {
         humanReviewedBy: saved.humanReviewedBy || undefined,
         watermarkSignature: saved.watermarkSignature,
         c2paManifestUrl: saved.c2paManifestUrl || undefined,
-        generationTimestamp: saved.generationTimestamp instanceof Date ? saved.generationTimestamp.toISOString() : String(saved.generationTimestamp),
-        createdAt: saved.createdAt instanceof Date ? saved.createdAt.toISOString() : String(saved.createdAt),
+        generationTimestamp:
+          saved.generationTimestamp instanceof Date
+            ? saved.generationTimestamp.toISOString()
+            : String(saved.generationTimestamp),
+        createdAt:
+          saved.createdAt instanceof Date ? saved.createdAt.toISOString() : String(saved.createdAt),
       };
     } catch {
       return this.fallbackMemory.saveProvenance(provenance);
@@ -77,8 +81,12 @@ export class PrismaProvenanceRepository implements IProvenanceRepository {
         humanReviewedBy: row.humanReviewedBy || undefined,
         watermarkSignature: row.watermarkSignature,
         c2paManifestUrl: row.c2paManifestUrl || undefined,
-        generationTimestamp: row.generationTimestamp instanceof Date ? row.generationTimestamp.toISOString() : String(row.generationTimestamp),
-        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        generationTimestamp:
+          row.generationTimestamp instanceof Date
+            ? row.generationTimestamp.toISOString()
+            : String(row.generationTimestamp),
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
       };
     } catch {
       return this.fallbackMemory.getProvenance(storyId);

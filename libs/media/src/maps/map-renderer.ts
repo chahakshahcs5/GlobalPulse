@@ -17,7 +17,10 @@ export class MapRenderer {
   /**
    * Generates production MapLibre GL configuration options from a structured MapBlock.
    */
-  static buildMapLibreOptions(mapData: MapBlock['data'], containerId = 'map-container'): MapLibreConfig {
+  static buildMapLibreOptions(
+    mapData: MapBlock['data'],
+    containerId = 'map-container'
+  ): MapLibreConfig {
     const styleUrls: Record<string, string> = {
       dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
       light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -118,5 +121,9 @@ export class MapRenderer {
 
 function escapeXml(unsafe?: string): string {
   if (!unsafe) return '';
-  return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

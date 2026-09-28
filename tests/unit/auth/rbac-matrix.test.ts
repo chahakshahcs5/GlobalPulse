@@ -99,7 +99,9 @@ describe('Enterprise RBAC Matrix & Token Lifecycle (Unit Tests)', () => {
         scopes: ROLE_PERMISSIONS.reader,
       };
 
-      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(ForbiddenError);
+      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(
+        ForbiddenError
+      );
       expect(() => AuthService.requireRole(readerPrincipal, 'editor')).toThrow(
         'Insufficient role privileges. Required one of: [editor], but principal possesses role: "reader".'
       );
@@ -141,7 +143,9 @@ describe('Enterprise RBAC Matrix & Token Lifecycle (Unit Tests)', () => {
         scopes: ROLE_PERMISSIONS.reader,
       };
 
-      expect(() => AuthService.requireScope(readerPrincipal, 'news:publish')).toThrow(ForbiddenError);
+      expect(() => AuthService.requireScope(readerPrincipal, 'news:publish')).toThrow(
+        ForbiddenError
+      );
       expect(() => AuthService.requireScope(readerPrincipal, 'news:publish')).toThrow(
         'Insufficient privileges. Required scope: "news:publish", but principal has: [news:read, news:search]'
       );

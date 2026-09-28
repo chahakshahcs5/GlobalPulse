@@ -21,13 +21,21 @@ describe('AuthService Unit Tests', () => {
     });
 
     it('throws UnauthorizedError when token is expired_token', () => {
-      expect(() => AuthService.resolveBearerToken('Bearer expired_token')).toThrow(UnauthorizedError);
-      expect(() => AuthService.resolveBearerToken('Bearer expired_token')).toThrow('Token has expired');
+      expect(() => AuthService.resolveBearerToken('Bearer expired_token')).toThrow(
+        UnauthorizedError
+      );
+      expect(() => AuthService.resolveBearerToken('Bearer expired_token')).toThrow(
+        'Token has expired'
+      );
     });
 
     it('throws UnauthorizedError when token has invalid_signature', () => {
-      expect(() => AuthService.resolveBearerToken('Bearer invalid_signature')).toThrow(UnauthorizedError);
-      expect(() => AuthService.resolveBearerToken('Bearer invalid_signature')).toThrow('Invalid token signature');
+      expect(() => AuthService.resolveBearerToken('Bearer invalid_signature')).toThrow(
+        UnauthorizedError
+      );
+      expect(() => AuthService.resolveBearerToken('Bearer invalid_signature')).toThrow(
+        'Invalid token signature'
+      );
     });
 
     it('resolves dev-admin to internal_service with full administrative privileges', () => {
@@ -39,8 +47,12 @@ describe('AuthService Unit Tests', () => {
     });
 
     it('rejects unrecognized non-JWT tokens instead of silently granting access', () => {
-      expect(() => AuthService.resolveBearerToken('Bearer mcp-gemini-spark-session-token')).toThrow(UnauthorizedError);
-      expect(() => AuthService.resolveBearerToken('Bearer random-string')).toThrow(UnauthorizedError);
+      expect(() => AuthService.resolveBearerToken('Bearer mcp-gemini-spark-session-token')).toThrow(
+        UnauthorizedError
+      );
+      expect(() => AuthService.resolveBearerToken('Bearer random-string')).toThrow(
+        UnauthorizedError
+      );
     });
 
     it('strictly rejects unauthenticated requests when in production', () => {
@@ -51,10 +63,14 @@ describe('AuthService Unit Tests', () => {
         delete process.env.ALLOW_DEV_TOKENS;
 
         expect(() => AuthService.resolveBearerToken()).toThrow(UnauthorizedError);
-        expect(() => AuthService.resolveBearerToken('Basic credentials')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Basic credentials')).toThrow(
+          UnauthorizedError
+        );
         expect(() => AuthService.resolveBearerToken('Bearer ')).toThrow(UnauthorizedError);
         expect(() => AuthService.resolveBearerToken('Bearer dev-admin')).toThrow(UnauthorizedError);
-        expect(() => AuthService.resolveBearerToken('Bearer dev-editor')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer dev-editor')).toThrow(
+          UnauthorizedError
+        );
       } finally {
         (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
         if (prevAllowDev !== undefined) process.env.ALLOW_DEV_TOKENS = prevAllowDev;
@@ -97,8 +113,12 @@ describe('AuthService Unit Tests', () => {
     });
 
     it('throws ForbiddenError when principal lacks the required scope', () => {
-      expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(ForbiddenError);
-      expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(/Insufficient privileges/);
+      expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(
+        ForbiddenError
+      );
+      expect(() => AuthService.requireScope(standardPrincipal, 'news:publish')).toThrow(
+        /Insufficient privileges/
+      );
     });
   });
 
@@ -138,8 +158,12 @@ describe('AuthService Unit Tests', () => {
     });
 
     it('throws ForbiddenError when principal has insufficient role', () => {
-      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(ForbiddenError);
-      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(/Insufficient role privileges/);
+      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(
+        ForbiddenError
+      );
+      expect(() => AuthService.requireRole(readerPrincipal, 'editor', 'admin')).toThrow(
+        /Insufficient role privileges/
+      );
     });
   });
 

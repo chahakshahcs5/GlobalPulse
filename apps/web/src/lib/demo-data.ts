@@ -13,7 +13,8 @@ export const DEMO_SOURCES: Record<string, Source> = {
     retrievedAt: '2026-09-26T10:30:00Z',
     language: 'en',
     sourceType: 'NEWS_ARTICLE',
-    permissibleExcerpt: 'Delegates representing the expanded 10-nation bloc ratified terms for sovereign local-currency settlement.',
+    permissibleExcerpt:
+      'Delegates representing the expanded 10-nation bloc ratified terms for sovereign local-currency settlement.',
     createdAt: '2026-09-26T10:30:00Z',
     updatedAt: '2026-09-26T10:30:00Z',
   },
@@ -28,7 +29,8 @@ export const DEMO_SOURCES: Record<string, Source> = {
     retrievedAt: '2026-09-26T08:30:00Z',
     language: 'en',
     sourceType: 'NEWS_ARTICLE',
-    permissibleExcerpt: 'Non-dollar settlement accounts for over 38% of total commerce within member states.',
+    permissibleExcerpt:
+      'Non-dollar settlement accounts for over 38% of total commerce within member states.',
     createdAt: '2026-09-26T08:30:00Z',
     updatedAt: '2026-09-26T08:30:00Z',
   },
@@ -36,13 +38,15 @@ export const DEMO_SOURCES: Record<string, Source> = {
     id: 'src_official',
     organizationId: 'org_default',
     url: 'https://secretariat.brics2026.gov/declaration-final',
-    title: 'New Delhi Declaration: Leaders Joint Communiqué on Sustainable Growth and AI Cooperation',
+    title:
+      'New Delhi Declaration: Leaders Joint Communiqué on Sustainable Growth and AI Cooperation',
     publisher: 'BRICS Summit Secretariat',
     publishedAt: '2026-09-26T14:00:00Z',
     retrievedAt: '2026-09-26T14:15:00Z',
     language: 'en',
     sourceType: 'OFFICIAL_DOCUMENT',
-    permissibleExcerpt: 'We resolve to establish an open technological exchange framework ensuring equitable access to advanced compute and energy resources.',
+    permissibleExcerpt:
+      'We resolve to establish an open technological exchange framework ensuring equitable access to advanced compute and energy resources.',
     createdAt: '2026-09-26T14:15:00Z',
     updatedAt: '2026-09-26T14:15:00Z',
   },
@@ -54,7 +58,8 @@ export const DEMO_STORIES: Story[] = [
     organizationId: 'org_default',
     slug: 'brics-2026-summit-ratifies-landmark-trade-pact',
     title: 'BRICS 2026 Summit Ratifies Landmark Trade Accord in New Delhi',
-    summary: 'Delegates representing the expanded 10-nation bloc finalize terms for sovereign local-currency settlements and launch joint AI compute standards.',
+    summary:
+      'Delegates representing the expanded 10-nation bloc finalize terms for sovereign local-currency settlements and launch joint AI compute standards.',
     status: 'PUBLISHED',
     articleType: 'developing_story',
     currentVersionNumber: 3,
@@ -62,7 +67,8 @@ export const DEMO_STORIES: Story[] = [
     topicIds: ['top_brics_2026', 'top_global_trade', 'top_ai_policy'],
     entityIds: ['ent_india', 'ent_china', 'ent_brazil', 'ent_russia', 'ent_south_africa'],
     sourceIds: ['src_reuters', 'src_bloomberg', 'src_official'],
-    heroImageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1600&q=80',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1600&q=80',
     createdVia: 'mcp',
     createdByClient: 'gemini_spark',
     authorId: 'usr_gemini_spark_agent',
@@ -80,17 +86,20 @@ export const DEMO_STORIES: Story[] = [
           items: [
             {
               changeType: 'added',
-              description: 'Incorporated official Joint Communiqué terms on shared compute clusters.',
+              description:
+                'Incorporated official Joint Communiqué terms on shared compute clusters.',
               affectedSection: 'paragraph',
             },
             {
               changeType: 'updated',
-              description: 'Updated Intra-Bloc Settlement chart with verified 2026 Q3 data from Central Bank registry.',
+              description:
+                'Updated Intra-Bloc Settlement chart with verified 2026 Q3 data from Central Bank registry.',
               affectedSection: 'chart',
             },
             {
               changeType: 'corrected',
-              description: 'Corrected ratification count: 10 member states unanimously confirmed, not 9.',
+              description:
+                'Corrected ratification count: 10 member states unanimously confirmed, not 9.',
             },
           ],
         },
@@ -158,7 +167,8 @@ export const DEMO_STORIES: Story[] = [
         blockType: 'quote',
         sortOrder: 5,
         data: {
-          quote: 'Our goal is not isolation, but resilience. By building resilient financial infrastructure and pooling computational research, we establish an engine for shared prosperity.',
+          quote:
+            'Our goal is not isolation, but resilience. By building resilient financial infrastructure and pooling computational research, we establish an engine for shared prosperity.',
           attribution: 'Summit Conference Chair',
           title: 'Plenary Closing Remarks',
         },
@@ -170,9 +180,21 @@ export const DEMO_STORIES: Story[] = [
         data: {
           title: 'Summit Milestone Chronology',
           items: [
-            { date: 'Day 1 • 09:00', headline: 'Opening Session', body: 'Delegations arrive and confirm the final agenda.' },
-            { date: 'Day 2 • 14:00', headline: 'Financial Ministers Accord', body: 'Technical working groups harmonize clearing protocol.' },
-            { date: 'Day 3 • 16:30', headline: 'Unanimous Adoption', body: 'Final joint declaration ratified and released to international press.' },
+            {
+              date: 'Day 1 • 09:00',
+              headline: 'Opening Session',
+              body: 'Delegations arrive and confirm the final agenda.',
+            },
+            {
+              date: 'Day 2 • 14:00',
+              headline: 'Financial Ministers Accord',
+              body: 'Technical working groups harmonize clearing protocol.',
+            },
+            {
+              date: 'Day 3 • 16:30',
+              headline: 'Unanimous Adoption',
+              body: 'Final joint declaration ratified and released to international press.',
+            },
           ],
         },
       },
@@ -192,7 +214,8 @@ export const DEMO_STORIES: Story[] = [
     organizationId: 'org_default',
     slug: 'global-semiconductor-consortium-formed',
     title: 'Global Semiconductor Consortium Establishes 2nm Lithography Standard',
-    summary: 'Leading fabrication foundries and research universities establish an open patent pool for advanced packaging and gate-all-around architectures.',
+    summary:
+      'Leading fabrication foundries and research universities establish an open patent pool for advanced packaging and gate-all-around architectures.',
     status: 'PUBLISHED',
     articleType: 'technology',
     currentVersionNumber: 2,
@@ -200,7 +223,8 @@ export const DEMO_STORIES: Story[] = [
     topicIds: ['top_semiconductors', 'top_ai_hardware'],
     entityIds: ['ent_tsmc', 'ent_intel', 'ent_samsung'],
     sourceIds: ['src_reuters'],
-    heroImageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
     createdVia: 'mcp',
     createdByClient: 'chatgpt',
     authorId: 'usr_chatgpt_agent',
@@ -257,7 +281,8 @@ export const DEMO_STORIES: Story[] = [
     organizationId: 'org_default',
     slug: 'fusion-reactor-test-reaches-net-energy-gain',
     title: 'Magnetic Fusion Reactor Sustains Net Energy Gain for 120 Seconds',
-    summary: 'High-temperature superconducting magnets maintain steady-state fusion plasma at an unprecedented 1.35x Q-factor.',
+    summary:
+      'High-temperature superconducting magnets maintain steady-state fusion plasma at an unprecedented 1.35x Q-factor.',
     status: 'PUBLISHED',
     articleType: 'science',
     currentVersionNumber: 1,
@@ -265,7 +290,8 @@ export const DEMO_STORIES: Story[] = [
     topicIds: ['top_clean_energy', 'top_physics'],
     entityIds: ['ent_iter', 'ent_mit'],
     sourceIds: ['src_reuters'],
-    heroImageUrl: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1600&q=80',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1600&q=80',
     createdVia: 'mcp',
     createdByClient: 'gemini',
     authorId: 'usr_gemini_agent',
@@ -283,7 +309,10 @@ export const DEMO_STORIES: Story[] = [
           xAxis: { type: 'category', key: 'round', label: 'Test Round' },
           yAxis: { label: 'Ratio' },
           series: [{ name: 'Q-Factor', key: 'q' }],
-          values: [{ round: 'Test 1', q: 1.05 }, { round: 'Test 2', q: 1.35 }],
+          values: [
+            { round: 'Test 1', q: 1.05 },
+            { round: 'Test 2', q: 1.35 },
+          ],
         },
       },
       {
@@ -306,7 +335,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'Republic of India',
     slug: 'india',
     type: 'COUNTRY',
-    description: 'Host nation of the 2026 BRICS summit in New Delhi and architect of the bilateral trade settlement framework.',
+    description:
+      'Host nation of the 2026 BRICS summit in New Delhi and architect of the bilateral trade settlement framework.',
     aliases: ['India', 'Bharat', 'New Delhi Administration'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -317,7 +347,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: "People's Republic of China",
     slug: 'china',
     type: 'COUNTRY',
-    description: 'Key participant in the bilateral trade settlement protocol and co-sponsor of the open scientific compute framework.',
+    description:
+      'Key participant in the bilateral trade settlement protocol and co-sponsor of the open scientific compute framework.',
     aliases: ['China', 'Beijing'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -328,7 +359,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'Federative Republic of Brazil',
     slug: 'brazil',
     type: 'COUNTRY',
-    description: 'South American founding member supporting sovereign currency clearing and agricultural trade agreements.',
+    description:
+      'South American founding member supporting sovereign currency clearing and agricultural trade agreements.',
     aliases: ['Brazil', 'Brasília'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -339,7 +371,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'Taiwan Semiconductor Manufacturing Co.',
     slug: 'tsmc',
     type: 'ORGANIZATION',
-    description: 'World-leading dedicated semiconductor foundry co-founding the 2nm High-NA EUV lithography consortium.',
+    description:
+      'World-leading dedicated semiconductor foundry co-founding the 2nm High-NA EUV lithography consortium.',
     aliases: ['TSMC', 'Taiwan Semiconductor'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -350,7 +383,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'Intel Corporation',
     slug: 'intel',
     type: 'ORGANIZATION',
-    description: 'Global microchip manufacturer contributing advanced packaging and open chiplet interconnect specifications.',
+    description:
+      'Global microchip manufacturer contributing advanced packaging and open chiplet interconnect specifications.',
     aliases: ['Intel', 'Intel Foundry'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -361,7 +395,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'Samsung Electronics',
     slug: 'samsung',
     type: 'ORGANIZATION',
-    description: 'Multinational electronics and memory leader standardizing Gate-All-Around (GAA) transistor architectures.',
+    description:
+      'Multinational electronics and memory leader standardizing Gate-All-Around (GAA) transistor architectures.',
     aliases: ['Samsung', 'Samsung Foundry'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -372,7 +407,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'ITER Organization',
     slug: 'iter',
     type: 'INSTITUTION',
-    description: 'International nuclear fusion research mega-project validating burning plasma physics and magnetic confinement.',
+    description:
+      'International nuclear fusion research mega-project validating burning plasma physics and magnetic confinement.',
     aliases: ['ITER', 'International Thermonuclear Experimental Reactor'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -383,7 +419,8 @@ export const DEMO_ENTITIES: Record<string, Entity> = {
     name: 'MIT Plasma Science and Fusion Center',
     slug: 'mit',
     type: 'INSTITUTION',
-    description: 'Academic research laboratory pioneering high-field superconducting magnets for commercial net-energy fusion.',
+    description:
+      'Academic research laboratory pioneering high-field superconducting magnets for commercial net-energy fusion.',
     aliases: ['MIT PSFC', 'Massachusetts Institute of Technology'],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-26T00:00:00Z',
@@ -395,7 +432,8 @@ export const DEMO_EVENTS: Record<string, Event> = {
     id: 'evt_brics_2026',
     organizationId: 'org_default',
     title: 'BRICS 2026 Leaders Summit in New Delhi',
-    summary: 'Historic multilateral summit uniting 10 nations to establish sovereign bilateral clearing networks and open AI computing exchange.',
+    summary:
+      'Historic multilateral summit uniting 10 nations to establish sovereign bilateral clearing networks and open AI computing exchange.',
     status: 'ACTIVE',
     occurredAt: '2026-09-26T09:00:00Z',
     location: 'Bharat Mandapam, New Delhi, India',
@@ -411,7 +449,8 @@ export const DEMO_EVENTS: Record<string, Event> = {
     id: 'evt_semi_consortium',
     organizationId: 'org_default',
     title: 'Formation of 2nm Semiconductor Lithography Consortium',
-    summary: 'Cross-foundry alliance standardizing High-NA EUV tolerances, packaging, and open-source chiplet interconnect topologies.',
+    summary:
+      'Cross-foundry alliance standardizing High-NA EUV tolerances, packaging, and open-source chiplet interconnect topologies.',
     status: 'ACTIVE',
     occurredAt: '2026-09-26T12:00:00Z',
     location: 'Taipei International Convention Center, Taiwan',
@@ -427,7 +466,8 @@ export const DEMO_EVENTS: Record<string, Event> = {
     id: 'evt_fusion_milestone',
     organizationId: 'org_default',
     title: 'Steady-State Burning Plasma Net Gain Verification',
-    summary: 'Magnetic confinement fusion reactor sustains steady-state plasma at 1.35x Q-factor for 120 consecutive seconds.',
+    summary:
+      'Magnetic confinement fusion reactor sustains steady-state plasma at 1.35x Q-factor for 120 consecutive seconds.',
     status: 'RESOLVED',
     occurredAt: '2026-09-26T07:30:00Z',
     location: 'Culham Centre for Fusion Energy, Oxfordshire, UK',
@@ -440,4 +480,3 @@ export const DEMO_EVENTS: Record<string, Event> = {
     updatedAt: '2026-09-26T07:30:00Z',
   },
 };
-

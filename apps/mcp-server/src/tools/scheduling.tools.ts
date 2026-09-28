@@ -19,7 +19,9 @@ export function registerSchedulingTools(
     'Schedule an approved story for automated publication at a future timestamp (embargo release).',
     {
       story_id: z.string().describe('ID of the story to schedule'),
-      publish_at: z.string().describe('Target publication timestamp in ISO-8601 format (e.g. 2026-10-01T12:00:00Z)'),
+      publish_at: z
+        .string()
+        .describe('Target publication timestamp in ISO-8601 format (e.g. 2026-10-01T12:00:00Z)'),
     },
     async (args) => {
       try {
@@ -34,7 +36,11 @@ export function registerSchedulingTools(
           createdVia: 'mcp',
         };
 
-        const scheduled = await schedulingService.scheduleStory(args.story_id, args.publish_at, ctx);
+        const scheduled = await schedulingService.scheduleStory(
+          args.story_id,
+          args.publish_at,
+          ctx
+        );
         return successResponse({
           story_id: scheduled.id,
           title: scheduled.title,
@@ -88,7 +94,11 @@ export function registerSchedulingTools(
         const published = await schedulingService.publishDueStories(principal.organizationId);
         return successResponse({
           published_count: published.length,
-          published_stories: published.map((s) => ({ id: s.id, title: s.title, publishedAt: s.publishedAt })),
+          published_stories: published.map((s) => ({
+            id: s.id,
+            title: s.title,
+            publishedAt: s.publishedAt,
+          })),
         });
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));

@@ -23,14 +23,26 @@ export class PrismaTopicRepository implements ITopicRepository {
   private get topicClient(): {
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow | null>;
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
-    findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaTopicRow[]>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaTopicRow>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaTopicRow[]>;
   } {
     return this.prisma.topic as {
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow | null>;
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
-      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaTopicRow>;
-      findMany: (args: { where: Record<string, unknown>; orderBy?: Record<string, unknown> }) => Promise<PrismaTopicRow[]>;
+      update: (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => Promise<PrismaTopicRow>;
+      findMany: (args: {
+        where: Record<string, unknown>;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaTopicRow[]>;
     };
   }
 

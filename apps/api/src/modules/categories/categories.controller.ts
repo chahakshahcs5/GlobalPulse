@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
@@ -54,9 +47,7 @@ export class CategoriesController {
     @Principal() principal: AuthenticatedPrincipal
   ) {
     const normalized = slug.toLowerCase();
-    const found = CANONICAL_CATEGORIES.find(
-      (c) => c.slug === normalized || c.code === normalized
-    );
+    const found = CANONICAL_CATEGORIES.find((c) => c.slug === normalized || c.code === normalized);
     if (!found) {
       throw new NotFoundException(`Category "${slug}" not found`);
     }

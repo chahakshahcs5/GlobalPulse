@@ -19,8 +19,12 @@ export default function LargeDisplayPage() {
     const updateTime = () => {
       const now = new Date();
       setTimeStr(
-        now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-          ' UTC'
+        now.toLocaleTimeString('en-US', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }) + ' UTC'
       );
     };
     updateTime();
@@ -50,7 +54,9 @@ export default function LargeDisplayPage() {
   // Find chart and map blocks from the current story or use fallbacks
   const chartBlock = currentStory.blocks.find((b): b is ChartBlock => b.blockType === 'chart');
   const mapBlock = currentStory.blocks.find((b): b is MapBlock => b.blockType === 'map');
-  const timelineBlock = currentStory.blocks.find((b): b is TimelineBlock => b.blockType === 'timeline');
+  const timelineBlock = currentStory.blocks.find(
+    (b): b is TimelineBlock => b.blockType === 'timeline'
+  );
 
   return (
     <div className="min-h-screen bg-[#060911] text-slate-100 flex flex-col justify-between overflow-hidden select-none p-4 sm:p-6 lg:p-8">
@@ -161,7 +167,11 @@ export default function LargeDisplayPage() {
           <div className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-              Agent: <strong className="text-slate-200">{currentStory.createdByClient.toUpperCase()}</strong> via MCP
+              Agent:{' '}
+              <strong className="text-slate-200">
+                {currentStory.createdByClient.toUpperCase()}
+              </strong>{' '}
+              via MCP
             </span>
             <span>Revision: Version {currentStory.currentVersionNumber}</span>
           </div>
@@ -188,7 +198,9 @@ export default function LargeDisplayPage() {
                   }}
                 />
               ) : (
-                <div className="text-slate-500 font-mono text-xs">No chart attached to this briefing.</div>
+                <div className="text-slate-500 font-mono text-xs">
+                  No chart attached to this briefing.
+                </div>
               )}
             </div>
           </div>
@@ -208,7 +220,9 @@ export default function LargeDisplayPage() {
                   }}
                 />
               ) : (
-                <div className="text-slate-500 font-mono text-xs">No geospatial coordinates for this story.</div>
+                <div className="text-slate-500 font-mono text-xs">
+                  No geospatial coordinates for this story.
+                </div>
               )}
             </div>
           </div>
@@ -224,10 +238,17 @@ export default function LargeDisplayPage() {
         <div className="overflow-hidden whitespace-nowrap flex-1">
           <div className="ticker-track text-xs">
             {DEMO_STORIES.map((s) => (
-              <span key={s.id} className="inline-flex items-center gap-3 mx-8 text-slate-300 font-medium">
-                <span className="font-bold text-blue-400 font-mono uppercase">[{s.articleType}]</span>
+              <span
+                key={s.id}
+                className="inline-flex items-center gap-3 mx-8 text-slate-300 font-medium"
+              >
+                <span className="font-bold text-blue-400 font-mono uppercase">
+                  [{s.articleType}]
+                </span>
                 <span>{s.title}</span>
-                <span className="text-slate-500 font-mono text-[11px]">(Version {s.currentVersionNumber})</span>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  (Version {s.currentVersionNumber})
+                </span>
                 <span className="text-slate-700 ml-4">•</span>
               </span>
             ))}

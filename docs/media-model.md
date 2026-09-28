@@ -28,6 +28,7 @@ graph TD
 ```
 
 ### Complete 13 Chart Types Supported:
+
 1. **`line`**: Time-series trends with multi-series line tracks, data points, and value labels.
 2. **`bar`**: Discrete category comparisons with value badges and attribution footnotes.
 3. **`stacked_bar`**: Multi-segment composition bars with normalized scale calculation.
@@ -47,22 +48,25 @@ graph TD
 ## 2. Geospatial Map Engine (`MapRenderer`)
 
 The `MapRenderer` renders geospatial visualizations with zero external network dependencies:
-* **Interactive Client Layer**: Renders high-performance vector tiles via MapLibre GL on Web and native maps on Mobile.
-* **Declarative Fallback Layer**: Renders standalone SVG maps with stylized globe latitude/longitude grids, reticle crosshairs, layer badges (`fill`, `line`, `circle`, `heatmap`), zoom factor indicators, and projected markers.
+
+- **Interactive Client Layer**: Renders high-performance vector tiles via MapLibre GL on Web and native maps on Mobile.
+- **Declarative Fallback Layer**: Renders standalone SVG maps with stylized globe latitude/longitude grids, reticle crosshairs, layer badges (`fill`, `line`, `circle`, `heatmap`), zoom factor indicators, and projected markers.
 
 ---
 
 ## 3. Responsive Timeline Engine (`TimelineRenderer`)
 
 Timelines convey diplomatic and breaking milestone sequences across dynamic aspect ratios:
-* **Horizontal Mode (`desktop` / `display wall`)**: Renders horizontal chronological track with milestone nodes, dates, headlines, and connecting conduits.
-* **Vertical Mode (`mobile` / `tablet`)**: Renders vertical numbered spine with dynamic SVG height calculation based on item count.
+
+- **Horizontal Mode (`desktop` / `display wall`)**: Renders horizontal chronological track with milestone nodes, dates, headlines, and connecting conduits.
+- **Vertical Mode (`mobile` / `tablet`)**: Renders vertical numbered spine with dynamic SVG height calculation based on item count.
 
 ---
 
 ## 4. Audio Briefing Synthesis Pipeline
 
 When stories publish, the background worker invokes the audio generator:
-* **Input**: Executive summary and lead narrative paragraphs.
-* **Processing**: Estimates speech cadence (150 words/min) and triggers neural text-to-speech voice generation (`news_anchor_f`, `diplomatic_briefing_m`).
-* **Artifact**: Streamable `.m4a` / `.mp3` podcast file attached as an `audio` block for commute playback.
+
+- **Input**: Executive summary and lead narrative paragraphs.
+- **Processing**: Estimates speech cadence (150 words/min) and triggers neural text-to-speech voice generation (`news_anchor_f`, `diplomatic_briefing_m`).
+- **Artifact**: Streamable `.m4a` / `.mp3` podcast file attached as an `audio` block for commute playback.

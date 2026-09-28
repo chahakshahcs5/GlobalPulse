@@ -9,7 +9,7 @@ export const requestLoggerPlugin: FastifyPluginAsync = async (app: FastifyInstan
     const requestId = (request.headers['x-request-id'] as string) || uuidv4();
     request.headers['x-request-id'] = requestId;
     reply.header('x-request-id', requestId);
-type TimedRequest = typeof request & { startTime?: number };
+    type TimedRequest = typeof request & { startTime?: number };
     (request as TimedRequest).startTime = Date.now();
   });
 
@@ -25,15 +25,26 @@ type TimedRequest = typeof request & { startTime?: number };
       statusCode,
       durationMs,
       userAgent: request.headers['user-agent'],
-      caller: request.principal ? `${request.principal.clientType}:${request.principal.id}` : 'anonymous',
+      caller: request.principal
+        ? `${request.principal.clientType}:${request.principal.id}`
+        : 'anonymous',
     };
 
     if (statusCode >= 500) {
-      logger.error(`HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`, logPayload);
+      logger.error(
+        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        logPayload
+      );
     } else if (statusCode >= 400) {
-      logger.warn(`HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`, logPayload);
+      logger.warn(
+        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        logPayload
+      );
     } else {
-      logger.info(`HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`, logPayload);
+      logger.info(
+        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        logPayload
+      );
     }
   });
 };

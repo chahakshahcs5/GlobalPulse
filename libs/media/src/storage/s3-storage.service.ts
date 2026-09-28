@@ -57,7 +57,6 @@ export class S3StorageService {
         ? `${(process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT)!.replace(/\/$/, '')}/${this.bucket}`
         : 'https://cdn.globalpulse.news');
 
-
     try {
       this.client = new S3Client({
         endpoint,
@@ -94,8 +93,8 @@ export class S3StorageService {
     const buffer = Buffer.isBuffer(body)
       ? body
       : typeof body === 'string'
-      ? Buffer.from(body, 'utf-8')
-      : Buffer.from(body);
+        ? Buffer.from(body, 'utf-8')
+        : Buffer.from(body);
 
     if (this.client) {
       try {
@@ -185,9 +184,15 @@ export class S3StorageService {
     }
   }
 
-  public async checkHealth(): Promise<{ status: 'healthy' | 'degraded'; bucket: string; provider: string; latencyMs: number }> {
+  public async checkHealth(): Promise<{
+    status: 'healthy' | 'degraded';
+    bucket: string;
+    provider: string;
+    latencyMs: number;
+  }> {
     const start = Date.now();
-    const provider = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3';
+    const provider =
+      process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3';
     if (!this.client || process.env.NODE_ENV === 'test') {
       return {
         status: 'healthy',
@@ -214,7 +219,6 @@ export class S3StorageService {
     }
   }
 }
-
 
 // Global storage singleton
 export const s3Storage = new S3StorageService();

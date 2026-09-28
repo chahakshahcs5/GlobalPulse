@@ -6,10 +6,10 @@ This document provides setup instructions for configuring development and produc
 
 ## 1. System Requirements
 
-* **Node.js**: `v20.18.0` LTS or `v22.x` (ESM native modules supported).
-* **Package Manager**: `pnpm` `9.x` or `10.x` (recommended) or `npm` `10.x`.
-* **Database (Optional for production)**: PostgreSQL 16+ with `pgvector` extension.
-* **Operating System**: macOS, Linux, or Windows 10/11 (PowerShell / WSL2).
+- **Node.js**: `v20.18.0` LTS or `v22.x` (ESM native modules supported).
+- **Package Manager**: `pnpm` `9.x` or `10.x` (recommended) or `npm` `10.x`.
+- **Database (Optional for production)**: PostgreSQL 16+ with `pgvector` extension.
+- **Operating System**: macOS, Linux, or Windows 10/11 (PowerShell / WSL2).
 
 ---
 
@@ -99,6 +99,7 @@ pnpm test
 ```
 
 Expected result:
+
 ```text
 Test Files  17 passed (17)
 Tests       158 passed (158)

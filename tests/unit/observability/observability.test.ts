@@ -92,8 +92,12 @@ describe('Observability Subsystem (Unit Tests)', () => {
       registry.incrementCounter('http_requests_total', 2, { method: 'GET', status: '200' });
       registry.incrementCounter('http_requests_total', 1, { method: 'POST', status: '201' });
 
-      expect(registry.getCounterValue('http_requests_total', { method: 'GET', status: '200' })).toBe(3);
-      expect(registry.getCounterValue('http_requests_total', { method: 'POST', status: '201' })).toBe(1);
+      expect(
+        registry.getCounterValue('http_requests_total', { method: 'GET', status: '200' })
+      ).toBe(3);
+      expect(
+        registry.getCounterValue('http_requests_total', { method: 'POST', status: '201' })
+      ).toBe(1);
       // Aggregate total across all labels
       expect(registry.getCounterValue('http_requests_total')).toBe(4);
     });
@@ -148,7 +152,10 @@ describe('Observability Subsystem (Unit Tests)', () => {
     });
 
     it('manages span lifecycles, attributes, and duration calculation', () => {
-      const span = simpleTracer.startSpan('render_d3_chart', { chartType: 'bar', blockId: 'blk_1' });
+      const span = simpleTracer.startSpan('render_d3_chart', {
+        chartType: 'bar',
+        blockId: 'blk_1',
+      });
       expect(span.traceId).toBeDefined();
       expect(span.spanId).toBeDefined();
       expect(span.name).toBe('render_d3_chart');
@@ -209,13 +216,9 @@ describe('Observability Subsystem (Unit Tests)', () => {
 
     it('traceAsync captures rethrown errors and marks span failed', async () => {
       await expect(
-        simpleTracer.traceAsync(
-          'failing_operation',
-          {},
-          async () => {
-            throw new Error('Downstream network timeout');
-          }
-        )
+        simpleTracer.traceAsync('failing_operation', {}, async () => {
+          throw new Error('Downstream network timeout');
+        })
       ).rejects.toThrow('Downstream network timeout');
 
       const completed = simpleTracer.getCompletedSpans();

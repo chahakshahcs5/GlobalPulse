@@ -71,10 +71,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, NewsScope[]> = {
     'news:sources',
     'news:topics',
   ],
-  reader: [
-    'news:read',
-    'news:search',
-  ],
+  reader: ['news:read', 'news:search'],
   ai_agent: [
     'news:read',
     'news:search',
@@ -108,7 +105,10 @@ export class AuthService {
    * Generates a signed RFC 7519 JSON Web Token for human users or AI agents.
    */
   static generateToken(
-    principal: Partial<Omit<AuthenticatedPrincipal, 'tokenExpiresAt'>> & { id: string; role: UserRole },
+    principal: Partial<Omit<AuthenticatedPrincipal, 'tokenExpiresAt'>> & {
+      id: string;
+      role: UserRole;
+    },
     secret: string = getJwtSecret(),
     expiresIn: SignOptions['expiresIn'] = '24h'
   ): string {
@@ -118,7 +118,10 @@ export class AuthService {
       role: principal.role,
       email: principal.email,
       clientType: principal.clientType || 'human_web',
-      scopes: principal.scopes && principal.scopes.length > 0 ? principal.scopes : ROLE_PERMISSIONS[principal.role] || [],
+      scopes:
+        principal.scopes && principal.scopes.length > 0
+          ? principal.scopes
+          : ROLE_PERMISSIONS[principal.role] || [],
       ...(principal.agentMetadata ? { agent: principal.agentMetadata } : {}),
     };
 

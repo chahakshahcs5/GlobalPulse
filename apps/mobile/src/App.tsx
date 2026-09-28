@@ -19,7 +19,8 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
     id: 'sty_brics_mobile',
     slug: 'brics-expansion-2026-global-economic-realignment',
     title: 'BRICS Expansion 2026: Historic Geoeconomic Shift',
-    summary: 'Four new member nations formally inducted into BRICS during the landmark New Delhi summit.',
+    summary:
+      'Four new member nations formally inducted into BRICS during the landmark New Delhi summit.',
     articleType: 'breaking',
     currentVersionNumber: 2,
     savedAt: new Date().toISOString(),
@@ -58,7 +59,8 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
         blockType: 'quote',
         sortOrder: 3,
         data: {
-          quote: 'This accord represents the most significant recalibration of sovereign financial plumbing in fifty years.',
+          quote:
+            'This accord represents the most significant recalibration of sovereign financial plumbing in fifty years.',
           attribution: 'Chief Economic Envoy',
           title: 'Summit Delegation',
         },
@@ -98,7 +100,8 @@ export const SAMPLE_MOBILE_STORIES: OfflineStory[] = [
     id: 'sty_chips_mobile',
     slug: 'next-gen-photonic-semiconductor-fabrication',
     title: 'Breakthrough Photonic Lithography Unveiled',
-    summary: 'Research alliance demonstrates first commercially viable optical chip interconnects operating at sub-picosecond latency.',
+    summary:
+      'Research alliance demonstrates first commercially viable optical chip interconnects operating at sub-picosecond latency.',
     articleType: 'analysis',
     currentVersionNumber: 1,
     savedAt: new Date(Date.now() - 3600000).toISOString(),
@@ -167,15 +170,25 @@ export default function MobileApp() {
                 onPress={() => setActiveTab('feed')}
                 style={[styles.tabletTabBtn, activeTab === 'feed' && styles.tabletTabBtnActive]}
               >
-                <Text style={[styles.tabletTabText, activeTab === 'feed' && styles.tabletTabTextActive]}>
+                <Text
+                  style={[styles.tabletTabText, activeTab === 'feed' && styles.tabletTabTextActive]}
+                >
                   📰 Dispatches
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setActiveTab('bookmarks')}
-                style={[styles.tabletTabBtn, activeTab === 'bookmarks' && styles.tabletTabBtnActive]}
+                style={[
+                  styles.tabletTabBtn,
+                  activeTab === 'bookmarks' && styles.tabletTabBtnActive,
+                ]}
               >
-                <Text style={[styles.tabletTabText, activeTab === 'bookmarks' && styles.tabletTabTextActive]}>
+                <Text
+                  style={[
+                    styles.tabletTabText,
+                    activeTab === 'bookmarks' && styles.tabletTabTextActive,
+                  ]}
+                >
                   🔖 Offline Cache
                 </Text>
               </TouchableOpacity>
@@ -205,7 +218,9 @@ export default function MobileApp() {
             ) : (
               <View style={styles.tabletPlaceholder}>
                 <Text style={styles.tabletPlaceholderIcon}>📰</Text>
-                <Text style={styles.tabletPlaceholderText}>Select a dispatch to read in high resolution.</Text>
+                <Text style={styles.tabletPlaceholderText}>
+                  Select a dispatch to read in high resolution.
+                </Text>
               </View>
             )}
           </View>
@@ -231,10 +246,7 @@ export default function MobileApp() {
         {/* Main Screen Body */}
         <View style={styles.phoneScreenContent}>
           {activeTab === 'feed' ? (
-            <FeedScreen
-              stories={stories}
-              onSelectStory={(s) => setSelectedStory(s)}
-            />
+            <FeedScreen stories={stories} onSelectStory={(s) => setSelectedStory(s)} />
           ) : (
             <BookmarksScreen onSelectStory={(s) => setSelectedStory(s)} />
           )}
@@ -250,9 +262,7 @@ export default function MobileApp() {
             style={styles.tabBarItem}
           >
             <Text style={styles.tabBarIcon}>📰</Text>
-            <Text
-              style={[styles.tabBarLabel, activeTab === 'feed' && styles.tabBarLabelActive]}
-            >
+            <Text style={[styles.tabBarLabel, activeTab === 'feed' && styles.tabBarLabelActive]}>
               Feed
             </Text>
           </TouchableOpacity>

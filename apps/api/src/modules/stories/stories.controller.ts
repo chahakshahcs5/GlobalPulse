@@ -14,7 +14,13 @@ import {
   Res,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { StoryService, SchedulingService, PersonalizationService, ClusteringService, LiveblogService } from '@ai-news/stories';
+import {
+  StoryService,
+  SchedulingService,
+  PersonalizationService,
+  ClusteringService,
+  LiveblogService,
+} from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
@@ -29,7 +35,13 @@ import {
 } from './stories.dto';
 import { CreateLiveblogEntryInputSchema } from '@ai-news/schemas';
 
-import type { Story, StoryBlock, StoryVersion, FullCoverageResult, LiveblogEntry } from '@ai-news/schemas';
+import type {
+  Story,
+  StoryBlock,
+  StoryVersion,
+  FullCoverageResult,
+  LiveblogEntry,
+} from '@ai-news/schemas';
 
 @Controller('api/stories')
 @UseGuards(NestAuthGuard)
@@ -62,7 +74,6 @@ export class StoriesController {
       paginated.offset
     );
   }
-
 
   @Post()
   @Roles('admin', 'editor', 'journalist', 'ai_agent')
@@ -180,13 +191,19 @@ export class StoriesController {
 
   @Get(':id')
   @RequireScope('news:read')
-  async getStoryById(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal): Promise<Story> {
+  async getStoryById(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
     return await this.storyService.getStory(id, principal.organizationId);
   }
 
   @Get('slug/:slug')
   @RequireScope('news:read')
-  async getStoryBySlug(@Param('slug') slug: string, @Principal() principal: AuthenticatedPrincipal): Promise<Story> {
+  async getStoryBySlug(
+    @Param('slug') slug: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<Story> {
     return await this.storyService.getStoryBySlug(slug, principal.organizationId);
   }
 
@@ -312,7 +329,10 @@ export class StoriesController {
 
   @Get(':id/versions')
   @RequireScope('news:read')
-  async listVersions(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal): Promise<StoryVersion[]> {
+  async listVersions(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<StoryVersion[]> {
     return await this.storyService.getStoryVersions(id, principal.organizationId);
   }
 
@@ -324,7 +344,11 @@ export class StoriesController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryVersion> {
     const versionNumber = parseInt(vId, 10);
-    return await this.storyService.getStoryVersion(id, isNaN(versionNumber) ? 1 : versionNumber, principal.organizationId);
+    return await this.storyService.getStoryVersion(
+      id,
+      isNaN(versionNumber) ? 1 : versionNumber,
+      principal.organizationId
+    );
   }
 
   @Post(':id/publish')
@@ -419,13 +443,17 @@ export class StoriesController {
     @Headers('x-request-id') requestId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Story> {
-    return await this.storyService.reviewStory(id, { action: 'approve', feedback: body?.feedback }, {
-      organizationId: principal.organizationId,
-      authorId: principal.id,
-      clientType: principal.clientType,
-      createdVia: 'api',
-      requestId,
-    });
+    return await this.storyService.reviewStory(
+      id,
+      { action: 'approve', feedback: body?.feedback },
+      {
+        organizationId: principal.organizationId,
+        authorId: principal.id,
+        clientType: principal.clientType,
+        createdVia: 'api',
+        requestId,
+      }
+    );
   }
 
   @Post(':id/reject')
@@ -438,13 +466,17 @@ export class StoriesController {
     @Headers('x-request-id') requestId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Story> {
-    return await this.storyService.reviewStory(id, { action: 'reject', feedback: body?.feedback }, {
-      organizationId: principal.organizationId,
-      authorId: principal.id,
-      clientType: principal.clientType,
-      createdVia: 'api',
-      requestId,
-    });
+    return await this.storyService.reviewStory(
+      id,
+      { action: 'reject', feedback: body?.feedback },
+      {
+        organizationId: principal.organizationId,
+        authorId: principal.id,
+        clientType: principal.clientType,
+        createdVia: 'api',
+        requestId,
+      }
+    );
   }
 
   @Post(':id/unpublish')

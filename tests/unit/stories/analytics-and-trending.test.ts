@@ -17,7 +17,8 @@ describe('Story Analytics & Trending Rankings (Unit Tests)', () => {
     const story = await storyService.createStory(
       {
         title: 'Breakthrough in Room Temperature Superconductors',
-        summary: 'Researchers demonstrate stable levitation at ambient pressure and room temperature.',
+        summary:
+          'Researchers demonstrate stable levitation at ambient pressure and room temperature.',
         articleType: 'science',
         blocks: [
           {
@@ -85,7 +86,11 @@ describe('Story Analytics & Trending Rankings (Unit Tests)', () => {
       { id: 'b1', blockType: 'paragraph', data: { text: 'Content details here.' }, sortOrder: 0 },
       { organizationId: 'org_test', authorId: 'usr_author', clientType: 'human_web' }
     );
-    await storyService.reviewStory(story1.id, { action: 'approve' }, { organizationId: 'org_test', authorId: 'usr_editor', clientType: 'human_web' });
+    await storyService.reviewStory(
+      story1.id,
+      { action: 'approve' },
+      { organizationId: 'org_test', authorId: 'usr_editor', clientType: 'human_web' }
+    );
 
     // Story 2: standard story
     const story2 = await storyService.createStory(
@@ -101,7 +106,11 @@ describe('Story Analytics & Trending Rankings (Unit Tests)', () => {
       { id: 'b2', blockType: 'paragraph', data: { text: 'Market summary notes.' }, sortOrder: 0 },
       { organizationId: 'org_test', authorId: 'usr_author', clientType: 'human_web' }
     );
-    await storyService.reviewStory(story2.id, { action: 'approve' }, { organizationId: 'org_test', authorId: 'usr_editor', clientType: 'human_web' });
+    await storyService.reviewStory(
+      story2.id,
+      { action: 'approve' },
+      { organizationId: 'org_test', authorId: 'usr_editor', clientType: 'human_web' }
+    );
 
     // Add massive reactions to Story 1
     for (let i = 1; i <= 5; i++) {

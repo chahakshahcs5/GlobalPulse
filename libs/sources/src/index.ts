@@ -1,9 +1,4 @@
-import type {
-  Source,
-  CreateSourceInput,
-  Citation,
-  Claim,
-} from '@ai-news/schemas';
+import type { Source, CreateSourceInput, Citation, Claim } from '@ai-news/schemas';
 import { CreateSourceInputSchema } from '@ai-news/schemas';
 import type { DatabaseService } from '@ai-news/database';
 import { NotFoundError, generateId } from '@ai-news/shared';

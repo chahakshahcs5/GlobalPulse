@@ -42,8 +42,17 @@ export function registerFactCheckTools(
     {
       title: z.string().min(1).describe('Proposed story headline'),
       content: z.string().min(1).describe('Proposed story body text or article draft'),
-      storyIdToExclude: z.string().optional().describe('Story ID to exclude from self-comparison when updating an existing article'),
-      threshold: z.number().min(0).max(100).default(75).optional().describe('Similarity percentage threshold (default 75%)'),
+      storyIdToExclude: z
+        .string()
+        .optional()
+        .describe('Story ID to exclude from self-comparison when updating an existing article'),
+      threshold: z
+        .number()
+        .min(0)
+        .max(100)
+        .default(75)
+        .optional()
+        .describe('Similarity percentage threshold (default 75%)'),
     },
     async ({ title, content, storyIdToExclude, threshold }) => {
       try {

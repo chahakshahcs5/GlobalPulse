@@ -28,7 +28,9 @@ export class CacheService {
 
         this.redis.on('connect', () => {
           this.isRedisConnected = true;
-          logger.info(`Redis cache connected successfully at ${targetUrl.replace(/:[^:@]*@/, ':****@')}`);
+          logger.info(
+            `Redis cache connected successfully at ${targetUrl.replace(/:[^:@]*@/, ':****@')}`
+          );
         });
 
         this.redis.on('error', (err) => {
@@ -70,7 +72,9 @@ export class CacheService {
         const raw = await this.redis.get(key);
         return raw ? (JSON.parse(raw) as T) : null;
       } catch (err: unknown) {
-        logger.debug(`Redis get failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`);
+        logger.debug(
+          `Redis get failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 
@@ -96,7 +100,9 @@ export class CacheService {
         await this.redis.set(key, serialized, 'EX', ttlSeconds);
         return;
       } catch (err: unknown) {
-        logger.debug(`Redis set failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`);
+        logger.debug(
+          `Redis set failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 
@@ -112,7 +118,9 @@ export class CacheService {
       try {
         await this.redis.del(key);
       } catch (err: unknown) {
-        logger.debug(`Redis del failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`);
+        logger.debug(
+          `Redis del failed for key "${key}": ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
     this.memoryCache.delete(key);
@@ -126,7 +134,9 @@ export class CacheService {
           await this.redis.del(...keys);
         }
       } catch (err: unknown) {
-        logger.debug(`Redis delByPrefix failed for "${prefix}": ${err instanceof Error ? err.message : String(err)}`);
+        logger.debug(
+          `Redis delByPrefix failed for "${prefix}": ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 

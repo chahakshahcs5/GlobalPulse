@@ -96,10 +96,10 @@ export function NewsroomPulseTab({ metrics, trending }: NewsroomPulseTabProps) {
                       idx === 0
                         ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 border border-amber-300 dark:border-amber-700'
                         : idx === 1
-                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                        : idx === 2
-                        ? 'bg-amber-900/10 text-amber-700 dark:text-amber-500'
-                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400'
+                          ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          : idx === 2
+                            ? 'bg-amber-900/10 text-amber-700 dark:text-amber-500'
+                            : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400'
                     }`}
                   >
                     #{idx + 1}
@@ -142,7 +142,9 @@ export function NewsroomPulseTab({ metrics, trending }: NewsroomPulseTabProps) {
                     <div className="w-24 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 mt-1 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
-                          isHighViral ? 'bg-gradient-to-r from-amber-500 to-rose-500' : 'bg-blue-500'
+                          isHighViral
+                            ? 'bg-gradient-to-r from-amber-500 to-rose-500'
+                            : 'bg-blue-500'
                         }`}
                         style={{ width: `${virality}%` }}
                       ></div>

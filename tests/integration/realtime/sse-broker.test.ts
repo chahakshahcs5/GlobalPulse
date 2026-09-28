@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { RealtimeService, RealtimeMessageEvent } from '../../../apps/api/src/modules/realtime/realtime.service';
+import {
+  RealtimeService,
+  RealtimeMessageEvent,
+} from '../../../apps/api/src/modules/realtime/realtime.service';
 import { firstValueFrom } from 'rxjs';
 
 describe('Realtime SSE Broker Integration Tests', () => {

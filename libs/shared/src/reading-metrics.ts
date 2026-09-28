@@ -43,7 +43,11 @@ export function calculateWordCount(content: string | unknown[]): number {
         for (const listItem of data.items) {
           if (typeof listItem === 'string') {
             total += calculateWordCount(listItem);
-          } else if (listItem && typeof listItem === 'object' && typeof listItem.text === 'string') {
+          } else if (
+            listItem &&
+            typeof listItem === 'object' &&
+            typeof listItem.text === 'string'
+          ) {
             total += calculateWordCount(listItem.text);
           }
         }

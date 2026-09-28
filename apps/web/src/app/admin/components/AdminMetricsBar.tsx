@@ -2,7 +2,6 @@
 
 import type { Story } from '@ai-news/schemas';
 
-
 interface AdminMetricsBarProps {
   stories: Story[];
   onSweepScheduled: () => Promise<void>;
@@ -18,7 +17,9 @@ export function AdminMetricsBar({ stories, onSweepScheduled }: AdminMetricsBarPr
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div className="text-xs text-slate-500">Total Stories</div>
-        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stories.length}</div>
+        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          {stories.length}
+        </div>
       </div>
 
       <div
@@ -30,7 +31,9 @@ export function AdminMetricsBar({ stories, onSweepScheduled }: AdminMetricsBarPr
       >
         <div className="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-bold">
           <span>Review Queue</span>
-          {inReviewCount > 0 && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>}
+          {inReviewCount > 0 && (
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          )}
         </div>
         <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
           {inReviewCount}
@@ -39,9 +42,7 @@ export function AdminMetricsBar({ stories, onSweepScheduled }: AdminMetricsBarPr
 
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div className="text-xs text-emerald-600">Published Live</div>
-        <div className="text-2xl font-bold text-emerald-600 mt-1">
-          {publishedCount}
-        </div>
+        <div className="text-2xl font-bold text-emerald-600 mt-1">{publishedCount}</div>
       </div>
 
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">

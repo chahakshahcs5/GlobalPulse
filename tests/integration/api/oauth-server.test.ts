@@ -77,7 +77,10 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
   describe('RFC 7636 PKCE Authorization Code Grant for External AI Agents', () => {
     // Generate valid PKCE code_verifier and code_challenge
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
-    const codeChallenge = crypto.createHash('sha256').update(codeVerifier, 'ascii').digest('base64url');
+    const codeChallenge = crypto
+      .createHash('sha256')
+      .update(codeVerifier, 'ascii')
+      .digest('base64url');
 
     let authorizationCode: string;
 

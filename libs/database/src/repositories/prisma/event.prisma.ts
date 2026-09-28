@@ -29,14 +29,28 @@ export class PrismaEventRepository implements IEventRepository {
   private get eventClient(): {
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaEventRow | null>;
     create: (args: { data: Record<string, unknown> }) => Promise<PrismaEventRow>;
-    update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaEventRow>;
-    findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaEventRow[]>;
+    update: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<PrismaEventRow>;
+    findMany: (args: {
+      where: Record<string, unknown>;
+      take?: number;
+      orderBy?: Record<string, unknown>;
+    }) => Promise<PrismaEventRow[]>;
   } {
     return this.prisma.event as {
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaEventRow | null>;
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaEventRow>;
-      update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<PrismaEventRow>;
-      findMany: (args: { where: Record<string, unknown>; take?: number; orderBy?: Record<string, unknown> }) => Promise<PrismaEventRow[]>;
+      update: (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => Promise<PrismaEventRow>;
+      findMany: (args: {
+        where: Record<string, unknown>;
+        take?: number;
+        orderBy?: Record<string, unknown>;
+      }) => Promise<PrismaEventRow[]>;
     };
   }
 
@@ -122,7 +136,10 @@ export class PrismaEventRepository implements IEventRepository {
       status: row.status as Event['status'],
       occurredAt: row.occurredAt.toISOString(),
       location: row.location || undefined,
-      coordinates: row.coordinates && row.coordinates.length === 2 ? [row.coordinates[0], row.coordinates[1]] : undefined,
+      coordinates:
+        row.coordinates && row.coordinates.length === 2
+          ? [row.coordinates[0], row.coordinates[1]]
+          : undefined,
       topicIds: row.topicIds || [],
       entityIds: row.entityIds || [],
       storyIds: row.storyIds || [],

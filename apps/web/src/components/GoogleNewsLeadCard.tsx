@@ -72,7 +72,11 @@ export const GoogleNewsLeadCard: React.FC<GoogleNewsLeadCardProps> = ({
                   className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition"
                   title="Share"
                 >
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                  {copied ? (
+                    <Check className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>

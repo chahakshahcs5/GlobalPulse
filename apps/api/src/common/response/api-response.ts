@@ -40,10 +40,13 @@ export class ApiResponse {
         cursor,
         nextCursor: cursor,
         offset,
-        hasMore: cursor ? true : offset !== undefined ? offset + items.length < total : items.length === limit,
+        hasMore: cursor
+          ? true
+          : offset !== undefined
+            ? offset + items.length < total
+            : items.length === limit,
       },
       timestamp: new Date().toISOString(),
     };
   }
 }
-

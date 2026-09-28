@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { offlineStorage, OfflineStory } from '../services/storage';
 
 interface BookmarksScreenProps {
@@ -66,7 +60,8 @@ export function BookmarksScreen({ onSelectStory, selectedStoryId }: BookmarksScr
             <Text style={styles.emptyIcon}>🔖</Text>
             <Text style={styles.emptyTitle}>No Offline Articles Yet</Text>
             <Text style={styles.emptySubtext}>
-              Tap "Save Offline" on any dispatch in the feed to cache stories for uninterrupted reading without internet.
+              Tap "Save Offline" on any dispatch in the feed to cache stories for uninterrupted
+              reading without internet.
             </Text>
           </View>
         }

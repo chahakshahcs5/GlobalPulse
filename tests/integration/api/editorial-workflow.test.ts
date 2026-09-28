@@ -24,7 +24,10 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
             id: 'blk_grid_01',
             blockType: 'paragraph',
             sortOrder: 0,
-            data: { text: 'Regional energy grid pilots reported steady power distribution.', format: 'markdown' },
+            data: {
+              text: 'Regional energy grid pilots reported steady power distribution.',
+              format: 'markdown',
+            },
           },
         ],
       },

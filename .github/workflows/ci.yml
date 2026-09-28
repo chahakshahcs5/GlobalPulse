@@ -2,9 +2,9 @@ name: CI/CD Pipeline - GlobalPulse
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,6 +28,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 12.3.4
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -84,6 +85,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 12.3.4
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -112,6 +114,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 12.3.4
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
