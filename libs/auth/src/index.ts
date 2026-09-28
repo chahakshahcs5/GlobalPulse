@@ -359,3 +359,4 @@ export class AuthService {
 }
 
 export * from './password';
+export * from './tenant';

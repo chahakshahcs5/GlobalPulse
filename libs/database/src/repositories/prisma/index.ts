@@ -12,3 +12,5 @@ export * from './cluster.prisma';
 export * from './liveblog.prisma';
 export * from './newsletter.prisma';
 export * from './collection.prisma';
+export * from './webhook.prisma';
+export * from './provenance.prisma';

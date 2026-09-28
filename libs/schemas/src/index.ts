@@ -18,3 +18,6 @@ export * from './fact-check';
 export * from './collaboration';
 export * from './newsletter';
 export * from './collection';
+export * from './provenance';
+export * from './webhook';
+export * from './localization';

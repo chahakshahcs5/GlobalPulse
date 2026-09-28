@@ -26,6 +26,9 @@ import { FactCheckModule } from './modules/fact-check/fact-check.module';
 import { EditorialModule } from './modules/editorial/editorial.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
 import { CollectionsModule } from './modules/collections/collections.module';
+import { ProvenanceModule } from './modules/provenance/provenance.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { LocalizationModule } from './modules/localization/localization.module';
 
 @Module({
   imports: [
@@ -59,6 +62,9 @@ import { CollectionsModule } from './modules/collections/collections.module';
     EditorialModule,
     NewsletterModule,
     CollectionsModule,
+    ProvenanceModule,
+    WebhooksModule,
+    LocalizationModule,
   ],
 })
 export class AppModule {}

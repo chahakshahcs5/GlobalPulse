@@ -13,6 +13,8 @@ import type {
   ILiveblogRepository,
   INewsletterRepository,
   ICollectionRepository,
+  IWebhookRepository,
+  IProvenanceRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -29,6 +31,8 @@ import {
   MemoryLiveblogRepository,
   MemoryNewsletterRepository,
   MemoryCollectionRepository,
+  MemoryWebhookRepository,
+  MemoryProvenanceRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -45,6 +49,8 @@ import {
   PrismaLiveblogRepository,
   PrismaNewsletterRepository,
   PrismaCollectionRepository,
+  PrismaWebhookRepository,
+  PrismaProvenanceRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -71,6 +77,8 @@ export class DatabaseService {
   public liveblogs: ILiveblogRepository;
   public newsletters: INewsletterRepository;
   public collections: ICollectionRepository;
+  public webhooks: IWebhookRepository;
+  public provenance: IProvenanceRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -86,6 +94,8 @@ export class DatabaseService {
   private memoryLiveblogs = new MemoryLiveblogRepository();
   private memoryNewsletters = new MemoryNewsletterRepository();
   private memoryCollections = new MemoryCollectionRepository();
+  private memoryWebhooks = new MemoryWebhookRepository();
+  private memoryProvenance = new MemoryProvenanceRepository();
 
   private isPrismaActive = false;
 
@@ -105,6 +115,8 @@ export class DatabaseService {
     this.liveblogs = this.memoryLiveblogs;
     this.newsletters = this.memoryNewsletters;
     this.collections = this.memoryCollections;
+    this.webhooks = this.memoryWebhooks;
+    this.provenance = this.memoryProvenance;
   }
 
   /**
@@ -129,8 +141,10 @@ export class DatabaseService {
         this.liveblogs = new PrismaLiveblogRepository(getPrisma);
         this.newsletters = new PrismaNewsletterRepository(getPrisma);
         this.collections = new PrismaCollectionRepository(getPrisma);
+        this.webhooks = new PrismaWebhookRepository(getPrisma);
+        this.provenance = new PrismaProvenanceRepository(getPrisma);
         this.isPrismaActive = true;
-        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 14 domains).');
+        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 16 domains).');
         return true;
       }
     } catch (err: unknown) {
@@ -217,6 +231,8 @@ export class DatabaseService {
     this.memoryLiveblogs.clear();
     this.memoryNewsletters.clear();
     this.memoryCollections.clear();
+    this.memoryWebhooks.clear();
+    this.memoryProvenance.clear();
   }
 }
 

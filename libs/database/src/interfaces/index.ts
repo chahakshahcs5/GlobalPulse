@@ -12,3 +12,5 @@ export * from './cluster.repository';
 export * from './liveblog.repository';
 export * from './newsletter.repository';
 export * from './collection.repository';
+export * from './webhook.repository';
+export * from './provenance.repository';
