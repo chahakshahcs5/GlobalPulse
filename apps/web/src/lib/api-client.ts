@@ -25,15 +25,16 @@ const API_BASE_URL =
     ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
     : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000');
 
-// Auth token stored in memory (upgraded from localStorage for XSS safety)
+// Auth token stored in memory with sessionStorage fallback (isolated per session, prevents persistent XSS token theft)
 let _authToken: string | null = null;
 
 export function setAuthToken(token: string | null): void {
   _authToken = token;
   if (typeof window !== 'undefined') {
     if (token) {
-      localStorage.setItem('globalpulse_auth_token', token);
+      sessionStorage.setItem('globalpulse_auth_token', token);
     } else {
+      sessionStorage.removeItem('globalpulse_auth_token');
       localStorage.removeItem('globalpulse_auth_token');
     }
   }
@@ -42,7 +43,7 @@ export function setAuthToken(token: string | null): void {
 export function getAuthToken(): string | null {
   if (_authToken) return _authToken;
   if (typeof window !== 'undefined') {
-    _authToken = localStorage.getItem('globalpulse_auth_token');
+    _authToken = sessionStorage.getItem('globalpulse_auth_token') || localStorage.getItem('globalpulse_auth_token');
   }
   return _authToken;
 }
@@ -76,6 +77,7 @@ async function request<T>(
   };
 
   const res = await fetch(url, {
+    credentials: 'include',
     ...options,
     headers,
   });

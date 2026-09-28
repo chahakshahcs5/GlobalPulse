@@ -46,13 +46,12 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       'news:media',
       'news:sources',
       'news:topics',
-      'news:admin',
     ],
     aiMetadata: {
       model: 'gemini-1.5-pro',
       provider: 'google',
       version: '1.5',
-      capabilities: ['news:read', 'news:write', 'news:publish', 'news:admin'],
+      capabilities: ['news:read', 'news:write', 'news:publish'],
     },
   };
 
@@ -171,11 +170,23 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     }
 
     // Concurrency-safe request-scoped principal resolution
-    let resolvedPrincipal = defaultPrincipal;
+    const isProduction = process.env.NODE_ENV === 'production';
+    let resolvedPrincipal: AuthenticatedPrincipal;
     try {
       const authHeader = req.headers.authorization;
       if (authHeader) {
         resolvedPrincipal = AuthService.resolveBearerToken(authHeader);
+      } else if (isProduction) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            error: 'Unauthorized',
+            message: 'Authentication required. Authorization Bearer token must be provided to access MCP endpoints in production.',
+          })
+        );
+        return;
+      } else {
+        resolvedPrincipal = defaultPrincipal;
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);

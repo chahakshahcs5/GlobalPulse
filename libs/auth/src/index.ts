@@ -90,13 +90,26 @@ const DEFAULT_JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-minimum-32-char
 const DEFAULT_ISSUER = process.env.JWT_ISSUER || 'https://auth.globalpulse.news';
 const DEFAULT_AUDIENCE = process.env.JWT_AUDIENCE || 'https://api.globalpulse.news';
 
+export function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    if (!secret || secret === 'dev-secret-minimum-32-chars-globalpulse-key' || secret.length < 32) {
+      throw new Error(
+        'CRITICAL SECURITY CONFIGURATION ERROR: A strong JWT_SECRET (minimum 32 characters) must be configured in production environment.'
+      );
+    }
+    return secret;
+  }
+  return secret || DEFAULT_JWT_SECRET;
+}
+
 export class AuthService {
   /**
    * Generates a signed RFC 7519 JSON Web Token for human users or AI agents.
    */
   static generateToken(
     principal: Partial<Omit<AuthenticatedPrincipal, 'tokenExpiresAt'>> & { id: string; role: UserRole },
-    secret: string = DEFAULT_JWT_SECRET,
+    secret: string = getJwtSecret(),
     expiresIn: SignOptions['expiresIn'] = '24h'
   ): string {
     const payload: Record<string, unknown> = {
@@ -121,7 +134,7 @@ export class AuthService {
   /**
    * Cryptographically verifies and resolves an RFC 7519 JWT into an AuthenticatedPrincipal.
    */
-  static verifyToken(token: string, secret: string = DEFAULT_JWT_SECRET): AuthenticatedPrincipal {
+  static verifyToken(token: string, secret: string = getJwtSecret()): AuthenticatedPrincipal {
     try {
       const decoded = jwt.verify(token, secret, {
         issuer: DEFAULT_ISSUER,
@@ -186,7 +199,13 @@ export class AuthService {
    * Resolves Authorization Bearer token header supporting real signed JWTs and dev/test tokens.
    */
   static resolveBearerToken(authHeader?: string): AuthenticatedPrincipal {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const allowDevTokens = process.env.ALLOW_DEV_TOKENS === 'true' || !isProduction;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (isProduction) {
+        throw new UnauthorizedError('Missing or malformed Authorization header');
+      }
       return {
         id: 'usr_dev_default',
         organizationId: 'org_default',
@@ -199,7 +218,20 @@ export class AuthService {
 
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
-    // Fast-path for testing harness mock tokens
+    if (!token) {
+      throw new UnauthorizedError('Authorization Bearer token payload is empty');
+    }
+
+    // Try parsing as cryptographically signed JWT
+    if (token.includes('.')) {
+      return this.verifyToken(token);
+    }
+
+    // Fast-path for testing harness mock tokens (only allowed in non-production or when explicitly enabled)
+    if (!allowDevTokens) {
+      throw new UnauthorizedError('Invalid token format: cryptographic JWT required in production');
+    }
+
     if (token === 'expired_token') {
       throw new UnauthorizedError('Token has expired');
     }
@@ -277,15 +309,6 @@ export class AuthService {
           capabilities: ['fact_checking', 'summary_generation'],
         },
       };
-    }
-
-    // Try parsing as cryptographically signed JWT
-    if (token.includes('.')) {
-      try {
-        return this.verifyToken(token);
-      } catch {
-        // Fallback to testing fallback if signature verification fails in dev mock tests
-      }
     }
 
     // Standard dev fallback for mock tests with arbitrary strings (e.g. 'test-token')

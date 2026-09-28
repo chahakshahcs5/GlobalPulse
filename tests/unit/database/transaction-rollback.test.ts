@@ -163,4 +163,120 @@ describe('Transactional Integrity & Rollback Handling', () => {
     const logs = await db.audit.query('org_test');
     expect(logs).toHaveLength(0);
   });
+
+  it('rolls back events, topics, entities, sources, and engagement across failed transactions', async () => {
+    const now = new Date().toISOString();
+    // Setup initial baseline
+    await db.events.create({
+      id: 'evt_baseline',
+      organizationId: 'org_test',
+      slug: 'base-event',
+      title: 'Base Event',
+      summary: 'Base Event Summary',
+      status: 'ACTIVE',
+      occurredAt: now,
+      storyIds: [],
+      topicIds: [],
+      entityIds: [],
+      sourceIds: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.topics.create({
+      id: 'top_baseline',
+      organizationId: 'org_test',
+      slug: 'base-topic',
+      name: 'Base Topic',
+      aliases: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    let caughtError: Error | null = null;
+    try {
+      await db.runInTransaction(async () => {
+        await db.events.create({
+          id: 'evt_corrupted',
+          organizationId: 'org_test',
+          slug: 'corrupt-event',
+          title: 'Corrupt Event',
+          summary: 'Corrupt Summary',
+          status: 'ACTIVE',
+          occurredAt: now,
+          storyIds: [],
+          topicIds: [],
+          entityIds: [],
+          sourceIds: [],
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await db.topics.create({
+          id: 'top_corrupted',
+          organizationId: 'org_test',
+          slug: 'corrupt-topic',
+          name: 'Corrupt Topic',
+          aliases: [],
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await db.entities.create({
+          id: 'ent_corrupted',
+          organizationId: 'org_test',
+          slug: 'corrupt-entity',
+          name: 'Corrupt Entity',
+          type: 'ORGANIZATION',
+          aliases: [],
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await db.sources.create({
+          id: 'src_corrupted',
+          organizationId: 'org_test',
+          url: 'https://corrupt.example.com',
+          title: 'Corrupt Source',
+          publisher: 'Corrupt Publisher',
+          sourceType: 'NEWS_ARTICLE',
+          retrievedAt: now,
+          language: 'en',
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await db.engagement.createComment({
+          id: 'cmt_corrupted',
+          storyId: 'sty_any',
+          authorId: 'usr_test',
+          authorName: 'Test User',
+          authorRole: 'reader',
+          likesCount: 0,
+          organizationId: 'org_test',
+          content: 'This comment should not persist',
+          status: 'approved',
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        throw new Error('Mid-transaction explosion');
+      });
+    } catch (err) {
+      caughtError = err as Error;
+    }
+
+    expect(caughtError?.message).toBe('Mid-transaction explosion');
+
+    // Check that none of the corrupted items were committed
+    expect(await db.events.findById('evt_corrupted', 'org_test')).toBeNull();
+    expect(await db.topics.findById('top_corrupted', 'org_test')).toBeNull();
+    expect(await db.entities.findById('ent_corrupted', 'org_test')).toBeNull();
+    expect(await db.sources.findById('src_corrupted', 'org_test')).toBeNull();
+    expect(await db.engagement.findCommentById('cmt_corrupted')).toBeNull();
+
+    // Check baseline is intact
+    expect(await db.events.findById('evt_baseline', 'org_test')).not.toBeNull();
+    expect(await db.topics.findById('top_baseline', 'org_test')).not.toBeNull();
+  });
 });

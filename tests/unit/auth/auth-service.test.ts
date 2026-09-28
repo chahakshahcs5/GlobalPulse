@@ -44,6 +44,29 @@ describe('AuthService Unit Tests', () => {
       expect(principal.scopes).toContain('news:publish');
       expect(principal.scopes).not.toContain('news:admin');
     });
+
+    it('strictly rejects unauthenticated requests when in production', () => {
+      const prevEnv = process.env.NODE_ENV;
+      const prevAllowDev = process.env.ALLOW_DEV_TOKENS;
+      try {
+        (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+        delete process.env.ALLOW_DEV_TOKENS;
+
+        expect(() => AuthService.resolveBearerToken()).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Basic credentials')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer ')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer admin-token')).toThrow(UnauthorizedError);
+        expect(() => AuthService.resolveBearerToken('Bearer editor-token')).toThrow(UnauthorizedError);
+      } finally {
+        (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+        if (prevAllowDev !== undefined) process.env.ALLOW_DEV_TOKENS = prevAllowDev;
+      }
+    });
+
+    it('rejects tampered or forged JWT tokens rather than falling through', () => {
+      const forgedToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.tamperedSignature';
+      expect(() => AuthService.resolveBearerToken(forgedToken)).toThrow(UnauthorizedError);
+    });
   });
 
   describe('requireScope', () => {

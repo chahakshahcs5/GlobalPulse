@@ -73,6 +73,28 @@ export class MemorySourceRepository implements ISourceRepository {
     return Array.from(this.claims.values()).filter((c) => c.sourceIds.includes(sourceId));
   }
 
+  snapshot(): {
+    sources: Map<string, Source>;
+    citations: Map<string, Citation>;
+    claims: Map<string, Claim>;
+  } {
+    return {
+      sources: new Map(this.sources),
+      citations: new Map(this.citations),
+      claims: new Map(this.claims),
+    };
+  }
+
+  restore(snapshot: {
+    sources: Map<string, Source>;
+    citations: Map<string, Citation>;
+    claims: Map<string, Claim>;
+  }): void {
+    this.sources = new Map(snapshot.sources);
+    this.citations = new Map(snapshot.citations);
+    this.claims = new Map(snapshot.claims);
+  }
+
   clear(): void {
     this.sources.clear();
     this.citations.clear();

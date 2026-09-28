@@ -51,6 +51,14 @@ export class MemoryTopicRepository implements ITopicRepository {
     );
   }
 
+  snapshot(): Map<string, Topic> {
+    return new Map(this.topics);
+  }
+
+  restore(snapshot: Map<string, Topic>): void {
+    this.topics = new Map(snapshot);
+  }
+
   clear(): void {
     this.topics.clear();
   }

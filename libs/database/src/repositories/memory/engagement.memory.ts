@@ -167,4 +167,32 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
+
+  snapshot(): {
+    comments: Map<string, Comment>;
+    reactions: Map<string, StoryReaction>;
+    bookmarks: Map<string, BookmarkItem>;
+  } {
+    return {
+      comments: new Map(this.comments),
+      reactions: new Map(this.reactions),
+      bookmarks: new Map(this.bookmarks),
+    };
+  }
+
+  restore(snapshot: {
+    comments: Map<string, Comment>;
+    reactions: Map<string, StoryReaction>;
+    bookmarks: Map<string, BookmarkItem>;
+  }): void {
+    this.comments = new Map(snapshot.comments);
+    this.reactions = new Map(snapshot.reactions);
+    this.bookmarks = new Map(snapshot.bookmarks);
+  }
+
+  clear(): void {
+    this.comments.clear();
+    this.reactions.clear();
+    this.bookmarks.clear();
+  }
 }

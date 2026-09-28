@@ -122,22 +122,45 @@ export class DatabaseService {
       return TransactionManager.execute(work);
     }
 
-    // High-fidelity in-memory atomic transaction with automatic rollback
+    // High-fidelity in-memory atomic transaction with automatic rollback across all 10 domains
     const storySnap = this.memoryStories.snapshot();
-    const auditSnap = this.memoryAudit.snapshot();
+    const eventSnap = this.memoryEvents.snapshot();
+    const topicSnap = this.memoryTopics.snapshot();
+    const entitySnap = this.memoryEntities.snapshot();
+    const sourceSnap = this.memorySources.snapshot();
     const idempSnap = this.memoryIdempotency.snapshot();
+    const auditSnap = this.memoryAudit.snapshot();
+    const engSnap = this.memoryEngagement.snapshot();
     const userSnap = this.memoryUsers.snapshot();
     const notifSnap = this.memoryNotifications.snapshot();
+
     try {
       const result = await work(null);
       return result;
     } catch (err) {
       this.memoryStories.restore(storySnap);
-      this.memoryAudit.restore(auditSnap);
+      this.memoryEvents.restore(eventSnap);
+      this.memoryTopics.restore(topicSnap);
+      this.memoryEntities.restore(entitySnap);
+      this.memorySources.restore(sourceSnap);
       this.memoryIdempotency.restore(idempSnap);
+      this.memoryAudit.restore(auditSnap);
+      this.memoryEngagement.restore(engSnap);
       this.memoryUsers.restore(userSnap);
       this.memoryNotifications.restore(notifSnap);
       throw err;
+    }
+  }
+
+  public validateProductionConfiguration(): void {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      !this.isPrismaActive &&
+      process.env.ALLOW_IN_MEMORY_PRODUCTION !== 'true'
+    ) {
+      throw new Error(
+        'CRITICAL CONFIGURATION ERROR: DatabaseService is operating in in-memory mode in production. Configure DATABASE_URL and initialize Prisma persistence, or explicitly set ALLOW_IN_MEMORY_PRODUCTION=true if ephemeral storage is intended.'
+      );
     }
   }
 
@@ -149,6 +172,7 @@ export class DatabaseService {
     this.memorySources.clear();
     this.memoryIdempotency.clear();
     this.memoryAudit.clear();
+    this.memoryEngagement.clear();
     this.memoryUsers.clear();
     this.memoryNotifications.clear();
   }

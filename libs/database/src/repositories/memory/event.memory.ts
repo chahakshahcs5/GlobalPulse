@@ -52,6 +52,14 @@ export class MemoryEventRepository implements IEventRepository {
     );
   }
 
+  snapshot(): Map<string, Event> {
+    return new Map(this.events);
+  }
+
+  restore(snapshot: Map<string, Event>): void {
+    this.events = new Map(snapshot);
+  }
+
   clear(): void {
     this.events.clear();
   }

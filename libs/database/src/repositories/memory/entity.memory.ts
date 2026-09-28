@@ -52,6 +52,14 @@ export class MemoryEntityRepository implements IEntityRepository {
     );
   }
 
+  snapshot(): Map<string, Entity> {
+    return new Map(this.entities);
+  }
+
+  restore(snapshot: Map<string, Entity>): void {
+    this.entities = new Map(snapshot);
+  }
+
   clear(): void {
     this.entities.clear();
   }

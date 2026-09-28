@@ -409,4 +409,47 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
 
     await new Promise<void>((resolve) => testHttpServer.close(() => resolve()));
   });
+
+  it('rejects unauthenticated MCP requests in production mode with 401', async () => {
+    const prevEnv = process.env.NODE_ENV;
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+      const app = createMcpApp(db);
+      const testHttpServer = app.httpServer;
+
+      await new Promise<void>((resolve) => testHttpServer.listen(0, resolve));
+      const address = testHttpServer.address() as AddressInfo;
+      const port = address.port;
+
+      const res = await new Promise<{ statusCode: number; data: string }>((resolve, reject) => {
+        const req = http.request(
+          `http://localhost:${port}/mcp`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' } },
+          (res) => {
+            let data = '';
+            res.on('data', (c) => (data += c));
+            res.on('end', () => resolve({ statusCode: res.statusCode || 200, data }));
+          }
+        );
+        req.on('error', reject);
+        req.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }));
+        req.end();
+      });
+
+      expect(res.statusCode).toBe(401);
+      const body = JSON.parse(res.data);
+      expect(body.error).toBe('Unauthorized');
+      expect(body.message).toContain('Authentication required');
+
+      await new Promise<void>((resolve) => testHttpServer.close(() => resolve()));
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+    }
+  });
+
+  it('ensures defaultPrincipal does not possess dangerous news:admin scope', () => {
+    const app = createMcpApp(db);
+    expect(app.currentPrincipal.scopes).not.toContain('news:admin');
+    expect(app.currentPrincipal.role).toBe('ai_agent');
+  });
 });
