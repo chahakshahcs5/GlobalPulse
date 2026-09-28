@@ -155,9 +155,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
               <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mb-1">
                 <span>{story.articleType.replace('_', ' ')}</span>
                 <span>•</span>
-                <span className="flex items-center gap-1 text-slate-400 font-normal">
+                <span className="flex items-center gap-1 text-slate-400 font-normal" suppressHydrationWarning>
                   <Clock className="w-3 h-3" />
-                  {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString() : 'Recent'}
+                  {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
                 </span>
               </div>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">

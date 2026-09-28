@@ -90,9 +90,9 @@ export default function CategoryPage() {
                         <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide text-[10px]">
                           {story.articleType.replace('_', ' ')}
                         </span>
-                        <span className="flex items-center gap-1 text-[11px]">
+                        <span className="flex items-center gap-1 text-[11px]" suppressHydrationWarning>
                           <Clock className="w-3 h-3" />
-                          {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString() : 'Recent'}
+                          {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
                         </span>
                       </div>
                       <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">

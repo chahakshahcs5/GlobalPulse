@@ -83,8 +83,8 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({ isOpen, onClos
                   </Link>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                    <span>
-                      {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString() : 'Recent'}
+                    <span suppressHydrationWarning>
+                      {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Recent'}
                     </span>
                     <Link
                       href={`/stories/${story.slug}`}

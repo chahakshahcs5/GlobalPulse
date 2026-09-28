@@ -225,7 +225,7 @@ export default function StoryPage() {
               GlobalPulse Dispatch
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="flex items-center gap-1 text-slate-500 font-medium">
+            <span className="flex items-center gap-1 text-slate-500 font-medium" suppressHydrationWarning>
               <Clock className="w-3.5 h-3.5" />
               {story.publishedAt
                 ? new Date(story.publishedAt).toLocaleDateString('en-US', {
@@ -455,8 +455,8 @@ export default function StoryPage() {
                   <span className="font-bold text-blue-600 uppercase">
                     {rel.articleType.replace('_', ' ')}
                   </span>
-                  <span>
-                    {rel.publishedAt ? new Date(rel.publishedAt).toLocaleDateString() : 'Recent'}
+                  <span suppressHydrationWarning>
+                    {rel.publishedAt ? new Date(rel.publishedAt).toLocaleDateString('en-US') : 'Recent'}
                   </span>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 line-clamp-2">

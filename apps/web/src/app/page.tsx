@@ -168,7 +168,7 @@ export default function GoogleNewsHomePage() {
                 {feedMode === 'following' && 'Your followed topics & sources'}
                 {feedMode === 'history' && 'Reading history'}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium" suppressHydrationWarning>
                 {todayFormatted} • {edition.toUpperCase()} REGION
               </p>
             </div>
@@ -209,8 +209,8 @@ export default function GoogleNewsHomePage() {
                         <Link href={`/stories/${item.slug}`} className="block font-bold text-sm text-slate-900 dark:text-white hover:text-blue-600 transition">
                           {item.title}
                         </Link>
-                        <span className="text-[10px] text-slate-400">
-                          Read {new Date(item.readAt).toLocaleDateString()} at {new Date(item.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[10px] text-slate-400" suppressHydrationWarning>
+                          Read {new Date(item.readAt).toLocaleDateString('en-US')} at {new Date(item.readAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                       <Link
@@ -350,8 +350,8 @@ export default function GoogleNewsHomePage() {
                             <span className="font-extrabold text-blue-600 dark:text-blue-400">
                               {story.articleType.replace('_', ' ').toUpperCase()}
                             </span>
-                            <span className="text-[11px] text-slate-400 font-mono">
-                              {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString() : 'Just now'}
+                            <span className="text-[11px] text-slate-400 font-mono" suppressHydrationWarning>
+                              {story.publishedAt ? new Date(story.publishedAt).toLocaleDateString('en-US') : 'Just now'}
                             </span>
                           </div>
 
