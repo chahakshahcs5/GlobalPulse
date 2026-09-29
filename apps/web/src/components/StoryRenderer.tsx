@@ -14,6 +14,9 @@ import type {
   EntityBlock,
   RelatedStoriesBlock,
   EmbedBlock,
+  ImageDiffBlock,
+  LiveTickerBlock,
+  PollBlock,
 } from '@ai-news/schemas';
 import {
   D3ChartRenderer,
@@ -281,6 +284,18 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
       return <EmbedBlockView data={block.data} />;
     }
 
+    case 'image_diff': {
+      return <ImageDiffBlockView data={block.data} />;
+    }
+
+    case 'live_ticker': {
+      return <LiveTickerBlockView data={block.data} />;
+    }
+
+    case 'poll': {
+      return <PollBlockView data={block.data} blockId={block.id} />;
+    }
+
     case 'citation': {
       return (
         <div className="my-3 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/30 text-xs text-slate-400 flex items-center justify-between">
@@ -466,31 +481,115 @@ const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data }) => {
 };
 
 const AudioBlockView: React.FC<{ data: AudioBlock['data'] }> = ({ data }) => {
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const [currentTimeMs, setCurrentTimeMs] = React.useState(0);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [readAlongMode, setReadAlongMode] = React.useState(
+    Boolean(data.cuePoints && data.cuePoints.length > 0)
+  );
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTimeMs(audioRef.current.currentTime * 1000);
+    }
+  };
+
+  const seekToCue = (timeMs: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = timeMs / 1000;
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const hasCuePoints = Boolean(data.cuePoints && data.cuePoints.length > 0);
+
   return (
     <div className="my-6 rounded-xl border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900/80 to-indigo-950/40 p-5 shadow-lg">
       <div className="flex items-center justify-between gap-4 mb-3">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span
+              className={`w-2 h-2 rounded-full bg-indigo-500 ${isPlaying ? 'animate-ping' : ''}`}
+            />
             Audio Dispatch
           </span>
           <h4 className="text-lg font-bold text-slate-100 mt-0.5">{data.title}</h4>
         </div>
-        {data.durationSeconds && (
-          <span className="text-xs font-mono font-medium text-slate-400 bg-slate-800/80 px-2 py-1 rounded">
-            {Math.floor(data.durationSeconds / 60)}:
-            {(data.durationSeconds % 60).toString().padStart(2, '0')}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {hasCuePoints && (
+            <button
+              onClick={() => setReadAlongMode(!readAlongMode)}
+              className={`px-2.5 py-1 rounded text-xs font-semibold border transition-all ${
+                readAlongMode
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+              }`}
+            >
+              {readAlongMode ? 'Read-Along Active' : 'Enable Read-Along'}
+            </button>
+          )}
+          {data.durationSeconds && (
+            <span className="text-xs font-mono font-medium text-slate-400 bg-slate-800/80 px-2 py-1 rounded">
+              {Math.floor(data.durationSeconds / 60)}:
+              {(data.durationSeconds % 60).toString().padStart(2, '0')}
+            </span>
+          )}
+        </div>
       </div>
+
       {data.narrator && (
         <div className="text-xs text-slate-400 mb-3 flex items-center gap-1.5">
           <span>Narrated by:</span>
           <span className="font-semibold text-slate-200">{data.narrator}</span>
         </div>
       )}
-      <audio src={data.url} controls className="w-full rounded-lg" />
-      {data.transcript && (
+
+      <audio
+        ref={audioRef}
+        src={data.url}
+        controls
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={handleTimeUpdate}
+        className="w-full rounded-lg"
+      />
+
+      {/* Synchronized Read-Along Karaoke Container */}
+      {hasCuePoints && readAlongMode && data.cuePoints && (
+        <div className="mt-4 pt-3 border-t border-slate-800">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 mb-2 flex items-center justify-between">
+            <span>Synchronized Script (Click any phrase to jump)</span>
+            <span className="font-mono text-slate-500">{Math.floor(currentTimeMs / 1000)}s</span>
+          </div>
+          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 text-sm leading-relaxed">
+            {data.cuePoints.map((cue, idx) => {
+              const nextCue = data.cuePoints ? data.cuePoints[idx + 1] : undefined;
+              const isActive =
+                currentTimeMs >= cue.timeMs && (nextCue ? currentTimeMs < nextCue.timeMs : true);
+
+              return (
+                <div
+                  key={idx}
+                  onClick={() => seekToCue(cue.timeMs)}
+                  className={`p-2 rounded-lg cursor-pointer transition-all flex items-start gap-2 ${
+                    isActive
+                      ? 'bg-indigo-500/20 text-indigo-100 border-l-3 border-indigo-400 font-medium pl-3'
+                      : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                  }`}
+                >
+                  <span className="text-[10px] font-mono text-slate-500 pt-0.5 select-none shrink-0">
+                    {Math.floor(cue.timeMs / 1000)}s
+                  </span>
+                  <span>{cue.text}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {data.transcript && !hasCuePoints && (
         <details className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400">
           <summary className="font-semibold text-slate-300 cursor-pointer hover:text-indigo-400 transition-colors">
             Audio Briefing Transcript
@@ -729,6 +828,330 @@ const EmbedBlockView: React.FC<{ data: EmbedBlock['data'] }> = ({ data }) => {
       ) : (
         <div className="p-3 rounded-lg border border-slate-800/80 bg-slate-950/60 font-mono text-xs text-slate-400 break-all">
           {data.url}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ImageDiffBlockView: React.FC<{ data: ImageDiffBlock['data'] }> = ({ data }) => {
+  const [sliderPos, setSliderPos] = React.useState(data.defaultSplitPercent ?? 50);
+
+  return (
+    <figure className="my-8 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl">
+      <div className="relative w-full aspect-[16/9] min-h-[280px] max-h-[550px] overflow-hidden select-none bg-black">
+        {/* Layer 2: After image (full background) */}
+        <img
+          src={data.afterUrl}
+          alt={data.afterLabel || 'After'}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+
+        {/* Layer 1: Before image with horizontal clip */}
+        <div
+          className="absolute inset-0 overflow-hidden pointer-events-none"
+          style={{
+            clipPath:
+              data.orientation === 'vertical'
+                ? `polygon(0 0, 100% 0, 100% ${sliderPos}%, 0 ${sliderPos}%)`
+                : `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+          }}
+        >
+          <img
+            src={data.beforeUrl}
+            alt={data.beforeLabel || 'Before'}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+
+        {/* Divider line and handle */}
+        {data.orientation === 'vertical' ? (
+          <div
+            className="absolute left-0 right-0 h-1 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)] pointer-events-none z-10"
+            style={{ top: `${sliderPos}%` }}
+          >
+            <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/90 border-2 border-white shadow-xl flex items-center justify-center text-white text-xs font-bold">
+              ↕
+            </div>
+          </div>
+        ) : (
+          <div
+            className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)] pointer-events-none z-10"
+            style={{ left: `${sliderPos}%` }}
+          >
+            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-900/90 border-2 border-white shadow-xl flex items-center justify-center text-white text-xs font-bold">
+              ↔
+            </div>
+          </div>
+        )}
+
+        {/* Glassmorphism badges */}
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-black/70 text-white backdrop-blur-md border border-white/20 z-10">
+          {data.beforeLabel || 'Before'}
+        </span>
+        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-black/70 text-white backdrop-blur-md border border-white/20 z-10">
+          {data.afterLabel || 'After'}
+        </span>
+
+        {/* Transparent accessible range slider for drag & touch & keyboard */}
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={sliderPos}
+          onChange={(e) => setSliderPos(Number(e.target.value))}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+          aria-label="Image comparison slider"
+        />
+      </div>
+
+      {(data.caption || data.credit) && (
+        <figcaption className="p-3 bg-slate-900/90 text-xs text-slate-400 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          {data.caption && <span>{data.caption}</span>}
+          {data.credit && <span className="font-mono text-slate-500">Credit: {data.credit}</span>}
+        </figcaption>
+      )}
+    </figure>
+  );
+};
+
+const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = ({ data }) => {
+  const [selectedSymbol, setSelectedSymbol] = React.useState<string | null>(null);
+
+  return (
+    <div className="my-8 rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 p-5 shadow-xl">
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+            Live Market & Numerical Ticker
+          </span>
+          {data.title && (
+            <span className="text-xs font-medium text-slate-400 border-l border-slate-700 pl-2.5">
+              {data.title}
+            </span>
+          )}
+        </div>
+        <span className="text-[11px] font-mono text-slate-500">
+          Refreshes every {data.refreshIntervalSeconds || 30}s
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        {data.items.map((item, idx) => {
+          const isPositive = item.delta >= 0;
+          const isSelected = selectedSymbol === item.symbol;
+
+          // Build SVG sparkline polyline
+          const sparkline =
+            item.sparkline && item.sparkline.length > 0 ? item.sparkline : [item.value, item.value];
+          const min = Math.min(...sparkline);
+          const max = Math.max(...sparkline);
+          const range = max - min || 1;
+          const points = sparkline
+            .map((val, i) => {
+              const x = (i / (sparkline.length - 1 || 1)) * 100;
+              const y = 28 - ((val - min) / range) * 24;
+              return `${x.toFixed(1)},${y.toFixed(1)}`;
+            })
+            .join(' ');
+
+          return (
+            <div
+              key={idx}
+              onClick={() => setSelectedSymbol(isSelected ? null : item.symbol)}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                isSelected
+                  ? 'border-indigo-500 bg-indigo-950/20 shadow-lg ring-1 ring-indigo-500/50'
+                  : 'border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-800/40'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  {item.symbol}
+                </span>
+                <span
+                  className={`text-xs font-bold flex items-center gap-0.5 px-2 py-0.5 rounded ${
+                    isPositive
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  <span>{isPositive ? '↑' : '↓'}</span>
+                  <span>
+                    {isPositive ? '+' : ''}
+                    {item.delta.toFixed(2)}%
+                  </span>
+                </span>
+              </div>
+
+              <div className="text-xs text-slate-400 line-clamp-1 mb-1">{item.label}</div>
+
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-2xl font-black text-slate-100 tracking-tight font-mono">
+                  {item.unit && item.unit !== '%' ? item.unit : ''}
+                  {item.value.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  {item.unit === '%' ? '%' : ''}
+                </span>
+              </div>
+
+              {/* Sparkline track */}
+              <div className="mt-2 h-7 w-full overflow-hidden">
+                <svg
+                  className="w-full h-full overflow-visible"
+                  viewBox="0 0 100 30"
+                  preserveAspectRatio="none"
+                >
+                  <polyline
+                    fill="none"
+                    stroke={isPositive ? '#10b981' : '#f43f5e'}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={points}
+                  />
+                </svg>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = ({ data }) => {
+  const storageKey = `globalpulse_poll_${data.pollId}`;
+  const [votedOptionId, setVotedOptionId] = React.useState<string | null>(null);
+  const [options, setOptions] = React.useState(data.options);
+  const [totalVotes, setTotalVotes] = React.useState(data.totalVotes);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) setVotedOptionId(saved);
+      else if (data.userVotedOptionId) setVotedOptionId(data.userVotedOptionId);
+    } catch {}
+  }, [storageKey, data.userVotedOptionId]);
+
+  const handleVote = (optionId: string) => {
+    if (votedOptionId || data.closed || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setVotedOptionId(optionId);
+    try {
+      localStorage.setItem(storageKey, optionId);
+    } catch {}
+
+    setOptions((prev) =>
+      prev.map((opt) => (opt.id === optionId ? { ...opt, voteCount: opt.voteCount + 1 } : opt))
+    );
+    setTotalVotes((prev) => prev + 1);
+    setIsSubmitting(false);
+  };
+
+  const hasVoted = Boolean(votedOptionId) || data.closed;
+
+  return (
+    <div className="my-8 rounded-2xl border border-indigo-900/40 bg-gradient-to-br from-slate-900 via-slate-900/80 to-indigo-950/20 p-6 shadow-xl">
+      <div className="flex items-center justify-between gap-3 mb-3 border-b border-slate-800 pb-3">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+          Interactive Reader Poll
+        </span>
+        <div className="flex items-center gap-2">
+          {data.closed && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+              Poll Closed
+            </span>
+          )}
+          <span className="text-xs font-mono text-slate-400">
+            {totalVotes.toLocaleString()} {totalVotes === 1 ? 'vote' : 'votes'}
+          </span>
+        </div>
+      </div>
+
+      <h4 className="text-lg sm:text-xl font-bold text-slate-100 mb-4">{data.question}</h4>
+
+      <div className="space-y-3">
+        {options.map((opt) => {
+          const isSelected = votedOptionId === opt.id;
+          const percentage = totalVotes > 0 ? Math.round((opt.voteCount / totalVotes) * 100) : 0;
+
+          if (hasVoted) {
+            return (
+              <div
+                key={opt.id}
+                className={`relative rounded-xl overflow-hidden border p-3.5 transition-all ${
+                  isSelected
+                    ? 'border-indigo-500 bg-indigo-950/40 text-slate-100 ring-1 ring-indigo-500'
+                    : 'border-slate-800 bg-slate-900/40 text-slate-300'
+                }`}
+              >
+                {/* Progress bar background fill */}
+                <div
+                  className={`absolute inset-y-0 left-0 transition-all duration-700 ease-out ${
+                    isSelected ? 'bg-indigo-600/30' : 'bg-slate-800/40'
+                  }`}
+                  style={{ width: `${percentage}%` }}
+                />
+
+                <div className="relative z-10 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    {isSelected && (
+                      <span className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                        ✓
+                      </span>
+                    )}
+                    <span className="text-sm font-medium">{opt.text}</span>
+                  </div>
+                  <div className="flex items-baseline gap-2 font-mono text-xs">
+                    <span className="font-bold">{percentage}%</span>
+                    <span className="text-slate-400">({opt.voteCount})</span>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={opt.id}
+              onClick={() => handleVote(opt.id)}
+              disabled={isSubmitting}
+              className="w-full text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-indigo-500/60 hover:bg-slate-800/80 transition-all flex items-center justify-between group cursor-pointer text-slate-200"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-4 h-4 rounded-full border border-slate-600 group-hover:border-indigo-400 group-hover:scale-110 transition-all" />
+                <span className="text-sm font-medium group-hover:text-white transition-colors">
+                  {opt.text}
+                </span>
+              </div>
+              <span className="text-xs text-slate-500 group-hover:text-indigo-400 transition-colors">
+                Vote →
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {hasVoted && (
+        <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+          <span>
+            {votedOptionId
+              ? 'Thank you for contributing your perspective.'
+              : 'Voting is now closed.'}
+          </span>
+          <span className="font-mono text-[11px] text-slate-500">Live consensus tally</span>
         </div>
       )}
     </div>

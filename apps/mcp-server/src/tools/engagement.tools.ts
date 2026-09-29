@@ -1,7 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
-import { EngagementService, NewsletterService, CollectionService } from '@ai-news/stories';
+import {
+  EngagementService,
+  NewsletterService,
+  CollectionService,
+  StoryService,
+} from '@ai-news/stories';
+import type { PollBlock } from '@ai-news/schemas';
 import { generateOpenGraphMeta, generateSocialShareLinks } from '@ai-news/shared';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
@@ -12,6 +18,7 @@ export function registerEngagementTools(
   getPrincipal: () => AuthenticatedPrincipal
 ) {
   const engagementService = new EngagementService(db);
+  const storyService = new StoryService(db);
 
   server.tool(
     'get_story_comments',
@@ -296,6 +303,131 @@ export function registerEngagementTools(
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return mcpErrorResponse(`Failed to add story to collection: ${msg}`);
+      }
+    }
+  );
+
+  // Poll engagement
+  server.tool(
+    'cast_poll_vote',
+    '[INTERACTIVE READER ENGAGEMENT] Cast a reader vote on a story poll block.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      blockId: z.string().min(1).describe('Block ID of the poll'),
+      optionId: z.string().min(1).describe('Option ID being chosen (e.g. "opt_1")'),
+    },
+    async ({ storyId, blockId, optionId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const story = await storyService.getStory(storyId, principal.organizationId);
+        const block = story.blocks?.find((b) => b.id === blockId);
+        if (!block || block.blockType !== 'poll') {
+          return mcpErrorResponse(`Poll block "${blockId}" not found in story "${storyId}".`);
+        }
+
+        const pollData = block.data as {
+          pollId: string;
+          question: string;
+          options: Array<{ id: string; text: string; voteCount: number }>;
+          totalVotes: number;
+          closed?: boolean;
+        };
+
+        if (pollData.closed) {
+          return mcpErrorResponse('This poll has been closed.');
+        }
+
+        const option = pollData.options.find((o) => o.id === optionId);
+        if (!option) {
+          return mcpErrorResponse(`Option "${optionId}" not found in poll.`);
+        }
+
+        const updatedOptions = pollData.options.map((o) =>
+          o.id === optionId ? { ...o, voteCount: o.voteCount + 1 } : o
+        );
+        const updatedTotal = pollData.totalVotes + 1;
+
+        const updatedBlock: PollBlock = {
+          id: block.id,
+          blockType: 'poll',
+          sortOrder: block.sortOrder,
+          data: {
+            pollId: pollData.pollId,
+            question: pollData.question,
+            options: updatedOptions,
+            totalVotes: updatedTotal,
+            closed: pollData.closed ?? false,
+          },
+        };
+
+        await storyService.updateBlock(storyId, blockId, updatedBlock, {
+          organizationId: principal.organizationId,
+          authorId: principal.id,
+          clientType: principal.clientType,
+          createdVia: 'mcp',
+        });
+
+        return mcpJsonResponse({
+          message: 'Vote successfully recorded.',
+          poll: {
+            pollId: pollData.pollId,
+            question: pollData.question,
+            totalVotes: updatedTotal,
+            options: updatedOptions.map((o) => ({
+              ...o,
+              percentage: ((o.voteCount / updatedTotal) * 100).toFixed(1),
+            })),
+          },
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to cast vote: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_poll_results',
+    '[READ-ONLY] Retrieve aggregated vote counts and percentage breakdown for a poll block.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      blockId: z.string().min(1).describe('Block ID of the poll'),
+    },
+    async ({ storyId, blockId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const story = await storyService.getStory(storyId, principal.organizationId);
+        const block = story.blocks?.find((b) => b.id === blockId);
+        if (!block || block.blockType !== 'poll') {
+          return mcpErrorResponse(`Poll block "${blockId}" not found in story "${storyId}".`);
+        }
+
+        const pollData = block.data as {
+          pollId: string;
+          question: string;
+          options: Array<{ id: string; text: string; voteCount: number }>;
+          totalVotes: number;
+          closed?: boolean;
+        };
+
+        const total = pollData.totalVotes || 0;
+        return mcpJsonResponse({
+          pollId: pollData.pollId,
+          question: pollData.question,
+          totalVotes: total,
+          closed: pollData.closed || false,
+          options: pollData.options.map((o) => ({
+            ...o,
+            percentage: total > 0 ? ((o.voteCount / total) * 100).toFixed(1) : '0.0',
+          })),
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get poll results: ${msg}`);
       }
     }
   );

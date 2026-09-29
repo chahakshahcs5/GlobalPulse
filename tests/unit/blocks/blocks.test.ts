@@ -129,4 +129,103 @@ describe('Block Model & Validation (Unit Tests)', () => {
     expect(extracted).toContain('Breaking Story');
     expect(extracted).toContain('Detailed article content here.');
   });
+
+  it('validates an image_diff before/after block', () => {
+    const raw = {
+      id: 'blk_diff_1',
+      blockType: 'image_diff',
+      sortOrder: 4,
+      data: {
+        beforeUrl: 'https://images.unsplash.com/photo-1?auto=format',
+        afterUrl: 'https://images.unsplash.com/photo-2?auto=format',
+        beforeLabel: 'Pre-Disaster',
+        afterLabel: 'Post-Restoration',
+        caption: 'Satellite analysis reveals coastal regeneration.',
+        orientation: 'horizontal',
+        defaultSplitPercent: 45,
+      },
+    };
+    const block = validateBlock(raw);
+    expect(block.blockType).toBe('image_diff');
+    if (block.blockType === 'image_diff') {
+      expect(block.data.beforeLabel).toBe('Pre-Disaster');
+      expect(block.data.defaultSplitPercent).toBe(45);
+    }
+  });
+
+  it('validates a live_ticker metric block with sparklines', () => {
+    const raw = {
+      id: 'blk_tick_1',
+      blockType: 'live_ticker',
+      sortOrder: 5,
+      data: {
+        title: 'Global Energy Pulse',
+        refreshIntervalSeconds: 15,
+        items: [
+          {
+            symbol: 'BRENT',
+            label: 'Brent Crude Oil',
+            value: 82.4,
+            delta: 1.85,
+            unit: '$',
+            sparkline: [80, 81.2, 80.8, 82.4],
+          },
+        ],
+      },
+    };
+    const block = validateBlock(raw);
+    expect(block.blockType).toBe('live_ticker');
+    if (block.blockType === 'live_ticker') {
+      expect(block.data.items[0].symbol).toBe('BRENT');
+      expect(block.data.items[0].sparkline).toEqual([80, 81.2, 80.8, 82.4]);
+    }
+  });
+
+  it('validates a reader poll block with choices and vote counts', () => {
+    const raw = {
+      id: 'blk_pol_1',
+      blockType: 'poll',
+      sortOrder: 6,
+      data: {
+        pollId: 'pol_summit_1',
+        question: 'Should the treaty be ratified by year-end?',
+        options: [
+          { id: 'opt_1', text: 'Yes, unanimously', voteCount: 140 },
+          { id: 'opt_2', text: 'No, needs amendment', voteCount: 45 },
+        ],
+        totalVotes: 185,
+        closed: false,
+      },
+    };
+    const block = validateBlock(raw);
+    expect(block.blockType).toBe('poll');
+    if (block.blockType === 'poll') {
+      expect(block.data.totalVotes).toBe(185);
+      expect(block.data.options.length).toBe(2);
+    }
+  });
+
+  it('validates an audio block with synchronized read-along cue points', () => {
+    const raw = {
+      id: 'blk_aud_1',
+      blockType: 'audio',
+      sortOrder: 7,
+      data: {
+        url: 'https://example.com/briefing.mp3',
+        title: 'Morning Briefing',
+        durationSeconds: 180,
+        transcript: 'Welcome to GlobalPulse. Today the summit reached consensus.',
+        cuePoints: [
+          { timeMs: 0, text: 'Welcome to GlobalPulse.' },
+          { timeMs: 3200, text: 'Today the summit reached consensus.' },
+        ],
+      },
+    };
+    const block = validateBlock(raw);
+    expect(block.blockType).toBe('audio');
+    if (block.blockType === 'audio') {
+      expect(block.data.cuePoints?.length).toBe(2);
+      expect(block.data.cuePoints?.[1].timeMs).toBe(3200);
+    }
+  });
 });

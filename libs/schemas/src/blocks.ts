@@ -218,6 +218,13 @@ export const VideoBlockSchema = BaseBlockSchema.extend({
   }),
 });
 
+export const AudioCuePointSchema = z.object({
+  timeMs: z.number().nonnegative(),
+  text: z.string().min(1),
+  blockRefId: z.string().optional(),
+});
+export type AudioCuePoint = z.infer<typeof AudioCuePointSchema>;
+
 export const AudioBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('audio'),
   data: z.object({
@@ -227,6 +234,7 @@ export const AudioBlockSchema = BaseBlockSchema.extend({
     durationSeconds: z.number().positive().optional(),
     transcript: z.string().optional(),
     language: z.string().default('en'),
+    cuePoints: z.array(AudioCuePointSchema).optional(),
   }),
 });
 
@@ -350,6 +358,60 @@ export const EmbedBlockSchema = BaseBlockSchema.extend({
   }),
 });
 
+export const ImageDiffBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('image_diff'),
+  data: z.object({
+    beforeUrl: z.string().url(),
+    afterUrl: z.string().url(),
+    beforeLabel: z.string().default('Before'),
+    afterLabel: z.string().default('After'),
+    caption: z.string().optional(),
+    orientation: z.enum(['horizontal', 'vertical']).default('horizontal'),
+    defaultSplitPercent: z.number().min(0).max(100).default(50),
+    credit: z.string().optional(),
+  }),
+});
+
+export const LiveTickerItemSchema = z.object({
+  symbol: z.string().min(1),
+  label: z.string().min(1),
+  value: z.number(),
+  delta: z.number(),
+  unit: z.string().optional(),
+  sparkline: z.array(z.number()).optional().default([]),
+  lastUpdated: z.string().optional(),
+});
+export type LiveTickerItem = z.infer<typeof LiveTickerItemSchema>;
+
+export const LiveTickerBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('live_ticker'),
+  data: z.object({
+    title: z.string().optional(),
+    refreshIntervalSeconds: z.number().int().min(5).max(3600).default(30),
+    items: z.array(LiveTickerItemSchema).min(1),
+  }),
+});
+
+export const PollOptionSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  voteCount: z.number().int().nonnegative().default(0),
+});
+export type PollOption = z.infer<typeof PollOptionSchema>;
+
+export const PollBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('poll'),
+  data: z.object({
+    pollId: z.string().min(1),
+    question: z.string().min(1),
+    options: z.array(PollOptionSchema).min(2),
+    totalVotes: z.number().int().nonnegative().default(0),
+    userVotedOptionId: z.string().optional(),
+    expiresAt: z.string().optional(),
+    closed: z.boolean().default(false),
+  }),
+});
+
 export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   HeadingBlockSchema,
   ParagraphBlockSchema,
@@ -375,6 +437,9 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   WhatChangedBlockSchema,
   RelatedStoriesBlockSchema,
   EmbedBlockSchema,
+  ImageDiffBlockSchema,
+  LiveTickerBlockSchema,
+  PollBlockSchema,
 ]);
 
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
@@ -404,3 +469,6 @@ export type EntityBlock = z.infer<typeof EntityBlockSchema>;
 export type WhatChangedBlock = z.infer<typeof WhatChangedBlockSchema>;
 export type RelatedStoriesBlock = z.infer<typeof RelatedStoriesBlockSchema>;
 export type EmbedBlock = z.infer<typeof EmbedBlockSchema>;
+export type ImageDiffBlock = z.infer<typeof ImageDiffBlockSchema>;
+export type LiveTickerBlock = z.infer<typeof LiveTickerBlockSchema>;
+export type PollBlock = z.infer<typeof PollBlockSchema>;

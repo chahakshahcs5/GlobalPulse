@@ -156,6 +156,12 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     expect(toolNames).toContain('add_citation_block');
     expect(toolNames).toContain('add_source_block');
     expect(toolNames).toContain('add_related_stories_block');
+    expect(toolNames).toContain('add_image_diff_block');
+    expect(toolNames).toContain('add_live_ticker_block');
+    expect(toolNames).toContain('update_live_ticker_block');
+    expect(toolNames).toContain('add_poll_block');
+    expect(toolNames).toContain('cast_poll_vote');
+    expect(toolNames).toContain('get_poll_results');
 
     // Media tools
     expect(toolNames).toContain('create_chart');
@@ -516,5 +522,122 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const app = createMcpApp(db);
     expect(app.currentPrincipal.scopes).not.toContain('news:admin');
     expect(app.currentPrincipal.role).toBe('ai_agent');
+  });
+
+  it('executes interactive media tools via MCP protocol (image_diff, live_ticker, poll, vote)', async () => {
+    // 1. Create a story
+    const storyRes = await client.callTool({
+      name: 'create_story',
+      arguments: {
+        title: 'Interactive Media Test Story',
+        summary: 'Testing Phase 1 interactive blocks via MCP.',
+        articleType: 'technology',
+      },
+    });
+    const { storyId } = parseJson<{ storyId: string }>(storyRes);
+    expect(storyId).toBeDefined();
+
+    // 2. Add image_diff block
+    const diffRes = await client.callTool({
+      name: 'add_image_diff_block',
+      arguments: {
+        storyId,
+        beforeUrl: 'https://example.com/before.jpg',
+        afterUrl: 'https://example.com/after.jpg',
+        beforeLabel: 'Initial Concept',
+        afterLabel: 'Final Prototype',
+        caption: 'Design progression comparison',
+      },
+    });
+    const diffBody = parseJson<{ message: string }>(diffRes);
+    expect(diffBody.message).toContain('image_diff');
+
+    // 3. Add live_ticker block
+    const tickerRes = await client.callTool({
+      name: 'add_live_ticker_block',
+      arguments: {
+        storyId,
+        title: 'Semiconductor Index',
+        items: [
+          {
+            symbol: 'SOX',
+            label: 'PHLX Semiconductor',
+            value: 4850.5,
+            delta: 2.1,
+            unit: 'pts',
+            sparkline: [4790, 4810, 4850.5],
+          },
+        ],
+      },
+    });
+    const tickerBody = parseJson<{ message: string; blockId: string }>(tickerRes);
+    expect(tickerBody.message).toContain('live_ticker');
+    const tickerBlockId = tickerBody.blockId;
+
+    // 4. Update live_ticker block
+    const tickUpdateRes = await client.callTool({
+      name: 'update_live_ticker_block',
+      arguments: {
+        storyId,
+        blockId: tickerBlockId,
+        items: [
+          {
+            symbol: 'SOX',
+            label: 'PHLX Semiconductor',
+            value: 4890.0,
+            delta: 2.9,
+            unit: 'pts',
+            sparkline: [4790, 4810, 4850.5, 4890.0],
+          },
+        ],
+      },
+    });
+    const tickUpdateBody = parseJson<{
+      message: string;
+      block: { data: { items: Array<{ value: number }> } };
+    }>(tickUpdateRes);
+    expect(tickUpdateBody.block.data.items[0].value).toBe(4890.0);
+
+    // 5. Add poll block
+    const pollRes = await client.callTool({
+      name: 'add_poll_block',
+      arguments: {
+        storyId,
+        question: 'Will 2nm chips achieve mass yield in 2026?',
+        options: ['Yes, on track', 'Delayed to 2027', 'Uncertain'],
+      },
+    });
+    const pollBody = parseJson<{ message: string; blockId: string }>(pollRes);
+    expect(pollBody.message).toContain('poll');
+    const pollBlockId = pollBody.blockId;
+
+    // 6. Cast vote on poll
+    const voteRes = await client.callTool({
+      name: 'cast_poll_vote',
+      arguments: {
+        storyId,
+        blockId: pollBlockId,
+        optionId: 'opt_1',
+      },
+    });
+    const voteBody = parseJson<{ message: string; poll: { totalVotes: number } }>(voteRes);
+    expect(voteBody.message).toBe('Vote successfully recorded.');
+    expect(voteBody.poll.totalVotes).toBe(1);
+
+    // 7. Get poll results
+    const resultsRes = await client.callTool({
+      name: 'get_poll_results',
+      arguments: {
+        storyId,
+        blockId: pollBlockId,
+      },
+    });
+    const resultsBody = parseJson<{
+      totalVotes: number;
+      options: Array<{ voteCount: number; percentage: string }>;
+    }>(resultsRes);
+    expect(resultsBody.totalVotes).toBe(1);
+    expect(resultsBody.options[0].voteCount).toBe(1);
+    expect(resultsBody.options[0].percentage).toBe('100.0');
   });
 });

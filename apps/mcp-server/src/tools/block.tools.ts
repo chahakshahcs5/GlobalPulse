@@ -314,7 +314,7 @@ export function registerBlockTools(
   // 13. add_audio_block (§38)
   server.tool(
     'add_audio_block',
-    '[WRITE] Add a narrated audio briefing or podcast segment block.',
+    '[WRITE] Add a narrated audio briefing or podcast segment block with optional synchronized cue points.',
     {
       storyId: z.string().min(1),
       url: z.string().url(),
@@ -322,6 +322,17 @@ export function registerBlockTools(
       narrator: z.string().optional(),
       durationSeconds: z.number().positive().optional(),
       transcript: z.string().optional(),
+      language: z.string().default('en'),
+      cuePoints: z
+        .array(
+          z.object({
+            timeMs: z.number().nonnegative().describe('Offset in milliseconds'),
+            text: z.string().min(1).describe('Spoken sentence or phrase'),
+            blockRefId: z.string().optional().describe('Referenced paragraph or block ID'),
+          })
+        )
+        .optional()
+        .describe('Synchronized read-along cue points for karaoke audio playback'),
     },
     async ({ storyId, ...audioData }) =>
       helperAdd(storyId, {
@@ -567,6 +578,158 @@ export function registerBlockTools(
       });
 
       return mcpJsonResponse({ message: 'Blocks reordered successfully.', count: blocks.length });
+    }
+  );
+
+  // 25. add_image_diff_block
+  server.tool(
+    'add_image_diff_block',
+    '[WRITE] Add an interactive before/after visual difference slider comparing two images (e.g. satellite imagery, urban change).',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      beforeUrl: z.string().url().describe('URL of before image'),
+      afterUrl: z.string().url().describe('URL of after image'),
+      beforeLabel: z.string().default('Before').describe('Label for before image'),
+      afterLabel: z.string().default('After').describe('Label for after image'),
+      caption: z.string().optional().describe('Editorial caption explaining the visual difference'),
+      orientation: z.enum(['horizontal', 'vertical']).default('horizontal'),
+      defaultSplitPercent: z.number().min(0).max(100).default(50),
+      credit: z.string().optional().describe('Image copyright or attribution credit'),
+    },
+    async ({ storyId, ...diffData }) =>
+      helperAdd(storyId, {
+        id: generateId('blk_diff'),
+        blockType: 'image_diff',
+        sortOrder: 0,
+        data: diffData,
+      })
+  );
+
+  // 26. add_live_ticker_block
+  server.tool(
+    'add_live_ticker_block',
+    '[WRITE] Add a live financial or numerical data ticker with metric cards, delta indicators, and sparkline arrays.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      title: z.string().optional().describe('Title of the ticker (e.g. "Live Market Pulse")'),
+      refreshIntervalSeconds: z.number().int().min(5).max(3600).default(30),
+      items: z
+        .array(
+          z.object({
+            symbol: z.string().min(1).describe('Ticker symbol (e.g. "BRENT", "BTC/USD")'),
+            label: z.string().min(1).describe('Readable label (e.g. "Brent Crude")'),
+            value: z.number().describe('Current numeric value'),
+            delta: z.number().describe('Percentage or point delta (positive or negative)'),
+            unit: z.string().optional().describe('Currency or unit (e.g. "$", "pts", "%")'),
+            sparkline: z
+              .array(z.number())
+              .optional()
+              .default([])
+              .describe('Historical values for sparkline chart'),
+          })
+        )
+        .min(1)
+        .describe('List of metric items to track in the ticker'),
+    },
+    async ({ storyId, ...tickerData }) =>
+      helperAdd(storyId, {
+        id: generateId('blk_tick'),
+        blockType: 'live_ticker',
+        sortOrder: 0,
+        data: tickerData,
+      })
+  );
+
+  // 27. update_live_ticker_block
+  server.tool(
+    'update_live_ticker_block',
+    '[WRITE] Update metric values and sparklines on an existing live ticker block.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      blockId: z.string().min(1).describe('Block ID of the live ticker'),
+      items: z
+        .array(
+          z.object({
+            symbol: z.string().min(1),
+            label: z.string().min(1),
+            value: z.number(),
+            delta: z.number(),
+            unit: z.string().optional(),
+            sparkline: z.array(z.number()).optional().default([]),
+            lastUpdated: z.string().optional(),
+          })
+        )
+        .min(1),
+    },
+    async ({ storyId, blockId, items }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const story = await storyService.getStory(storyId, principal.organizationId);
+      const existingBlock = story.blocks?.find((b) => b.id === blockId);
+      if (!existingBlock || existingBlock.blockType !== 'live_ticker') {
+        throw new Error(`Live ticker block "${blockId}" not found in story "${storyId}".`);
+      }
+
+      const updatedBlock = {
+        ...existingBlock,
+        data: {
+          title: existingBlock.data.title,
+          refreshIntervalSeconds: existingBlock.data.refreshIntervalSeconds,
+          items: items.map((it) => ({
+            ...it,
+            sparkline: it.sparkline || [],
+            lastUpdated: it.lastUpdated || new Date().toISOString(),
+          })),
+        },
+      };
+
+      const updated = await storyService.updateBlock(storyId, blockId, updatedBlock, {
+        organizationId: principal.organizationId,
+        authorId: principal.id,
+        clientType: principal.clientType,
+        createdVia: 'mcp',
+      });
+
+      return mcpJsonResponse({ message: `Live ticker "${blockId}" updated.`, block: updated });
+    }
+  );
+
+  // 28. add_poll_block
+  server.tool(
+    'add_poll_block',
+    '[WRITE] Add an interactive reader poll with selectable options to a story.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      question: z
+        .string()
+        .min(1)
+        .describe('Poll question (e.g. "Do you agree with the trade agreement?")'),
+      options: z
+        .array(z.string().min(1))
+        .min(2)
+        .describe('List of choice strings (e.g. ["Yes, strongly", "No, oppose", "Undecided"])'),
+      expiresAt: z.string().optional().describe('Optional ISO date when the poll closes'),
+    },
+    async ({ storyId, question, options, expiresAt }) => {
+      const pollId = generateId('pol');
+      return helperAdd(storyId, {
+        id: generateId('blk_pol'),
+        blockType: 'poll',
+        sortOrder: 0,
+        data: {
+          pollId,
+          question,
+          options: options.map((text, idx) => ({
+            id: `opt_${idx + 1}`,
+            text,
+            voteCount: 0,
+          })),
+          totalVotes: 0,
+          expiresAt,
+          closed: false,
+        },
+      });
     }
   );
 }

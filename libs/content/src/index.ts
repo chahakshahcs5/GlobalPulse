@@ -72,6 +72,22 @@ export function extractTextContent(blocks: StoryBlock[]): string {
           fragments.push(item.description);
         }
         break;
+      case 'image_diff':
+        if (block.data.caption) fragments.push(block.data.caption);
+        fragments.push(block.data.beforeLabel, block.data.afterLabel);
+        break;
+      case 'live_ticker':
+        if (block.data.title) fragments.push(block.data.title);
+        for (const it of block.data.items) {
+          fragments.push(it.label, it.symbol);
+        }
+        break;
+      case 'poll':
+        fragments.push(block.data.question);
+        for (const opt of block.data.options) {
+          fragments.push(opt.text);
+        }
+        break;
       default:
         break;
     }
