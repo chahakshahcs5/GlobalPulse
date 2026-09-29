@@ -1,11 +1,17 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
-import { TopicService } from '@ai-news/topics';
+import { TopicService, specialDeskService } from '@ai-news/topics';
 import { EventService } from '@ai-news/events';
 import { EntityService } from '@ai-news/entities';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
-import { EntityTypeSchema, EventStatusSchema } from '@ai-news/schemas';
+import {
+  EntityTypeSchema,
+  EventStatusSchema,
+  CANONICAL_CATEGORIES,
+  CategoryCodeSchema,
+  CreateSpecialDeskInputSchema,
+} from '@ai-news/schemas';
 import { mcpJsonResponse } from './tool-helpers';
 
 export function registerTaxonomyTools(
@@ -263,6 +269,184 @@ export function registerTaxonomyTools(
       }
 
       return mcpJsonResponse({ message: 'Story linked to entity.', storyId, entityId });
+    }
+  );
+
+  // Dynamic Subcategory Registry Map
+  const dynamicSubCategories = new Map<string, string[]>();
+  for (const cat of CANONICAL_CATEGORIES) {
+    dynamicSubCategories.set(cat.code, [...(cat.subCategories || [])]);
+  }
+
+  // Category Hierarchy
+  server.tool(
+    'list_category_hierarchy',
+    '[READ-ONLY] Retrieve all primary news categories, their nested subcategories, and story distribution.',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const allStories = await db.stories.list({ status: 'PUBLISHED', limit: 200 });
+      const countsByCat = new Map<string, number>();
+
+      for (const s of allStories) {
+        if (s.articleType) {
+          countsByCat.set(s.articleType, (countsByCat.get(s.articleType) || 0) + 1);
+        }
+        if (s.categories) {
+          for (const c of s.categories) {
+            countsByCat.set(c, (countsByCat.get(c) || 0) + 1);
+          }
+        }
+      }
+
+      const hierarchy = CANONICAL_CATEGORIES.map((cat) => {
+        const subs = dynamicSubCategories.get(cat.code) || [];
+        return {
+          code: cat.code,
+          name: cat.name,
+          slug: cat.slug,
+          description: cat.description,
+          icon: cat.icon,
+          storyCount: countsByCat.get(cat.code) || countsByCat.get(cat.slug) || 0,
+          subCategories: subs.map((subName) => ({
+            name: subName,
+            storyCount: countsByCat.get(subName) || 0,
+          })),
+        };
+      });
+
+      return mcpJsonResponse({ categories: hierarchy, totalCategories: hierarchy.length });
+    }
+  );
+
+  server.tool(
+    'create_subcategory',
+    '[WRITE] Register a new editorial subcategory under a primary category code.',
+    {
+      parentCode: CategoryCodeSchema.describe(
+        'Parent primary category code (e.g. "technology", "world")'
+      ),
+      name: z.string().min(1).describe('Subcategory name (e.g. "Quantum Cryptography")'),
+    },
+    async ({ parentCode, name }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const existing = dynamicSubCategories.get(parentCode) || [];
+      if (!existing.includes(name)) {
+        existing.push(name);
+        dynamicSubCategories.set(parentCode, existing);
+      }
+
+      return mcpJsonResponse({
+        message: 'Subcategory registered.',
+        parentCode,
+        name,
+        allSubCategories: existing,
+      });
+    }
+  );
+
+  server.tool(
+    'assign_story_categories',
+    '[WRITE] Assign hierarchical categories and subcategories to a story.',
+    {
+      storyId: z.string().min(1).describe('Story ID'),
+      categories: z.array(z.string().min(1)).describe('Category names or subcategories to assign'),
+    },
+    async ({ storyId, categories }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const story = await db.stories.findById(storyId, principal.organizationId);
+      if (!story) throw new Error(`Story ${storyId} not found`);
+      story.categories = Array.from(new Set([...(story.categories || []), ...categories]));
+      await db.stories.update(story);
+
+      return mcpJsonResponse({
+        message: 'Categories assigned to story.',
+        storyId,
+        categories: story.categories,
+      });
+    }
+  );
+
+  // Special Pop-Up Event Desks
+  server.tool(
+    'create_special_desk',
+    '[WRITE] Launch a dynamic pop-up event news desk with custom theme color, banner, and live ticker.',
+    CreateSpecialDeskInputSchema.shape,
+    async (params) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const desk = await specialDeskService.createDesk(params);
+      return mcpJsonResponse({ message: 'Special desk launched.', desk });
+    }
+  );
+
+  server.tool(
+    'list_special_desks',
+    '[READ-ONLY] List active or archived special coverage pop-up desks.',
+    {
+      onlyActive: z.boolean().optional().default(true).describe('Filter to only active desks'),
+    },
+    async ({ onlyActive }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const desks = await specialDeskService.listDesks(onlyActive);
+      return mcpJsonResponse({ desks, count: desks.length });
+    }
+  );
+
+  server.tool(
+    'pin_story_to_special_desk',
+    '[WRITE] Pin a key breaking story to a special coverage desk.',
+    {
+      deskId: z.string().min(1).describe('Special desk ID or slug'),
+      storyId: z.string().min(1).describe('Story ID to pin'),
+    },
+    async ({ deskId, storyId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const desk = await specialDeskService.pinStory(deskId, storyId);
+      return mcpJsonResponse({ message: 'Story pinned to special desk.', desk });
+    }
+  );
+
+  // Topic Dossier & Knowledge Graph
+  server.tool(
+    'get_topic_dossier',
+    '[READ-ONLY] Retrieve comprehensive topic dossier including timeline milestones, sentiment pulse, key entities, and co-occurring topics.',
+    {
+      topicSlugOrId: z
+        .string()
+        .min(1)
+        .describe('Topic slug or ID (e.g. "artificial-intelligence" or "top_ai")'),
+    },
+    async ({ topicSlugOrId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const dossier = await topicService.getTopicDossier(topicSlugOrId, principal.organizationId);
+      return mcpJsonResponse(dossier);
+    }
+  );
+
+  server.tool(
+    'get_topic_knowledge_graph',
+    '[READ-ONLY] Retrieve network knowledge graph of topics, co-occurrence edge weights, and story clusters.',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const graph = await topicService.getTopicKnowledgeGraph(principal.organizationId);
+      return mcpJsonResponse(graph);
     }
   );
 }

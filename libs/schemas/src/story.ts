@@ -80,6 +80,7 @@ export const StorySchema = z.object({
   topicIds: z.array(z.string()).default([]),
   entityIds: z.array(z.string()).default([]),
   sourceIds: z.array(z.string()).default([]),
+  categories: z.array(z.string()).optional(),
   blocks: z.array(StoryBlockSchema).default([]),
   heroImageUrl: z.string().url().optional(),
   createdVia: CreatedViaSchema,
@@ -104,6 +105,7 @@ export const CreateStoryInputSchema = z.object({
   topicIds: z.array(z.string()).optional().default([]),
   entityIds: z.array(z.string()).optional().default([]),
   sourceIds: z.array(z.string()).optional().default([]),
+  categories: z.array(z.string()).optional().default([]),
   blocks: z.array(StoryBlockSchema).optional().default([]),
   heroImageUrl: z.string().url().optional(),
   idempotencyKey: z.string().max(200).optional(),
@@ -118,6 +120,7 @@ export const UpdateStoryInputSchema = z.object({
   eventId: z.string().optional(),
   topicIds: z.array(z.string()).optional(),
   entityIds: z.array(z.string()).optional(),
+  categories: z.array(z.string()).optional(),
   heroImageUrl: z.string().url().optional(),
 });
 export type UpdateStoryInput = z.infer<typeof UpdateStoryInputSchema>;

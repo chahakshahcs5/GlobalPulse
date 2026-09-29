@@ -640,4 +640,128 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     expect(resultsBody.options[0].voteCount).toBe(1);
     expect(resultsBody.options[0].percentage).toBe('100.0');
   });
+
+  it('supports hierarchical taxonomy, subcategories, special pop-up desks, and topic dossiers via MCP', async () => {
+    // 1. List category hierarchy
+    const hierarchyRes = await client.callTool({
+      name: 'list_category_hierarchy',
+      arguments: {},
+    });
+    const hierarchy = parseJson<{
+      categories: Array<{ code: string; name: string; subCategories: Array<{ name: string }> }>;
+    }>(hierarchyRes);
+    expect(hierarchy.categories.length).toBeGreaterThanOrEqual(9);
+    const techCat = hierarchy.categories.find((c) => c.code === 'technology');
+    expect(techCat).toBeDefined();
+    expect(techCat?.subCategories.some((s) => s.name === 'Artificial Intelligence')).toBe(true);
+
+    // 2. Create subcategory under technology
+    const subCatRes = await client.callTool({
+      name: 'create_subcategory',
+      arguments: {
+        parentCode: 'technology',
+        name: 'Neuromorphic Hardware',
+      },
+    });
+    const subCatBody = parseJson<{ message: string; allSubCategories: string[] }>(subCatRes);
+    expect(subCatBody.message).toBe('Subcategory registered.');
+    expect(subCatBody.allSubCategories).toContain('Neuromorphic Hardware');
+
+    // 3. Create story and assign categories
+    const story = await db.stories.create({
+      id: 'sty_tax_test',
+      organizationId: 'org_mcp_test',
+      slug: 'neuromorphic-spiking-silicon',
+      title: 'Neuromorphic Silicon Demonstrates 100x Energy Efficiency',
+      summary: 'Spiking neural network chips deployed in low-power space probes.',
+      status: 'PUBLISHED',
+      articleType: 'technology',
+      topicIds: ['top_neuromorphic', 'top_energy'],
+      entityIds: ['ent_cern'],
+      sourceIds: [],
+      categories: [],
+      currentVersionNumber: 1,
+      authorId: 'usr_gemini_spark_01',
+      createdVia: 'api',
+      createdByClient: 'gemini_spark',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+      blocks: [],
+    });
+
+    const assignRes = await client.callTool({
+      name: 'assign_story_categories',
+      arguments: {
+        storyId: story.id,
+        categories: ['technology', 'Neuromorphic Hardware'],
+      },
+    });
+    const assignBody = parseJson<{ message: string; categories: string[] }>(assignRes);
+    expect(assignBody.categories).toContain('Neuromorphic Hardware');
+
+    // 4. Create dynamic special pop-up desk
+    const deskRes = await client.callTool({
+      name: 'create_special_desk',
+      arguments: {
+        name: 'Quantum & Neuromorphic Summit',
+        description: 'Continuous dispatches on unconventional computing paradigms.',
+        themeColor: '#8b5cf6',
+        liveTickerSymbol: 'SYNAPSE-100',
+      },
+    });
+    const deskBody = parseJson<{
+      message: string;
+      desk: { id: string; slug: string; themeColor: string };
+    }>(deskRes);
+    expect(deskBody.message).toBe('Special desk launched.');
+    expect(deskBody.desk.themeColor).toBe('#8b5cf6');
+
+    // 5. List special desks
+    const listDesksRes = await client.callTool({
+      name: 'list_special_desks',
+      arguments: { onlyActive: true },
+    });
+    const listDesksBody = parseJson<{ desks: Array<{ id: string; name: string }> }>(listDesksRes);
+    expect(listDesksBody.desks.length).toBeGreaterThanOrEqual(1);
+
+    // 6. Pin story to special desk
+    const pinRes = await client.callTool({
+      name: 'pin_story_to_special_desk',
+      arguments: {
+        deskId: deskBody.desk.id,
+        storyId: story.id,
+      },
+    });
+    const pinBody = parseJson<{ message: string; desk: { pinnedStoryIds: string[] } }>(pinRes);
+    expect(pinBody.desk.pinnedStoryIds).toContain(story.id);
+
+    // 7. Get topic dossier
+    const dossierRes = await client.callTool({
+      name: 'get_topic_dossier',
+      arguments: {
+        topicSlugOrId: 'neuromorphic-silicon',
+      },
+    });
+    const dossierBody = parseJson<{
+      topic: { name: string };
+      storyCount: number;
+      sentiment: { positive: number; neutral: number };
+    }>(dossierRes);
+    expect(dossierBody.topic.name).toBeDefined();
+    expect(typeof dossierBody.storyCount).toBe('number');
+    expect(typeof dossierBody.sentiment.neutral).toBe('number');
+
+    // 8. Get topic knowledge graph
+    const graphRes = await client.callTool({
+      name: 'get_topic_knowledge_graph',
+      arguments: {},
+    });
+    const graphBody = parseJson<{
+      nodes: Array<{ id: string }>;
+      edges: Array<{ source: string; target: string; weight: number }>;
+    }>(graphRes);
+    expect(Array.isArray(graphBody.nodes)).toBe(true);
+    expect(Array.isArray(graphBody.edges)).toBe(true);
+  });
 });

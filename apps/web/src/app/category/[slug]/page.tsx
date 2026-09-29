@@ -10,18 +10,39 @@ import { GoogleNewsClusterCard } from '../../../components/GoogleNewsClusterCard
 import { WeatherWidget } from '../../../components/WeatherWidget';
 import { TrendingTopicsWidget } from '../../../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
-import { ArrowLeft, Rss, Clock, ShieldCheck, Newspaper } from 'lucide-react';
+import { ArrowLeft, Rss, Clock, ShieldCheck, Newspaper, Filter } from 'lucide-react';
 import { formatDeterministicDate } from '../../../lib/date-utils';
+import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
 
 export default function CategoryPage() {
   const params = useParams();
   const slug = (params?.slug as string) || '';
   const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1);
   const [activeFullCoverageSlug, setActiveFullCoverageSlug] = useState<string | null>(null);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
 
   // Dynamic API stories for this category
   const { stories: categoryStories } = useCategoryStories(slug);
   const { clusters: allClusters } = useNewsClusters();
+
+  const canonical = CANONICAL_CATEGORIES.find(
+    (c) =>
+      c.slug.toLowerCase() === slug.toLowerCase() || c.code.toLowerCase() === slug.toLowerCase()
+  );
+  const subCategories = canonical?.subCategories || [];
+
+  const filteredStories = selectedSub
+    ? categoryStories.filter((s) => {
+        if (
+          s.categories &&
+          s.categories.some((c) => c.toLowerCase() === selectedSub.toLowerCase())
+        ) {
+          return true;
+        }
+        const text = `${s.title} ${s.summary} ${s.slug}`.toLowerCase();
+        return text.includes(selectedSub.toLowerCase());
+      })
+    : categoryStories;
 
   // Match category clusters strictly
   const categoryClusters = allClusters.filter(
@@ -66,20 +87,62 @@ export default function CategoryPage() {
         </div>
       </div>
 
+      {/* Subcategory Filter Chips */}
+      {subCategories.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs">
+          <span className="text-slate-400 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1 shrink-0">
+            <Filter className="w-3 h-3 text-blue-500" /> Desks:
+          </span>
+          <button
+            onClick={() => setSelectedSub(null)}
+            className={`px-3 py-1 rounded-full font-bold transition shrink-0 ${
+              selectedSub === null
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            All {categoryName}
+          </button>
+          {subCategories.map((sub) => (
+            <button
+              key={sub}
+              onClick={() => setSelectedSub(selectedSub === sub ? null : sub)}
+              className={`px-3 py-1 rounded-full font-medium transition shrink-0 ${
+                selectedSub === sub
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60'
+              }`}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Category Feed */}
         <div className="lg:col-span-8 space-y-6">
           {/* Dynamic Category Stories from Database / API */}
-          {categoryStories.length > 0 && (
+          {filteredStories.length > 0 && (
             <section className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <Newspaper className="w-4 h-4 text-blue-600" />
-                <span>Live Dispatches in {categoryName}</span>
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="w-4 h-4 text-blue-600" />
+                  <span>
+                    {selectedSub
+                      ? `${selectedSub} Dispatches`
+                      : `Live Dispatches in ${categoryName}`}
+                  </span>
+                </div>
+                <span className="font-mono text-[11px]">
+                  {filteredStories.length}{' '}
+                  {filteredStories.length === 1 ? 'Dispatch' : 'Dispatches'}
+                </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {categoryStories.slice(0, 6).map((story) => (
+                {filteredStories.slice(0, 8).map((story) => (
                   <Link
                     key={story.id}
                     href={`/stories/${story.slug}`}

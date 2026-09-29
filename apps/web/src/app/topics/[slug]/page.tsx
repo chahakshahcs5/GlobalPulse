@@ -2,10 +2,21 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { listStories } from '../../../lib/api-client';
+import { getTopicDossier, listStories } from '../../../lib/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
-import { ArrowLeft, Newspaper } from 'lucide-react';
-import type { Story } from '@ai-news/schemas';
+import {
+  ArrowLeft,
+  Newspaper,
+  TrendingUp,
+  Activity,
+  Layers,
+  Sparkles,
+  Share2,
+  Bookmark,
+  Calendar,
+  Tag,
+} from 'lucide-react';
+import type { Story, TopicDossier } from '@ai-news/schemas';
 
 interface TopicPageProps {
   params: Promise<{ slug: string }>;
@@ -13,36 +24,37 @@ interface TopicPageProps {
 
 export default function TopicPage({ params }: TopicPageProps) {
   const { slug } = use(params);
+  const [dossier, setDossier] = useState<TopicDossier | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const topicName = slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    listStories({ limit: 50 })
-      .then((allStories) => {
+
+    Promise.all([getTopicDossier(slug), listStories({ limit: 60 })])
+      .then(([topicDossier, allStories]) => {
         if (!isMounted) return;
-        const normalized = slug.toLowerCase().replace(/-/g, '_');
+        setDossier(topicDossier);
+
         const slugClean = slug.toLowerCase();
+        const normalized = slug.toLowerCase().replace(/[-_]/g, ' ');
         const matching = allStories.filter(
           (s) =>
             s.status === 'PUBLISHED' &&
             (s.slug.toLowerCase().includes(slugClean) ||
               (s.topicIds || []).some(
-                (t) => t.toLowerCase().includes(normalized) || t.toLowerCase().includes(slugClean)
+                (t) => t.toLowerCase().includes(slugClean) || t.toLowerCase().includes(normalized)
               ) ||
-              (s.title || '').toLowerCase().includes(slugClean))
+              (s.title || '').toLowerCase().includes(slugClean) ||
+              (s.title || '').toLowerCase().includes(normalized))
         );
         setStories(matching);
         setIsLoading(false);
       })
       .catch(() => {
         if (isMounted) {
-          setStories([]);
           setIsLoading(false);
         }
       });
@@ -52,38 +64,305 @@ export default function TopicPage({ params }: TopicPageProps) {
     };
   }, [slug]);
 
+  const topicName =
+    dossier?.topic?.name ||
+    slug
+      .split(/[-_]/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+  const totalSentiment = dossier
+    ? dossier.sentiment.positive +
+      dossier.sentiment.cautious +
+      dossier.sentiment.critical +
+      dossier.sentiment.neutral
+    : 0;
+
+  const getPercent = (count: number) => {
+    if (!totalSentiment) return 25;
+    return Math.round((count / totalSentiment) * 100);
+  };
+
+  const handleShare = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Topic Header */}
-      <div className="pb-6 border-b border-slate-800 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-mono text-blue-400 font-bold uppercase tracking-wider">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Navigation Breadcrumb */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
+        <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider">
           <Link href="/" className="hover:text-white transition flex items-center gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Live Feed
           </Link>
           <span>/</span>
-          <span>TOPIC DASHBOARD</span>
+          <span>Topic Dossier Hub</span>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight flex items-center gap-3">
-              <span className="text-blue-500">#</span>
-              <span>{topicName}</span>
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-2xl">
-              Real-time editorial monitoring, timeline milestones, and data analytics on {topicName}
-              .
-            </p>
-          </div>
-          <span className="self-start sm:self-center px-3.5 py-1.5 rounded-full text-xs font-bold font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/30">
-            {stories.length} Covered Stories
-          </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 text-xs transition"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>{copied ? 'Link Copied!' : 'Share'}</span>
+          </button>
+          <button
+            onClick={() => setIsFollowing(!isFollowing)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-xs ${
+              isFollowing
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                : 'bg-blue-600 hover:bg-blue-500 text-white'
+            }`}
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>{isFollowing ? 'Following Beat' : 'Follow Beat'}</span>
+          </button>
         </div>
       </div>
+
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950/40">
+        <div className="relative z-10 space-y-4 max-w-3xl">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/40 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Verified Editorial Dossier
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+              {stories.length} Dispatches Recorded
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight flex items-center gap-3">
+            <span className="text-blue-500">#</span>
+            <span>{topicName}</span>
+          </h1>
+
+          <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+            {dossier?.topic?.description ||
+              `Real-time intelligence aggregation, storyline milestones, key entities, and sentiment analysis tracking ${topicName}.`}
+          </p>
+        </div>
+      </div>
+
+      {/* Intelligence Grid: Sentiment Pulse & Key Entities */}
+      {dossier && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Sentiment Pulse */}
+          <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800/80 bg-slate-900/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-bold uppercase font-mono tracking-wider text-white">
+                  Editorial Sentiment Pulse
+                </h3>
+              </div>
+              <span className="text-xs font-mono text-slate-400">
+                {totalSentiment} Wire Assessments
+              </span>
+            </div>
+
+            {/* Segmented Meter */}
+            <div className="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex shadow-inner">
+              <div
+                style={{ width: `${getPercent(dossier.sentiment.positive)}%` }}
+                className="bg-emerald-500 transition-all duration-500"
+                title={`Positive: ${getPercent(dossier.sentiment.positive)}%`}
+              />
+              <div
+                style={{ width: `${getPercent(dossier.sentiment.cautious)}%` }}
+                className="bg-amber-500 transition-all duration-500"
+                title={`Cautious: ${getPercent(dossier.sentiment.cautious)}%`}
+              />
+              <div
+                style={{ width: `${getPercent(dossier.sentiment.critical)}%` }}
+                className="bg-rose-500 transition-all duration-500"
+                title={`Critical: ${getPercent(dossier.sentiment.critical)}%`}
+              />
+              <div
+                style={{ width: `${getPercent(dossier.sentiment.neutral)}%` }}
+                className="bg-slate-600 transition-all duration-500"
+                title={`Neutral: ${getPercent(dossier.sentiment.neutral)}%`}
+              />
+            </div>
+
+            {/* Legend */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+                <div>
+                  <div className="font-bold text-emerald-300">
+                    {getPercent(dossier.sentiment.positive)}%
+                  </div>
+                  <div className="text-[10px] text-emerald-400/80 uppercase font-mono">
+                    Positive
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+                <div>
+                  <div className="font-bold text-amber-300">
+                    {getPercent(dossier.sentiment.cautious)}%
+                  </div>
+                  <div className="text-[10px] text-amber-400/80 uppercase font-mono">Cautious</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0" />
+                <div>
+                  <div className="font-bold text-rose-300">
+                    {getPercent(dossier.sentiment.critical)}%
+                  </div>
+                  <div className="text-[10px] text-rose-400/80 uppercase font-mono">Critical</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-700/30 border border-slate-700/50">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
+                <div>
+                  <div className="font-bold text-slate-300">
+                    {getPercent(dossier.sentiment.neutral)}%
+                  </div>
+                  <div className="text-[10px] text-slate-400 uppercase font-mono">Neutral</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Entities */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 bg-slate-900/50 space-y-4">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-blue-400" />
+              <h3 className="text-sm font-bold uppercase font-mono tracking-wider text-white">
+                Key Entities
+              </h3>
+            </div>
+            <div className="space-y-2.5">
+              {dossier.keyEntities.length > 0 ? (
+                dossier.keyEntities.map((ent) => (
+                  <div
+                    key={ent.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-800 hover:border-slate-700 transition"
+                  >
+                    <span className="text-xs font-semibold text-white truncate">{ent.name}</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30 shrink-0">
+                      {ent.type}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 italic">No linked entities recorded.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Storyline Milestones & Co-occurring Topics */}
+      {dossier && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Milestones Track */}
+          <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800/80 bg-slate-900/50 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-bold uppercase font-mono tracking-wider text-white">
+                  Storyline Milestones Track
+                </h3>
+              </div>
+              <span className="text-xs font-mono text-slate-400">Chronological Evolution</span>
+            </div>
+
+            {dossier.timeline.length > 0 ? (
+              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+                {dossier.timeline.map((item, idx) => (
+                  <div key={idx} className="relative group">
+                    {/* Circle Beacon */}
+                    <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-950 group-hover:scale-125 transition-transform" />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                        <span suppressHydrationWarning>{formatDeterministicDate(item.date)}</span>
+                        {item.sourcePublisher && (
+                          <>
+                            <span>&bull;</span>
+                            <span className="text-amber-400">{item.sourcePublisher}</span>
+                          </>
+                        )}
+                      </div>
+                      {item.storySlug ? (
+                        <Link
+                          href={`/stories/${item.storySlug}`}
+                          className="block text-sm font-bold text-white hover:text-blue-400 transition"
+                        >
+                          {item.headline}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium text-slate-200">{item.headline}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 italic">No milestones registered yet.</p>
+            )}
+          </div>
+
+          {/* Related Co-Occurring Topics */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 bg-slate-900/50 space-y-4 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-sm font-bold uppercase font-mono tracking-wider text-white">
+                  Related Topic Network
+                </h3>
+              </div>
+              <p className="text-xs text-slate-400">
+                Frequently co-occurring topics connected through cross-wire stories and joint entity
+                coverage.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {dossier.relatedTopics.length > 0 ? (
+                  dossier.relatedTopics.map((rel) => (
+                    <Link
+                      key={rel.id}
+                      href={`/topics/${rel.slug}`}
+                      className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-blue-500/50 hover:bg-blue-950/20 text-xs transition"
+                    >
+                      <Tag className="w-3 h-3 text-slate-400 group-hover:text-blue-400" />
+                      <span className="font-medium text-slate-200 group-hover:text-white">
+                        {rel.name}
+                      </span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+                        {rel.coOccurrenceCount}
+                      </span>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500 italic">No co-occurring topics yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800/60">
+              <Link
+                href="/categories"
+                className="text-xs font-mono font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition"
+              >
+                <span>Browse Global Category Taxonomy</span> &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading Skeleton */}
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse space-y-4"
@@ -120,14 +399,17 @@ export default function TopicPage({ params }: TopicPageProps) {
       {/* Stories Grid */}
       {!isLoading && stories.length > 0 && (
         <div className="space-y-6">
-          <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
-            Published Topic Coverage
-          </h2>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800/60">
+            <h2 className="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">
+              Verified Topic Dispatches ({stories.length})
+            </h2>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {stories.map((story) => (
               <div
                 key={story.id}
-                className="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between space-y-4"
+                className="glass-card rounded-2xl p-6 border border-slate-800 hover:border-slate-700 flex flex-col justify-between space-y-4 transition"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
@@ -148,15 +430,28 @@ export default function TopicPage({ params }: TopicPageProps) {
                   <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
                     {story.summary}
                   </p>
+
+                  {story.categories && story.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {story.categories.map((c) => (
+                        <span
+                          key={c}
+                          className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] font-mono text-slate-300 border border-slate-700"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
                   <span className="text-slate-400">By {story.authorId}</span>
                   <Link
                     href={`/stories/${story.slug}`}
-                    className="text-blue-400 hover:text-blue-300 font-bold transition"
+                    className="text-blue-400 hover:text-blue-300 font-bold transition flex items-center gap-1"
                   >
-                    Read Full Dispatch &rarr;
+                    <span>Read Full Dispatch</span> &rarr;
                   </Link>
                 </div>
               </div>

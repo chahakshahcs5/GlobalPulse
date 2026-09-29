@@ -13,6 +13,14 @@ export const CategoryCodeSchema = z.enum([
 ]);
 export type CategoryCode = z.infer<typeof CategoryCodeSchema>;
 
+export const SubCategorySchema = z.object({
+  slug: z.string().min(1),
+  name: z.string().min(1),
+  parentCode: CategoryCodeSchema,
+  description: z.string().default(''),
+});
+export type SubCategory = z.infer<typeof SubCategorySchema>;
+
 export const CategorySchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
@@ -22,8 +30,41 @@ export const CategorySchema = z.object({
   sortOrder: z.number().int().default(0),
   storyCount: z.number().int().nonnegative().default(0),
   isPinned: z.boolean().default(false),
+  subCategories: z.array(z.string()).default([]),
 });
 export type Category = z.infer<typeof CategorySchema>;
+
+export const SpecialDeskSchema = z.object({
+  id: z.string().min(1),
+  slug: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().default(''),
+  themeColor: z.string().default('#3b82f6'),
+  bannerImageUrl: z.string().url().optional(),
+  pinnedStoryIds: z.array(z.string()).default([]),
+  liveTickerSymbol: z.string().optional(),
+  activeUntil: z.string().optional(),
+  isLive: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SpecialDesk = z.infer<typeof SpecialDeskSchema>;
+
+export const CreateSpecialDeskInputSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z.string().min(1).max(100).optional(),
+  description: z.string().max(1000).optional(),
+  themeColor: z
+    .string()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+    .default('#3b82f6')
+    .optional(),
+  bannerImageUrl: z.string().url().optional(),
+  pinnedStoryIds: z.array(z.string()).optional().default([]),
+  liveTickerSymbol: z.string().optional(),
+  activeUntil: z.string().optional(),
+});
+export type CreateSpecialDeskInput = z.input<typeof CreateSpecialDeskInputSchema>;
 
 export const CANONICAL_CATEGORIES: Category[] = [
   {
@@ -35,6 +76,7 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 1,
     storyCount: 0,
     isPinned: true,
+    subCategories: ['Breaking Dispatches', 'Lead Developing', 'Verified Updates'],
   },
   {
     slug: 'technology',
@@ -45,6 +87,13 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 2,
     storyCount: 0,
     isPinned: true,
+    subCategories: [
+      'Artificial Intelligence',
+      'Semiconductors',
+      'Cybersecurity',
+      'Quantum Computing',
+      'Digital Policy',
+    ],
   },
   {
     slug: 'business',
@@ -55,6 +104,13 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 3,
     storyCount: 0,
     isPinned: true,
+    subCategories: [
+      'Global Markets',
+      'Macroeconomics',
+      'Venture Capital',
+      'Energy & Commodities',
+      'Trade Policy',
+    ],
   },
   {
     slug: 'world',
@@ -65,6 +121,12 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 4,
     storyCount: 0,
     isPinned: true,
+    subCategories: [
+      'Diplomatic Summits',
+      'Multilateral Treaties',
+      'Global Governance',
+      'Defense Alliances',
+    ],
   },
   {
     slug: 'science',
@@ -75,6 +137,12 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 5,
     storyCount: 0,
     isPinned: false,
+    subCategories: [
+      'Space Exploration',
+      'Climate Dynamics',
+      'Renewable Systems',
+      'Genomics & Biotech',
+    ],
   },
   {
     slug: 'health',
@@ -85,6 +153,12 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 6,
     storyCount: 0,
     isPinned: false,
+    subCategories: [
+      'Epidemiology',
+      'Clinical Trials',
+      'Medical Technology',
+      'Global Health Policy',
+    ],
   },
   {
     slug: 'sports',
@@ -95,6 +169,7 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 7,
     storyCount: 0,
     isPinned: false,
+    subCategories: ['Championships', 'Olympic Athletics', 'Analytics & Scouting', 'Global Leagues'],
   },
   {
     slug: 'entertainment',
@@ -105,6 +180,12 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 8,
     storyCount: 0,
     isPinned: false,
+    subCategories: [
+      'Cinema & Festivals',
+      'Streaming Media',
+      'Cultural Exhibitions',
+      'Creative Policy',
+    ],
   },
   {
     slug: 'india',
@@ -115,5 +196,11 @@ export const CANONICAL_CATEGORIES: Category[] = [
     sortOrder: 9,
     storyCount: 0,
     isPinned: false,
+    subCategories: [
+      'Digital Public Infrastructure',
+      'Economic Policy',
+      'Space Dispatches',
+      'Tech Ecosystem',
+    ],
   },
 ];
