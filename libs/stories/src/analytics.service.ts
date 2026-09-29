@@ -28,12 +28,12 @@ export class AnalyticsService {
     let totalWords = story.title.split(/\s+/).length + story.summary.split(/\s+/).length;
     if (story.blocks) {
       for (const block of story.blocks) {
-        if (
-          block.blockType === 'paragraph' &&
-          block.data &&
-          typeof (block.data as any).text === 'string'
-        ) {
-          totalWords += (block.data as any).text.split(/\s+/).length;
+        const dataObj =
+          block.data && typeof block.data === 'object'
+            ? (block.data as Record<string, unknown>)
+            : undefined;
+        if (block.blockType === 'paragraph' && dataObj && typeof dataObj.text === 'string') {
+          totalWords += dataObj.text.split(/\s+/).length;
         }
       }
     }
@@ -129,13 +129,16 @@ export class AnalyticsService {
     let totalReads = 0;
 
     for (const s of published) {
-      totalReads += (s as any).viewCount || 0;
+      const sWithViews = s as { viewCount?: number };
+      totalReads += sWithViews.viewCount || 0;
       const summaryWords = (s.summary || '').split(/\s+/).filter(Boolean).length;
       const titleWords = (s.title || '').split(/\s+/).filter(Boolean).length;
       let blockWords = 0;
-      for (const b of (s.blocks || []) as any[]) {
-        if (b.data?.text) {
-          blockWords += String(b.data.text).split(/\s+/).filter(Boolean).length;
+      for (const b of s.blocks || []) {
+        const bData =
+          b.data && typeof b.data === 'object' ? (b.data as Record<string, unknown>) : undefined;
+        if (bData?.text) {
+          blockWords += String(bData.text).split(/\s+/).filter(Boolean).length;
         }
       }
       totalWords += summaryWords + titleWords + blockWords;

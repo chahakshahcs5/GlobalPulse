@@ -3,10 +3,18 @@
 import Link from 'next/link';
 
 import { TrendingUp, Bot, Flame, Eye } from 'lucide-react';
+import type { NewsroomMetrics, TrendingStory } from '@ai-news/schemas';
+
+export interface TrendingStoryItem extends TrendingStory {
+  articleType?: string;
+  viewCount?: number;
+  totalReactions?: number;
+  commentCount?: number;
+}
 
 interface NewsroomPulseTabProps {
-  metrics: any;
-  trending: any[];
+  metrics: NewsroomMetrics | null;
+  trending: TrendingStoryItem[];
 }
 
 export function NewsroomPulseTab({ metrics, trending }: NewsroomPulseTabProps) {
@@ -113,14 +121,14 @@ export function NewsroomPulseTab({ metrics, trending }: NewsroomPulseTabProps) {
                     </Link>
                     <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-1">
                       <span className="uppercase font-mono text-[10px] text-blue-600 dark:text-blue-400">
-                        {t.articleType || 'news'}
+                        {t.articleType || t.category || 'news'}
                       </span>
                       <span>•</span>
                       <span>{(t.viewCount || 0).toLocaleString()} views</span>
                       <span>•</span>
-                      <span>{t.totalReactions || 0} reactions</span>
+                      <span>{t.totalReactions ?? t.reactionsCount ?? 0} reactions</span>
                       <span>•</span>
-                      <span>{t.commentCount || 0} comments</span>
+                      <span>{t.commentCount ?? t.commentsCount ?? 0} comments</span>
                     </div>
                   </div>
                 </div>

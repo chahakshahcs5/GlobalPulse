@@ -12,10 +12,19 @@ interface SearchModalProps {
   onClose: () => void;
 }
 
+interface MappedSearchResult {
+  id: string;
+  title: string;
+  summary: string;
+  slug: string;
+  articleType: string;
+  publishedAt?: string;
+}
+
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [apiResults, setApiResults] = useState<any[] | null>(null);
+  const [apiResults, setApiResults] = useState<MappedSearchResult[] | null>(null);
   const [suggestions, setSuggestions] = useState<
     Array<{ text: string; type: string; id: string; score: number }>
   >([]);
@@ -59,7 +68,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         }
 
         if (storiesRes.status === 'fulfilled' && storiesRes.value?.items) {
-          const mapped = storiesRes.value.items.map((item: any) => {
+          const mapped = storiesRes.value.items.map((item) => {
             const fullStory = stories.find((s) => s.id === item.storyId);
             return {
               id: item.storyId,

@@ -2,6 +2,17 @@ import type { WebhookSubscription, WebhookDispatchLog } from '@ai-news/schemas';
 import type { IWebhookRepository } from '../../interfaces/webhook.repository';
 import { MemoryWebhookRepository } from '../memory/webhook.memory';
 
+interface PrismaWebhookRow {
+  id: string;
+  url: string;
+  events: WebhookSubscription['events'];
+  secret: string;
+  active: boolean;
+  organizationId: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export class PrismaWebhookRepository implements IWebhookRepository {
   private fallbackMemory = new MemoryWebhookRepository();
 
@@ -11,8 +22,17 @@ export class PrismaWebhookRepository implements IWebhookRepository {
     return this.prismaGetter();
   }
 
-  private get webhookClient(): any {
-    return (this.prisma as any).webhookSubscription;
+  private get webhookClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaWebhookRow>;
+        findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaWebhookRow[]>;
+        findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaWebhookRow | null>;
+        delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+        deleteMany: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)
+      .webhookSubscription as typeof this.webhookClient;
   }
 
   async createSubscription(subscription: WebhookSubscription): Promise<WebhookSubscription> {
@@ -61,7 +81,7 @@ export class PrismaWebhookRepository implements IWebhookRepository {
       const rows = await this.webhookClient.findMany({
         where: { organizationId: orgId, active: true },
       });
-      return rows.map((r: any) => ({
+      return rows.map((r) => ({
         id: r.id,
         url: r.url,
         events: r.events,

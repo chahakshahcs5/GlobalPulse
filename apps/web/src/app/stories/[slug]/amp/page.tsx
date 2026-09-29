@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, Clock, ShieldCheck, Zap } from 'lucide-react';
 import { useAllStories } from '../../../../lib/news-store';
 import { formatDeterministicDate } from '../../../../lib/date-utils';
+import type { StoryBlock } from '@ai-news/schemas';
 
 export default function AmpStoryPage() {
   const params = useParams();
@@ -94,7 +95,7 @@ export default function AmpStoryPage() {
 
       {/* Story Body */}
       <div className="space-y-4 text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed">
-        {story.blocks?.map((b: any) => (
+        {story.blocks?.map((b: StoryBlock) => (
           <div key={b.id}>
             {b.data && 'text' in b.data && <p className="leading-relaxed">{String(b.data.text)}</p>}
             {b.data && 'quote' in b.data && (

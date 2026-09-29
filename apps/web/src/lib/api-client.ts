@@ -14,6 +14,23 @@ import type {
   StoryVersion,
   CreateStoryInput,
   UpdateStoryInput,
+  Comment,
+  BookmarkItem,
+  Category,
+  Topic,
+  Source,
+  Event,
+  Entity,
+  StoryAnalytics,
+  TrendingStory,
+  NewsroomMetrics,
+  EditorialNotification,
+  NewsroomUser,
+  FactCheckClaim,
+  FullCoverageResult,
+  AuditLog,
+  WebhookSubscription,
+  StorySearchResultItem,
 } from '@ai-news/schemas';
 
 // ---------------------------------------------------------------------------
@@ -246,7 +263,7 @@ export interface RealtimeEvent {
 export function subscribeToRealtimeEvents(
   channels: string[] = ['all'],
   onEvent: (event: RealtimeEvent) => void,
-  onError?: (error: Event) => void
+  onError?: (error: globalThis.Event) => void
 ): () => void {
   const channelParam = channels.join(',');
   const url = `${API_BASE_URL}/api/realtime/stream?channels=${encodeURIComponent(channelParam)}`;
@@ -328,8 +345,8 @@ export async function getReviewQueue(): Promise<Story[]> {
 // Reader Engagement (Comments, Reactions, Bookmarks)
 // ---------------------------------------------------------------------------
 
-export async function getStoryComments(storyId: string) {
-  return request<any[]>(`/api/stories/${encodeURIComponent(storyId)}/comments`);
+export async function getStoryComments(storyId: string): Promise<Comment[]> {
+  return request<Comment[]>(`/api/stories/${encodeURIComponent(storyId)}/comments`);
 }
 
 export async function createComment(
@@ -337,8 +354,8 @@ export async function createComment(
   content: string,
   authorName?: string,
   parentId?: string
-) {
-  return request<any>(`/api/stories/${encodeURIComponent(storyId)}/comments`, {
+): Promise<Comment> {
+  return request<Comment>(`/api/stories/${encodeURIComponent(storyId)}/comments`, {
     method: 'POST',
     body: JSON.stringify({ content, authorName, parentId }),
   });
@@ -348,8 +365,8 @@ export async function moderateComment(
   commentId: string,
   status: 'approved' | 'flagged' | 'hidden',
   reason?: string
-) {
-  return request<any>(`/api/comments/${encodeURIComponent(commentId)}/moderate`, {
+): Promise<Comment> {
+  return request<Comment>(`/api/comments/${encodeURIComponent(commentId)}/moderate`, {
     method: 'PUT',
     body: JSON.stringify({ status, reason }),
   });
@@ -377,8 +394,8 @@ export async function toggleStoryReaction(storyId: string, reactionType: string)
   });
 }
 
-export async function listServerBookmarks() {
-  return request<any[]>('/api/bookmarks');
+export async function listServerBookmarks(): Promise<BookmarkItem[]> {
+  return request<BookmarkItem[]>('/api/bookmarks');
 }
 
 export async function toggleServerBookmark(storyId: string) {
@@ -391,8 +408,8 @@ export async function toggleServerBookmark(storyId: string) {
 // Dynamic Categories
 // ---------------------------------------------------------------------------
 
-export async function listCategories() {
-  return request<any[]>('/api/categories');
+export async function listCategories(): Promise<Category[]> {
+  return request<Category[]>('/api/categories');
 }
 
 export async function getCategoryStories(slug: string, limit = 20) {
@@ -407,7 +424,7 @@ export async function getCategoryStories(slug: string, limit = 20) {
 // ---------------------------------------------------------------------------
 
 export async function searchStories(query: string, limit = 20) {
-  return request<{ items: any[]; total: number; hasMore: boolean }>(
+  return request<{ items: StorySearchResultItem[]; total: number; hasMore: boolean }>(
     `/api/search/stories?query=${encodeURIComponent(query)}&limit=${limit}`
   );
 }
@@ -425,11 +442,11 @@ export async function getSearchSuggestions(query: string, limit = 8) {
 
 export async function searchFederated(q: string) {
   return request<{
-    stories: any[];
-    events: any[];
-    topics: any[];
-    entities: any[];
-    sources: any[];
+    stories: Story[];
+    events: Event[];
+    topics: Topic[];
+    entities: Entity[];
+    sources: Source[];
   }>(`/api/search/federated?q=${encodeURIComponent(q)}`);
 }
 
@@ -449,35 +466,39 @@ export async function checkHealth(): Promise<{ status: string; engine?: string }
 // Phase 4: Analytics, Notifications, and Staff Operations
 // ---------------------------------------------------------------------------
 
-export async function getStoryAnalytics(storyId: string) {
-  return request<any>(`/api/analytics/stories/${encodeURIComponent(storyId)}`);
+export async function getStoryAnalytics(storyId: string): Promise<StoryAnalytics> {
+  return request<StoryAnalytics>(`/api/analytics/stories/${encodeURIComponent(storyId)}`);
 }
 
-export async function getTrendingStories(limit = 10) {
-  return request<any[]>(`/api/analytics/trending?limit=${limit}`);
+export async function getTrendingStories(limit = 10): Promise<TrendingStory[]> {
+  return request<TrendingStory[]>(`/api/analytics/trending?limit=${limit}`);
 }
 
-export async function getNewsroomMetrics() {
-  return request<any>('/api/analytics/newsroom');
+export async function getNewsroomMetrics(): Promise<NewsroomMetrics> {
+  return request<NewsroomMetrics>('/api/analytics/newsroom');
 }
 
-export async function listNotifications(limit = 20) {
-  return request<any[]>(`/api/notifications?limit=${limit}`);
+export async function listNotifications(limit = 20): Promise<EditorialNotification[]> {
+  return request<EditorialNotification[]>(`/api/notifications?limit=${limit}`);
 }
 
-export async function broadcastBreakingNews(storyId: string, headline: string, urgency = 'urgent') {
-  return request<any>('/api/notifications/breaking', {
+export async function broadcastBreakingNews(
+  storyId: string,
+  headline: string,
+  urgency: 'info' | 'warning' | 'urgent' = 'urgent'
+): Promise<EditorialNotification> {
+  return request<EditorialNotification>('/api/notifications/breaking', {
     method: 'POST',
     body: JSON.stringify({ storyId, headline, urgency }),
   });
 }
 
-export async function listNewsroomStaff() {
-  return request<any[]>('/api/users');
+export async function listNewsroomStaff(): Promise<NewsroomUser[]> {
+  return request<NewsroomUser[]>('/api/users');
 }
 
-export async function assignUserRole(userId: string, role: string) {
-  return request<any>(`/api/users/${encodeURIComponent(userId)}/role`, {
+export async function assignUserRole(userId: string, role: string): Promise<NewsroomUser> {
+  return request<NewsroomUser>(`/api/users/${encodeURIComponent(userId)}/role`, {
     method: 'PUT',
     body: JSON.stringify({ role }),
   });
@@ -488,8 +509,8 @@ export async function inviteNewsroomUser(input: {
   name: string;
   role: string;
   clientType?: string;
-}) {
-  return request<any>('/api/users/invite', {
+}): Promise<NewsroomUser> {
+  return request<NewsroomUser>('/api/users/invite', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -524,10 +545,10 @@ export async function sweepScheduledStories(): Promise<{
 // Taxonomy & Topics API
 // ---------------------------------------------------------------------------
 
-export async function listTopics(): Promise<any[]> {
+export async function listTopics(): Promise<Topic[]> {
   try {
-    const res = await request<any[]>('/api/topics');
-    return Array.isArray(res) ? res : (res as any)?.data || [];
+    const res = await request<Topic[] | { data: Topic[] }>('/api/topics');
+    return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
@@ -538,8 +559,8 @@ export async function createTopic(input: {
   slug?: string;
   description?: string;
   parentId?: string;
-}): Promise<any> {
-  return request<any>('/api/topics', {
+}): Promise<Topic> {
+  return request<Topic>('/api/topics', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -590,83 +611,89 @@ export async function getCurrentUser(): Promise<AuthResponse['user'] | null> {
 // Sources, Events, Entities & Fact-Checks API
 // ---------------------------------------------------------------------------
 
-export async function listSources(query?: string): Promise<any[]> {
+export async function listSources(query?: string): Promise<Source[]> {
   try {
     const qs = query ? `?query=${encodeURIComponent(query)}` : '';
-    const res = await request<any>(`/api/sources${qs}`);
+    const res = await request<Source[] | { data: Source[] }>(`/api/sources${qs}`);
     return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
 }
 
-export async function getSource(id: string): Promise<any | null> {
+export async function getSource(id: string): Promise<Source | null> {
   try {
-    return await request<any>(`/api/sources/${encodeURIComponent(id)}`);
+    return await request<Source>(`/api/sources/${encodeURIComponent(id)}`);
   } catch {
     return null;
   }
 }
 
-export async function listEvents(query?: string): Promise<any[]> {
+export async function listEvents(query?: string): Promise<Event[]> {
   try {
     const qs = query ? `?query=${encodeURIComponent(query)}` : '';
-    const res = await request<any>(`/api/events${qs}`);
+    const res = await request<Event[] | { data: Event[] }>(`/api/events${qs}`);
     return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
 }
 
-export async function getEvent(id: string): Promise<any | null> {
+export async function getEvent(id: string): Promise<Event | null> {
   try {
-    return await request<any>(`/api/events/${encodeURIComponent(id)}`);
+    return await request<Event>(`/api/events/${encodeURIComponent(id)}`);
   } catch {
     return null;
   }
 }
 
-export async function listEntities(query?: string): Promise<any[]> {
+export async function listEntities(query?: string): Promise<Entity[]> {
   try {
     const qs = query ? `?query=${encodeURIComponent(query)}` : '';
-    const res = await request<any>(`/api/entities${qs}`);
+    const res = await request<Entity[] | { data: Entity[] }>(`/api/entities${qs}`);
     return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
 }
 
-export async function getEntity(id: string): Promise<any | null> {
+export async function getEntity(id: string): Promise<Entity | null> {
   try {
-    return await request<any>(`/api/entities/${encodeURIComponent(id)}`);
+    return await request<Entity>(`/api/entities/${encodeURIComponent(id)}`);
   } catch {
     return null;
   }
 }
 
-export async function getTopic(slugOrId: string): Promise<any | null> {
+export async function getTopic(slugOrId: string): Promise<Topic | null> {
   try {
-    return await request<any>(`/api/topics/${encodeURIComponent(slugOrId)}`);
+    return await request<Topic>(`/api/topics/${encodeURIComponent(slugOrId)}`);
   } catch {
     return null;
   }
 }
 
-export async function listFactChecks(): Promise<any[]> {
+export async function listFactChecks(): Promise<FactCheckClaim[]> {
   try {
-    const res = await request<any[]>('/api/fact-checks');
-    return Array.isArray(res) ? res : (res as any)?.data || [];
+    const res = await request<FactCheckClaim[] | { data: FactCheckClaim[] }>('/api/fact-checks');
+    return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
 }
 
-export async function getStoryFullCoverage(storyIdOrSlug: string): Promise<any | null> {
+export async function getStoryFullCoverage(
+  storyIdOrSlug: string
+): Promise<FullCoverageResult | null> {
   try {
-    return await request<any>(`/api/clustering/coverage/${encodeURIComponent(storyIdOrSlug)}`);
+    return await request<FullCoverageResult>(
+      `/api/clustering/coverage/${encodeURIComponent(storyIdOrSlug)}`
+    );
   } catch {
     try {
-      return await request<any>(`/api/stories/${encodeURIComponent(storyIdOrSlug)}/full-coverage`);
+      return await request<FullCoverageResult>(
+        `/api/stories/${encodeURIComponent(storyIdOrSlug)}/full-coverage`
+      );
     } catch {
       return null;
     }
@@ -675,7 +702,7 @@ export async function getStoryFullCoverage(storyIdOrSlug: string): Promise<any |
 
 export async function listAuditLogs(
   params?: Record<string, string | number | undefined>
-): Promise<any[]> {
+): Promise<AuditLog[]> {
   try {
     const sp = new URLSearchParams();
     if (params) {
@@ -684,16 +711,18 @@ export async function listAuditLogs(
       }
     }
     const qs = sp.toString();
-    const res = await request<any>(`/api/audit/logs${qs ? `?${qs}` : ''}`);
+    const res = await request<AuditLog[] | { data: AuditLog[] }>(
+      `/api/audit/logs${qs ? `?${qs}` : ''}`
+    );
     return Array.isArray(res) ? res : res?.data || [];
   } catch {
     return [];
   }
 }
 
-export async function listMcpWebhooks(): Promise<any[]> {
+export async function listMcpWebhooks(): Promise<WebhookSubscription[]> {
   try {
-    const res = await request<any[]>('/api/mcp/webhooks');
+    const res = await request<WebhookSubscription[]>('/api/mcp/webhooks');
     return Array.isArray(res) ? res : [];
   } catch {
     return [];

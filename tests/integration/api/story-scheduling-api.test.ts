@@ -78,7 +78,7 @@ describe('Story Scheduling REST API Integration Tests', () => {
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
     expect(Array.isArray(body.data)).toBe(true);
-    const found = body.data.find((s: any) => s.id === storyId);
+    const found = body.data.find((s: { id: string }) => s.id === storyId);
     expect(found).toBeDefined();
     expect(found.status).toBe('SCHEDULED');
   });

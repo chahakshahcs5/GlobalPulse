@@ -2,6 +2,27 @@ import type { NewsletterSubscription, NewsletterDigest } from '@ai-news/schemas'
 import type { INewsletterRepository } from '../../interfaces/newsletter.repository';
 import { MemoryNewsletterRepository } from '../memory/newsletter.memory';
 
+interface PrismaSubscriptionRow {
+  id: string;
+  email: string;
+  frequency: 'daily' | 'weekly';
+  categories: string[] | string;
+  active: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+interface PrismaDigestRow {
+  id: string;
+  frequency: 'daily' | 'weekly';
+  date: string;
+  category?: string | null;
+  headline: string;
+  curatedStoryIds: string[] | string;
+  stories: unknown;
+  generatedAt: Date | string;
+}
+
 export class PrismaNewsletterRepository implements INewsletterRepository {
   private fallbackMemory = new MemoryNewsletterRepository();
 
@@ -11,12 +32,43 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
     return this.prismaGetter();
   }
 
-  private get subscriptionClient(): any {
-    return (this.prisma as any).newsletterSubscription;
+  private get subscriptionClient():
+    | {
+        upsert: (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => Promise<PrismaSubscriptionRow>;
+        updateMany: (args: {
+          where: Record<string, unknown>;
+          data: Record<string, unknown>;
+        }) => Promise<{ count: number }>;
+        findMany: (args: { where?: Record<string, unknown> }) => Promise<PrismaSubscriptionRow[]>;
+        findUnique: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<PrismaSubscriptionRow | null>;
+        update: (args: {
+          where: Record<string, unknown>;
+          data: Record<string, unknown>;
+        }) => Promise<PrismaSubscriptionRow>;
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaSubscriptionRow>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)
+      .newsletterSubscription as typeof this.subscriptionClient;
   }
 
-  private get digestClient(): any {
-    return (this.prisma as any).newsletterDigest;
+  private get digestClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaDigestRow>;
+        findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaDigestRow | null>;
+        findFirst: (args: {
+          where: Record<string, unknown>;
+          orderBy?: Record<string, unknown>;
+        }) => Promise<PrismaDigestRow | null>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>).newsletterDigest as typeof this.digestClient;
   }
 
   async subscribe(
@@ -155,7 +207,7 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
       if (frequency) where.frequency = frequency;
       const rows = await this.subscriptionClient.findMany({ where });
 
-      const mapped: NewsletterSubscription[] = rows.map((r: any) => ({
+      const mapped: NewsletterSubscription[] = rows.map((r: PrismaSubscriptionRow) => ({
         id: r.id,
         email: r.email,
         frequency: r.frequency as 'daily' | 'weekly',
@@ -211,7 +263,7 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         category: row.category || undefined,
         headline: row.headline,
         curatedStoryIds: row.curatedStoryIds as string[],
-        stories: row.stories as any[],
+        stories: row.stories as NewsletterDigest['stories'],
         generatedAt:
           row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
       };
@@ -244,7 +296,7 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         category: row.category || undefined,
         headline: row.headline,
         curatedStoryIds: row.curatedStoryIds as string[],
-        stories: row.stories as any[],
+        stories: row.stories as NewsletterDigest['stories'],
         generatedAt:
           row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
       };

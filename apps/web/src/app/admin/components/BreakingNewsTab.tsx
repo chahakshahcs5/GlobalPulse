@@ -2,13 +2,20 @@
 
 import React, { useState } from 'react';
 import { Radio, Bell, CheckCircle2 } from 'lucide-react';
-import type { Story } from '@ai-news/schemas';
+import type { Story, EditorialNotification } from '@ai-news/schemas';
 import { useEditorialNotifications } from '../../../lib/news-store';
 import { formatDeterministicDateTime } from '../../../lib/date-utils';
 
+export interface BreakingNotificationItem extends EditorialNotification {
+  urgency?: string;
+  headline?: string;
+  senderId?: string;
+  sentAt?: string;
+}
+
 interface BreakingNewsTabProps {
   stories: Story[];
-  notifications: any[];
+  notifications: BreakingNotificationItem[];
   onSuccess: (message: string) => void;
 }
 
@@ -17,9 +24,7 @@ export function BreakingNewsTab({ stories, notifications, onSuccess }: BreakingN
 
   const [breakingStoryId, setBreakingStoryId] = useState('');
   const [breakingHeadline, setBreakingHeadline] = useState('');
-  const [breakingUrgency, setBreakingUrgency] = useState<'urgent' | 'critical' | 'breaking'>(
-    'urgent'
-  );
+  const [breakingUrgency, setBreakingUrgency] = useState<'urgent' | 'warning' | 'info'>('urgent');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const handleBroadcastBreaking = async (e: React.FormEvent) => {
@@ -111,7 +116,7 @@ export function BreakingNewsTab({ stories, notifications, onSuccess }: BreakingN
                 Urgency Level
               </label>
               <div className="flex items-center gap-2">
-                {(['urgent', 'critical', 'breaking'] as const).map((urg) => (
+                {(['urgent', 'warning', 'info'] as const).map((urg) => (
                   <button
                     key={urg}
                     type="button"

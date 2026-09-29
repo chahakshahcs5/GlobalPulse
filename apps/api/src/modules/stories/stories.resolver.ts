@@ -12,6 +12,7 @@ import type {
   UpdateStoryInput,
   CreateStoryVersionInput,
   SearchStoriesInput,
+  ClientType,
 } from '@ai-news/schemas';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
@@ -19,7 +20,7 @@ export interface StoriesResolverContext {
   principal?: AuthenticatedPrincipal;
   organizationId?: string;
   userId?: string;
-  clientType?: any;
+  clientType?: ClientType;
 }
 
 @Injectable()

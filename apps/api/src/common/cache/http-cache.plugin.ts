@@ -85,4 +85,4 @@ export const httpCachePlugin: FastifyPluginAsync = async (fastify) => {
 };
 
 // Break Fastify plugin encapsulation so hooks apply globally across all routes
-(httpCachePlugin as any)[Symbol.for('skip-override')] = true;
+(httpCachePlugin as unknown as Record<symbol, unknown>)[Symbol.for('skip-override')] = true;

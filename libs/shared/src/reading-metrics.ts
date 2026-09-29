@@ -23,8 +23,11 @@ export function calculateWordCount(content: string | unknown[]): number {
     let total = 0;
     for (const item of content) {
       if (!item || typeof item !== 'object') continue;
-      const block = item as Record<string, any>;
-      const data = block.data || block;
+      const block = item as Record<string, unknown>;
+      const data =
+        block.data && typeof block.data === 'object'
+          ? (block.data as Record<string, unknown>)
+          : block;
 
       // Extract text based on block types
       if (typeof data.text === 'string') {
@@ -93,7 +96,7 @@ export function calculateReadingTimeMinutes(
 export function computeStoryReadingMetrics(story: {
   title?: string;
   summary?: string;
-  blocks?: Array<{ blockType?: string; data?: any }>;
+  blocks?: Array<{ blockType?: string; data?: unknown }>;
 }): WordCountAndReadingTime {
   let wordCount = 0;
   if (story.title) wordCount += calculateWordCount(story.title);

@@ -221,7 +221,8 @@ export class FactCheckService {
       let otherText = `${other.title} ${other.summary}`;
       if (other.blocks && Array.isArray(other.blocks)) {
         for (const b of other.blocks) {
-          const d = b.data as any;
+          const d =
+            b.data && typeof b.data === 'object' ? (b.data as Record<string, unknown>) : undefined;
           if (d && typeof d.text === 'string') {
             otherText += ` ${d.text}`;
           }

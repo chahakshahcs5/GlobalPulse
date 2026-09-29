@@ -1,4 +1,10 @@
-import type { NewsroomUser, UserRole, UserStatus } from '@ai-news/schemas';
+import type {
+  NewsroomUser,
+  UserRole,
+  UserStatus,
+  ClientType,
+  UserPreferences,
+} from '@ai-news/schemas';
 import type { IUserRepository, FollowRecord } from '../../interfaces/user.repository';
 
 interface PrismaUserRow {
@@ -13,9 +19,16 @@ interface PrismaUserRow {
   passwordHash?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
-  preferences?: any;
+  preferences?: UserPreferences;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface PrismaFollowRow {
+  userId: string;
+  targetType: string;
+  targetId: string;
+  createdAt: Date | string;
 }
 
 export class PrismaUserRepository implements IUserRepository {
@@ -55,8 +68,24 @@ export class PrismaUserRepository implements IUserRepository {
     };
   }
 
-  private get followClient(): any {
-    return (this.prisma as any)?.followRelationship;
+  private get followClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaFollowRow>;
+        delete: (args: { where: Record<string, unknown> }) => Promise<PrismaFollowRow>;
+        deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+        upsert: (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => Promise<PrismaFollowRow>;
+        findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaFollowRow | null>;
+        findMany: (args: {
+          where: Record<string, unknown>;
+          orderBy?: Record<string, unknown>;
+        }) => Promise<PrismaFollowRow[]>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)?.followRelationship as typeof this.followClient;
   }
 
   private mapToNewsroomUser(row: PrismaUserRow): NewsroomUser {
@@ -66,7 +95,7 @@ export class PrismaUserRepository implements IUserRepository {
       name: row.name,
       email: row.email,
       role: (row.role as UserRole) || 'journalist',
-      clientType: (row.clientType as any) || 'human_web',
+      clientType: (row.clientType as ClientType) || 'human_web',
       status: (row.status as UserStatus) || 'active',
       passwordHash: row.passwordHash || undefined,
       preferences: row.preferences || undefined,
@@ -232,7 +261,7 @@ export class PrismaUserRepository implements IUserRepository {
           where,
           orderBy: { createdAt: 'desc' },
         });
-        return rows.map((r: any) => ({
+        return rows.map((r) => ({
           userId: r.userId,
           targetType: r.targetType as 'topic' | 'entity' | 'author',
           targetId: r.targetId,

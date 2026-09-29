@@ -54,7 +54,7 @@ export interface JobRecord<T = unknown> {
   completedAt?: string;
 }
 
-export type JobHandler<T = any, R = any> = (
+export type JobHandler<T = unknown, R = unknown> = (
   job: JobRecord<T>,
   updateProgress: (pct: number) => void
 ) => Promise<R>;

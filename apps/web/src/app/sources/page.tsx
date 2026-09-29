@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { listSources } from '../../lib/api-client';
 import { formatDeterministicDate } from '../../lib/date-utils';
 import { FileText, ExternalLink, ArrowLeft } from 'lucide-react';
+import type { Source } from '@ai-news/schemas';
 
 export default function SourcesPage() {
-  const [sources, setSources] = useState<any[]>([]);
+  const [sources, setSources] = useState<Source[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

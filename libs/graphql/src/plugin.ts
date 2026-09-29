@@ -3,7 +3,7 @@ import mercurius from 'mercurius';
 import { typeDefs } from './schema';
 import { createResolvers } from './resolvers';
 import { DatabaseService, db } from '@ai-news/database';
-import { AuthService, type ClientType } from '@ai-news/auth';
+import { AuthService, type ClientType, type AuthenticatedPrincipal } from '@ai-news/auth';
 
 export interface GraphQLPluginOptions {
   database?: DatabaseService;
@@ -20,7 +20,7 @@ export async function registerGraphQL(app: FastifyInstance, options: GraphQLPlug
     subscription: true,
     graphiql: options.graphiql ?? true,
     context: (req: FastifyRequest) => {
-      let principal: any = null;
+      let principal: AuthenticatedPrincipal | null = null;
       let organizationId: string | undefined = undefined;
       let userId: string | undefined = undefined;
       let clientType: ClientType = 'human_web';

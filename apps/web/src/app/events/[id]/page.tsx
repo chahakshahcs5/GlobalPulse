@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getEvent, listStories, getEntity } from '../../../lib/api-client';
 import { MapRenderer } from '@ai-news/media';
 import { formatDeterministicDate } from '../../../lib/date-utils';
-import type { Story } from '@ai-news/schemas';
+import type { Story, Entity } from '@ai-news/schemas';
 
 import { DEMO_EVENTS, DEMO_STORIES, DEMO_ENTITIES } from '../../../lib/demo-data';
 
@@ -40,7 +40,7 @@ export default async function EventPage({ params }: EventPageProps) {
   );
 
   // Fetch participating entities from live backend
-  const participatingEntities: any[] = [];
+  const participatingEntities: Entity[] = [];
   for (const entId of (event.entityIds || []).slice(0, 10)) {
     try {
       const ent = (await getEntity(entId)) || DEMO_ENTITIES[entId];

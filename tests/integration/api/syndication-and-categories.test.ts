@@ -55,7 +55,7 @@ describe('Syndication Feeds & Category Taxonomy Integration Tests', () => {
       const categories = JSON.parse(res.body);
       expect(Array.isArray(categories)).toBe(true);
       expect(categories.length).toBeGreaterThanOrEqual(8);
-      const tech = categories.find((c: any) => c.slug === 'technology');
+      const tech = categories.find((c: { slug: string }) => c.slug === 'technology');
       expect(tech).toBeDefined();
       expect(tech.name).toBe('Technology');
       expect(tech.storyCount).toBeGreaterThanOrEqual(1);

@@ -238,10 +238,11 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
       expect(res.statusCode).toBe(200);
       const editions = JSON.parse(res.payload);
       expect(editions.length).toBeGreaterThanOrEqual(6);
-      expect(editions.map((e: any) => e.code)).toContain('global');
-      expect(editions.map((e: any) => e.code)).toContain('us');
-      expect(editions.map((e: any) => e.code)).toContain('uk');
-      expect(editions.map((e: any) => e.code)).toContain('in');
+      const editionCodes = editions.map((e: { code: string }) => e.code);
+      expect(editionCodes).toContain('global');
+      expect(editionCodes).toContain('us');
+      expect(editionCodes).toContain('uk');
+      expect(editionCodes).toContain('in');
 
       // Individual edition endpoint
       const inRes = await app.inject({

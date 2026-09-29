@@ -262,7 +262,9 @@ describe('Content Templates & Liveblog Dispatches (F10, F11)', () => {
           name: 'list_content_templates',
           arguments: {},
         });
-        const tplData = JSON.parse((listTplRes as any).content[0].text);
+        const tplData = JSON.parse(
+          (listTplRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(tplData.total).toBe(5);
 
         // 2. instantiate_story_from_template
@@ -274,7 +276,9 @@ describe('Content Templates & Liveblog Dispatches (F10, F11)', () => {
             summary: 'Assessing empirical transmission stability figures from grid operators.',
           },
         });
-        const instData = JSON.parse((instRes as any).content[0].text);
+        const instData = JSON.parse(
+          (instRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(instData.success).toBe(true);
         expect(instData.storyId).toBeDefined();
         expect(instData.articleType).toBe('fact_check');
@@ -289,7 +293,9 @@ describe('Content Templates & Liveblog Dispatches (F10, F11)', () => {
             isKeyEvent: true,
           },
         });
-        const lbPostData = JSON.parse((lbPostRes as any).content[0].text);
+        const lbPostData = JSON.parse(
+          (lbPostRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(lbPostData.success).toBe(true);
         expect(lbPostData.entry.headline).toContain('Ballot Counting');
 
@@ -298,7 +304,9 @@ describe('Content Templates & Liveblog Dispatches (F10, F11)', () => {
           name: 'list_liveblog_entries',
           arguments: { storyId: testStoryId },
         });
-        const lbListData = JSON.parse((lbListRes as any).content[0].text);
+        const lbListData = JSON.parse(
+          (lbListRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(lbListData.total).toBeGreaterThanOrEqual(1);
       } finally {
         await client.close();

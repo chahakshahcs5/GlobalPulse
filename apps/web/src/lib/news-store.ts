@@ -12,7 +12,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Story } from '@ai-news/schemas';
+import type {
+  Story,
+  Category,
+  Comment,
+  TrendingStory,
+  NewsroomUser,
+  EditorialNotification,
+  NewsroomMetrics,
+} from '@ai-news/schemas';
 import * as api from './api-client';
 
 // ---------------------------------------------------------------------------
@@ -314,7 +322,7 @@ export function useReviewQueue() {
  * React hook to fetch dynamic categories.
  */
 export function useCategories() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     api
@@ -383,7 +391,7 @@ export function useCategoryStories(slug: string) {
  * React hook for story comments.
  */
 export function useStoryComments(storyId: string) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchComments = useCallback(async () => {
@@ -460,7 +468,10 @@ export function useStoryReactions(storyId: string) {
     fetchReactions();
 
     const unsub = api.subscribeToRealtimeEvents(['all'], (event) => {
-      if (event.type === 'reaction.updated' && (event.data as any)?.storyId === storyId) {
+      if (
+        event.type === 'reaction.updated' &&
+        (event.data as Record<string, unknown> | undefined)?.storyId === storyId
+      ) {
         fetchReactions();
       }
     });
@@ -489,30 +500,21 @@ export function useStoryReactions(storyId: string) {
  * React hook for live newsroom metrics & KPIs.
  */
 export function useNewsroomMetrics() {
-  const [metrics, setMetrics] = useState<{
-    totalStories: number;
-    publishedStories: number;
-    draftStories: number;
-    inReviewStories: number;
-    scheduledStories: number;
-    totalReads: number;
-    totalReactions: number;
-    totalComments: number;
-    avgReadingTimeMinutes: number;
-    activeJournalists: number;
-    activeAiAgents: number;
-  }>({
+  const [metrics, setMetrics] = useState<NewsroomMetrics>({
     totalStories: 0,
     publishedStories: 0,
     draftStories: 0,
-    inReviewStories: 0,
-    scheduledStories: 0,
-    totalReads: 0,
-    totalReactions: 0,
+    reviewQueueCount: 0,
+    scheduledStoriesCount: 0,
     totalComments: 0,
+    totalReactions: 0,
+    totalBookmarks: 0,
+    activeCategoriesCount: 0,
+    totalReads: 0,
     avgReadingTimeMinutes: 3.5,
     activeJournalists: 1,
     activeAiAgents: 2,
+    generatedAt: new Date().toISOString(),
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -551,7 +553,7 @@ export function useNewsroomMetrics() {
  * React hook for trending stories leaderboard.
  */
 export function useTrendingStories(limit = 10) {
-  const [trending, setTrending] = useState<any[]>([]);
+  const [trending, setTrending] = useState<TrendingStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTrending = useCallback(async () => {
@@ -584,7 +586,7 @@ export function useTrendingStories(limit = 10) {
  * React hook for newsroom staff & autonomous AI roster.
  */
 export function useNewsroomStaff() {
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staff, setStaff] = useState<NewsroomUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStaff = useCallback(async () => {
@@ -673,7 +675,7 @@ export function useScheduledStories() {
  * React hook for editorial notifications.
  */
 export function useEditorialNotifications(limit = 20) {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<EditorialNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchNotifications = useCallback(async () => {
@@ -699,7 +701,11 @@ export function useEditorialNotifications(limit = 20) {
     return () => unsub();
   }, [fetchNotifications]);
 
-  const broadcastBreaking = async (storyId: string, headline: string, urgency = 'urgent') => {
+  const broadcastBreaking = async (
+    storyId: string,
+    headline: string,
+    urgency: 'info' | 'warning' | 'urgent' = 'urgent'
+  ) => {
     const res = await api.broadcastBreakingNews(storyId, headline, urgency);
     fetchNotifications();
     return res;
@@ -828,7 +834,7 @@ export function useTaxonomy() {
             const dynamicCount =
               categoryCounts[slug] ?? categoryCounts[ac.code] ?? ac.storyCount ?? 0;
             return {
-              id: ac.id || `cat_${slug}`,
+              id: (ac as { id?: string }).id || `cat_${slug}`,
               name: ac.name,
               slug,
               description: ac.description || '',
@@ -845,15 +851,19 @@ export function useTaxonomy() {
             const slug = at.slug || at.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
             const atId = (at.id || '').toLowerCase();
             const count =
-              topicCounts[atId] || topicCounts[slug.toLowerCase()] || at.storyCount || 0;
+              topicCounts[atId] ||
+              topicCounts[slug.toLowerCase()] ||
+              (at as { storyCount?: number }).storyCount ||
+              0;
             return {
               id: at.id || `top_${slug}`,
               name: at.name,
               slug,
               description: at.description || '',
-              parentCategory: at.parentCategory || 'General',
+              parentCategory:
+                (at as { parentCategory?: string }).parentCategory || at.parentTopicId || 'General',
               storyCount: count,
-              isCustom: at.isCustom,
+              isCustom: (at as { isCustom?: boolean }).isCustom ?? false,
             };
           })
         : [];

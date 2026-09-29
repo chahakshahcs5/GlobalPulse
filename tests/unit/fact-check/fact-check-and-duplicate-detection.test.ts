@@ -276,7 +276,9 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
           name: 'evaluate_story_credibility',
           arguments: { storyId: highCredStoryId },
         });
-        const credData = JSON.parse((credRes as any).content[0].text);
+        const credData = JSON.parse(
+          (credRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(credData.score).toBeGreaterThanOrEqual(75);
         expect(credData.level).toBe('high');
 
@@ -289,7 +291,9 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
               'Peer-reviewed collision metrics at the Large Hadron Collider establish new benchmarks.',
           },
         });
-        const dupData = JSON.parse((dupRes as any).content[0].text);
+        const dupData = JSON.parse(
+          (dupRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(dupData.isDuplicate).toBe(true);
         expect(dupData.recommendation).toBe('reject');
 
@@ -298,7 +302,9 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
           name: 'list_fact_checks',
           arguments: {},
         });
-        const fcData = JSON.parse((fcRes as any).content[0].text);
+        const fcData = JSON.parse(
+          (fcRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(fcData.total).toBeGreaterThanOrEqual(3);
       } finally {
         await client.close();

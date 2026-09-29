@@ -188,7 +188,9 @@ export class DatabaseService {
       if (requiresPrisma) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         logger.error(`Fatal database initialization failure: ${errorMsg}`);
-        throw err;
+        throw new Error(
+          `DATABASE_ENGINE is configured as "prisma" or running in production, but PrismaClient could not be initialized (${errorMsg}). In-memory fallback is disabled for production safety.`
+        );
       }
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn(`Prisma initialization failed: ${errorMsg}. Operating in Memory mode.`);

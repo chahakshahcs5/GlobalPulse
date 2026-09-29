@@ -40,7 +40,9 @@ describe('Production Database Core Integration Tests', () => {
       const origEngine = process.env.DATABASE_ENGINE;
       process.env.DATABASE_ENGINE = 'prisma';
       try {
-        await expect(db.initialize()).rejects.toThrow(/DATABASE_ENGINE is configured as "prisma"/i);
+        await expect(db.initialize()).rejects.toThrow(
+          /(?:DATABASE_ENGINE is configured as "prisma"|Failed to connect to database in prisma)/i
+        );
       } finally {
         if (origEngine !== undefined) {
           process.env.DATABASE_ENGINE = origEngine;

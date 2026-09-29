@@ -225,7 +225,9 @@ describe('Personalized "For You" Feed & Search Autocomplete (F2, F3)', () => {
       expect(res.statusCode).toBe(200);
       const suggestions = JSON.parse(res.body);
       expect(Array.isArray(suggestions)).toBe(true);
-      expect(suggestions.some((s: any) => s.text.toLowerCase().includes('cern'))).toBe(true);
+      expect(suggestions.some((s: { text: string }) => s.text.toLowerCase().includes('cern'))).toBe(
+        true
+      );
     });
   });
 
@@ -262,7 +264,9 @@ describe('Personalized "For You" Feed & Search Autocomplete (F2, F3)', () => {
           name: 'get_personalized_feed',
           arguments: { limit: 5 },
         });
-        const feedData = JSON.parse((feedResult as any).content[0].text);
+        const feedData = JSON.parse(
+          (feedResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(feedData.stories.length).toBeGreaterThanOrEqual(1);
         expect(feedData.stories[0].id).toBe('sty_quantum_cern');
 
@@ -271,7 +275,9 @@ describe('Personalized "For You" Feed & Search Autocomplete (F2, F3)', () => {
           name: 'get_search_suggestions',
           arguments: { query: 'cern', limit: 5 },
         });
-        const suggestData = JSON.parse((suggestResult as any).content[0].text);
+        const suggestData = JSON.parse(
+          (suggestResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(suggestData.suggestions.length).toBeGreaterThanOrEqual(1);
         expect(suggestData.suggestions[0].text.toLowerCase()).toContain('cern');
       } finally {

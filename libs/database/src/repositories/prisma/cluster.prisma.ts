@@ -11,8 +11,8 @@ interface PrismaClusterRow {
   storyIds: string[] | string;
   topic?: string | null;
   category?: string | null;
-  perspectives: any;
-  timeline: any;
+  perspectives: unknown;
+  timeline: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,7 +43,7 @@ export class PrismaClusterRepository implements IClusterRepository {
         delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
       }
     | undefined {
-    return (this.prisma as any).storyCluster;
+    return (this.prisma as Record<string, unknown>).storyCluster as typeof this.clusterClient;
   }
 
   private mapToCluster(row: PrismaClusterRow): StoryCluster {
@@ -58,9 +58,9 @@ export class PrismaClusterRepository implements IClusterRepository {
       }
     }
 
-    let perspectives: any[] = [];
+    let perspectives: StoryCluster['perspectives'] = [];
     if (Array.isArray(row.perspectives)) {
-      perspectives = row.perspectives;
+      perspectives = row.perspectives as StoryCluster['perspectives'];
     } else if (typeof row.perspectives === 'string') {
       try {
         perspectives = JSON.parse(row.perspectives);
@@ -69,9 +69,9 @@ export class PrismaClusterRepository implements IClusterRepository {
       }
     }
 
-    let timeline: any[] = [];
+    let timeline: StoryCluster['timeline'] = [];
     if (Array.isArray(row.timeline)) {
-      timeline = row.timeline;
+      timeline = row.timeline as StoryCluster['timeline'];
     } else if (typeof row.timeline === 'string') {
       try {
         timeline = JSON.parse(row.timeline);

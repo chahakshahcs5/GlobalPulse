@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, UseGuards, NotFoundException } from '@ne
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
-import { CANONICAL_CATEGORIES, Category } from '@ai-news/schemas';
+import { CANONICAL_CATEGORIES, Category, ArticleType } from '@ai-news/schemas';
 import { ApiResponse } from '../../common/response/api-response';
 
 @Controller('api/categories')
@@ -90,7 +90,7 @@ export class CategoriesController {
       return ApiResponse.paginated(stories, stories.length, limit);
     }
 
-    const targetArticleType = category ? category.code : (slug as any);
+    const targetArticleType = (category ? category.code : slug) as ArticleType;
     const stories = await db.stories.list(
       { status: 'PUBLISHED', articleType: targetArticleType, limit },
       principal.organizationId

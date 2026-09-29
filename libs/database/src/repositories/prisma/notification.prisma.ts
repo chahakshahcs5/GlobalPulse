@@ -40,7 +40,7 @@ export class PrismaNotificationRepository implements INotificationRepository {
       orderBy?: Record<string, unknown>;
     }) => Promise<PrismaNotificationRow[]>;
   } {
-    return this.prisma.editorialNotification as any;
+    return this.prisma.editorialNotification as unknown as typeof this.notificationClient;
   }
 
   private mapToNotification(row: PrismaNotificationRow): EditorialNotification {

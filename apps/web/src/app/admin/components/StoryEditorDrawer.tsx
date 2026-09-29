@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Eye,
 } from 'lucide-react';
-import type { Story } from '@ai-news/schemas';
+import type { Story, StoryBlock, ArticleType } from '@ai-news/schemas';
 import {
   saveUserStory,
   updateUserStory,
@@ -29,7 +29,8 @@ import { StoryRenderer } from '../../../components/StoryRenderer';
 interface MediaBlockDraft {
   id: string;
   type: 'image' | 'chart' | 'quote' | 'timeline' | 'video' | 'table' | 'callout' | 'statistic';
-  data: any;
+  data: Record<string, string | number | readonly string[] | undefined>;
+  items?: Array<{ date: string; headline: string; body: string }>;
 }
 
 interface StoryEditorDrawerProps {
@@ -56,9 +57,7 @@ export function StoryEditorDrawer({
   // Story Form State
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
-  const [category, setCategory] = useState<
-    'technology' | 'business' | 'world' | 'science' | 'sports' | 'health'
-  >('technology');
+  const [category, setCategory] = useState<ArticleType>('technology');
   const [authorName, setAuthorName] = useState('Senior Staff Journalist');
   const [heroImageUrl, setHeroImageUrl] = useState(
     'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80'
@@ -74,59 +73,169 @@ export function StoryEditorDrawer({
     if (editingStory) {
       setTitle(editingStory.title || '');
       setSummary(editingStory.summary || '');
-      setCategory((editingStory.articleType as any) || 'technology');
+      setCategory(editingStory.articleType || 'technology');
       setAuthorName(
         editingStory.authorId
           ? editingStory.authorId.replace('usr_', '').replace(/_/g, ' ')
           : 'Senior Staff Journalist'
       );
       setHeroImageUrl(editingStory.heroImageUrl || '');
-      setSubmitMode((editingStory.status as any) || 'PUBLISH');
+      if (editingStory.status === 'PUBLISHED') setSubmitMode('PUBLISH');
+      else if (editingStory.status === 'IN_REVIEW') setSubmitMode('REVIEW');
+      else if (editingStory.status === 'SCHEDULED') setSubmitMode('SCHEDULE');
+      else setSubmitMode('DRAFT');
 
-      const blocks = editingStory.blocks || [];
-      const leadBlock = blocks.find((b: any) => b.blockType === 'paragraph');
-      setLeadParagraph((leadBlock?.data as any)?.text || '');
+      const blocks: StoryBlock[] = editingStory.blocks || [];
+      const leadBlock = blocks.find((b) => b.blockType === 'paragraph');
+      setLeadParagraph((leadBlock?.data as { text?: string } | undefined)?.text || '');
 
       const bulletBlock = blocks.find(
-        (b: any) => b.blockType === 'bullet_list' || b.blockType === 'summary'
+        (b) => b.blockType === 'summary' || (b.blockType as string) === 'bullet_list'
       );
-      const items =
-        (bulletBlock?.data as any)?.items || (bulletBlock?.data as any)?.bulletPoints || [];
+      const bulletData = bulletBlock?.data as
+        { items?: string[]; bulletPoints?: string[] } | undefined;
+      const items = bulletData?.items || bulletData?.bulletPoints || [];
       setBullet1(items[0] || '');
       setBullet2(items[1] || '');
       setBullet3(items[2] || '');
 
       const loadedMedia: MediaBlockDraft[] = [];
-      blocks.forEach((b: any, idx: number) => {
+      blocks.forEach((b: StoryBlock, idx: number) => {
         if (b.blockType === 'image') {
-          loadedMedia.push({ id: b.id || `img_${idx}`, type: 'image', data: b.data });
+          const imgData = b.data as
+            { url?: string; caption?: string; credit?: string; altText?: string } | undefined;
+          loadedMedia.push({
+            id: b.id || `img_${idx}`,
+            type: 'image',
+            data: {
+              url: imgData?.url || '',
+              caption: imgData?.caption || '',
+              credit: imgData?.credit || '',
+              altText: imgData?.altText || '',
+            },
+          });
         } else if (b.blockType === 'chart') {
-          loadedMedia.push({ id: b.id || `chart_${idx}`, type: 'chart', data: b.data });
-        } else if (b.blockType === 'quote' || b.blockType === 'pull_quote') {
-          loadedMedia.push({ id: b.id || `quote_${idx}`, type: 'quote', data: b.data });
+          const chartData = b.data as unknown as
+            | {
+                chartType?: string;
+                title?: string;
+                xAxis?: string | { label?: string; key?: string };
+                yAxis?: string | { label?: string; key?: string };
+                dataRows?: string;
+              }
+            | undefined;
+          loadedMedia.push({
+            id: b.id || `chart_${idx}`,
+            type: 'chart',
+            data: {
+              chartType: chartData?.chartType || 'bar',
+              title: chartData?.title || '',
+              xAxis:
+                typeof chartData?.xAxis === 'string'
+                  ? chartData.xAxis
+                  : chartData?.xAxis?.label || '',
+              yAxis:
+                typeof chartData?.yAxis === 'string'
+                  ? chartData.yAxis
+                  : chartData?.yAxis?.label || '',
+              dataRows: chartData?.dataRows || '',
+            },
+          });
+        } else if (b.blockType === 'quote' || (b.blockType as string) === 'pull_quote') {
+          const quoteData = b.data as
+            { quote?: string; attribution?: string; title?: string } | undefined;
+          loadedMedia.push({
+            id: b.id || `quote_${idx}`,
+            type: 'quote',
+            data: {
+              quote: quoteData?.quote || '',
+              attribution: quoteData?.attribution || '',
+              title: quoteData?.title || '',
+            },
+          });
         } else if (b.blockType === 'timeline') {
-          loadedMedia.push({ id: b.id || `time_${idx}`, type: 'timeline', data: b.data });
+          const tData = b.data as
+            | {
+                title?: string;
+                items?: Array<{ date: string; headline: string; body: string }>;
+              }
+            | undefined;
+          loadedMedia.push({
+            id: b.id || `time_${idx}`,
+            type: 'timeline',
+            data: {
+              title: tData?.title || '',
+            },
+            items: tData?.items || [],
+          });
         } else if (b.blockType === 'video') {
-          loadedMedia.push({ id: b.id || `vid_${idx}`, type: 'video', data: b.data });
+          const vidData = b.data as
+            { url?: string; caption?: string; durationSeconds?: number } | undefined;
+          loadedMedia.push({
+            id: b.id || `vid_${idx}`,
+            type: 'video',
+            data: {
+              url: vidData?.url || '',
+              caption: vidData?.caption || '',
+              durationSeconds: vidData?.durationSeconds || 120,
+            },
+          });
         } else if (b.blockType === 'table') {
+          const tableData = b.data as
+            | {
+                title?: string;
+                headers?: string[] | string;
+                rows?: unknown[][];
+                footer?: string;
+              }
+            | undefined;
           loadedMedia.push({
             id: b.id || `tbl_${idx}`,
             type: 'table',
             data: {
-              title: b.data.title || '',
-              headers: Array.isArray(b.data.headers)
-                ? b.data.headers.join(', ')
-                : b.data.headers || '',
-              rowsText: Array.isArray(b.data.rows)
-                ? b.data.rows.map((r: any[]) => r.join(', ')).join('\n')
+              title: tableData?.title || '',
+              headers: Array.isArray(tableData?.headers)
+                ? tableData?.headers.join(', ')
+                : tableData?.headers || '',
+              rowsText: Array.isArray(tableData?.rows)
+                ? tableData?.rows.map((r: unknown[]) => r.join(', ')).join('\n')
                 : '',
-              footer: b.data.footer || '',
+              footer: tableData?.footer || '',
             },
           });
         } else if (b.blockType === 'callout') {
-          loadedMedia.push({ id: b.id || `call_${idx}`, type: 'callout', data: b.data });
+          const calloutData = b.data as
+            { style?: string; title?: string; text?: string } | undefined;
+          loadedMedia.push({
+            id: b.id || `call_${idx}`,
+            type: 'callout',
+            data: {
+              style: calloutData?.style || 'info',
+              title: calloutData?.title || '',
+              text: calloutData?.text || '',
+            },
+          });
         } else if (b.blockType === 'statistic') {
-          loadedMedia.push({ id: b.id || `stat_${idx}`, type: 'statistic', data: b.data });
+          const statData = b.data as
+            | {
+                label?: string;
+                value?: string;
+                trend?: string;
+                trendValue?: string;
+                context?: string;
+              }
+            | undefined;
+          loadedMedia.push({
+            id: b.id || `stat_${idx}`,
+            type: 'statistic',
+            data: {
+              label: statData?.label || '',
+              value: statData?.value || '',
+              trend: statData?.trend || 'up',
+              trendValue: statData?.trendValue || '',
+              context: statData?.context || '',
+            },
+          });
         }
       });
       setMediaBlocks(loadedMedia);
@@ -207,19 +316,19 @@ export function StoryEditorDrawer({
         type: 'timeline',
         data: {
           title: 'Key Milestones & Timeline',
-          items: [
-            {
-              date: 'Phase 1 • 09:00 AM',
-              headline: 'Working Group Formal Convening',
-              body: 'Delegations confirm multilateral agenda.',
-            },
-            {
-              date: 'Phase 2 • 02:30 PM',
-              headline: 'Technical Framework Approved',
-              body: 'All parties ratify operational protocol.',
-            },
-          ],
         },
+        items: [
+          {
+            date: 'Phase 1 • 09:00 AM',
+            headline: 'Working Group Formal Convening',
+            body: 'Delegations confirm multilateral agenda.',
+          },
+          {
+            date: 'Phase 2 • 02:30 PM',
+            headline: 'Technical Framework Approved',
+            body: 'All parties ratify operational protocol.',
+          },
+        ],
       },
     ]);
   };
@@ -292,14 +401,18 @@ export function StoryEditorDrawer({
     setMediaBlocks((prev) => prev.filter((b) => b.id !== id));
   };
 
-  const updateMediaBlockData = (id: string, field: string, value: any) => {
+  const updateMediaBlockData = (
+    id: string,
+    field: string,
+    value: string | number | readonly string[] | undefined
+  ) => {
     setMediaBlocks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, data: { ...b.data, [field]: value } } : b))
     );
   };
 
-  const getAssembledBlocks = (): any[] => {
-    const blocks: any[] = [];
+  const getAssembledBlocks = (): StoryBlock[] => {
+    const blocks: StoryBlock[] = [];
 
     if (leadParagraph.trim()) {
       blocks.push({
@@ -314,9 +427,12 @@ export function StoryEditorDrawer({
     if (keyTakeaways.length > 0) {
       blocks.push({
         id: `blk_takeaways_${editingStory?.id || 'new'}`,
-        blockType: 'bullet_list',
+        blockType: 'summary',
         sortOrder: 1,
-        data: { items: keyTakeaways },
+        data: {
+          headline: 'Key Takeaways',
+          bulletPoints: keyTakeaways,
+        },
       });
     }
 
@@ -328,12 +444,13 @@ export function StoryEditorDrawer({
           blockType: 'image',
           sortOrder,
           data: {
-            url: m.data.url,
-            caption: m.data.caption,
-            credit: m.data.credit,
-            altText: m.data.altText,
+            url: String(m.data.url || ''),
+            caption: m.data.caption ? String(m.data.caption) : undefined,
+            credit: m.data.credit ? String(m.data.credit) : undefined,
+            altText: String(m.data.altText || m.data.caption || 'Image'),
+            aspectRatio: '16:9',
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'chart') {
         blocks.push({
           id: `chart_${m.id}`,
@@ -346,28 +463,37 @@ export function StoryEditorDrawer({
             yAxis: m.data.yAxis,
             dataRows: m.data.dataRows,
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'quote') {
         blocks.push({
           id: `quote_${m.id}`,
-          blockType: 'pull_quote',
+          blockType: 'quote',
           sortOrder,
           data: {
-            quote: m.data.quote,
-            attribution: m.data.attribution,
-            title: m.data.title,
+            quote: String(m.data.quote || ''),
+            attribution: String(m.data.attribution || ''),
+            title: m.data.title ? String(m.data.title) : undefined,
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'timeline') {
         blocks.push({
           id: `time_${m.id}`,
           blockType: 'timeline',
           sortOrder,
           data: {
-            title: m.data.title,
-            items: m.data.items || [],
+            title: m.data.title ? String(m.data.title) : undefined,
+            items:
+              m.items && m.items.length > 0
+                ? m.items
+                : [
+                    {
+                      date: '09:00 AM',
+                      headline: 'Formal Session Convenes',
+                      body: 'Proceedings opened.',
+                    },
+                  ],
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'video') {
         blocks.push({
           id: `vid_${m.id}`,
@@ -378,17 +504,17 @@ export function StoryEditorDrawer({
             caption: m.data.caption,
             durationSeconds: Number(m.data.durationSeconds) || 120,
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'table') {
         const rawHeaders = Array.isArray(m.data.headers)
           ? m.data.headers
-          : (m.data.headers || '')
+          : String(m.data.headers || '')
               .split(',')
               .map((s: string) => s.trim())
               .filter(Boolean);
         const rawRows = Array.isArray(m.data.rows)
           ? m.data.rows
-          : (m.data.rowsText || '')
+          : String(m.data.rowsText || '')
               .split('\n')
               .filter(Boolean)
               .map((line: string) => line.split(',').map((c: string) => c.trim()));
@@ -402,7 +528,7 @@ export function StoryEditorDrawer({
             rows: rawRows.length > 0 ? rawRows : [['Item 1', 'Item 2']],
             footer: m.data.footer,
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'callout') {
         blocks.push({
           id: `call_${m.id}`,
@@ -413,7 +539,7 @@ export function StoryEditorDrawer({
             title: m.data.title,
             text: m.data.text,
           },
-        });
+        } as unknown as StoryBlock);
       } else if (m.type === 'statistic') {
         blocks.push({
           id: `stat_${m.id}`,
@@ -426,7 +552,7 @@ export function StoryEditorDrawer({
             trendValue: m.data.trendValue,
             context: m.data.context,
           },
-        });
+        } as unknown as StoryBlock);
       }
     });
 
@@ -455,7 +581,7 @@ export function StoryEditorDrawer({
           title: title.trim(),
           summary: summary.trim(),
           status: initialStatus,
-          articleType: category as any,
+          articleType: category,
           topicIds: [`top_${category}`],
           heroImageUrl: heroImageUrl.trim() || undefined,
           blocks: newBlocks,
@@ -475,7 +601,7 @@ export function StoryEditorDrawer({
           title: title.trim(),
           summary: summary.trim(),
           status: initialStatus,
-          articleType: category as any,
+          articleType: category,
           topicIds: [`top_${category}`],
           entityIds: [],
           sourceIds: [],
@@ -617,7 +743,7 @@ export function StoryEditorDrawer({
                 </label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
+                  onChange={(e) => setCategory(e.target.value as ArticleType)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-medium focus:outline-none focus:border-blue-500"
                 >
                   <option value="technology">Technology & Silicon</option>
@@ -1030,7 +1156,7 @@ export function StoryEditorDrawer({
                             <div>
                               <label className="block text-slate-500 mb-1">Callout Tone</label>
                               <select
-                                value={block.data.style || 'info'}
+                                value={(block.data.style as string) || 'info'}
                                 onChange={(e) =>
                                   updateMediaBlockData(block.id, 'style', e.target.value)
                                 }
@@ -1102,7 +1228,7 @@ export function StoryEditorDrawer({
                             <div>
                               <label className="block text-slate-500 mb-1">Trend Direction</label>
                               <select
-                                value={block.data.trend || 'up'}
+                                value={(block.data.trend as string) || 'up'}
                                 onChange={(e) =>
                                   updateMediaBlockData(block.id, 'trend', e.target.value)
                                 }

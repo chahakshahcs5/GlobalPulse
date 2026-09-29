@@ -312,7 +312,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
           name: 'get_news_sitemap',
           arguments: { limit: 10 },
         });
-        const sitemapData = JSON.parse((sitemapResult as any).content[0].text);
+        const sitemapData = JSON.parse(
+          (sitemapResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(sitemapData.totalEligible).toBeGreaterThanOrEqual(1);
         expect(sitemapData.entries[0].storyId).toBe(testStoryId);
 
@@ -321,7 +323,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
           name: 'get_story_structured_data',
           arguments: { storyId: testStoryId },
         });
-        const structuredData = JSON.parse((structuredResult as any).content[0].text);
+        const structuredData = JSON.parse(
+          (structuredResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(structuredData.schemaType).toBe('NewsArticle');
         expect(structuredData.structuredData['@type']).toBe('NewsArticle');
 
@@ -334,7 +338,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
             completed: false,
           },
         });
-        const progressData = JSON.parse((progressResult as any).content[0].text);
+        const progressData = JSON.parse(
+          (progressResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(progressData.progress.percentage).toBe(80);
 
         // Test get reading history tool
@@ -342,7 +348,9 @@ describe('Google News Core Discovery & Syndication (F22, F23, F24, F6, F7)', () 
           name: 'get_reading_history',
           arguments: { limit: 10 },
         });
-        const historyData = JSON.parse((historyResult as any).content[0].text);
+        const historyData = JSON.parse(
+          (historyResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(historyData.totalItems).toBeGreaterThanOrEqual(1);
       } finally {
         await client.close();

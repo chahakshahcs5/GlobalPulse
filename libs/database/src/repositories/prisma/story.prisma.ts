@@ -302,7 +302,7 @@ export class PrismaStoryRepository implements IStoryRepository {
     const rows = await this.storyClient.findMany(findManyArgs);
     const hasMore = rows.length > limit;
     const pageRows = hasMore ? rows.slice(0, limit) : rows;
-    const items = pageRows.map((r: any) => this.mapToDomain(r));
+    const items = pageRows.map((r) => this.mapToDomain(r));
     const lastItem = items[items.length - 1];
     const nextCursor =
       hasMore && lastItem

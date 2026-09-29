@@ -99,7 +99,9 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
               <label className="block text-slate-500 mb-1">Role</label>
               <select
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as any)}
+                onChange={(e) =>
+                  setInviteRole(e.target.value as 'journalist' | 'editor' | 'ai_agent' | 'admin')
+                }
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
               >
                 <option value="journalist">Journalist (Authoring)</option>
@@ -112,7 +114,7 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
               <label className="block text-slate-500 mb-1">Type</label>
               <select
                 value={inviteClientType}
-                onChange={(e) => setInviteClientType(e.target.value as any)}
+                onChange={(e) => setInviteClientType(e.target.value as 'human' | 'ai_agent')}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
               >
                 <option value="human">Human Contributor</option>
@@ -146,7 +148,10 @@ export function StaffManagementTab({ onSuccess }: StaffManagementTabProps) {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {staff.map((u) => {
-                const isAi = u.clientType === 'ai_agent' || u.id.includes('agent');
+                const isAi =
+                  u.role === 'ai_agent' ||
+                  (u.clientType as string) === 'ai_agent' ||
+                  u.id.includes('agent');
                 return (
                   <tr
                     key={u.id}

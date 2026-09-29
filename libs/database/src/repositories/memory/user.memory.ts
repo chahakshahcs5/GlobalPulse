@@ -186,7 +186,11 @@ export class MemoryUserRepository implements IUserRepository {
     };
   }
 
-  restore(snap: any): void {
+  restore(
+    snap:
+      | { users?: Map<string, NewsroomUser>; follows?: Map<string, FollowRecord> }
+      | Map<string, NewsroomUser>
+  ): void {
     if (snap instanceof Map) {
       this.users = new Map(snap);
     } else if (snap && snap.users) {

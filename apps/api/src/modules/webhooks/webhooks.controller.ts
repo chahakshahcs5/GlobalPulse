@@ -14,7 +14,7 @@ import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 import { RegisterWebhookInputSchema } from '@ai-news/schemas';
-import type { WebhookSubscription, WebhookDispatchLog } from '@ai-news/schemas';
+import type { WebhookSubscription, WebhookDispatchLog, WebhookEvent } from '@ai-news/schemas';
 
 @Controller('api/mcp/webhooks')
 @UseGuards(NestAuthGuard)
@@ -61,7 +61,7 @@ export class WebhooksController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<WebhookDispatchLog[]> {
     return await this.webhookService.dispatch(
-      body.event as any,
+      body.event as WebhookEvent,
       body.payload || {},
       principal.organizationId
     );

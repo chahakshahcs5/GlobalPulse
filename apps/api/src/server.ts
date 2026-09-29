@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import Fastify, { FastifyInstance, FastifyRequest } from 'fastify';
-import cors from '@fastify/cors';
+import cors, { FastifyCorsOptions } from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -21,16 +21,16 @@ export interface ApiServerOptions {
 
 import { isOriginAllowed, ALLOWED_CORS_HEADERS, ALLOWED_CORS_METHODS } from '@ai-news/shared';
 
-export function getCorsOptions() {
+export function getCorsOptions(): FastifyCorsOptions {
   return {
-    origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
+    origin: async (origin: string | undefined): Promise<boolean> => {
       if (!origin || isOriginAllowed(origin)) {
-        return cb(null, true);
+        return true;
       }
-      return cb(null, false);
+      return false;
     },
-    methods: ALLOWED_CORS_METHODS,
-    allowedHeaders: ALLOWED_CORS_HEADERS,
+    methods: ALLOWED_CORS_METHODS as string[],
+    allowedHeaders: ALLOWED_CORS_HEADERS as string[],
     credentials: true,
   };
 }
@@ -78,7 +78,7 @@ export function getRateLimitOptions() {
 export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
   const fastify = Fastify({ logger: options.logger ?? false });
 
-  fastify.register(cors, getCorsOptions() as any);
+  fastify.register(cors, getCorsOptions());
   fastify.register(rateLimit, getRateLimitOptions());
   fastify.register(httpCachePlugin);
   fastify.register(requestLoggerPlugin);
@@ -114,7 +114,7 @@ export async function createNestApp(): Promise<NestFastifyApplication> {
     logger: false,
   });
 
-  await app.register(cors, getCorsOptions() as any);
+  await app.register(cors, getCorsOptions() as unknown as Record<string, unknown>);
   await app.register(rateLimit, getRateLimitOptions());
   await app.register(httpCachePlugin);
 

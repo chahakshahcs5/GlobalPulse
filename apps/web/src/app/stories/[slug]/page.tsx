@@ -21,7 +21,7 @@ import {
   Play,
   Pause,
 } from 'lucide-react';
-import type { Story } from '@ai-news/schemas';
+import type { Story, StoryBlock } from '@ai-news/schemas';
 import * as api from '../../../lib/api-client';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
 import { StoryRenderer } from '../../../components/StoryRenderer';
@@ -102,9 +102,10 @@ export default function StoryPage() {
   // Dynamic Reading Time Calculation
   const totalWords =
     (story?.summary?.split(/\s+/).length || 0) +
-    (story?.blocks?.reduce((acc: number, b: any) => {
-      if (b?.data?.text) return acc + String(b.data.text).split(/\s+/).length;
-      if (b?.data?.caption) return acc + String(b.data.caption).split(/\s+/).length;
+    (story?.blocks?.reduce((acc: number, b: StoryBlock) => {
+      const data = b?.data as { text?: string; caption?: string } | undefined;
+      if (data?.text) return acc + String(data.text).split(/\s+/).length;
+      if (data?.caption) return acc + String(data.caption).split(/\s+/).length;
       return acc;
     }, 0) || 0);
   const readingTimeMins = Math.max(1, Math.ceil(totalWords / 200));
@@ -142,8 +143,13 @@ export default function StoryPage() {
     if (story && typeof window !== 'undefined') {
       try {
         const raw = localStorage.getItem('globalpulse_reading_history');
-        const history = raw ? JSON.parse(raw) : [];
-        const filtered = history.filter((item: any) => item.slug !== story.slug);
+        const history: Array<{
+          slug?: string;
+          title?: string;
+          category?: string;
+          readAt?: string;
+        }> = raw ? JSON.parse(raw) : [];
+        const filtered = history.filter((item) => item.slug !== story.slug);
         filtered.unshift({
           slug: story.slug,
           title: story.title,
@@ -405,10 +411,11 @@ export default function StoryPage() {
             story.createdByClient || (story.createdVia === 'admin' ? 'human_web' : 'gemini')
           }
           createdVia={story.createdVia || 'api'}
-          versionNumber={(story as any).version || 1}
+          versionNumber={story.currentVersionNumber || (story as { version?: number }).version || 1}
           sourceCount={
             story.blocks?.filter(
-              (b: any) => b.blockType === 'source_citation' || b.blockType === 'quote'
+              (b: StoryBlock) =>
+                (b.blockType as string) === 'source_citation' || b.blockType === 'quote'
             ).length || 2
           }
           publishedAt={story.publishedAt || story.createdAt}

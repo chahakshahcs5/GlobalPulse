@@ -16,7 +16,12 @@ import { EngagementService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
-import type { CreateCommentInput, ModerateCommentInput, StoryReactionType } from '@ai-news/schemas';
+import type {
+  CreateCommentInput,
+  ModerateCommentInput,
+  StoryReactionType,
+  CommentAuthorRole,
+} from '@ai-news/schemas';
 import { generateOpenGraphMeta, generateSocialShareLinks } from '@ai-news/shared';
 
 @Controller('api')
@@ -52,10 +57,13 @@ export class EngagementController {
     @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
+    const role = principal.role;
+    const authorRole: CommentAuthorRole =
+      role === 'admin' ? 'editor' : (role as CommentAuthorRole) || 'reader';
     const comment = await this.engagementService.createComment(storyId, body, {
       authorId: principal.id,
       authorName: body.authorName || principal.id,
-      authorRole: (principal.role as any) || 'reader',
+      authorRole,
       organizationId: principal.organizationId,
     });
     reply.status(HttpStatus.CREATED);

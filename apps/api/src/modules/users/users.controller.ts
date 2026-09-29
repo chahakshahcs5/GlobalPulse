@@ -64,7 +64,8 @@ export class UsersController {
     AuthService.requireRole(principal, 'admin');
     AuthService.requireScope(principal, 'news:admin');
 
-    const validated = AssignUserRoleInputSchema.parse({ ...((body as any) || {}), userId: id });
+    const bodyObj = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+    const validated = AssignUserRoleInputSchema.parse({ ...bodyObj, userId: id });
     const ctx: StoryContext = {
       organizationId: principal.organizationId,
       authorId: principal.id,

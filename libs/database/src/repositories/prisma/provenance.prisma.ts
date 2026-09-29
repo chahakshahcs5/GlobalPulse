@@ -2,6 +2,19 @@ import type { AIStoryProvenance } from '@ai-news/schemas';
 import type { IProvenanceRepository } from '../../interfaces/provenance.repository';
 import { MemoryProvenanceRepository } from '../memory/provenance.memory';
 
+interface PrismaProvenanceRow {
+  id: string;
+  storyId: string;
+  generatorModel: string;
+  promptHash: string;
+  confidenceScore: number;
+  humanReviewedBy?: string | null;
+  watermarkSignature: string;
+  c2paManifestUrl?: string | null;
+  generationTimestamp: Date | string;
+  createdAt: Date | string;
+}
+
 export class PrismaProvenanceRepository implements IProvenanceRepository {
   private fallbackMemory = new MemoryProvenanceRepository();
 
@@ -11,8 +24,19 @@ export class PrismaProvenanceRepository implements IProvenanceRepository {
     return this.prismaGetter();
   }
 
-  private get provenanceClient(): any {
-    return (this.prisma as any).storyProvenance;
+  private get provenanceClient():
+    | {
+        upsert: (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => Promise<PrismaProvenanceRow>;
+        findUnique: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<PrismaProvenanceRow | null>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>).storyProvenance as typeof this.provenanceClient;
   }
 
   async saveProvenance(provenance: AIStoryProvenance): Promise<AIStoryProvenance> {

@@ -75,7 +75,7 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     expect(res.statusCode).toBe(200);
     const comments = JSON.parse(res.body);
     expect(comments.length).toBeGreaterThanOrEqual(1);
-    expect(comments.some((c: any) => c.id === commentId)).toBe(true);
+    expect(comments.some((c: { id: string }) => c.id === commentId)).toBe(true);
   });
 
   it('moderates a comment via PUT /api/comments/:commentId/moderate', async () => {
@@ -133,6 +133,6 @@ describe('Reader Engagement & Moderation Integration Tests', () => {
     });
     expect(listRes.statusCode).toBe(200);
     const bookmarks = JSON.parse(listRes.body);
-    expect(bookmarks.some((b: any) => b.storyId === storyId)).toBe(true);
+    expect(bookmarks.some((b: { storyId: string }) => b.storyId === storyId)).toBe(true);
   });
 });

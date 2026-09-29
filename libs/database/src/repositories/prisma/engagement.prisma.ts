@@ -64,7 +64,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       orderBy?: Record<string, unknown>;
     }) => Promise<PrismaCommentRow[]>;
   } {
-    return this.prisma.comment as any;
+    return this.prisma.comment as unknown as typeof this.commentClient;
   }
 
   private get reactionClient(): {
@@ -73,7 +73,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaReactionRow | null>;
     findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaReactionRow[]>;
   } {
-    return this.prisma.storyReaction as any;
+    return this.prisma.storyReaction as unknown as typeof this.reactionClient;
   }
 
   private get bookmarkClient(): {
@@ -85,7 +85,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       orderBy?: Record<string, unknown>;
     }) => Promise<PrismaBookmarkRow[]>;
   } {
-    return this.prisma.bookmark as any;
+    return this.prisma.bookmark as unknown as typeof this.bookmarkClient;
   }
 
   private mapComment(row: PrismaCommentRow): Comment {
@@ -294,12 +294,52 @@ export class PrismaEngagementRepository implements IEngagementRepository {
   // ---------------------------------------------------------------------------
   private progressMap = new Map<string, ReadingProgressRecord>();
 
-  private get progressClient(): any {
-    return (this.prisma as any)?.readingProgress;
+  private get progressClient():
+    | {
+        upsert: (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => Promise<{
+          userId: string;
+          storyId: string;
+          percentage: number;
+          completed: boolean;
+          updatedAt: Date | string;
+        }>;
+        findUnique: (args: { where: Record<string, unknown> }) => Promise<{
+          userId: string;
+          storyId: string;
+          percentage: number;
+          completed: boolean;
+          updatedAt: Date | string;
+        } | null>;
+        findMany: (args: {
+          where: Record<string, unknown>;
+          orderBy?: Record<string, unknown>;
+          take?: number;
+        }) => Promise<
+          Array<{
+            userId: string;
+            storyId: string;
+            percentage: number;
+            completed: boolean;
+            updatedAt: Date | string;
+          }>
+        >;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)?.readingProgress as typeof this.progressClient;
   }
 
-  private get shareClient(): any {
-    return (this.prisma as any)?.storyShare;
+  private get shareClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+        count: (args: { where: Record<string, unknown> }) => Promise<number>;
+        findMany: (args: { where: Record<string, unknown> }) => Promise<unknown[]>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)?.storyShare as typeof this.shareClient;
   }
 
   async saveReadingProgress(
@@ -378,7 +418,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
           take: limit,
         });
         if (rows && rows.length > 0) {
-          return rows.map((r: any) => ({
+          return rows.map((r) => ({
             userId: r.userId,
             storyId: r.storyId,
             percentage: r.percentage,

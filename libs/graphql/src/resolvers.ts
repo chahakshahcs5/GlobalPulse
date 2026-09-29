@@ -15,12 +15,14 @@ import type {
   CreateTopicInput,
   CreateEventInput,
   CreateEntityInput,
+  ClientType,
 } from '@ai-news/schemas';
+import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
 export interface GraphQLContext {
   organizationId?: string;
   userId?: string;
-  principal?: any;
+  principal?: AuthenticatedPrincipal;
   clientType?: 'gemini' | 'gemini_spark' | 'chatgpt' | 'claude' | 'custom_mcp' | 'human_web';
   pubsub?: {
     publish: (event: { topic: string; payload: Record<string, unknown> }) => void;
@@ -31,7 +33,7 @@ export interface GraphQLContext {
 function requireAuth(ctx?: GraphQLContext): {
   organizationId: string;
   userId: string;
-  clientType: any;
+  clientType: ClientType;
 } {
   if (!ctx?.principal && !ctx?.userId) {
     throw new Error('UNAUTHENTICATED: Authentication required for GraphQL mutations.');

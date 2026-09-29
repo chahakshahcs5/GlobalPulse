@@ -270,7 +270,9 @@ describe('Story Clustering & Full Coverage (F4)', () => {
           arguments: { storyId: 'sty_lead_artemis' },
         });
 
-        const covData = JSON.parse((covResult as any).content[0].text);
+        const covData = JSON.parse(
+          (covResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(covData.storyId).toBe('sty_lead_artemis');
         expect(covData.perspectivesCount).toBe(3);
         expect(covData.timelineCount).toBe(3);
@@ -281,7 +283,9 @@ describe('Story Clustering & Full Coverage (F4)', () => {
           arguments: { limit: 5 },
         });
 
-        const listData = JSON.parse((listResult as any).content[0].text);
+        const listData = JSON.parse(
+          (listResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(listData.total).toBeGreaterThanOrEqual(1);
         expect(listData.clusters[0].leadStoryId).toBe('sty_lead_artemis');
 
@@ -295,7 +299,9 @@ describe('Story Clustering & Full Coverage (F4)', () => {
           },
         });
 
-        const createData = JSON.parse((createResult as any).content[0].text);
+        const createData = JSON.parse(
+          (createResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(createData.success).toBe(true);
         expect(createData.cluster.title).toBe('AI Synthesized Space Mega-Cluster');
       } finally {

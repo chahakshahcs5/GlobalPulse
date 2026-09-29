@@ -285,7 +285,9 @@ describe('User Accounts, Authentication Flow & Following (F1, F17)', () => {
             target_id: 'quantum-computing',
           },
         });
-        const followData = JSON.parse((followResult as any).content[0].text);
+        const followData = JSON.parse(
+          (followResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(followData.follow.targetId).toBe('quantum-computing');
 
         // List following
@@ -293,7 +295,9 @@ describe('User Accounts, Authentication Flow & Following (F1, F17)', () => {
           name: 'list_user_following',
           arguments: {},
         });
-        const listData = JSON.parse((listResult as any).content[0].text);
+        const listData = JSON.parse(
+          (listResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(listData.count).toBe(1);
         expect(listData.following[0].targetId).toBe('quantum-computing');
 
@@ -305,7 +309,9 @@ describe('User Accounts, Authentication Flow & Following (F1, F17)', () => {
             target_id: 'quantum-computing',
           },
         });
-        const unfollowData = JSON.parse((unfollowResult as any).content[0].text);
+        const unfollowData = JSON.parse(
+          (unfollowResult as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(unfollowData.success).toBe(true);
       } finally {
         await client.close();

@@ -1,7 +1,7 @@
 export interface ApiResponseEnvelope<T> {
   success: boolean;
   data: T;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -15,7 +15,7 @@ export interface PaginatedMeta {
 }
 
 export class ApiResponse {
-  static success<T>(data: T, meta?: Record<string, any>): ApiResponseEnvelope<T> {
+  static success<T>(data: T, meta?: Record<string, unknown>): ApiResponseEnvelope<T> {
     return {
       success: true,
       data,

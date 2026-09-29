@@ -27,7 +27,7 @@ describe('API & Repository Pagination (Cursor & Offset)', () => {
 
     it('returns null for empty or null cursor', () => {
       expect(decodeCursor('')).toBeNull();
-      expect(decodeCursor(null as any)).toBeNull();
+      expect(decodeCursor(null as unknown as string)).toBeNull();
     });
   });
 

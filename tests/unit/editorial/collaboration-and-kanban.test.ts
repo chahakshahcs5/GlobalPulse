@@ -284,7 +284,9 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
           name: 'acquire_story_lock',
           arguments: { storyId: testStoryId, ttlSeconds: 120 },
         });
-        const acqData = JSON.parse((acqRes as any).content[0].text);
+        const acqData = JSON.parse(
+          (acqRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(acqData.success).toBe(true);
 
         // 2. get_editorial_kanban
@@ -292,7 +294,9 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
           name: 'get_editorial_kanban',
           arguments: {},
         });
-        const kbData = JSON.parse((kbRes as any).content[0].text);
+        const kbData = JSON.parse(
+          (kbRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(kbData.totalCount).toBeGreaterThanOrEqual(2);
 
         // 3. transition_story_status
@@ -300,7 +304,9 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
           name: 'transition_story_status',
           arguments: { storyId: testStoryId, status: 'IN_REVIEW' },
         });
-        const transData = JSON.parse((transRes as any).content[0].text);
+        const transData = JSON.parse(
+          (transRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(transData.success).toBe(true);
         expect(transData.status).toBe('IN_REVIEW');
 
@@ -309,7 +315,9 @@ describe('Multi-Author Collaboration & Editorial Kanban (F8, F9)', () => {
           name: 'release_story_lock',
           arguments: { storyId: testStoryId },
         });
-        const relData = JSON.parse((relRes as any).content[0].text);
+        const relData = JSON.parse(
+          (relRes as unknown as { content: Array<{ text: string }> }).content[0].text
+        );
         expect(relData.success).toBe(true);
       } finally {
         await client.close();

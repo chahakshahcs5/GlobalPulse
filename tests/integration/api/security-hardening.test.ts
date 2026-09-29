@@ -57,13 +57,13 @@ describe('Production Security Hardening & Secret Governance', () => {
     const originalDbUrl = process.env.DATABASE_URL;
 
     afterAll(() => {
-      (process.env as any).NODE_ENV = originalEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
       process.env.JWT_SECRET = originalSecret;
       process.env.DATABASE_URL = originalDbUrl;
     });
 
     it('rejects startup in production mode if JWT_SECRET is the default dev key', () => {
-      (process.env as any).NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       process.env.JWT_SECRET = 'dev-secret-minimum-32-chars-globalpulse-key';
 
       expect(() => {
@@ -84,7 +84,7 @@ describe('Production Security Hardening & Secret Governance', () => {
     });
 
     it('rejects startup in production mode if JWT_SECRET is too short (< 32 chars)', () => {
-      (process.env as any).NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       process.env.JWT_SECRET = 'short_insecure_secret';
 
       expect(() => {
@@ -105,7 +105,7 @@ describe('Production Security Hardening & Secret Governance', () => {
     });
 
     it('rejects startup in production mode if DATABASE_ENGINE is prisma but DATABASE_URL is missing', () => {
-      (process.env as any).NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       process.env.JWT_SECRET =
         'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
       delete process.env.DATABASE_URL;
@@ -129,7 +129,7 @@ describe('Production Security Hardening & Secret Governance', () => {
     });
 
     it('accepts valid configuration in production mode with strong secrets', () => {
-      (process.env as any).NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       process.env.JWT_SECRET =
         'a_secure_custom_production_secret_key_exceeding_32_characters_12345';
       process.env.DATABASE_URL = 'postgresql://usr:pwd@localhost:5432/db';

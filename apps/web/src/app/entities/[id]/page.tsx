@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getEntity, listStories, listEvents } from '../../../lib/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import { ArrowLeft, Calendar, Newspaper } from 'lucide-react';
-import type { Story } from '@ai-news/schemas';
+import type { Story, Event } from '@ai-news/schemas';
 
 import { DEMO_ENTITIES, DEMO_STORIES, DEMO_EVENTS } from '../../../lib/demo-data';
 
@@ -45,7 +45,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
     allEvents = Object.values(DEMO_EVENTS);
   }
 
-  const linkedEvents = allEvents.filter((evt: any) => (evt.entityIds || []).includes(entity.id));
+  const linkedEvents = allEvents.filter((evt: Event) => (evt.entityIds || []).includes(entity.id));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -120,7 +120,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {linkedEvents.map((evt: any) => (
+            {linkedEvents.map((evt: Event) => (
               <Link
                 key={evt.id}
                 href={`/events/${evt.id}`}

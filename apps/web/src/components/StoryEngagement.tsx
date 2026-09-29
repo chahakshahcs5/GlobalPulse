@@ -22,6 +22,7 @@ import {
   toggleBookmark,
 } from '../lib/news-store';
 import { formatDeterministicDateTime, formatDeterministicDate } from '../lib/date-utils';
+import type { Comment } from '@ai-news/schemas';
 
 interface StoryEngagementProps {
   storyId: string;
@@ -107,7 +108,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
 
   // Organize comments into parent & child replies
   const rootComments = comments.filter((c) => !c.parentId);
-  const repliesByParent = comments.reduce<Record<string, any[]>>((acc, c) => {
+  const repliesByParent = comments.reduce<Record<string, Comment[]>>((acc, c) => {
     if (c.parentId) {
       acc[c.parentId] = acc[c.parentId] || [];
       acc[c.parentId].push(c);

@@ -28,7 +28,11 @@ export const TrendingTopicsWidget: React.FC<TrendingTopicsWidgetProps> = ({ onSe
         if (Array.isArray(trendingList)) {
           for (const tr of trendingList) {
             if (tr.title && !items.some((i) => i.name === tr.title)) {
-              items.push({ id: tr.storyId || tr.id, name: tr.title, slug: tr.slug || tr.storyId });
+              items.push({
+                id: tr.storyId || (tr as { id?: string }).id || tr.slug,
+                name: tr.title,
+                slug: tr.slug || tr.storyId,
+              });
             }
           }
         }

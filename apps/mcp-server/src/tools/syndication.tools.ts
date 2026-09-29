@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
+import type { ArticleType } from '@ai-news/schemas';
 import { generateNewsArticleJsonLd } from '@ai-news/shared';
 import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
 
@@ -99,7 +100,7 @@ export function registerSyndicationTools(
 
       const stories = await db.stories.list({
         status: 'PUBLISHED',
-        articleType: category as any,
+        articleType: category as ArticleType | undefined,
         topicId,
         limit,
       });

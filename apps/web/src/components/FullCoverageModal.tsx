@@ -19,8 +19,49 @@ interface FullCoverageModalProps {
   onClose: () => void;
 }
 
+export interface CoveragePerspective {
+  publisher: string;
+  timeAgo?: string;
+  headline: string;
+  excerpt?: string;
+  stance?: string;
+  url?: string;
+  isWire?: boolean;
+  sourceType?: string;
+}
+
+export interface CoverageTimelineItem {
+  time?: string;
+  date?: string;
+  headline?: string;
+  event?: string;
+  detail?: string;
+}
+
+export interface CoverageFactCheck {
+  verdict: string;
+  confidence?: number;
+  verificationNote?: string;
+  officialSources?: string[];
+}
+
+export interface CoverageData {
+  title?: string;
+  leadHeadline?: string;
+  summary?: string;
+  articleCount?: number;
+  biasSpectrum?: {
+    leftPercent?: number;
+    centerPercent?: number;
+    rightPercent?: number;
+  };
+  perspectives?: CoveragePerspective[];
+  timeline?: CoverageTimelineItem[];
+  factCheck?: CoverageFactCheck;
+}
+
 export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onClose }) => {
-  const [cluster, setCluster] = useState<any | null>(null);
+  const [cluster, setCluster] = useState<CoverageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -124,7 +165,7 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
               </h3>
 
               <div className="space-y-3">
-                {(cluster.perspectives || []).map((p: any, idx: number) => (
+                {(cluster.perspectives || []).map((p: CoveragePerspective, idx: number) => (
                   <div
                     key={idx}
                     className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2 hover:border-slate-300 dark:hover:border-slate-700 transition"
@@ -210,7 +251,7 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
                     Event Development Timeline
                   </h3>
                   <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-2 space-y-4 py-1">
-                    {cluster.timeline.map((item: any, idx: number) => (
+                    {cluster.timeline.map((item: CoverageTimelineItem, idx: number) => (
                       <div key={idx} className="relative pl-5">
                         <span className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-blue-600"></span>
                         <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">

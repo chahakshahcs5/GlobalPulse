@@ -3,9 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { listFactChecks } from '../lib/api-client';
 import { ShieldCheck, CheckCircle2 } from 'lucide-react';
+import type { FactCheckClaim } from '@ai-news/schemas';
+
+interface FactCheckItem extends FactCheckClaim {
+  verdict?: string;
+  explanation?: string;
+}
 
 export const FactCheckWidget: React.FC = () => {
-  const [factChecks, setFactChecks] = useState<any[]>([]);
+  const [factChecks, setFactChecks] = useState<FactCheckItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -13,7 +19,7 @@ export const FactCheckWidget: React.FC = () => {
     listFactChecks()
       .then((data) => {
         if (isMounted) {
-          setFactChecks(Array.isArray(data) ? data : []);
+          setFactChecks(Array.isArray(data) ? (data as FactCheckItem[]) : []);
           setIsLoading(false);
         }
       })
@@ -58,7 +64,7 @@ export const FactCheckWidget: React.FC = () => {
 
       {!isLoading && factChecks.length > 0 && (
         <div className="space-y-3">
-          {factChecks.map((fc: any) => {
+          {factChecks.map((fc: FactCheckItem) => {
             const isFalse = fc.verdict === 'FALSE' || fc.rating === 'FALSE';
             return (
               <div

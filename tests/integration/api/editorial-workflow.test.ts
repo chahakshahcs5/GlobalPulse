@@ -60,7 +60,7 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     });
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.data.some((s: any) => s.id === storyId)).toBe(true);
+    expect(body.data.some((s: { id: string }) => s.id === storyId)).toBe(true);
   });
 
   it('rejects a story back to draft via POST /api/stories/:id/reject with feedback', async () => {

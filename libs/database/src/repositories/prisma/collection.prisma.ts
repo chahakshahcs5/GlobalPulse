@@ -2,6 +2,19 @@ import type { StoryCollection } from '@ai-news/schemas';
 import type { ICollectionRepository } from '../../interfaces/collection.repository';
 import { MemoryCollectionRepository } from '../memory/collection.memory';
 
+interface PrismaCollectionRow {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  curatorId: string;
+  curatorName?: string | null;
+  isPublic: boolean;
+  storyIds: string[] | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export class PrismaCollectionRepository implements ICollectionRepository {
   private fallbackMemory = new MemoryCollectionRepository();
 
@@ -11,8 +24,29 @@ export class PrismaCollectionRepository implements ICollectionRepository {
     return this.prismaGetter();
   }
 
-  private get collectionClient(): any {
-    return (this.prisma as any).storyCollection;
+  private get collectionClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<PrismaCollectionRow>;
+        update: (args: {
+          where: Record<string, unknown>;
+          data: Record<string, unknown>;
+        }) => Promise<PrismaCollectionRow>;
+        findUnique: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<PrismaCollectionRow | null>;
+        findFirst: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<PrismaCollectionRow | null>;
+        findMany: (args: {
+          where?: Record<string, unknown>;
+          orderBy?: Record<string, unknown>;
+          skip?: number;
+          take?: number;
+        }) => Promise<PrismaCollectionRow[]>;
+        delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>).storyCollection as typeof this.collectionClient;
   }
 
   async create(
@@ -122,7 +156,7 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         take: limit,
       });
 
-      return rows.map((row: any) => ({
+      return rows.map((row: PrismaCollectionRow) => ({
         id: row.id,
         name: row.name,
         slug: row.slug,
@@ -151,7 +185,7 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         orderBy: { updatedAt: 'desc' },
       });
 
-      return rows.map((row: any) => ({
+      return rows.map((row: PrismaCollectionRow) => ({
         id: row.id,
         name: row.name,
         slug: row.slug,

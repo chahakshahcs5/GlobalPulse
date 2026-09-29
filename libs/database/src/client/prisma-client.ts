@@ -36,21 +36,21 @@ export class PrismaClientManager {
       process.env.DATABASE_ENGINE === 'prisma' ||
       (process.env.NODE_ENV === 'production' && process.env.DATABASE_ENGINE !== 'memory');
 
-    try {
-      // Dynamic import to prevent hard failure if prisma client is not yet generated
-      const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({
-        PrismaClient: null,
-      }));
-      if (!PrismaClientCtor) {
-        if (requiresPrisma) {
-          throw new Error(
-            '@prisma/client is not generated. In production or prisma mode, run "prisma generate" to generate database client bindings.'
-          );
-        }
-        logger.warn('@prisma/client not generated; falling back to memory repository.');
-        return null;
+    // Dynamic import to prevent hard failure if prisma client is not yet generated
+    const { PrismaClient: PrismaClientCtor } = await import('@prisma/client').catch(() => ({
+      PrismaClient: null,
+    }));
+    if (!PrismaClientCtor) {
+      if (requiresPrisma) {
+        throw new Error(
+          '@prisma/client is not generated. In production or prisma mode, run "prisma generate" to generate database client bindings.'
+        );
       }
+      logger.warn('@prisma/client not generated; falling back to memory repository.');
+      return null;
+    }
 
+    try {
       const instance = new PrismaClientCtor({
         log: [
           { level: 'error', emit: 'stdout' },

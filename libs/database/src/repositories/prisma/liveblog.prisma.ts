@@ -34,7 +34,7 @@ export class PrismaLiveblogRepository implements ILiveblogRepository {
         delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
       }
     | undefined {
-    return (this.prisma as any).liveblogEntry;
+    return (this.prisma as Record<string, unknown>).liveblogEntry as typeof this.liveblogClient;
   }
 
   private mapToEntry(row: PrismaLiveblogRow): LiveblogEntry {
