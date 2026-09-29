@@ -454,39 +454,75 @@ export function registerStoryTools(
 
   server.tool(
     'get_personalized_feed',
-    '[READ-ONLY] Retrieve personalized "For You" news feed tailored to the caller/user based on followed topics, entities, and interests.',
+    '[READ-ONLY] Retrieve personalized "For You" news feed tailored to the caller/user with transparent attribution signals ("Why You Saw This") and algorithm tuning.',
     {
       limit: z.number().int().min(1).max(50).default(20).describe('Number of stories to return'),
       cursor: z.string().optional().describe('Pagination cursor'),
+      includeCompleted: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Include already finished stories'),
     },
-    async ({ limit, cursor }) => {
+    async ({ limit, cursor, includeCompleted }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const feed = await personalizationService.getPersonalizedFeed({
+      const feed = await personalizationService.getPersonalizedFeedWithAttribution({
         userId: principal.id,
         organizationId: principal.organizationId,
         limit,
         cursor,
+        includeCompleted,
       });
 
       return mcpJsonResponse({
         total: feed.totalCount,
         hasMore: feed.hasMore,
         nextCursor: feed.nextCursor,
-        stories: feed.items.map((s) => ({
-          id: s.id,
-          title: s.title,
-          slug: s.slug,
-          articleType: s.articleType,
-          summary: s.summary,
-          publishedAt: s.publishedAt,
-          readingTimeMinutes: s.readingTimeMinutes,
-          wordCount: s.wordCount,
-          topicIds: s.topicIds,
-          entityIds: s.entityIds,
+        stories: feed.items.map(({ story, score, reasons, signals }) => ({
+          id: story.id,
+          title: story.title,
+          slug: story.slug,
+          articleType: story.articleType,
+          summary: story.summary,
+          publishedAt: story.publishedAt,
+          readingTimeMinutes: story.readingTimeMinutes,
+          wordCount: story.wordCount,
+          topicIds: story.topicIds,
+          entityIds: story.entityIds,
+          categories: story.categories || [],
+          relevanceScore: Math.round(score * 10) / 10,
+          rankingReasons: reasons,
+          attributionSignals: signals,
         })),
       });
+    }
+  );
+
+  server.tool(
+    'export_offline_digest',
+    '[READ-ONLY] Package a standalone offline reading briefing with full story dispatches for flight or commute reading.',
+    {
+      count: z
+        .number()
+        .int()
+        .min(1)
+        .max(25)
+        .default(10)
+        .describe('Number of top stories to bundle'),
+    },
+    async ({ count }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const digest = await personalizationService.exportOfflineDigest({
+        userId: principal.id,
+        organizationId: principal.organizationId,
+        count,
+      });
+
+      return mcpJsonResponse(digest);
     }
   );
 }

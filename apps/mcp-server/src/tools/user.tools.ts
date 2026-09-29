@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 import { AuthService } from '@ai-news/auth';
+import { DepthPreferenceSchema } from '@ai-news/schemas';
 import { UserService, type StoryContext } from '@ai-news/stories';
 import { successResponse, errorResponse } from './tool-helpers';
 
@@ -195,6 +196,133 @@ export function registerUserTools(
         return successResponse({
           count: list.length,
           following: list,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 7. get_algorithm_tuning
+  server.tool(
+    'get_algorithm_tuning',
+    '[READ-ONLY] Retrieve current recommendation algorithm parameters for the active user/agent.',
+    {},
+    async () => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const user = await database.users.findById(principal.id, principal.organizationId);
+        const prefs = user?.preferences;
+        return successResponse({
+          depthPreference: prefs?.depthPreference || 'balanced',
+          serendipityWeight: prefs?.serendipityWeight ?? 30,
+          localVsGlobalWeight: prefs?.localVsGlobalWeight ?? 50,
+          editorialStrictness: prefs?.editorialStrictness ?? 70,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 8. update_algorithm_tuning
+  server.tool(
+    'update_algorithm_tuning',
+    '[WRITE] Tune reader algorithm parameters (depth preference, serendipity, local vs global balance, and editorial strictness).',
+    {
+      depthPreference: DepthPreferenceSchema.optional().describe(
+        'Reading depth preference: quick, balanced, or deep_dive'
+      ),
+      serendipityWeight: z
+        .number()
+        .min(0)
+        .max(100)
+        .optional()
+        .describe('Serendipity weight (0-100) controlling out-of-bubble story discovery'),
+      localVsGlobalWeight: z
+        .number()
+        .min(0)
+        .max(100)
+        .optional()
+        .describe('Regional vs global story weighting (0-100)'),
+      editorialStrictness: z
+        .number()
+        .min(0)
+        .max(100)
+        .optional()
+        .describe('Editorial strictness threshold (0-100)'),
+    },
+    async (tuning) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        let user = await database.users.findById(principal.id, principal.organizationId);
+        const now = new Date().toISOString();
+        if (!user) {
+          user = await database.users.create({
+            id: principal.id,
+            organizationId: principal.organizationId,
+            name: principal.id,
+            email: `${principal.id}@globalpulse.internal`,
+            role: principal.role,
+            clientType: principal.clientType,
+            status: 'active',
+            preferences: {
+              categories: [],
+              emailFrequency: 'daily',
+              readingHistoryEnabled: true,
+              theme: 'system',
+              depthPreference: tuning.depthPreference || 'balanced',
+              serendipityWeight: tuning.serendipityWeight ?? 30,
+              localVsGlobalWeight: tuning.localVsGlobalWeight ?? 50,
+              editorialStrictness: tuning.editorialStrictness ?? 70,
+            },
+            createdAt: now,
+            updatedAt: now,
+          });
+        } else {
+          const currentPrefs = user.preferences || {
+            categories: [],
+            emailFrequency: 'daily',
+            readingHistoryEnabled: true,
+            theme: 'system',
+            depthPreference: 'balanced',
+            serendipityWeight: 30,
+            localVsGlobalWeight: 50,
+            editorialStrictness: 70,
+          };
+          user = await database.users.update({
+            ...user,
+            preferences: {
+              ...currentPrefs,
+              ...(tuning.depthPreference !== undefined
+                ? { depthPreference: tuning.depthPreference }
+                : {}),
+              ...(tuning.serendipityWeight !== undefined
+                ? { serendipityWeight: tuning.serendipityWeight }
+                : {}),
+              ...(tuning.localVsGlobalWeight !== undefined
+                ? { localVsGlobalWeight: tuning.localVsGlobalWeight }
+                : {}),
+              ...(tuning.editorialStrictness !== undefined
+                ? { editorialStrictness: tuning.editorialStrictness }
+                : {}),
+            },
+            updatedAt: now,
+          });
+        }
+
+        return successResponse({
+          message: 'Algorithm tuning successfully updated.',
+          tuning: {
+            depthPreference: user.preferences?.depthPreference || 'balanced',
+            serendipityWeight: user.preferences?.serendipityWeight ?? 30,
+            localVsGlobalWeight: user.preferences?.localVsGlobalWeight ?? 50,
+            editorialStrictness: user.preferences?.editorialStrictness ?? 70,
+          },
         });
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));

@@ -13,6 +13,8 @@ import { registerSourceTools } from '../../../apps/mcp-server/src/tools/source.t
 import { registerTaxonomyTools } from '../../../apps/mcp-server/src/tools/taxonomy.tools.js';
 import { registerJobTools } from '../../../apps/mcp-server/src/tools/job.tools.js';
 import { registerEngagementTools } from '../../../apps/mcp-server/src/tools/engagement.tools.js';
+import { registerUserTools } from '../../../apps/mcp-server/src/tools/user.tools.js';
+import { registerAnalyticsTools } from '../../../apps/mcp-server/src/tools/analytics.tools.js';
 import { registerResources } from '../../../apps/mcp-server/src/resources/index.js';
 import { registerPrompts } from '../../../apps/mcp-server/src/prompts/index.js';
 import { createMcpApp, mcpPrincipalStore } from '../../../apps/mcp-server/src/server.js';
@@ -78,6 +80,8 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     registerTaxonomyTools(server, db, getPrincipal);
     registerJobTools(server, db, getPrincipal);
     registerEngagementTools(server, db, getPrincipal);
+    registerUserTools(server, db, getPrincipal);
+    registerAnalyticsTools(server, db, getPrincipal);
     registerResources(server, db, getPrincipal);
     registerPrompts(server);
 
@@ -763,5 +767,88 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     }>(graphRes);
     expect(Array.isArray(graphBody.nodes)).toBe(true);
     expect(Array.isArray(graphBody.edges)).toBe(true);
+  });
+
+  it('supports explainable personalization, algorithm tuning, reader profiles, and offline digest via MCP', async () => {
+    // 1. Get default algorithm tuning
+    const tuningRes = await client.callTool({
+      name: 'get_algorithm_tuning',
+      arguments: {},
+    });
+    const tuningBody = parseJson<{
+      depthPreference: string;
+      serendipityWeight: number;
+      localVsGlobalWeight: number;
+    }>(tuningRes);
+    expect(tuningBody.depthPreference).toBeDefined();
+
+    // 2. Update algorithm tuning
+    const updateTuningRes = await client.callTool({
+      name: 'update_algorithm_tuning',
+      arguments: {
+        depthPreference: 'deep_dive',
+        serendipityWeight: 65,
+        localVsGlobalWeight: 40,
+        editorialStrictness: 85,
+      },
+    });
+    const updateTuningBody = parseJson<{
+      message: string;
+      tuning: { depthPreference: string; serendipityWeight: number };
+    }>(updateTuningRes);
+    expect(updateTuningBody.message).toContain('updated');
+    expect(updateTuningBody.tuning.depthPreference).toBe('deep_dive');
+    expect(updateTuningBody.tuning.serendipityWeight).toBe(65);
+
+    // 3. Get personalized feed with transparent attribution
+    const feedRes = await client.callTool({
+      name: 'get_personalized_feed',
+      arguments: { limit: 5 },
+    });
+    const feedBody = parseJson<{
+      total: number;
+      stories: Array<{
+        id: string;
+        title: string;
+        relevanceScore: number;
+        rankingReasons: string[];
+        attributionSignals: Array<{ type: string }>;
+      }>;
+    }>(feedRes);
+    expect(Array.isArray(feedBody.stories)).toBe(true);
+    if (feedBody.stories.length > 0) {
+      expect(typeof feedBody.stories[0].relevanceScore).toBe('number');
+      expect(Array.isArray(feedBody.stories[0].rankingReasons)).toBe(true);
+      expect(Array.isArray(feedBody.stories[0].attributionSignals)).toBe(true);
+    }
+
+    // 4. Get reader consumption profile
+    const profileRes = await client.callTool({
+      name: 'get_reader_consumption_profile',
+      arguments: {},
+    });
+    const profileBody = parseJson<{
+      userId: string;
+      totalReadingMinutes: number;
+      diversityScore: number;
+    }>(profileRes);
+    expect(profileBody.userId).toBeDefined();
+    expect(typeof profileBody.diversityScore).toBe('number');
+
+    // 5. Export offline digest
+    const digestRes = await client.callTool({
+      name: 'export_offline_digest',
+      arguments: { count: 3 },
+    });
+    const digestBody = parseJson<{
+      digestId: string;
+      title: string;
+      totalStories: number;
+      totalEstimatedReadingMinutes: number;
+      stories: Array<{ id: string }>;
+    }>(digestRes);
+    expect(digestBody.digestId).toMatch(/^digest_/);
+    expect(digestBody.title).toContain('Offline');
+    expect(Array.isArray(digestBody.stories)).toBe(true);
   });
 });

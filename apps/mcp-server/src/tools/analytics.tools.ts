@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 import { AuthService } from '@ai-news/auth';
-import { AnalyticsService } from '@ai-news/stories';
+import { AnalyticsService, PersonalizationService } from '@ai-news/stories';
 import { successResponse, errorResponse } from './tool-helpers';
 
 export function registerAnalyticsTools(
@@ -12,6 +12,7 @@ export function registerAnalyticsTools(
   getPrincipal: () => AuthenticatedPrincipal
 ): void {
   const analyticsService = new AnalyticsService(database);
+  const personalizationService = new PersonalizationService(database);
 
   // 1. get_story_analytics
   server.tool(
@@ -77,6 +78,33 @@ export function registerAnalyticsTools(
 
         const metrics = await analyticsService.getNewsroomMetrics(principal.organizationId);
         return successResponse(metrics);
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 4. get_reader_consumption_profile
+  server.tool(
+    'get_reader_consumption_profile',
+    '[READ-ONLY] Retrieve reader analytics profile including category distribution, topic balance, reading minutes, and diversity score.',
+    {
+      userId: z
+        .string()
+        .optional()
+        .describe('Optional user ID (defaults to active caller principal)'),
+    },
+    async ({ userId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const targetUserId = userId || principal.id;
+        const profile = await personalizationService.getReaderConsumptionProfile(
+          targetUserId,
+          principal.organizationId
+        );
+        return successResponse(profile);
       } catch (err: unknown) {
         return errorResponse(err instanceof Error ? err.message : String(err));
       }
