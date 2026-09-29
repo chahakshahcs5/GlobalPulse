@@ -73,3 +73,48 @@ export const BookmarkItemSchema = z.object({
   createdAt: z.string(),
 });
 export type BookmarkItem = z.infer<typeof BookmarkItemSchema>;
+
+export const StoryPerspectiveStanceSchema = z.enum([
+  'in_favor',
+  'dissenting',
+  'analytical',
+  'question',
+]);
+export type StoryPerspectiveStance = z.infer<typeof StoryPerspectiveStanceSchema>;
+
+export const StoryPerspectiveStatusSchema = z.enum(['pending_moderation', 'approved', 'rejected']);
+export type StoryPerspectiveStatus = z.infer<typeof StoryPerspectiveStatusSchema>;
+
+export const StoryPerspectiveSchema = z.object({
+  id: z.string().min(1),
+  storyId: z.string().min(1),
+  organizationId: z.string().min(1),
+  authorId: z.string().min(1),
+  authorName: z.string().min(1).max(100),
+  authorRole: CommentAuthorRoleSchema.default('reader'),
+  stance: StoryPerspectiveStanceSchema,
+  targetParagraphQuote: z.string().max(1000).optional(),
+  argument: z.string().min(1).max(3000),
+  evidenceUrl: z.string().optional(),
+  status: StoryPerspectiveStatusSchema.default('approved'),
+  upvotes: z.number().int().nonnegative().default(0),
+  moderationReason: z.string().max(500).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type StoryPerspective = z.infer<typeof StoryPerspectiveSchema>;
+
+export const CreateStoryPerspectiveInputSchema = z.object({
+  stance: StoryPerspectiveStanceSchema,
+  argument: z.string().min(1, 'Argument is required').max(3000),
+  targetParagraphQuote: z.string().max(1000).optional(),
+  evidenceUrl: z.string().optional(),
+  authorName: z.string().min(1).max(100).optional(),
+});
+export type CreateStoryPerspectiveInput = z.infer<typeof CreateStoryPerspectiveInputSchema>;
+
+export const ModerateStoryPerspectiveInputSchema = z.object({
+  status: StoryPerspectiveStatusSchema,
+  reason: z.string().max(500).optional(),
+});
+export type ModerateStoryPerspectiveInput = z.infer<typeof ModerateStoryPerspectiveInputSchema>;

@@ -21,3 +21,4 @@ export * from './collection';
 export * from './provenance';
 export * from './webhook';
 export * from './localization';
+export * from './tip';

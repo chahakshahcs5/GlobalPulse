@@ -15,3 +15,5 @@ export * from './newsletter.service';
 export * from './collection.service';
 export * from './provenance.service';
 export * from './webhook.service';
+export * from './perspectives.service';
+export * from './citizen-tips.service';

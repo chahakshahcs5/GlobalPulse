@@ -23,6 +23,7 @@ import { registerLiveblogTools } from './tools/liveblog.tools';
 import { registerFactCheckTools } from './tools/fact-check.tools';
 import { registerEditorialTools } from './tools/editorial.tools';
 import { registerEnterpriseTools } from './tools/enterprise.tools';
+import { registerTipTools } from './tools/tip.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 import { resolveCorsOrigin, ALLOWED_CORS_HEADERS } from '@ai-news/shared';
@@ -132,6 +133,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     registerFactCheckTools(targetServer, database, getPrincipal);
     registerEditorialTools(targetServer, database, getPrincipal);
     registerEnterpriseTools(targetServer, database, getPrincipal);
+    registerTipTools(targetServer, database, getPrincipal);
     registerResources(targetServer, database, getPrincipal);
     registerPrompts(targetServer);
   }

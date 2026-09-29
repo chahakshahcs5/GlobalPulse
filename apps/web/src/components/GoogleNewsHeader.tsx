@@ -17,6 +17,7 @@ import {
   PenTool,
   Radio,
   Compass,
+  ShieldAlert,
 } from 'lucide-react';
 import { useBookmarks, useTaxonomy } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
@@ -25,9 +26,10 @@ import { AuthModal, type UserSession } from './AuthModal';
 
 const BASE_NAV_ITEMS = [
   { id: 'top', name: 'Top Stories', href: '/', icon: Star },
-  { id: 'for-you', name: 'For You', href: '/?tab=for-you', icon: Sparkles },
+  { id: 'for-you', name: 'For You', href: '/for-you', icon: Sparkles },
   { id: 'following', name: 'Following', href: '/?tab=following', icon: BookmarkCheck },
   { id: 'explore', name: 'Explore', href: '/topics', icon: Compass },
+  { id: 'tips', name: 'Tip Line', href: '/tips', icon: ShieldAlert },
 ];
 
 function CategoryNavStrip({ pathname }: { pathname: string }) {
@@ -243,6 +245,16 @@ export const GoogleNewsHeader: React.FC = () => {
             >
               {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
+
+            {/* Secure Whistleblower Tip Line Trigger */}
+            <Link
+              href="/tips"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 text-xs font-bold transition"
+              title="Secure Whistleblower Drop & Tip Line"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Tip Line</span>
+            </Link>
 
             {/* Journalist Newsroom CMS Button - RBAC protected */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'editor' || !currentUser) && (
