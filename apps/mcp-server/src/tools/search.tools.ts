@@ -182,4 +182,146 @@ export function registerSearchTools(
       return mcpJsonResponse({ query, suggestions });
     }
   );
+
+  server.tool(
+    'query_story_citations',
+    '[READ-ONLY] Retrieve verified verbatim citations and source excerpts from a story to ground factual claims and answer specific reader or investigative questions.',
+    {
+      storyId: z.string().min(1).describe('Target story ID to query'),
+      question: z
+        .string()
+        .min(1)
+        .describe(
+          'The question or factual claim to verify against the article (e.g. "What treaty was signed?")'
+        ),
+      maxCitations: z
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .default(5)
+        .describe('Maximum number of citations to return'),
+    },
+    async ({ storyId, question, maxCitations }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const story = await db.stories.findById(storyId, principal.organizationId);
+      if (!story) {
+        throw new Error(`Story with ID "${storyId}" not found in organization.`);
+      }
+
+      const qWords = question
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter((w) => w.length > 2);
+
+      interface Citation {
+        blockId: string;
+        blockType: string;
+        citationLabel: string;
+        excerpt: string;
+        relevanceScore: number;
+      }
+
+      const matches: Citation[] = [];
+
+      // Check summary
+      if (story.summary) {
+        let matchCount = 0;
+        for (const w of qWords) {
+          if (story.summary.toLowerCase().includes(w)) matchCount++;
+        }
+        if (matchCount > 0) {
+          matches.push({
+            blockId: 'summary',
+            blockType: 'executive_summary',
+            citationLabel: 'Executive Summary',
+            excerpt: story.summary,
+            relevanceScore: Math.min(1, 0.4 + (matchCount / (qWords.length || 1)) * 0.6),
+          });
+        }
+      }
+
+      // Check blocks
+      for (const block of story.blocks || []) {
+        let text = '';
+        let label = `Block: ${block.blockType}`;
+
+        switch (block.blockType) {
+          case 'paragraph': {
+            text = (block.data as { text?: string }).text || '';
+            label = 'Article Paragraph';
+            break;
+          }
+          case 'quote': {
+            const d = block.data as { quote?: string; attribution?: string };
+            text = `"${d.quote}" - ${d.attribution || 'Attribution'}`;
+            label = `Quote: ${d.attribution || 'Expert'}`;
+            break;
+          }
+          case 'statistic': {
+            const d = block.data as { label?: string; value?: string | number; context?: string };
+            text = `${d.label}: ${d.value}. ${d.context || ''}`;
+            label = `Statistic: ${d.label}`;
+            break;
+          }
+          case 'summary': {
+            const d = block.data as { headline?: string; bulletPoints?: string[] };
+            text = `${d.headline}. ${d.bulletPoints?.join(' ') || ''}`;
+            label = 'Briefing Summary';
+            break;
+          }
+          case 'document_viewer': {
+            const d = block.data as {
+              title: string;
+              description?: string;
+              highlights?: Array<{ page: number; excerpt: string; note?: string; tag?: string }>;
+            };
+            text = `${d.title} ${d.description || ''} ${d.highlights?.map((h) => `P.${h.page}: ${h.excerpt}`).join(' ') || ''}`;
+            label = `Primary Document: ${d.title}`;
+            break;
+          }
+          case 'source': {
+            const d = block.data as { title?: string; publisher?: string; url?: string };
+            text = `${d.title || ''} ${d.publisher || ''} ${d.url || ''}`;
+            label = `Source Citation: ${d.publisher || 'Reference'}`;
+            break;
+          }
+          default:
+            break;
+        }
+
+        if (!text) continue;
+
+        let matchCount = 0;
+        for (const w of qWords) {
+          if (text.toLowerCase().includes(w)) matchCount++;
+        }
+
+        if (matchCount > 0) {
+          matches.push({
+            blockId: block.id,
+            blockType: block.blockType,
+            citationLabel: label,
+            excerpt: text.length > 300 ? text.slice(0, 297) + '...' : text,
+            relevanceScore: Math.min(1, 0.35 + (matchCount / (qWords.length || 1)) * 0.65),
+          });
+        }
+      }
+
+      matches.sort((a, b) => b.relevanceScore - a.relevanceScore);
+      const topMatches = matches.slice(0, maxCitations);
+
+      return mcpJsonResponse({
+        storyId: story.id,
+        storyTitle: story.title,
+        question,
+        citationsFound: topMatches.length,
+        groundingScore: topMatches.length > 0 ? topMatches[0].relevanceScore : 0,
+        citations: topMatches,
+      });
+    }
+  );
 }

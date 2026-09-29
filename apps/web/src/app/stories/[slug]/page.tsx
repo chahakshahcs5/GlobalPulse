@@ -29,6 +29,7 @@ import { FullCoverageModal } from '../../../components/FullCoverageModal';
 import { StoryEngagement } from '../../../components/StoryEngagement';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 import { PaywallBarrier } from '../../../components/PaywallBarrier';
+import { AskArticleDrawer } from '../../../components/AskArticleDrawer';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../../../lib/date-utils';
 
 export default function StoryPage() {
@@ -49,6 +50,8 @@ export default function StoryPage() {
   const [isDark, setIsDark] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [monthlyReads, setMonthlyReads] = useState(1);
+  const [readingDepth, setReadingDepth] = useState<'quick' | 'balanced' | 'deep_dive'>('balanced');
+  const [isAskDrawerOpen, setIsAskDrawerOpen] = useState(false);
 
   const [remoteStory, setRemoteStory] = useState<Story | null>(null);
   const [isLoadingStory, setIsLoadingStory] = useState(false);
@@ -549,6 +552,53 @@ export default function StoryPage() {
         </div>
       )}
 
+      {/* Reading Depth Selector & Grounded AI Assistant Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-slate-500 dark:text-slate-400">Reading Depth:</span>
+          <div className="flex items-center bg-slate-200 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-300 dark:border-slate-700/60 font-medium">
+            <button
+              onClick={() => setReadingDepth('quick')}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                readingDepth === 'quick'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              ⚡ Quick (1m)
+            </button>
+            <button
+              onClick={() => setReadingDepth('balanced')}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                readingDepth === 'balanced'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Standard (3m)
+            </button>
+            <button
+              onClick={() => setReadingDepth('deep_dive')}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                readingDepth === 'deep_dive'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🔬 Deep Dive
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsAskDrawerOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-xs shadow-indigo-600/20 cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Ask Article AI</span>
+        </button>
+      </div>
+
       {/* Article Content with Dynamic Font Scaling & Metered Paywall (F30) */}
       <div
         className={`space-y-6 ${
@@ -562,6 +612,7 @@ export default function StoryPage() {
         <StoryRenderer
           blocks={!isSubscribed && monthlyReads > 5 ? story.blocks.slice(0, 2) : story.blocks}
           theme={isDark ? 'dark' : 'light'}
+          depth={readingDepth}
         />
 
         {!isSubscribed && monthlyReads > 5 && (
@@ -796,6 +847,15 @@ export default function StoryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Grounded Ask Article AI Drawer */}
+      {story && (
+        <AskArticleDrawer
+          isOpen={isAskDrawerOpen}
+          onClose={() => setIsAskDrawerOpen(false)}
+          story={story}
+        />
       )}
     </div>
   );

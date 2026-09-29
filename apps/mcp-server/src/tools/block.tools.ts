@@ -732,4 +732,77 @@ export function registerBlockTools(
       });
     }
   );
+
+  // 29. add_document_viewer_block
+  server.tool(
+    'add_document_viewer_block',
+    '[WRITE] Embed a primary source document viewer (court filings, treaties, financial disclosures, leaked memos, or whitepapers) with annotated highlight excerpts.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      documentUrl: z
+        .string()
+        .url()
+        .describe('Direct link or hosted PDF URL of the primary document'),
+      title: z.string().min(1).describe('Document title or filing heading'),
+      pageCount: z.number().int().positive().describe('Total pages in the source document'),
+      documentType: z
+        .enum([
+          'court_filing',
+          'treaty',
+          'financial_disclosure',
+          'leak',
+          'whitepaper',
+          'regulatory_directive',
+        ])
+        .default('whitepaper')
+        .describe('Class of primary source material'),
+      description: z
+        .string()
+        .optional()
+        .describe('Editorial overview of the document significance'),
+      highlights: z
+        .array(
+          z.object({
+            page: z.number().int().positive().describe('Page number of the quote'),
+            excerpt: z.string().min(1).describe('Exact text excerpt from the document'),
+            note: z
+              .string()
+              .optional()
+              .describe('Editorial annotation explaining the legal/technical meaning'),
+            tag: z
+              .string()
+              .optional()
+              .describe('Section or topic tag, e.g. "Section 4.1" or "Clause 9"'),
+          })
+        )
+        .default([])
+        .describe('List of highlighted passages'),
+      sourceAttribution: z.string().optional().describe('Issuing authority, court, or repository'),
+    },
+    async ({
+      storyId,
+      documentUrl,
+      title,
+      pageCount,
+      documentType,
+      description,
+      highlights,
+      sourceAttribution,
+    }) => {
+      return helperAdd(storyId, {
+        id: generateId('blk_doc'),
+        blockType: 'document_viewer',
+        sortOrder: 0,
+        data: {
+          documentUrl,
+          title,
+          pageCount,
+          documentType,
+          description,
+          highlights,
+          sourceAttribution,
+        },
+      });
+    }
+  );
 }

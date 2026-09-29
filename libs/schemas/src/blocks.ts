@@ -412,6 +412,36 @@ export const PollBlockSchema = BaseBlockSchema.extend({
   }),
 });
 
+export const DocumentHighlightSchema = z.object({
+  page: z.number().int().positive(),
+  excerpt: z.string().min(1),
+  note: z.string().optional(),
+  tag: z.string().optional(),
+});
+export type DocumentHighlight = z.infer<typeof DocumentHighlightSchema>;
+
+export const DocumentViewerBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('document_viewer'),
+  data: z.object({
+    documentUrl: z.string().url(),
+    title: z.string().min(1),
+    pageCount: z.number().int().positive(),
+    documentType: z
+      .enum([
+        'court_filing',
+        'treaty',
+        'financial_disclosure',
+        'leak',
+        'whitepaper',
+        'regulatory_directive',
+      ])
+      .default('whitepaper'),
+    description: z.string().optional(),
+    highlights: z.array(DocumentHighlightSchema).default([]),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
 export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   HeadingBlockSchema,
   ParagraphBlockSchema,
@@ -440,6 +470,7 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   ImageDiffBlockSchema,
   LiveTickerBlockSchema,
   PollBlockSchema,
+  DocumentViewerBlockSchema,
 ]);
 
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
@@ -472,3 +503,4 @@ export type EmbedBlock = z.infer<typeof EmbedBlockSchema>;
 export type ImageDiffBlock = z.infer<typeof ImageDiffBlockSchema>;
 export type LiveTickerBlock = z.infer<typeof LiveTickerBlockSchema>;
 export type PollBlock = z.infer<typeof PollBlockSchema>;
+export type DocumentViewerBlock = z.infer<typeof DocumentViewerBlockSchema>;

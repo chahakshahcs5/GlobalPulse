@@ -525,4 +525,82 @@ export function registerStoryTools(
       return mcpJsonResponse(digest);
     }
   );
+
+  server.tool(
+    'generate_depth_variants',
+    '[READ-ONLY] Generate multi-depth reading variants (quick 1-minute executive brief, balanced standard story, and exhaustive deep dive) for any story.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+    },
+    async ({ storyId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const story = await storyService.getStory(storyId, principal.organizationId);
+      const blocks = story.blocks || [];
+
+      // Quick variant
+      const quickTypes = new Set([
+        'heading',
+        'summary',
+        'quote',
+        'statistic',
+        'chart',
+        'live_ticker',
+        'poll',
+        'callout',
+      ]);
+      const quickBlocks = blocks.filter(
+        (b) => quickTypes.has(b.blockType) || (b.blockType === 'paragraph' && b.sortOrder <= 2)
+      );
+
+      // Balanced variant (standard editorial core)
+      const balancedBlocks = blocks.filter(
+        (b) => b.blockType !== 'document_viewer' && b.blockType !== 'slide_deck'
+      );
+
+      // Deep dive (all blocks)
+      const deepDiveBlocks = blocks;
+
+      const calcMinutes = (blkList: typeof blocks) => {
+        let words = story.summary?.split(/\s+/).length || 0;
+        for (const b of blkList) {
+          const d = b.data as { text?: string; caption?: string; quote?: string };
+          if (d?.text) words += d.text.split(/\s+/).length;
+          if (d?.caption) words += d.caption.split(/\s+/).length;
+          if (d?.quote) words += d.quote.split(/\s+/).length;
+        }
+        return Math.max(1, Math.ceil(words / 200));
+      };
+
+      return mcpJsonResponse({
+        storyId: story.id,
+        title: story.title,
+        slug: story.slug,
+        variants: {
+          quick: {
+            depth: 'quick',
+            name: 'Quick Executive Brief',
+            estimatedMinutes: Math.min(2, calcMinutes(quickBlocks)),
+            blockCount: quickBlocks.length,
+            blocks: quickBlocks,
+          },
+          balanced: {
+            depth: 'balanced',
+            name: 'Standard Reporting',
+            estimatedMinutes: calcMinutes(balancedBlocks.length > 0 ? balancedBlocks : blocks),
+            blockCount: (balancedBlocks.length > 0 ? balancedBlocks : blocks).length,
+            blocks: balancedBlocks.length > 0 ? balancedBlocks : blocks,
+          },
+          deep_dive: {
+            depth: 'deep_dive',
+            name: 'Exhaustive Deep Dive',
+            estimatedMinutes: Math.max(calcMinutes(deepDiveBlocks), 5),
+            blockCount: deepDiveBlocks.length,
+            blocks: deepDiveBlocks,
+          },
+        },
+      });
+    }
+  );
 }

@@ -88,6 +88,14 @@ export function extractTextContent(blocks: StoryBlock[]): string {
           fragments.push(opt.text);
         }
         break;
+      case 'document_viewer':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        for (const hl of block.data.highlights) {
+          fragments.push(hl.excerpt);
+          if (hl.note) fragments.push(hl.note);
+        }
+        break;
       default:
         break;
     }
