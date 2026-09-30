@@ -95,8 +95,15 @@ export class OAuthService {
         clientId: 'gemini_agent_service',
         clientSecret: process.env.OAUTH_GEMINI_CLIENT_SECRET || 'sec_test_gemini_999',
         clientType: 'gemini',
-        allowedGrants: ['client_credentials'],
+        allowedGrants: ['client_credentials', 'authorization_code'],
         allowedScopes: DEFAULT_SCOPES,
+        redirectUris: [
+          'http://localhost:3000/oauth/callback',
+          'http://localhost:3002/oauth/callback',
+          'https://gemini.google.com/oauth/callback',
+          'https://spark.gemini.google.com/oauth/callback',
+          'https://oauth.googleusercontent.com',
+        ],
       },
       {
         clientId: 'chatgpt_mcp_client',
@@ -226,6 +233,13 @@ export class OAuthService {
         try {
           const registeredUrl = new URL(uri);
           const reqUrl = new URL(req.redirect_uri!);
+          if (
+            client.clientType === 'gemini' &&
+            (reqUrl.hostname.endsWith('google.com') ||
+              reqUrl.hostname.endsWith('googleusercontent.com'))
+          ) {
+            return true;
+          }
           return (
             registeredUrl.origin === reqUrl.origin && registeredUrl.pathname === reqUrl.pathname
           );

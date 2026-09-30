@@ -230,12 +230,16 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     }
 
     // RFC 8414 OAuth Protected Resource Metadata for OpenAI & Gemini (§42, §47)
-    if (url.pathname === '/.well-known/oauth-protected-resource') {
+    if (
+      url.pathname === '/.well-known/oauth-protected-resource' ||
+      url.pathname === '/.well-known/oauth-protected-resource/mcp'
+    ) {
+      const serverOrigin = `${url.protocol}//${req.headers.host || 'localhost'}`;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
-          resource: process.env.OAUTH_AUDIENCE || 'https://news.platform/mcp',
-          authorization_servers: [process.env.OAUTH_ISSUER || 'http://localhost:4000/auth'],
+          resource: process.env.OAUTH_AUDIENCE || `${serverOrigin}/mcp`,
+          authorization_servers: [process.env.OAUTH_ISSUER || `${serverOrigin}/auth`],
           scopes_supported: [
             'news:read',
             'news:search',
@@ -247,7 +251,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
             'news:admin',
           ],
           bearer_methods_supported: ['header'],
-          resource_documentation: 'https://news.platform/docs/mcp',
+          resource_documentation: `${serverOrigin}/docs/mcp`,
         })
       );
       return;
@@ -282,6 +286,43 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
 
     // Streamable HTTP / MCP Handler wrapped in request-scoped AsyncLocalStorage
     if (url.pathname === '/mcp' || url.pathname === '/') {
+      // Normalize Accept header so non-SSE client probes (Gemini Spark, browsers, curl)
+      // that send Accept: */* or Accept: application/json are not rejected with HTTP 406
+      const currentAccept = (req.headers.accept || '').trim();
+
+      if (req.method === 'GET') {
+        // If it's a GET probe that is not explicitly requesting an SSE stream, return 200 OK server info
+        if (!currentAccept.includes('text/event-stream') && !req.headers['mcp-session-id']) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              status: 'healthy',
+              service: 'ai-news-platform-mcp',
+              mcp: 'streamable-http',
+              version: '1.0.0',
+              endpoint: '/mcp',
+            })
+          );
+          return;
+        }
+        req.headers.accept = 'text/event-stream';
+      } else if (req.method === 'POST') {
+        // Streamable HTTP POST requires both application/json and text/event-stream in Accept header
+        const parts = currentAccept ? currentAccept.split(',').map((p) => p.trim()) : [];
+        if (!parts.some((p) => p.includes('application/json'))) {
+          parts.push('application/json');
+        }
+        if (!parts.some((p) => p.includes('text/event-stream'))) {
+          parts.push('text/event-stream');
+        }
+        req.headers.accept = parts.join(', ');
+
+        // Default Content-Type to application/json if omitted
+        if (!req.headers['content-type']) {
+          req.headers['content-type'] = 'application/json';
+        }
+      }
+
       let bodyStr = '';
       req.on('data', (chunk) => {
         bodyStr += chunk;
