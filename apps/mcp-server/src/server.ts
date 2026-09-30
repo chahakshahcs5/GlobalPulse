@@ -248,7 +248,6 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
             'news:media',
             'news:sources',
             'news:topics',
-            'news:admin',
           ],
           bearer_methods_supported: ['header'],
           resource_documentation: `${serverOrigin}/docs/mcp`,

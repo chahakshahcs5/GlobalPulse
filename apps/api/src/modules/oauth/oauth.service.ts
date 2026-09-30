@@ -96,7 +96,7 @@ export class OAuthService {
         clientSecret: process.env.OAUTH_GEMINI_CLIENT_SECRET || 'sec_test_gemini_999',
         clientType: 'gemini',
         allowedGrants: ['client_credentials', 'authorization_code'],
-        allowedScopes: [...DEFAULT_SCOPES, 'news:admin'],
+        allowedScopes: DEFAULT_SCOPES,
         redirectUris: [
           'http://localhost:3000/oauth/callback',
           'http://localhost:3002/oauth/callback',
@@ -273,16 +273,16 @@ export class OAuthService {
       });
     }
 
-    // Parse and authorize scopes
-    const parsedScopes: NewsScope[] = req.scope
+    // Parse and authorize scopes; downscope to client.allowedScopes (RFC 6749 §3.3)
+    const rawRequestedScopes: NewsScope[] = req.scope
       ? (req.scope.split(/[\s,]+/).filter(Boolean) as NewsScope[])
       : client.allowedScopes;
 
-    const unauthorizedScopes = parsedScopes.filter((s) => !client.allowedScopes.includes(s));
-    if (unauthorizedScopes.length > 0) {
+    const parsedScopes = rawRequestedScopes.filter((s) => client.allowedScopes.includes(s));
+    if (parsedScopes.length === 0) {
       throw new BadRequestException({
         error: 'invalid_scope',
-        error_description: `Scope(s) [${unauthorizedScopes.join(', ')}] are not authorized for client "${req.client_id}".`,
+        error_description: `None of the requested scope(s) are authorized for client "${req.client_id}".`,
       });
     }
 
