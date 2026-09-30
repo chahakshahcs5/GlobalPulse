@@ -96,7 +96,7 @@ export class OAuthService {
         clientSecret: process.env.OAUTH_GEMINI_CLIENT_SECRET || 'sec_test_gemini_999',
         clientType: 'gemini',
         allowedGrants: ['client_credentials', 'authorization_code'],
-        allowedScopes: DEFAULT_SCOPES,
+        allowedScopes: [...DEFAULT_SCOPES, 'news:admin'],
         redirectUris: [
           'http://localhost:3000/oauth/callback',
           'http://localhost:3002/oauth/callback',
