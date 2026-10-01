@@ -6,6 +6,7 @@ export interface ISourceRepository {
   create(source: Source): Promise<Source>;
   update(source: Source): Promise<Source>;
   list(orgId: string, limit?: number): Promise<Source[]>;
+  listByPublisher(publisherId: string, orgId?: string): Promise<Source[]>;
   search(query: string, orgId: string): Promise<Source[]>;
 
   // Citations & Claims

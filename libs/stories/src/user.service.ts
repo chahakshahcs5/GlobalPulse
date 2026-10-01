@@ -145,34 +145,62 @@ export class UserService {
   }
 
   /**
-   * F17: Follow Topics, Entities & Authors
+   * F17: Follow Topics, Entities, Authors & Sources
    */
   async followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<FollowRecord> {
-    return this.db.users.followTarget(userId, targetType, targetId);
+    const record = await this.db.users.followTarget(userId, targetType, targetId);
+    if (targetType === 'source') {
+      try {
+        let pub = await this.db.publishers.findById(targetId);
+        if (!pub) {
+          const list = await this.db.publishers.list('org_default');
+          pub = list.find((p) => p.slug === targetId || p.domain === targetId) || null;
+        }
+        if (pub) {
+          pub.followerCount = (pub.followerCount || 0) + 1;
+          await this.db.publishers.update(pub);
+        }
+      } catch {}
+    }
+    return record;
   }
 
   async unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
-    return this.db.users.unfollowTarget(userId, targetType, targetId);
+    const removed = await this.db.users.unfollowTarget(userId, targetType, targetId);
+    if (removed && targetType === 'source') {
+      try {
+        let pub = await this.db.publishers.findById(targetId);
+        if (!pub) {
+          const list = await this.db.publishers.list('org_default');
+          pub = list.find((p) => p.slug === targetId || p.domain === targetId) || null;
+        }
+        if (pub && pub.followerCount > 0) {
+          pub.followerCount -= 1;
+          await this.db.publishers.update(pub);
+        }
+      } catch {}
+    }
+    return removed;
   }
 
   async listFollowing(
     userId: string,
-    targetType?: 'topic' | 'entity' | 'author'
+    targetType?: 'topic' | 'entity' | 'author' | 'source'
   ): Promise<FollowRecord[]> {
     return this.db.users.listFollowing(userId, targetType);
   }
 
   async isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
     return this.db.users.isFollowing(userId, targetType, targetId);

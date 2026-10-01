@@ -734,13 +734,22 @@ const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = ({ data
 };
 
 const SourceBlockView: React.FC<{ data: SourceBlock['data'] }> = ({ data }) => {
+  const pubSlug = data.publisher
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
   return (
     <div className="my-4 p-4 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 border border-indigo-500/20">
+          <Link
+            href={`/sources/${pubSlug}`}
+            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 hover:text-white hover:bg-indigo-600/30 border border-indigo-500/20 transition-colors"
+            title={`View all coverage & sources from ${data.publisher}`}
+          >
             {data.publisher}
-          </span>
+          </Link>
           {data.publishedAt && (
             <span className="text-xs text-slate-500 font-mono" suppressHydrationWarning>
               {formatDeterministicDate(data.publishedAt)}

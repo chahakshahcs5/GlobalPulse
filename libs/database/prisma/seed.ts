@@ -77,11 +77,141 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     await db.entities.create(entity);
   }
 
-  // 3. Primary Sources
+  // 3. Publishers & Primary Sources
+  const publishers = [
+    {
+      id: 'pub_the_hindu',
+      organizationId: 'org_default',
+      name: 'The Hindu',
+      slug: 'the-hindu',
+      domain: 'thehindu.com',
+      logoUrl:
+        'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=160&auto=format&fit=crop&q=80',
+      description:
+        "One of India's most respected English-language daily newspapers, founded in 1878.",
+      category: 'general',
+      country: 'India',
+      language: 'en',
+      websiteUrl: 'https://www.thehindu.com',
+      biasRating: 'Center / Independent',
+      credibilityScore: 96,
+      isVerified: true,
+      followerCount: 1840,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'pub_reuters',
+      organizationId: 'org_default',
+      name: 'Reuters',
+      slug: 'reuters',
+      domain: 'reuters.com',
+      logoUrl:
+        'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=160&auto=format&fit=crop&q=80',
+      description:
+        'International news organization providing breaking global wire dispatches and financial intelligence.',
+      category: 'world',
+      country: 'Global',
+      language: 'en',
+      websiteUrl: 'https://www.reuters.com',
+      biasRating: 'Wire / Factual',
+      credibilityScore: 98,
+      isVerified: true,
+      followerCount: 4210,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'pub_bloomberg',
+      organizationId: 'org_default',
+      name: 'Bloomberg',
+      slug: 'bloomberg',
+      domain: 'bloomberg.com',
+      logoUrl:
+        'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=160&auto=format&fit=crop&q=80',
+      description: 'Global business and financial markets news agency.',
+      category: 'business',
+      country: 'United States',
+      language: 'en',
+      websiteUrl: 'https://www.bloomberg.com',
+      biasRating: 'Market Focused',
+      credibilityScore: 95,
+      isVerified: true,
+      followerCount: 3950,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'pub_techcrunch',
+      organizationId: 'org_default',
+      name: 'TechCrunch',
+      slug: 'techcrunch',
+      domain: 'techcrunch.com',
+      logoUrl:
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=160&auto=format&fit=crop&q=80',
+      description:
+        'Premier technology and venture publication covering AI breakthroughs and startup innovation.',
+      category: 'technology',
+      country: 'United States',
+      language: 'en',
+      websiteUrl: 'https://techcrunch.com',
+      biasRating: 'Tech Analytical',
+      credibilityScore: 92,
+      isVerified: true,
+      followerCount: 2600,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+
+  for (const pub of publishers) {
+    await db.publishers.create(pub);
+  }
+
   const sources = [
+    {
+      id: 'src_hindu_01',
+      organizationId: 'org_default',
+      publisherId: 'pub_the_hindu',
+      domain: 'thehindu.com',
+      url: 'https://thehindu.com/news/national/india-multilateral-trade-accord-2026',
+      canonicalUrl: 'https://thehindu.com/news/national/india-multilateral-trade-accord-2026',
+      title: 'India Seals Multilateral Trade Settlement Framework at New Delhi Summit',
+      publisher: 'The Hindu',
+      author: 'Special Diplomatic Correspondent',
+      publishedAt: '2026-09-26T09:00:00Z',
+      retrievedAt: new Date().toISOString(),
+      language: 'en',
+      sourceType: 'NEWS_ARTICLE' as const,
+      permissibleExcerpt:
+        'Negotiators in New Delhi agreed to the landmark accession protocols establishing direct local-currency exchange mechanisms.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'src_hindu_02',
+      organizationId: 'org_default',
+      publisherId: 'pub_the_hindu',
+      domain: 'thehindu.com',
+      url: 'https://thehindu.com/business/economy/cross-border-currency-clearing',
+      canonicalUrl: 'https://thehindu.com/business/economy/cross-border-currency-clearing',
+      title: 'Reserve Bank Unveils Sovereign Clearing Channels for Asian Bilateral Trade',
+      publisher: 'The Hindu',
+      author: 'Banking & Macroeconomics Desk',
+      publishedAt: '2026-09-26T11:45:00Z',
+      retrievedAt: new Date().toISOString(),
+      language: 'en',
+      sourceType: 'NEWS_ARTICLE' as const,
+      permissibleExcerpt:
+        'The central bank issued operational directives permitting bilateral clearing accounts without third-party intermediary currencies.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
     {
       id: 'src_reuters_01',
       organizationId: 'org_default',
+      publisherId: 'pub_reuters',
+      domain: 'reuters.com',
       url: 'https://reuters.example.com/world/brics-summit-accord-2026',
       canonicalUrl: 'https://reuters.example.com/world/brics-summit-accord-2026',
       title: 'BRICS Leaders Reach Comprehensive Accession Accord',
@@ -99,6 +229,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     {
       id: 'src_mea_gov',
       organizationId: 'org_default',
+      domain: 'mea.gov.in',
       url: 'https://mea.gov.in/brics-declaration-2026.htm',
       canonicalUrl: 'https://mea.gov.in/brics-declaration-2026.htm',
       title: 'Official Treaty: 2026 New Delhi Declaration',

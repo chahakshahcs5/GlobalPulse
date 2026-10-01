@@ -8,6 +8,8 @@ interface PrismaSourceRow {
   canonicalUrl?: string | null;
   title: string;
   publisher: string;
+  publisherId?: string | null;
+  domain?: string | null;
   author?: string | null;
   publishedAt?: Date | null;
   retrievedAt: Date;
@@ -118,6 +120,8 @@ export class PrismaSourceRepository implements ISourceRepository {
         canonicalUrl: source.canonicalUrl,
         title: source.title,
         publisher: source.publisher,
+        publisherId: source.publisherId,
+        domain: source.domain,
         author: source.author,
         publishedAt: source.publishedAt ? new Date(source.publishedAt) : null,
         retrievedAt: new Date(source.retrievedAt),
@@ -148,6 +152,16 @@ export class PrismaSourceRepository implements ISourceRepository {
     const rows = await this.sourceClient.findMany({
       where: { organizationId: orgId },
       take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => this.mapToDomain(r));
+  }
+
+  async listByPublisher(publisherId: string, orgId?: string): Promise<Source[]> {
+    const where: Record<string, unknown> = { publisherId };
+    if (orgId) where.organizationId = orgId;
+    const rows = await this.sourceClient.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((r) => this.mapToDomain(r));
@@ -260,6 +274,8 @@ export class PrismaSourceRepository implements ISourceRepository {
       canonicalUrl: row.canonicalUrl || undefined,
       title: row.title,
       publisher: row.publisher,
+      publisherId: row.publisherId || undefined,
+      domain: row.domain || undefined,
       author: row.author || undefined,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       retrievedAt: row.retrievedAt.toISOString(),

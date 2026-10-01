@@ -19,6 +19,8 @@ import type {
   Category,
   Topic,
   Source,
+  Publisher,
+  PublisherProfile,
   Event,
   Entity,
   StoryAnalytics,
@@ -628,6 +630,87 @@ export async function getSource(id: string): Promise<Source | null> {
     return await request<Source>(`/api/sources/${encodeURIComponent(id)}`);
   } catch {
     return null;
+  }
+}
+
+export async function listPublishers(category?: string, query?: string): Promise<Publisher[]> {
+  try {
+    const params = new URLSearchParams();
+    if (category && category !== 'all') params.append('category', category);
+    if (query) params.append('query', query);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await request<Publisher[] | { data: Publisher[] }>(`/api/publishers${qs}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getPublisherProfile(slug: string): Promise<PublisherProfile | null> {
+  try {
+    const res = await request<PublisherProfile | { data: PublisherProfile }>(
+      `/api/publishers/${encodeURIComponent(slug)}`
+    );
+    return (res as { data?: PublisherProfile })?.data || (res as PublisherProfile) || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function followTarget(
+  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetId: string
+): Promise<boolean> {
+  try {
+    await request('/api/users/follow', {
+      method: 'POST',
+      body: JSON.stringify({ targetType, targetId }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function unfollowTarget(
+  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetId: string
+): Promise<boolean> {
+  try {
+    await request(`/api/users/follow/${targetType}/${encodeURIComponent(targetId)}`, {
+      method: 'DELETE',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function isFollowingTarget(
+  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetId: string
+): Promise<boolean> {
+  try {
+    const res = await request<{ following: boolean }>(
+      `/api/users/following/${targetType}/${encodeURIComponent(targetId)}`
+    );
+    return !!res?.following;
+  } catch {
+    return false;
+  }
+}
+
+export async function listFollowing(
+  targetType?: 'topic' | 'entity' | 'author' | 'source'
+): Promise<Array<{ targetType: string; targetId: string }>> {
+  try {
+    const qs = targetType ? `?targetType=${targetType}` : '';
+    const res = await request<Array<{ targetType: string; targetId: string }>>(
+      `/api/users/following${qs}`
+    );
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
   }
 }
 

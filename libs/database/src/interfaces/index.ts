@@ -3,6 +3,7 @@ export * from './event.repository';
 export * from './topic.repository';
 export * from './entity.repository';
 export * from './source.repository';
+export * from './publisher.repository';
 export * from './idempotency.repository';
 export * from './audit.repository';
 export * from './engagement.repository';

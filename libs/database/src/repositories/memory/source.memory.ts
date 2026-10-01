@@ -44,6 +44,12 @@ export class MemorySourceRepository implements ISourceRepository {
       .slice(0, limit);
   }
 
+  async listByPublisher(publisherId: string, orgId?: string): Promise<Source[]> {
+    return Array.from(this.sources.values()).filter(
+      (s) => (!orgId || s.organizationId === orgId) && s.publisherId === publisherId
+    );
+  }
+
   async search(query: string, orgId: string): Promise<Source[]> {
     const q = query.toLowerCase();
     return Array.from(this.sources.values()).filter(

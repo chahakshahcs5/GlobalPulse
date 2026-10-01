@@ -2,7 +2,7 @@ import type { NewsroomUser } from '@ai-news/schemas';
 
 export interface FollowRecord {
   userId: string;
-  targetType: 'topic' | 'entity' | 'author';
+  targetType: 'topic' | 'entity' | 'author' | 'source';
   targetId: string;
   createdAt: string;
 }
@@ -18,21 +18,21 @@ export interface IUserRepository {
   // Following interests (F17)
   followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<FollowRecord>;
   unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean>;
   listFollowing(
     userId: string,
-    targetType?: 'topic' | 'entity' | 'author'
+    targetType?: 'topic' | 'entity' | 'author' | 'source'
   ): Promise<FollowRecord[]>;
   isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean>;
 }

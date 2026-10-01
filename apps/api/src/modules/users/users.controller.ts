@@ -91,7 +91,7 @@ export class UsersController {
   @Delete('follow/:targetType/:targetId')
   @HttpCode(HttpStatus.OK)
   async unfollowTarget(
-    @Param('targetType') targetType: 'topic' | 'entity' | 'author',
+    @Param('targetType') targetType: 'topic' | 'entity' | 'author' | 'source',
     @Param('targetId') targetId: string,
     @Principal() principal: AuthenticatedPrincipal
   ) {
@@ -102,7 +102,7 @@ export class UsersController {
 
   @Get('following')
   async listFollowing(
-    @Query('targetType') targetType: 'topic' | 'entity' | 'author' | undefined,
+    @Query('targetType') targetType: 'topic' | 'entity' | 'author' | 'source' | undefined,
     @Principal() principal: AuthenticatedPrincipal
   ) {
     AuthService.requireScope(principal, 'news:read');
@@ -111,7 +111,7 @@ export class UsersController {
 
   @Get('following/:targetType/:targetId')
   async isFollowing(
-    @Param('targetType') targetType: 'topic' | 'entity' | 'author',
+    @Param('targetType') targetType: 'topic' | 'entity' | 'author' | 'source',
     @Param('targetId') targetId: string,
     @Principal() principal: AuthenticatedPrincipal
   ) {

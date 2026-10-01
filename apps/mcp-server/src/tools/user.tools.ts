@@ -122,10 +122,15 @@ export function registerUserTools(
   // 4. follow_interest (F17)
   server.tool(
     'follow_interest',
-    'Follow a news topic, cited entity, or journalist/author to personalize news delivery.',
+    'Follow a news topic, cited entity, source publication, or journalist/author to personalize news delivery.',
     {
-      target_type: z.enum(['topic', 'entity', 'author']).describe('Type of interest to follow'),
-      target_id: z.string().min(1).describe('The unique ID or slug of the topic/entity/author'),
+      target_type: z
+        .enum(['topic', 'entity', 'author', 'source'])
+        .describe('Type of interest to follow'),
+      target_id: z
+        .string()
+        .min(1)
+        .describe('The unique ID or slug of the topic/entity/author/source'),
     },
     async (args) => {
       try {
@@ -150,9 +155,11 @@ export function registerUserTools(
   // 5. unfollow_interest (F17)
   server.tool(
     'unfollow_interest',
-    'Unfollow a previously followed topic, entity, or author.',
+    'Unfollow a previously followed topic, entity, author, or source publication.',
     {
-      target_type: z.enum(['topic', 'entity', 'author']).describe('Type of interest to unfollow'),
+      target_type: z
+        .enum(['topic', 'entity', 'author', 'source'])
+        .describe('Type of interest to unfollow'),
       target_id: z.string().min(1).describe('The unique ID or slug'),
     },
     async (args) => {
@@ -180,10 +187,10 @@ export function registerUserTools(
   // 6. list_user_following (F17)
   server.tool(
     'list_user_following',
-    'Retrieve all topics, entities, and authors followed by the active user/agent.',
+    'Retrieve all topics, entities, authors, and sources followed by the active user/agent.',
     {
       target_type: z
-        .enum(['topic', 'entity', 'author'])
+        .enum(['topic', 'entity', 'author', 'source'])
         .optional()
         .describe('Filter by target type'),
     },

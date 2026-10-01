@@ -3,6 +3,7 @@ export * from './event.memory';
 export * from './topic.memory';
 export * from './entity.memory';
 export * from './source.memory';
+export * from './publisher.memory';
 export * from './idempotency.memory';
 export * from './audit.memory';
 export * from './engagement.memory';

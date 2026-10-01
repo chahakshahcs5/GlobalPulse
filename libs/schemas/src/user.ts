@@ -105,7 +105,7 @@ export const UpdatePreferencesInputSchema = z.object({
 });
 export type UpdatePreferencesInput = z.infer<typeof UpdatePreferencesInputSchema>;
 
-export const FollowTargetTypeSchema = z.enum(['topic', 'entity', 'author']);
+export const FollowTargetTypeSchema = z.enum(['topic', 'entity', 'author', 'source']);
 export type FollowTargetType = z.infer<typeof FollowTargetTypeSchema>;
 
 export const FollowTargetInputSchema = z.object({

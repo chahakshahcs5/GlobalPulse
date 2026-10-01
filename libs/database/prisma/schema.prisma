@@ -96,6 +96,7 @@ model Organization {
   topics              Topic[]
   entities            Entity[]
   sources             Source[]
+  publishers          Publisher[]
   idempotencyRecords  IdempotencyRecord[]
   auditLogs           AuditLog[]
   comments            Comment[]
@@ -265,9 +266,39 @@ model Entity {
   @@map("entities")
 }
 
+model Publisher {
+  id               String   @id @default(uuid())
+  organizationId   String
+  name             String
+  slug             String
+  domain           String
+  logoUrl          String?
+  description      String?
+  category         String   @default("general")
+  country          String?
+  language         String   @default("en")
+  websiteUrl       String?
+  biasRating       String?
+  credibilityScore Float?
+  isVerified       Boolean  @default(true)
+  followerCount    Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sources          Source[]
+
+  @@unique([organizationId, slug])
+  @@unique([organizationId, domain])
+  @@index([organizationId, category])
+  @@map("publishers")
+}
+
 model Source {
   id                 String       @id @default(uuid())
   organizationId     String
+  publisherId        String?
+  domain             String?
   url                String
   canonicalUrl       String?
   title              String
@@ -283,10 +314,12 @@ model Source {
   updatedAt          DateTime     @updatedAt
 
   organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  publisherRef       Publisher?   @relation(fields: [publisherId], references: [id], onDelete: SetNull)
   citations          Citation[]
 
   @@unique([organizationId, url])
   @@index([organizationId, publisher])
+  @@index([organizationId, publisherId])
   @@map("sources")
 }
 

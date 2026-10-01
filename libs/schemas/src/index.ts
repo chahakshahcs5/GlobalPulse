@@ -4,6 +4,7 @@ export * from './event';
 export * from './topic';
 export * from './entity';
 export * from './source';
+export * from './publisher';
 export * from './search';
 export * from './audit';
 export * from './engagement';

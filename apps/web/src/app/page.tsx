@@ -25,7 +25,9 @@ import {
   Plus,
   X as XIcon,
   Newspaper,
+  Building2,
 } from 'lucide-react';
+import { DEMO_PUBLISHERS } from '../lib/demo-data';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
 export type FeedMode = 'top' | 'for-you' | 'following' | 'history';
@@ -125,6 +127,7 @@ function GoogleNewsContent() {
     Array<{ slug: string; title: string; category?: string; readAt: string }>
   >([]);
   const [followedTopics, setFollowedTopics] = useState<string[]>([]);
+  const [followedSources, setFollowedSources] = useState<string[]>([]);
 
   const { stories: userStories } = useAllStories();
   const { clusters, leadCluster, secondaryClusters } = useNewsClusters();
@@ -188,9 +191,25 @@ function GoogleNewsContent() {
       }
       const savedEd = localStorage.getItem('globalpulse_edition') as RegionalEdition | null;
       if (savedEd) setEdition(savedEd);
+
+      const sourcesRaw = localStorage.getItem('globalpulse_followed_sources');
+      if (sourcesRaw) {
+        setFollowedSources(JSON.parse(sourcesRaw));
+      } else {
+        setFollowedSources(['the-hindu', 'reuters']);
+      }
     } catch {
       // Safe fallback
     }
+
+    const handleSourcesUpdate = () => {
+      try {
+        const stored = localStorage.getItem('globalpulse_followed_sources');
+        if (stored) setFollowedSources(JSON.parse(stored));
+      } catch {}
+    };
+    window.addEventListener('globalpulse_sources_updated', handleSourcesUpdate);
+    return () => window.removeEventListener('globalpulse_sources_updated', handleSourcesUpdate);
   }, [taxonomyTopics]);
 
   // Switch tab and synchronize URL
@@ -275,15 +294,28 @@ function GoogleNewsContent() {
     return 0;
   });
 
-  // Clusters matching followed topics for "Following"
+  // Clusters matching followed topics and followed sources for "Following"
   const followedClusters = clusters.filter((c) => {
-    if (followedTopics.length === 0) return true;
-    return followedTopics.some(
+    if (followedTopics.length === 0 && followedSources.length === 0) return true;
+    const matchesTopic = followedTopics.some(
       (t) =>
         c.title.toLowerCase().includes(t.toLowerCase()) ||
         c.category.toLowerCase().includes(t.toLowerCase()) ||
         c.summary.toLowerCase().includes(t.toLowerCase())
     );
+    const matchesSource = followedSources.some((s) => {
+      const sLow = s.toLowerCase();
+      return (
+        c.leadStory?.publisher?.toLowerCase().includes(sLow) ||
+        c.leadStory?.slug?.toLowerCase().includes(sLow) ||
+        c.relatedArticles?.some(
+          (art) =>
+            art.publisher.toLowerCase().includes(sLow) ||
+            (art.url && art.url.toLowerCase().includes(sLow))
+        )
+      );
+    });
+    return matchesTopic || matchesSource;
   });
 
   return (
@@ -542,6 +574,58 @@ function GoogleNewsContent() {
                         </button>
                       ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Followed Sources Shelf */}
+              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-blue-600" /> Followed Sources & Publishers
+                      ({followedSources.length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Stories citing or published by these news sources are prioritized in your
+                      feed.
+                    </p>
+                  </div>
+                  <Link
+                    href="/sources"
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0"
+                  >
+                    <span>Explore All Sources</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {followedSources.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">
+                      No sources followed yet.{' '}
+                      <Link href="/sources" className="text-blue-500 underline font-semibold">
+                        Explore sources to follow
+                      </Link>
+                      .
+                    </span>
+                  ) : (
+                    followedSources.map((srcSlug) => {
+                      const pub = Object.values(DEMO_PUBLISHERS).find(
+                        (p) => p.slug === srcSlug || p.id === srcSlug
+                      );
+                      const name = pub?.name || srcSlug.replace(/-/g, ' ');
+                      return (
+                        <Link
+                          key={srcSlug}
+                          href={`/sources/${srcSlug}`}
+                          className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold flex items-center gap-2 transition"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="capitalize">{name}</span>
+                        </Link>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 

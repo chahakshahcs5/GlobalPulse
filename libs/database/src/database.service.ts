@@ -4,6 +4,7 @@ import type {
   ITopicRepository,
   IEntityRepository,
   ISourceRepository,
+  IPublisherRepository,
   IIdempotencyRepository,
   IAuditRepository,
   IEngagementRepository,
@@ -22,6 +23,7 @@ import {
   MemoryTopicRepository,
   MemoryEntityRepository,
   MemorySourceRepository,
+  MemoryPublisherRepository,
   MemoryIdempotencyRepository,
   MemoryAuditRepository,
   MemoryEngagementRepository,
@@ -40,6 +42,7 @@ import {
   PrismaTopicRepository,
   PrismaEntityRepository,
   PrismaSourceRepository,
+  PrismaPublisherRepository,
   PrismaIdempotencyRepository,
   PrismaAuditRepository,
   PrismaUserRepository,
@@ -68,6 +71,7 @@ export class DatabaseService {
   public topics: ITopicRepository;
   public entities: IEntityRepository;
   public sources: ISourceRepository;
+  public publishers: IPublisherRepository;
   public idempotency: IIdempotencyRepository;
   public audit: IAuditRepository;
   public engagement: IEngagementRepository;
@@ -85,6 +89,7 @@ export class DatabaseService {
   private memoryTopics = new MemoryTopicRepository();
   private memoryEntities = new MemoryEntityRepository();
   private memorySources = new MemorySourceRepository();
+  private memoryPublishers = new MemoryPublisherRepository();
   private memoryIdempotency = new MemoryIdempotencyRepository();
   private memoryAudit = new MemoryAuditRepository();
   private memoryEngagement = new MemoryEngagementRepository();
@@ -132,6 +137,7 @@ export class DatabaseService {
     this.topics = this.memoryTopics;
     this.entities = this.memoryEntities;
     this.sources = this.memorySources;
+    this.publishers = this.memoryPublishers;
     this.idempotency = this.memoryIdempotency;
     this.audit = this.memoryAudit;
     this.engagement = this.memoryEngagement;
@@ -163,6 +169,7 @@ export class DatabaseService {
         this.topics = new PrismaTopicRepository(getPrisma);
         this.entities = new PrismaEntityRepository(getPrisma);
         this.sources = new PrismaSourceRepository(getPrisma);
+        this.publishers = new PrismaPublisherRepository(getPrisma);
         this.idempotency = new PrismaIdempotencyRepository(getPrisma);
         this.audit = new PrismaAuditRepository(getPrisma);
         this.users = new PrismaUserRepository(getPrisma);
@@ -223,6 +230,7 @@ export class DatabaseService {
     const topicSnap = this.memoryTopics.snapshot();
     const entitySnap = this.memoryEntities.snapshot();
     const sourceSnap = this.memorySources.snapshot();
+    const publisherSnap = this.memoryPublishers.snapshot();
     const idempSnap = this.memoryIdempotency.snapshot();
     const auditSnap = this.memoryAudit.snapshot();
     const engSnap = this.memoryEngagement.snapshot();
@@ -244,6 +252,7 @@ export class DatabaseService {
       this.memoryTopics.restore(topicSnap);
       this.memoryEntities.restore(entitySnap);
       this.memorySources.restore(sourceSnap);
+      this.memoryPublishers.restore(publisherSnap);
       this.memoryIdempotency.restore(idempSnap);
       this.memoryAudit.restore(auditSnap);
       this.memoryEngagement.restore(engSnap);
@@ -279,6 +288,7 @@ export class DatabaseService {
     this.memoryTopics.clear();
     this.memoryEntities.clear();
     this.memorySources.clear();
+    this.memoryPublishers.clear();
     this.memoryIdempotency.clear();
     this.memoryAudit.clear();
     this.memoryEngagement.clear();

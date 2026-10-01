@@ -252,6 +252,109 @@ describe('Domain Services Unit Tests', () => {
       expect(citations.length).toBeGreaterThanOrEqual(1);
       expect(citations.some((c) => c.id === citation.id)).toBe(true);
     });
+
+    it('groups multiple news articles under one parent publisher (The Hindu news1 & news2)', async () => {
+      // 1. Register publisher The Hindu with logo and domain
+      const hinduPub = await sourceService.createPublisher(
+        {
+          name: 'The Hindu',
+          domain: 'thehindu.com',
+          logoUrl: 'https://www.thehindu.com/theme/images/th-online/thehindu-logo.svg',
+          description: "India's national newspaper since 1878",
+          category: 'general',
+          country: 'India',
+        },
+        'org_test'
+      );
+
+      expect(hinduPub.id).toMatch(/^pub_/);
+      expect(hinduPub.domain).toBe('thehindu.com');
+      expect(hinduPub.slug).toBe('the-hindu');
+
+      // 2. Create news article 1: thehindu.com/news1
+      const news1 = await sourceService.createSource(
+        {
+          url: 'https://thehindu.com/news/national/news1',
+          title: 'India Finalizes Bilateral Tech Accord',
+          publisher: 'The Hindu',
+        },
+        'org_test'
+      );
+
+      // 3. Create news article 2: thehindu.com/news2
+      const news2 = await sourceService.createSource(
+        {
+          url: 'https://thehindu.com/business/economy/news2',
+          title: 'Reserve Bank Expands Cross-Border Clearing',
+          publisher: 'The Hindu',
+        },
+        'org_test'
+      );
+
+      // Both should be associated with The Hindu publisher
+      expect(news1.publisherId).toBe(hinduPub.id);
+      expect(news2.publisherId).toBe(hinduPub.id);
+
+      // 4. Attach news1 to story A
+      const storyA = await db.stories.create({
+        id: 'sty_test_a',
+        organizationId: 'org_test',
+        slug: 'story-a',
+        title: 'Story A: Tech Policy',
+        summary: 'Story A summary',
+        articleType: 'breaking_news',
+        status: 'PUBLISHED',
+        currentVersionNumber: 1,
+        topicIds: [],
+        entityIds: [],
+        sourceIds: [news1.id],
+        blocks: [],
+        createdVia: 'api',
+        createdByClient: 'human_web',
+        authorId: 'usr_test',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // 5. Query complete publisher profile
+      const profile = await sourceService.getPublisherProfile(hinduPub.slug, 'org_test');
+      expect(profile.publisher.name).toBe('The Hindu');
+      expect(profile.citedArticles.length).toBe(2);
+      expect(profile.citedArticles.map((a) => a.url)).toContain(
+        'https://thehindu.com/news/national/news1'
+      );
+      expect(profile.citedArticles.map((a) => a.url)).toContain(
+        'https://thehindu.com/business/economy/news2'
+      );
+
+      // Referenced stories should contain Story A
+      expect(profile.referencingStories.length).toBe(1);
+      expect(profile.referencingStories[0].id).toBe(storyA.id);
+    });
+
+    it('allows users and AI agents to follow a publisher source', async () => {
+      const pub = await sourceService.createPublisher(
+        {
+          name: 'Reuters',
+          domain: 'reuters.com',
+          category: 'world',
+        },
+        'org_test'
+      );
+
+      // User follows publisher
+      await db.users.followTarget('usr_reader_1', 'source', pub.id);
+
+      const isFollowing = await db.users.isFollowing('usr_reader_1', 'source', pub.id);
+      expect(isFollowing).toBe(true);
+
+      const followingList = await db.users.listFollowing('usr_reader_1', 'source');
+      expect(followingList.length).toBe(1);
+      expect(followingList[0].targetId).toBe(pub.id);
+
+      const profile = await sourceService.getPublisherProfile(pub.slug, 'org_test', 'usr_reader_1');
+      expect(profile.isFollowing).toBe(true);
+    });
   });
 
   describe('EventService', () => {
