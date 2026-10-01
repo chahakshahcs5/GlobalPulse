@@ -41,8 +41,8 @@ import type {
 
 const API_BASE_URL =
   typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    ? ''
+    : process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Auth token stored in memory with sessionStorage fallback (isolated per session, prevents persistent XSS token theft)
 let _authToken: string | null = null;

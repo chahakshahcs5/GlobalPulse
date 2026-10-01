@@ -4,7 +4,7 @@
 
 services:
   # 1. PostgreSQL 16 with pgvector extension (Sections 10, 152, 154)
-  postgres:
+  postgres: 
     image: pgvector/pgvector:pg16
     container_name: globalpulse_postgres
     restart: unless-stopped
@@ -37,25 +37,60 @@ services:
       timeout: 5s
       retries: 5
 
-  # 3. MinIO S3-Compatible Object Storage for media assets and variants (Section 154)
+  # Prepare the persistent volume for RustFS's non-root runtime user.
+  rustfs-volume-permissions:
+    image: alpine:3.22
+    volumes:
+      - rustfs_data:/data
+    command: ['sh', '-c', 'chown -R 10001:10001 /data']
+    restart: 'no'
+
+  # 3. S3-compatible RustFS object storage for media assets and variants
   minio:
-    image: minio/minio:RELEASE.2024-03-05T04-48-44Z
+    image: rustfs/rustfs:1.0.0
     container_name: globalpulse_minio
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    depends_on:
+      rustfs-volume-permissions:
+        condition: service_completed_successfully
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      RUSTFS_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
     ports:
       - '9000:9000'
       - '9001:9001'
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/health']
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 40s
+
+  # Initialize PostgreSQL before database-backed services start.
+  prisma-setup:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@host.docker.internal:5432/${POSTGRES_DB:-ai_news}?schema=public
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    command:
+      [
+        'sh',
+        '-c',
+        'pnpm --filter @ai-news/database exec prisma db push --schema=prisma/schema.prisma && pnpm --filter @ai-news/database exec prisma db execute --schema=prisma/schema.prisma --file=prisma/codespaces-bootstrap.sql',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
 
   # 4. Production NestJS API Gateway & Mercurius GraphQL API
   api:
@@ -65,21 +100,32 @@ services:
     container_name: globalpulse_api
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
       HOST: 0.0.0.0
       DATABASE_ENGINE: prisma
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
-      REDIS_URL: redis://redis:6379
-      MINIO_ENDPOINT: http://minio:9000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@host.docker.internal:5432/${POSTGRES_DB:-ai_news}?schema=public
+      REDIS_URL: redis://host.docker.internal:6379
+      API_BASE_URL: https://presence-eminem-bidding-teens.trycloudflare.com
+      MCP_BASE_URL: https://apartment-bradford-myers-podcast.trycloudflare.com/mcp
+      OAUTH_ISSUER: https://presence-eminem-bidding-teens.trycloudflare.com
+      OAUTH_AUDIENCE: https://apartment-bradford-myers-podcast.trycloudflare.com/mcp
+      MINIO_ENDPOINT: http://host.docker.internal:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
+      S3_BUCKET: ${S3_BUCKET:-news-media}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
       JWT_ISSUER: https://auth.globalpulse.news
       JWT_AUDIENCE: https://api.globalpulse.news
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-setup:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -91,12 +137,19 @@ services:
     container_name: globalpulse_mcp
     restart: unless-stopped
     environment:
-      NODE_ENV: production
-      PORT: 3001
-      HOST: 0.0.0.0
-      API_BASE_URL: http://api:3000
+      API_BASE_URL: https://presence-eminem-bidding-teens.trycloudflare.com
+      MCP_BASE_URL: https://apartment-bradford-myers-podcast.trycloudflare.com/mcp
+      OAUTH_ISSUER: https://presence-eminem-bidding-teens.trycloudflare.com
+      OAUTH_AUDIENCE: https://apartment-bradford-myers-podcast.trycloudflare.com/mcp
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
+      NODE_ENV: development
+      MCP_PORT: 3001
+      MCP_HOST: 0.0.0.0
+      DEV_TOKEN_ADMIN: ${DEV_TOKEN_ADMIN:-}
       DATABASE_ENGINE: prisma
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@host.docker.internal:5432/${POSTGRES_DB:-ai_news}?schema=public
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3001:3001'
     depends_on:
@@ -113,10 +166,12 @@ services:
     container_name: globalpulse_web
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3002
-      NEXT_PUBLIC_API_URL: http://localhost:3000
-      NEXT_PUBLIC_MCP_URL: http://localhost:3001/mcp
+      API_INTERNAL_URL: http://host.docker.internal:3000
+      NEXT_PUBLIC_MCP_URL: ${CODESPACE_MCP_URL:-http://localhost:3001/mcp}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3002:3002'
     depends_on:
@@ -131,16 +186,20 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://host.docker.internal:6379
       DATABASE_ENGINE: prisma
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@host.docker.internal:5432/${POSTGRES_DB:-ai_news}?schema=public
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-setup:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+  rustfs_data:

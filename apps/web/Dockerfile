@@ -4,7 +4,7 @@
 # ==============================================================================
 
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@12.3.4
 
 WORKDIR /app
 
@@ -43,8 +43,8 @@ COPY . .
 # Expose Next.js Web port
 EXPOSE 3002
 
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=3002
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD ["pnpm", "--filter", "@ai-news/web", "dev", "--", "-p", "3002", "-H", "0.0.0.0"]
+CMD ["pnpm", "--filter", "@ai-news/web", "exec", "next", "dev", "-p", "3002", "-H", "0.0.0.0"]

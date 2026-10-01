@@ -33,7 +33,7 @@ const nextConfig = {
   // Proxy API requests to the backend during local development
   // so the browser doesn't need CORS and the frontend can use relative URLs
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const apiUrl = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     return [
       {
         source: '/api/:path*',

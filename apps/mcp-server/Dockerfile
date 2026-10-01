@@ -4,7 +4,7 @@
 # ==============================================================================
 
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@12.3.4
 
 WORKDIR /app
 
@@ -41,7 +41,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Generate Prisma Client bindings for PostgreSQL database engine
-RUN npx prisma generate --schema=libs/database/prisma/schema.prisma || true
+RUN DATABASE_URL='postgresql://postgres:postgres@localhost:5432/ai_news?schema=public' pnpm --filter @ai-news/database exec prisma generate --schema=prisma/schema.prisma
 
 # Expose Remote MCP Server port
 EXPOSE 3001
