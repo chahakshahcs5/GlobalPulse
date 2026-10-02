@@ -263,7 +263,10 @@ export default function LiveCoveragePage() {
             {/* Entry Header */}
             <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/60 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-rose-400 flex items-center gap-1">
+                <span
+                  className="font-mono font-bold text-rose-400 flex items-center gap-1"
+                  suppressHydrationWarning
+                >
                   <Clock className="w-3 h-3" />
                   {new Date(entry.timestamp).toLocaleTimeString([], {
                     hour: '2-digit',

@@ -19,6 +19,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { listFactChecks } from '../../lib/api-client';
+import { formatLocalDate } from '../../lib/date-utils';
 import type { FactCheckClaim } from '@ai-news/schemas';
 
 type VerdictFilter = 'ALL' | 'FALSE' | 'TRUE' | 'MIXTURE' | 'UNVERIFIED';
@@ -394,13 +395,11 @@ export default function FactChecksPage() {
                         {fc.claimant || 'Viral Posts'}
                       </strong>
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
-                      Investigated on{' '}
-                      {new Date(fc.checkedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                    <span
+                      className="text-[10px] text-slate-400 dark:text-slate-500 block"
+                      suppressHydrationWarning
+                    >
+                      Investigated on {formatLocalDate(fc.checkedAt)}
                     </span>
                   </div>
 

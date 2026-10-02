@@ -23,11 +23,10 @@ export default function LargeDisplayPage() {
       const now = new Date();
       setTimeStr(
         now.toLocaleTimeString('en-US', {
-          hour12: false,
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
-        }) + ' UTC'
+        })
       );
     };
     updateTime();
@@ -90,7 +89,7 @@ export default function LargeDisplayPage() {
           </div>
 
           <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-bold text-sm">
-            {timeStr || '12:00:00 UTC'}
+            {timeStr || '12:00:00'}
           </div>
 
           {/* Controls */}
