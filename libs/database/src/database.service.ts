@@ -145,7 +145,10 @@ export class DatabaseService {
     }
   }
 
-  constructor(_options?: DatabaseServiceOptions) {
+  private readonly options?: DatabaseServiceOptions;
+
+  constructor(options?: DatabaseServiceOptions) {
+    this.options = options;
     // Default to high-performance in-memory repositories
     this.stories = this.memoryStories;
     this.events = this.memoryEvents;
@@ -173,6 +176,12 @@ export class DatabaseService {
    * Attempt to initialize and switch to PostgreSQL Prisma repositories if available
    */
   public async initialize(): Promise<boolean> {
+    if (this.options?.memory || this.options?.engine === 'memory') {
+      this.isPrismaActive = false;
+      logger.info('DatabaseService operating in explicit High-Fidelity Memory mode.');
+      return false;
+    }
+
     const isExplicitPrisma = process.env.DATABASE_ENGINE === 'prisma';
     const isProduction = process.env.NODE_ENV === 'production';
     const requiresPrisma =

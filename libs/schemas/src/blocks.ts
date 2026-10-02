@@ -209,8 +209,8 @@ export const FlowBlockSchema = BaseBlockSchema.extend({
 export const VideoBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('video'),
   data: z.object({
-    url: z.string().url(),
-    posterUrl: z.string().url().optional(),
+    url: z.string().url().or(z.string().startsWith('/')),
+    posterUrl: z.string().url().or(z.string().startsWith('/')).optional(),
     aspectRatio: z.enum(['16:9', '9:16', '1:1']).default('16:9'),
     caption: z.string().optional(),
     durationSeconds: z.number().positive().optional(),
@@ -228,7 +228,7 @@ export type AudioCuePoint = z.infer<typeof AudioCuePointSchema>;
 export const AudioBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('audio'),
   data: z.object({
-    url: z.string().url(),
+    url: z.string().url().or(z.string().startsWith('/')),
     title: z.string().min(1),
     narrator: z.string().optional(),
     durationSeconds: z.number().positive().optional(),
