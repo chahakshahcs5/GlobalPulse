@@ -38,11 +38,19 @@ export interface WeatherCityConfig {
   lon: number;
 }
 
+export const DELHI_FALLBACK: WeatherCityConfig = {
+  key: 'new-delhi',
+  name: 'New Delhi',
+  label: 'New Delhi, India',
+  lat: 28.6139,
+  lon: 77.209,
+};
+
 export const WEATHER_CITIES: WeatherCityConfig[] = [
-  { key: 'ahmedabad', name: 'Ahmedabad', label: 'Ahmedabad, India', lat: 23.0225, lon: 72.5714 },
+  DELHI_FALLBACK,
   { key: 'mumbai', name: 'Mumbai', label: 'Mumbai, India', lat: 19.076, lon: 72.8777 },
   { key: 'bengaluru', name: 'Bengaluru', label: 'Bengaluru, India', lat: 12.9716, lon: 77.5946 },
-  { key: 'new-delhi', name: 'New Delhi', label: 'New Delhi, India', lat: 28.6139, lon: 77.209 },
+  { key: 'ahmedabad', name: 'Ahmedabad', label: 'Ahmedabad, India', lat: 23.0225, lon: 72.5714 },
   { key: 'new-york', name: 'New York', label: 'New York, USA', lat: 40.7128, lon: -74.006 },
   { key: 'london', name: 'London', label: 'London, UK', lat: 51.5074, lon: -0.1278 },
   { key: 'tokyo', name: 'Tokyo', label: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503 },
@@ -58,13 +66,13 @@ export const WeatherWidget: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCityKey, setSelectedCityKey] = useState<string>('auto');
   const [detectedLocationName, setDetectedLocationName] = useState<string>('');
-  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'preset'>('ip');
+  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'preset'>('preset');
   const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('globalpulse_weather_location');
-      if (saved && saved !== 'new-delhi') {
+      if (saved) {
         setSelectedCityKey(saved);
       } else {
         setSelectedCityKey('auto');
@@ -77,21 +85,21 @@ export const WeatherWidget: React.FC = () => {
   const fetchLiveWeather = async (cityKey = selectedCityKey, forceGps = false) => {
     setIsLoading(true);
     try {
-      let lat = 23.0225;
-      let lon = 72.5714;
-      let city = 'Current Location';
-      let source: 'gps' | 'ip' | 'preset' = 'ip';
+      let lat = DELHI_FALLBACK.lat;
+      let lon = DELHI_FALLBACK.lon;
+      let city = DELHI_FALLBACK.label;
+      let source: 'gps' | 'ip' | 'preset' = 'preset';
 
       if (cityKey === 'auto' || forceGps) {
         let resolved = false;
 
-        // 1. If explicit GPS requested or browser geolocation available
-        if (forceGps && typeof window !== 'undefined' && 'geolocation' in navigator) {
+        // Prompt the user for location access on land or when auto is requested
+        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
           setIsLocating(true);
           try {
             const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
               navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 10000,
+                timeout: 8000,
                 enableHighAccuracy: true,
               });
             });
@@ -110,64 +118,42 @@ export const WeatherWidget: React.FC = () => {
                 const place = geoData.locality || geoData.city || geoData.principalSubdivision;
                 city = place
                   ? `${place}${geoData.countryCode ? `, ${geoData.countryCode}` : ''}`
-                  : 'Your GPS Location';
+                  : 'Your Location';
+              } else {
+                city = 'Your Location';
               }
             } catch {
-              city = 'Your GPS Location';
+              city = 'Your Location';
             }
-          } catch {
-            // User dismissed or denied GPS prompt; fall back to IP geolocation
+          } catch (err) {
+            // User denied or dismissed GPS prompt, or timeout occurred:
+            // Fall back strictly to Delhi as configured
+            console.warn(
+              'Geolocation permission denied or unavailable, falling back to Delhi:',
+              err
+            );
+            lat = DELHI_FALLBACK.lat;
+            lon = DELHI_FALLBACK.lon;
+            city = DELHI_FALLBACK.label;
+            source = 'preset';
+            resolved = true;
           } finally {
             setIsLocating(false);
           }
         }
 
-        // 2. Real-time IP Geolocation (instant, no prompt needed, highly accurate)
-        if (!resolved && typeof window !== 'undefined') {
-          try {
-            const ipRes = await fetch('https://ipwho.is/');
-            if (ipRes.ok) {
-              const ipData = await ipRes.json();
-              if (ipData.success && ipData.latitude && ipData.longitude) {
-                lat = ipData.latitude;
-                lon = ipData.longitude;
-                city = `${ipData.city || ipData.region || 'Local'}${
-                  ipData.country_code ? `, ${ipData.country_code}` : ''
-                }`;
-                source = 'ip';
-                resolved = true;
-              }
-            }
-          } catch {
-            // Try backup IP service
-            try {
-              const geojsRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
-              if (geojsRes.ok) {
-                const geoData = await geojsRes.json();
-                if (geoData.latitude && geoData.longitude) {
-                  lat = parseFloat(geoData.latitude);
-                  lon = parseFloat(geoData.longitude);
-                  city = `${geoData.city || 'Local'}${geoData.country_code ? `, ${geoData.country_code}` : ''}`;
-                  source = 'ip';
-                  resolved = true;
-                }
-              }
-            } catch {}
-          }
+        if (!resolved) {
+          // If browser does not support geolocation, fallback to Delhi
+          lat = DELHI_FALLBACK.lat;
+          lon = DELHI_FALLBACK.lon;
+          city = DELHI_FALLBACK.label;
+          source = 'preset';
         }
 
-        if (resolved) {
-          setDetectedLocationName(city);
-          setLocationSource(source);
-        } else {
-          const fallback = WEATHER_CITIES[0]; // Ahmedabad
-          lat = fallback.lat;
-          lon = fallback.lon;
-          city = fallback.label;
-          setLocationSource('preset');
-        }
+        setDetectedLocationName(city);
+        setLocationSource(source);
       } else {
-        const found = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
+        const found = WEATHER_CITIES.find((c) => c.key === cityKey) || DELHI_FALLBACK;
         lat = found.lat;
         lon = found.lon;
         city = found.label;
@@ -215,7 +201,7 @@ export const WeatherWidget: React.FC = () => {
       const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const today = new Date().getDay();
       setWeather({
-        city: detectedLocationName || 'Local Weather',
+        city: detectedLocationName || DELHI_FALLBACK.label,
         temperature: 28,
         condition: 'Clear Sky',
         icon: '☀️',

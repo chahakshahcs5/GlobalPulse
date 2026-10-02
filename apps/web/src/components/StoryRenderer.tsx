@@ -53,7 +53,7 @@ export const StoryRenderer: React.FC<StoryRendererProps> = ({
   // Filter blocks based on selected reading depth
   let effectiveBlocks = sortedBlocks;
   if (depth === 'quick') {
-    // In Quick mode: exactly 1 opening lead paragraph + summary/stats/charts/quotes only
+    // In Quick mode: exactly 1 opening lead paragraph + summary/stats/charts/quotes/live tickers/polls/headings
     let paragraphCount = 0;
     effectiveBlocks = sortedBlocks.filter((b) => {
       if (b.blockType === 'paragraph') {
@@ -65,7 +65,10 @@ export const StoryRenderer: React.FC<StoryRendererProps> = ({
         b.blockType === 'statistic' ||
         b.blockType === 'quote' ||
         b.blockType === 'callout' ||
-        b.blockType === 'chart'
+        b.blockType === 'chart' ||
+        b.blockType === 'live_ticker' ||
+        b.blockType === 'poll' ||
+        b.blockType === 'heading'
       );
     });
     if (effectiveBlocks.length === 0) {

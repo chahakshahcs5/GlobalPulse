@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useNewsClusters } from '../../../lib/cluster-builder';
@@ -10,9 +10,94 @@ import { GoogleNewsClusterCard } from '../../../components/GoogleNewsClusterCard
 import { WeatherWidget } from '../../../components/WeatherWidget';
 import { TrendingTopicsWidget } from '../../../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
-import { ArrowLeft, Rss, Clock, ShieldCheck, Newspaper, Filter } from 'lucide-react';
-import { formatDeterministicDate } from '../../../lib/date-utils';
+import { ArrowLeft, Rss, Newspaper, Filter, Sparkles } from 'lucide-react';
 import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
+
+/**
+ * Intelligent matcher to match story clusters and dispatches to specific subcategory desks
+ */
+function matchesSubCategory(
+  item: {
+    title?: string;
+    summary?: string;
+    slug?: string;
+    topicIds?: string[];
+    categories?: string[];
+    leadStory?: { headline: string; excerpt?: string };
+    relatedArticles?: Array<{ headline: string; publisher?: string }>;
+  },
+  sub: string
+): boolean {
+  if (!sub) return true;
+  const subNorm = sub.toLowerCase().trim();
+  const subSingular = subNorm.endsWith('s') ? subNorm.slice(0, -1) : subNorm;
+
+  // Search tokens including singular and plural
+  const searchTerms = [subNorm, subSingular];
+
+  // Specific domain synonym mappings for known editorial desks
+  if (subNorm.includes('artificial intelligence') || subNorm === 'ai') {
+    searchTerms.push('ai', 'agent', 'model', 'neural', 'machine learning', 'llm');
+  }
+  if (subNorm.includes('semiconductor')) {
+    searchTerms.push('chip', 'lithography', 'wafer', 'foundry', 'tsmc', 'transistor');
+  }
+  if (subNorm.includes('quantum')) {
+    searchTerms.push('qubit', 'quantum computing', 'superconducting');
+  }
+  if (subNorm.includes('cybersecurity')) {
+    searchTerms.push('security', 'vulnerability', 'breach', 'ransomware', 'crypto');
+  }
+  if (subNorm.includes('digital policy')) {
+    searchTerms.push('policy', 'regulation', 'antitrust', 'governance', 'copyright');
+  }
+  if (subNorm.includes('energy') || subNorm.includes('climate')) {
+    searchTerms.push('fusion', 'nuclear', 'reactor', 'solar', 'wind', 'renewable', 'carbon');
+  }
+
+  // 1. Check topicIds (e.g. "top_semiconductors")
+  if (item.topicIds && item.topicIds.length > 0) {
+    for (const t of item.topicIds) {
+      const tNorm = t.toLowerCase().replace(/^top_/, '').replace(/[-_]/g, ' ');
+      for (const term of searchTerms) {
+        if (tNorm.includes(term) || term.includes(tNorm)) return true;
+      }
+    }
+  }
+
+  // 2. Check categories array if present
+  if (item.categories && item.categories.length > 0) {
+    for (const c of item.categories) {
+      const cNorm = c.toLowerCase();
+      for (const term of searchTerms) {
+        if (cNorm.includes(term) || term.includes(cNorm)) return true;
+      }
+    }
+  }
+
+  // 3. Check combined text fields
+  const fullText = [
+    item.title || '',
+    item.summary || '',
+    item.slug || '',
+    item.leadStory?.headline || '',
+    item.leadStory?.excerpt || '',
+    ...(item.relatedArticles?.map((r) => r.headline) || []),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  for (const term of searchTerms) {
+    if (term.length <= 3) {
+      const re = new RegExp(`\\b${term}\\b`, 'i');
+      if (re.test(fullText)) return true;
+    } else {
+      if (fullText.includes(term)) return true;
+    }
+  }
+
+  return false;
+}
 
 export default function CategoryPage() {
   const params = useParams();
@@ -45,25 +130,28 @@ export default function CategoryPage() {
       ? currentCategory.subCategories
       : canonical?.subCategories || [];
 
-  const filteredStories = selectedSub
-    ? categoryStories.filter((s) => {
-        if (
-          s.categories &&
-          s.categories.some((c) => c.toLowerCase() === selectedSub.toLowerCase())
-        ) {
-          return true;
-        }
-        const text = `${s.title} ${s.summary} ${s.slug}`.toLowerCase();
-        return text.includes(selectedSub.toLowerCase());
-      })
-    : categoryStories;
-
   // Match category clusters strictly
-  const categoryClusters = allClusters.filter(
-    (c) => c.category.toLowerCase() === slug.toLowerCase()
-  );
-  const leadCluster = categoryClusters[0] || null;
-  const secondaryClusters = categoryClusters.slice(1);
+  const categoryClusters = useMemo(() => {
+    return allClusters.filter((c) => c.category.toLowerCase() === slug.toLowerCase());
+  }, [allClusters, slug]);
+
+  // Filter clusters by selected subcategory / desk
+  const displayClusters = useMemo(() => {
+    if (!selectedSub) return categoryClusters;
+    return categoryClusters.filter((c) => {
+      // Find matching underlying story to inspect topics as well
+      const underlyingStory = categoryStories.find((s) => s.id === c.mainStoryId);
+      const combined = {
+        ...c,
+        topicIds: underlyingStory?.topicIds || [],
+        categories: underlyingStory?.categories || [],
+      };
+      return matchesSubCategory(combined, selectedSub);
+    });
+  }, [categoryClusters, selectedSub, categoryStories]);
+
+  const leadCluster = displayClusters[0] || null;
+  const secondaryClusters = displayClusters.slice(1);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -81,9 +169,14 @@ export default function CategoryPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               {categoryName}
             </h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold">
-              {categoryStories.length} Published
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold transition-all">
+              {displayClusters.length} Published
             </span>
+            {selectedSub && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1 font-medium">
+                <Sparkles className="w-3 h-3" /> Filtered by {selectedSub}
+              </span>
+            )}
           </div>
         </div>
 
@@ -109,7 +202,7 @@ export default function CategoryPage() {
           </span>
           <button
             onClick={() => setSelectedSub(null)}
-            className={`px-3 py-1 rounded-full font-bold transition shrink-0 ${
+            className={`px-3 py-1 rounded-full font-bold transition shrink-0 cursor-pointer ${
               selectedSub === null
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -117,19 +210,23 @@ export default function CategoryPage() {
           >
             All {categoryName}
           </button>
-          {subCategories.map((sub) => (
-            <button
-              key={sub}
-              onClick={() => setSelectedSub(selectedSub === sub ? null : sub)}
-              className={`px-3 py-1 rounded-full font-medium transition shrink-0 ${
-                selectedSub === sub
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60'
-              }`}
-            >
-              {sub}
-            </button>
-          ))}
+          {subCategories.map((sub) => {
+            const isSelected = selectedSub === sub;
+            return (
+              <button
+                key={sub}
+                onClick={() => setSelectedSub(isSelected ? null : sub)}
+                className={`px-3 py-1 rounded-full font-medium transition shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60'
+                }`}
+                title={`Filter dispatches by ${sub}`}
+              >
+                {sub}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -137,64 +234,6 @@ export default function CategoryPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Category Feed */}
         <div className="lg:col-span-8 space-y-6">
-          {/* Dynamic Category Stories from Database / API */}
-          {filteredStories.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-2">
-                  <Newspaper className="w-4 h-4 text-blue-600" />
-                  <span>
-                    {selectedSub
-                      ? `${selectedSub} Dispatches`
-                      : `Live Dispatches in ${categoryName}`}
-                  </span>
-                </div>
-                <span className="font-mono text-[11px]">
-                  {filteredStories.length}{' '}
-                  {filteredStories.length === 1 ? 'Dispatch' : 'Dispatches'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredStories.slice(0, 8).map((story) => (
-                  <Link
-                    key={story.id}
-                    href={`/stories/${story.slug}`}
-                    className="group p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 transition shadow-xs flex flex-col justify-between space-y-3"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-slate-400">
-                        <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide text-[10px]">
-                          {story.articleType.replace('_', ' ')}
-                        </span>
-                        <span
-                          className="flex items-center gap-1 text-[11px]"
-                          suppressHydrationWarning
-                        >
-                          <Clock className="w-3 h-3" />
-                          {formatDeterministicDate(story.publishedAt)}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">
-                        {story.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                        {story.summary}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <ShieldCheck className="w-3 h-3" /> Verified
-                      </span>
-                      <span>Read Story &rarr;</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
           {leadCluster && (
             <GoogleNewsLeadCard
               cluster={leadCluster}
@@ -212,7 +251,29 @@ export default function CategoryPage() {
             ))}
           </div>
 
-          {categoryStories.length === 0 && !leadCluster && (
+          {/* Empty State for Subcategory Desk */}
+          {selectedSub && displayClusters.length === 0 && (
+            <div className="p-10 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
+              <Filter className="w-8 h-8 mx-auto text-blue-500/70" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                No Dispatches Found in the &ldquo;{selectedSub}&rdquo; Desk
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                No published dispatches currently match the {selectedSub} desk in {categoryName}.
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => setSelectedSub(null)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                >
+                  Show All {categoryName} Stories
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State for Entire Category */}
+          {!selectedSub && displayClusters.length === 0 && (
             <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
               <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
               <h3 className="text-base font-bold text-slate-900 dark:text-white">

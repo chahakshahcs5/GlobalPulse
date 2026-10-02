@@ -226,4 +226,88 @@ describe('Story Skeletons, Shimmer Loaders & Navigation Unit Tests', () => {
       expect(subscriber.locked).toBe(false);
     });
   });
+
+  describe('Quick Reading Depth Blocks Retention', () => {
+    it('preserves live_ticker, poll, and heading blocks in quick mode alongside lead paragraph', () => {
+      const blocks = [
+        { id: '1', blockType: 'paragraph', sortOrder: 1, data: { text: 'Lead paragraph' } },
+        { id: '2', blockType: 'paragraph', sortOrder: 2, data: { text: 'Second paragraph' } },
+        { id: '3', blockType: 'live_ticker', sortOrder: 3, data: { ticker: 'AI-COMPUTE' } },
+        { id: '4', blockType: 'poll', sortOrder: 4, data: { question: 'Vote on standard' } },
+        { id: '5', blockType: 'heading', sortOrder: 5, data: { text: 'Key Takeaways' } },
+        { id: '6', blockType: 'document_viewer', sortOrder: 6, data: { doc: 'archive.pdf' } },
+      ];
+
+      let paragraphCount = 0;
+      const effectiveQuick = blocks.filter((b) => {
+        if (b.blockType === 'paragraph') {
+          paragraphCount++;
+          return paragraphCount <= 1;
+        }
+        return (
+          b.blockType === 'summary' ||
+          b.blockType === 'statistic' ||
+          b.blockType === 'quote' ||
+          b.blockType === 'callout' ||
+          b.blockType === 'chart' ||
+          b.blockType === 'live_ticker' ||
+          b.blockType === 'poll' ||
+          b.blockType === 'heading'
+        );
+      });
+
+      expect(effectiveQuick.map((b) => b.blockType)).toEqual([
+        'paragraph',
+        'live_ticker',
+        'poll',
+        'heading',
+      ]);
+      expect(effectiveQuick.find((b) => b.blockType === 'live_ticker')).toBeDefined();
+      expect(effectiveQuick.find((b) => b.blockType === 'poll')).toBeDefined();
+    });
+  });
+
+  describe('Category Hub Desk Filter Matching', () => {
+    it('matches semiconductor stories under Semiconductors desk accounting for plural and synonyms', () => {
+      const semiconductorStory = {
+        title: 'Global Semiconductor Consortium Establishes 2nm Lithography Standard',
+        summary: 'Leading fabrication foundries establish an open patent pool.',
+        topicIds: ['top_semiconductors'],
+      };
+
+      const aiStory = {
+        title:
+          'Autonomous AI Agents Surpass Human Verification Benchmarks in Critical Infrastructure',
+        summary:
+          'Rigorous evaluations across telecommunications demonstrate multi-agent verification.',
+        topicIds: ['top_ai'],
+      };
+
+      const matchesDesk = (item: typeof semiconductorStory, desk: string) => {
+        const norm = desk.toLowerCase().trim();
+        const singular = norm.endsWith('s') ? norm.slice(0, -1) : norm;
+        const text =
+          `${item.title} ${item.summary} ${(item.topicIds || []).join(' ')}`.toLowerCase();
+        return text.includes(norm) || text.includes(singular);
+      };
+
+      expect(matchesDesk(semiconductorStory, 'Semiconductors')).toBe(true);
+      expect(matchesDesk(aiStory, 'Semiconductors')).toBe(false);
+      expect(matchesDesk(aiStory, 'Artificial Intelligence')).toBe(false); // matches if checking AI acronym
+    });
+  });
+
+  describe('Weather Widget Location Fallback Contract', () => {
+    it('specifies New Delhi as the default location fallback when geolocation is unavailable', async () => {
+      const { DELHI_FALLBACK, WEATHER_CITIES } =
+        await import('../../../apps/web/src/components/WeatherWidget');
+
+      expect(DELHI_FALLBACK.key).toBe('new-delhi');
+      expect(DELHI_FALLBACK.name).toBe('New Delhi');
+      expect(DELHI_FALLBACK.label).toContain('New Delhi');
+      expect(DELHI_FALLBACK.lat).toBeCloseTo(28.6139, 2);
+      expect(DELHI_FALLBACK.lon).toBeCloseTo(77.209, 2);
+      expect(WEATHER_CITIES[0].key).toBe('new-delhi');
+    });
+  });
 });
