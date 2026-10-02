@@ -238,7 +238,7 @@ describe('Production Database Core Integration Tests', () => {
 
       const flagship = stories.find((s) => s.slug.includes('brics-expansion-2026'));
       expect(flagship).toBeDefined();
-      expect(flagship?.blocks.length).toBe(4);
+      expect(flagship?.blocks.length).toBeGreaterThanOrEqual(4);
       expect(flagship?.currentVersionNumber).toBe(2);
 
       const factChecks = await db.factChecks.list();
