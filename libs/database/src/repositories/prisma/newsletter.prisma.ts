@@ -231,15 +231,24 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
       return this.fallbackMemory.saveDigest(digest);
     }
     try {
+      const existing = await this.digestClient.findFirst({
+        where: { id: digest.id },
+      });
+      if (existing) {
+        return digest;
+      }
       await this.digestClient.create({
         data: {
           id: digest.id,
           frequency: digest.frequency,
-          date: digest.date,
           category: digest.category,
-          headline: digest.headline,
-          curatedStoryIds: digest.curatedStoryIds,
-          stories: digest.stories,
+          recipientCount: 0,
+          storyIds: digest.curatedStoryIds || [],
+          contentSummary: digest.headline,
+          metadata: {
+            date: digest.date,
+            stories: digest.stories,
+          },
           generatedAt: new Date(digest.generatedAt),
         },
       });

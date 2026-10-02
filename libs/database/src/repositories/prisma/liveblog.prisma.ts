@@ -26,6 +26,7 @@ export class PrismaLiveblogRepository implements ILiveblogRepository {
   private get liveblogClient():
     | {
         create: (args: { data: Record<string, unknown> }) => Promise<PrismaLiveblogRow>;
+        findFirst?: (args: { where: Record<string, unknown> }) => Promise<PrismaLiveblogRow | null>;
         findMany: (args: {
           where: Record<string, unknown>;
           take?: number;
@@ -59,6 +60,14 @@ export class PrismaLiveblogRepository implements ILiveblogRepository {
       return this.fallbackMemory.addEntry(entry);
     }
     try {
+      if (typeof this.liveblogClient.findFirst === 'function') {
+        const existing = await this.liveblogClient.findFirst({
+          where: { id: entry.id },
+        });
+        if (existing) {
+          return this.mapToEntry(existing);
+        }
+      }
       const row = await this.liveblogClient.create({
         data: {
           id: entry.id,
