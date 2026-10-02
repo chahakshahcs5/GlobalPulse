@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ExternalLink } from 'lucide-react';
 import { formatDeterministicDateTime } from '../lib/date-utils';
 
 interface ProvenanceBadgeProps {
@@ -9,6 +10,7 @@ interface ProvenanceBadgeProps {
   versionNumber: number;
   sourceCount: number;
   publishedAt?: string;
+  onViewSources?: () => void;
 }
 
 export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
@@ -17,6 +19,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
   versionNumber,
   sourceCount,
   publishedAt,
+  onViewSources,
 }) => {
   const clientConfig: Record<string, { label: string; icon: string; badgeClass: string }> = {
     gemini_spark: {
@@ -69,9 +72,23 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
       </span>
 
       {/* Sources Cited */}
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-slate-800/80 text-slate-300 border border-slate-700/60">
-        📚 {sourceCount} {sourceCount === 1 ? 'Source' : 'Sources'} Cited
-      </span>
+      {onViewSources ? (
+        <button
+          onClick={onViewSources}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/60 hover:border-slate-500 shadow-xs transition-all cursor-pointer group active:scale-95"
+          title="Click to view all primary sources cited in this report"
+        >
+          <span className="group-hover:scale-110 transition-transform">📚</span>
+          <span className="font-semibold underline decoration-dotted decoration-slate-400 group-hover:decoration-white underline-offset-2">
+            {sourceCount} {sourceCount === 1 ? 'Source' : 'Sources'} Cited
+          </span>
+          <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-400 transition-colors ml-0.5" />
+        </button>
+      ) : (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-slate-800/80 text-slate-300 border border-slate-700/60">
+          📚 {sourceCount} {sourceCount === 1 ? 'Source' : 'Sources'} Cited
+        </span>
+      )}
 
       {/* Published Date */}
       {publishedAt && (

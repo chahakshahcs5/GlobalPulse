@@ -23,12 +23,14 @@ import {
   Layers,
   FileText,
   CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import type { Story, StoryBlock } from '@ai-news/schemas';
 import * as api from '../../../lib/api-client';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
 import { StoryRenderer } from '../../../components/StoryRenderer';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';
+import { CitedSourcesModal } from '../../../components/CitedSourcesModal';
 import { StoryEngagement } from '../../../components/StoryEngagement';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 import { PaywallBarrier } from '../../../components/PaywallBarrier';
@@ -62,6 +64,7 @@ export default function StoryPage() {
   };
   const [copied, setCopied] = useState(false);
   const [isFullCoverageOpen, setIsFullCoverageOpen] = useState(false);
+  const [isSourcesModalOpen, setIsSourcesModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isAudioActive, setIsAudioActive] = useState(false);
@@ -458,12 +461,17 @@ export default function StoryPage() {
           createdVia={story.createdVia || 'api'}
           versionNumber={story.currentVersionNumber || (story as { version?: number }).version || 1}
           sourceCount={
+            story.sourceIds?.length ||
             story.blocks?.filter(
               (b: StoryBlock) =>
-                (b.blockType as string) === 'source_citation' || b.blockType === 'quote'
-            ).length || 2
+                (b.blockType as string) === 'source' ||
+                (b.blockType as string) === 'source_citation' ||
+                b.blockType === 'quote'
+            ).length ||
+            2
           }
           publishedAt={story.publishedAt || story.createdAt}
+          onViewSources={() => setIsSourcesModalOpen(true)}
         />
 
         {/* Executive Summary */}
@@ -744,8 +752,17 @@ export default function StoryPage() {
                   Direct source provenance verified across international regulatory filings and
                   peer-reviewed dispatches.
                 </p>
-                <div className="pt-2 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                  Record Hash: {story.id ? story.id.slice(0, 16) : '8f4b29c9a01'}...
+                <div className="pt-2 flex items-center justify-between text-[11px]">
+                  <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                    Record Hash: {story.id ? story.id.slice(0, 16) : '8f4b29c9a01'}...
+                  </span>
+                  <button
+                    onClick={() => setIsSourcesModalOpen(true)}
+                    className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <span>View Primary Records</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
@@ -821,9 +838,18 @@ export default function StoryPage() {
           </p>
           <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
             <span>Editorial Standards: GlobalPulse Independent Verification</span>
-            <span className="text-emerald-600 font-bold flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" /> 100% Fact Checked
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSourcesModalOpen(true)}
+                className="text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <span>Inspect Cited Sources ({story.sourceIds?.length || 2})</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+              <span className="text-emerald-600 font-bold flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" /> 100% Fact Checked
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -867,6 +893,13 @@ export default function StoryPage() {
       <FullCoverageModal
         slug={isFullCoverageOpen ? story.slug : null}
         onClose={() => setIsFullCoverageOpen(false)}
+      />
+
+      {/* Cited Sources & Primary Verification Registry Modal */}
+      <CitedSourcesModal
+        isOpen={isSourcesModalOpen}
+        onClose={() => setIsSourcesModalOpen(false)}
+        story={story}
       />
 
       {/* F8: Social Share Modal */}
