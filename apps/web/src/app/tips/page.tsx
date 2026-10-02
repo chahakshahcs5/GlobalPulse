@@ -113,14 +113,14 @@ export default function TipLinePage() {
 
       {/* Hero Masthead */}
       <div className="space-y-3 pb-6 border-b border-slate-200 dark:border-slate-800">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold">
-          <ShieldAlert className="w-3.5 h-3.5" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs font-bold tracking-wide shadow-xs">
+          <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           <span>Encrypted Investigative Intake Drop</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Citizen Tip Line & Whistleblower Drop
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+          Citizen Tip Line &amp; Whistleblower Drop
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl">
+        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl font-normal">
           Submit documents, leaks, and verified tips directly to GlobalPulse investigative
           journalists. All submissions feature client-side SHA-256 payload integrity hashing without
           device tracking.
@@ -129,37 +129,49 @@ export default function TipLinePage() {
 
       {/* Security Protocol Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs space-y-1.5">
-          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+        <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition space-y-2">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
             <Lock className="w-4 h-4" />
-            <span>Zero Device Logging</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            No source IP addresses, browser canvas fingerprints, or telemetry are recorded in our
-            triage database.
-          </p>
+          <div>
+            <div className="font-bold text-sm text-slate-900 dark:text-white">
+              Zero Device Logging
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
+              No source IP addresses, browser canvas fingerprints, or telemetry are recorded in our
+              triage database.
+            </p>
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs space-y-1.5">
-          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+        <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition space-y-2">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <Key className="w-4 h-4" />
-            <span>Cryptographic Checksum</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            A client-side cryptographic hash ensures your submission cannot be modified or tampered
-            with in transit.
-          </p>
+          <div>
+            <div className="font-bold text-sm text-slate-900 dark:text-white">
+              Cryptographic Checksum
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
+              A client-side cryptographic hash ensures your submission cannot be modified or
+              tampered with in transit.
+            </p>
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs space-y-1.5">
-          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs">
+        <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition space-y-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <EyeOff className="w-4 h-4" />
-            <span>Anonymous Token Retrieval</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            You receive a single-use receipt token to monitor reporter review without disclosing
-            contact channels.
-          </p>
+          <div>
+            <div className="font-bold text-sm text-slate-900 dark:text-white">
+              Anonymous Token Retrieval
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
+              You receive a single-use receipt token to monitor reporter review without disclosing
+              contact channels.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -167,29 +179,37 @@ export default function TipLinePage() {
       {!submissionReceipt ? (
         <form
           onSubmit={handleSubmit}
-          className="p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl space-y-6"
+          className="p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6"
         >
           {/* Anonymity Mode Switch */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
               1. Anonymity Preference
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setAnonymityMode('full_anonymous')}
-                className={`p-3.5 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
+                className={`p-4 rounded-2xl border text-left transition flex items-start gap-3.5 cursor-pointer ${
                   anonymityMode === 'full_anonymous'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-1 ring-indigo-500'
-                    : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-2 ring-indigo-600/20 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
-                <EyeOff className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+                <div
+                  className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                    anonymityMode === 'full_anonymous'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <EyeOff className="w-4 h-4" />
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">
                     Full Anonymous Drop
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     No name, email, or handle recorded. Monitored strictly via receipt token.
                   </div>
                 </div>
@@ -198,18 +218,26 @@ export default function TipLinePage() {
               <button
                 type="button"
                 onClick={() => setAnonymityMode('confidential_source')}
-                className={`p-3.5 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
+                className={`p-4 rounded-2xl border text-left transition flex items-start gap-3.5 cursor-pointer ${
                   anonymityMode === 'confidential_source'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-1 ring-indigo-500'
-                    : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-2 ring-indigo-600/20 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
-                <Lock className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <div
+                  className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                    anonymityMode === 'confidential_source'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <Lock className="w-4 h-4" />
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">
                     Confidential Source Channel
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     Provide a pseudonym or encrypted messaging handle for investigative follow-ups.
                   </div>
                 </div>
@@ -220,7 +248,7 @@ export default function TipLinePage() {
           {/* Confidential handle input if requested */}
           {anonymityMode === 'confidential_source' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Encrypted Handle or Secure Drop Pseudonym:
               </label>
               <input
@@ -228,15 +256,15 @@ export default function TipLinePage() {
                 value={contactAlias}
                 onChange={(e) => setContactAlias(e.target.value)}
                 placeholder="e.g. Signal number, Tor onion handle, or 'AeroAnalyst_Sector4'"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-indigo-500"
+                className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           )}
 
           {/* Urgency Selector */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-              2. Urgency & Impact Horizon
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+              2. Urgency &amp; Impact Horizon
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
@@ -263,22 +291,23 @@ export default function TipLinePage() {
                 },
               ].map((u) => {
                 const Icon = u.icon;
+                const isSelected = urgency === u.id;
                 return (
                   <button
                     key={u.id}
                     type="button"
                     onClick={() => setUrgency(u.id as CitizenTipUrgency)}
-                    className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                      urgency === u.id
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-1 ring-indigo-500'
-                        : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-950 dark:text-white ring-2 ring-indigo-600/20 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                      <Icon className={`w-3.5 h-3.5 ${u.color}`} />
+                    <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
+                      <Icon className={`w-4 h-4 ${u.color}`} />
                       <span>{u.label}</span>
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
                       {u.desc}
                     </div>
                   </button>
@@ -289,78 +318,87 @@ export default function TipLinePage() {
 
           {/* Category Selector */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
               3. Investigative Subject Area
             </label>
             <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setCategory(c.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
-                    category === c.id
-                      ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
+              {categories.map((c) => {
+                const isSelected = category === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCategory(c.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Headline & Details */}
-          <div className="space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              4. Tip Narrative & Disclosures
-            </label>
+          <div className="space-y-4">
             <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                4. Working Title / Lead Headline
+              </label>
               <input
                 type="text"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
                 required
-                placeholder="Working summary or headline (e.g. Undisclosed autonomous drone corridor tests)"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 font-semibold"
+                placeholder="e.g. Undisclosed autonomous drone corridor tests"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
               />
             </div>
             <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                Disclosures &amp; Evidence Details
+              </label>
               <textarea
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 required
                 rows={5}
                 placeholder="Provide detailed factual occurrences, dates, named entities, internal memos, or eyewitness observations..."
-                className="w-full p-3.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 resize-none leading-relaxed"
+                className="w-full p-4 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed"
               />
             </div>
           </div>
 
           {/* Supporting Evidence / Attachment simulation */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-              5. Document / Manifest Attachment (Optional)
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+              5. Document / Manifest Reference (Optional)
             </label>
-            <div className="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 text-center space-y-2">
-              <UploadCloud className="w-7 h-7 mx-auto text-indigo-500 dark:text-indigo-400" />
+            <div className="p-6 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-center space-y-2">
+              <UploadCloud className="w-8 h-8 mx-auto text-indigo-500 dark:text-indigo-400" />
               <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                Include verification document name or manifest reference
+                Attach verification document name or manifest reference
               </div>
               <input
                 type="text"
                 value={attachedFileName}
                 onChange={(e) => setAttachedFileName(e.target.value)}
                 placeholder="e.g. flight_telemetry_corridor_log.csv or contract_appendix_b.pdf"
-                className="max-w-md mx-auto w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-center"
+                className="max-w-md mx-auto w-full px-4 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
 
           {/* Live Checksum Bar */}
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-            <span className="text-slate-500">Payload Integrity Checksum:</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold truncate max-w-[280px] sm:max-w-md">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <Key className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span>Payload Integrity Checksum:</span>
+            </div>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold truncate max-w-full sm:max-w-md">
               {checksum}
             </span>
           </div>
@@ -370,7 +408,7 @@ export default function TipLinePage() {
             <button
               type="submit"
               disabled={!headline.trim() || !details.trim() || isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 via-indigo-600 to-blue-600 hover:opacity-90 disabled:opacity-50 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/20 cursor-pointer"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-indigo-600 to-blue-600 hover:opacity-95 disabled:opacity-50 text-white text-xs font-bold transition shadow-md shadow-indigo-600/20 cursor-pointer"
             >
               <Send className="w-4 h-4" />
               <span>
@@ -381,7 +419,7 @@ export default function TipLinePage() {
         </form>
       ) : (
         /* Confirmation & Receipt Card */
-        <div className="p-6 sm:p-8 rounded-2xl border border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-2xl space-y-6">
+        <div className="p-6 sm:p-8 rounded-3xl border border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xl space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <CheckCircle className="w-6 h-6" />
@@ -397,7 +435,7 @@ export default function TipLinePage() {
           </div>
 
           {/* Receipt Token Display */}
-          <div className="p-5 rounded-xl border border-emerald-500/30 bg-white dark:bg-slate-950 space-y-3 shadow-xs">
+          <div className="p-5 rounded-2xl border border-emerald-500/30 bg-white dark:bg-slate-950 space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Your Secure Receipt Token:
@@ -411,7 +449,7 @@ export default function TipLinePage() {
               </button>
             </div>
 
-            <div className="font-mono text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800 break-all select-all">
+            <div className="font-mono text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 break-all select-all">
               {submissionReceipt.receiptToken}
             </div>
 
@@ -423,10 +461,10 @@ export default function TipLinePage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+          <div className="p-4 rounded-2xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
             <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <ShieldAlert className="w-4 h-4 text-amber-500" />
-              <span>Next Steps & Security Protocol</span>
+              <span>Next Steps &amp; Security Protocol</span>
             </div>
             <p>
               Please store your receipt token in a secure location. If reporters verify your
@@ -438,7 +476,7 @@ export default function TipLinePage() {
           <div className="flex items-center justify-between pt-2">
             <Link
               href="/"
-              className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1"
+              className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1 font-semibold"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Return to Dispatches
             </Link>
@@ -449,7 +487,7 @@ export default function TipLinePage() {
                 setDetails('');
                 setAttachedFileName('');
               }}
-              className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white transition cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white transition cursor-pointer"
             >
               Submit Another Tip
             </button>
