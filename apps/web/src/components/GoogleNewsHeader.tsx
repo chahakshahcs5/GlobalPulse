@@ -18,29 +18,83 @@ import {
   Radio,
   Compass,
   ShieldAlert,
+  Globe,
+  TrendingUp,
+  Cpu,
+  Atom,
+  HeartPulse,
+  Trophy,
+  Film,
+  type LucideIcon,
 } from 'lucide-react';
 import { useBookmarks, useTaxonomy } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
 import { BookmarksDrawer } from './BookmarksDrawer';
 import { AuthModal, type UserSession } from './AuthModal';
 
-const BASE_NAV_ITEMS = [
-  { id: 'top', name: 'Top Stories', href: '/', icon: Star },
-  { id: 'for-you', name: 'For You', href: '/for-you', icon: Sparkles },
-  { id: 'following', name: 'Following', href: '/?tab=following', icon: BookmarkCheck },
-  { id: 'explore', name: 'Explore', href: '/topics', icon: Compass },
-  { id: 'tips', name: 'Tip Line', href: '/tips', icon: ShieldAlert },
+const NAV_ICON_MAP: Record<string, LucideIcon> = {
+  Star,
+  Sparkles,
+  BookmarkCheck,
+  Compass,
+  ShieldAlert,
+  Globe,
+  TrendingUp,
+  Cpu,
+  Atom,
+  HeartPulse,
+  Trophy,
+  Film,
+  Radio,
+  PenTool,
+};
+
+interface HeaderTabItem {
+  id: string;
+  tabId?: string;
+  name: string;
+  href: string;
+  icon?: string | LucideIcon;
+  sortOrder?: number;
+  active?: boolean;
+}
+
+const BASE_NAV_ITEMS: HeaderTabItem[] = [
+  { id: 'top', tabId: 'top', name: 'Top Stories', href: '/', icon: Star },
+  { id: 'for-you', tabId: 'for-you', name: 'For You', href: '/for-you', icon: Sparkles },
+  {
+    id: 'following',
+    tabId: 'following',
+    name: 'Following',
+    href: '/?tab=following',
+    icon: BookmarkCheck,
+  },
+  { id: 'explore', tabId: 'explore', name: 'Explore', href: '/explore', icon: Compass },
+  { id: 'tips', tabId: 'tips', name: 'Tip Line', href: '/tips', icon: ShieldAlert },
 ];
 
 function CategoryNavStrip({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
   const currentTab = searchParams?.get('tab') || 'top';
-  const { categories } = useTaxonomy();
+  const { categories, navTabs } = useTaxonomy();
 
   const dynamicCategories = categories.filter((c) => c.slug !== 'top-stories' && c.slug !== 'top');
+  const baseTabs: HeaderTabItem[] =
+    navTabs && navTabs.length > 0 ? navTabs.map((t) => ({ ...t, id: t.tabId })) : BASE_NAV_ITEMS;
 
   const navItems = [
-    ...BASE_NAV_ITEMS,
+    ...baseTabs.map((t) => {
+      const iconName = typeof t.icon === 'string' ? t.icon : '';
+      const ResolvedIcon =
+        NAV_ICON_MAP[iconName] ||
+        (typeof t.icon === 'function' ? (t.icon as LucideIcon) : undefined);
+      return {
+        id: t.tabId || (t as { id?: string }).id,
+        name: t.name,
+        href: t.href,
+        icon: ResolvedIcon,
+      };
+    }),
     ...dynamicCategories.map((c) => ({
       id: c.slug,
       name: c.name,
@@ -92,7 +146,8 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
 export const GoogleNewsHeader: React.FC = () => {
   const pathname = usePathname();
   const bookmarks = useBookmarks();
-  const { categories } = useTaxonomy();
+  const { categories, navTabs } = useTaxonomy();
+  const baseTabs = navTabs && navTabs.length > 0 ? navTabs : BASE_NAV_ITEMS;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -300,7 +355,18 @@ export const GoogleNewsHeader: React.FC = () => {
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-2 animate-in slide-in-from-top-2">
             <div className="flex flex-col space-y-1">
               {[
-                ...BASE_NAV_ITEMS,
+                ...baseTabs.map((t) => {
+                  const iconName = typeof t.icon === 'string' ? t.icon : '';
+                  const ResolvedIcon =
+                    NAV_ICON_MAP[iconName] ||
+                    (typeof t.icon === 'function' ? (t.icon as LucideIcon) : undefined);
+                  return {
+                    id: t.tabId || (t as { id?: string }).id,
+                    name: t.name,
+                    href: t.href,
+                    icon: ResolvedIcon,
+                  };
+                }),
                 ...categories
                   .filter((c) => c.slug !== 'top-stories' && c.slug !== 'top')
                   .map((c) => ({

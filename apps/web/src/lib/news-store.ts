@@ -12,14 +12,16 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type {
-  Story,
-  Category,
-  Comment,
-  TrendingStory,
-  NewsroomUser,
-  EditorialNotification,
-  NewsroomMetrics,
+import {
+  BASELINE_NAV_TABS,
+  type Story,
+  type Category,
+  type Comment,
+  type TrendingStory,
+  type NewsroomUser,
+  type EditorialNotification,
+  type NewsroomMetrics,
+  type NavTab,
 } from '@ai-news/schemas';
 import * as api from './api-client';
 
@@ -755,10 +757,12 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
 
 const CATEGORIES_KEY = 'globalpulse_api_categories_v3';
 const TOPICS_KEY = 'globalpulse_api_topics_v3';
+const NAV_TABS_KEY = 'globalpulse_api_nav_tabs_v3';
 
 export function useTaxonomy() {
   const [categories, setCategories] = useState<NewsCategory[]>([]);
   const [topics, setTopics] = useState<NewsTopic[]>([]);
+  const [navTabs, setNavTabs] = useState<NavTab[]>(BASELINE_NAV_TABS);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const loadTaxonomy = useCallback(async () => {
@@ -780,15 +784,21 @@ export function useTaxonomy() {
           const parsed = JSON.parse(storedTops);
           if (Array.isArray(parsed) && parsed.length > 0) setTopics(parsed);
         }
+        const storedTabs = localStorage.getItem(NAV_TABS_KEY);
+        if (storedTabs) {
+          const parsed = JSON.parse(storedTabs);
+          if (Array.isArray(parsed) && parsed.length > 0) setNavTabs(parsed);
+        }
       } catch {
         // Safe fallback
       }
     }
 
     try {
-      const [apiCats, apiTops, publishedStories] = await Promise.all([
+      const [apiCats, apiTops, apiTabs, publishedStories] = await Promise.all([
         api.listCategories().catch(() => []),
         api.listTopics().catch(() => []),
+        api.listNavTabs().catch(() => []),
         api.listStories({ limit: 500 }).catch(() => []),
       ]);
 
@@ -870,12 +880,18 @@ export function useTaxonomy() {
 
       setCategories(finalCats);
       setTopics(finalTops);
+      if (Array.isArray(apiTabs) && apiTabs.length > 0) {
+        setNavTabs(apiTabs);
+      }
       setIsLoading(false);
 
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(CATEGORIES_KEY, JSON.stringify(finalCats));
           localStorage.setItem(TOPICS_KEY, JSON.stringify(finalTops));
+          if (Array.isArray(apiTabs) && apiTabs.length > 0) {
+            localStorage.setItem(NAV_TABS_KEY, JSON.stringify(apiTabs));
+          }
         } catch {}
       }
     } catch {
@@ -992,6 +1008,7 @@ export function useTaxonomy() {
   return {
     categories,
     topics,
+    navTabs,
     isLoading,
     addCategory,
     deleteCategory,

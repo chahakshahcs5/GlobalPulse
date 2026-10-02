@@ -23,7 +23,10 @@ export class CategoriesController {
       countsByArticleType[type] = (countsByArticleType[type] || 0) + 1;
     }
 
-    const categoriesWithCounts: Category[] = CANONICAL_CATEGORIES.map((cat) => {
+    const dbCategories = await db.categories.list();
+    const categoriesSource = dbCategories.length > 0 ? dbCategories : CANONICAL_CATEGORIES;
+
+    const categoriesWithCounts: Category[] = categoriesSource.map((cat) => {
       // Map category to possible article types
       let count = 0;
       if (cat.slug === 'top-stories') {
@@ -47,7 +50,9 @@ export class CategoriesController {
     @Principal() principal: AuthenticatedPrincipal
   ) {
     const normalized = slug.toLowerCase();
-    const found = CANONICAL_CATEGORIES.find((c) => c.slug === normalized || c.code === normalized);
+    const found =
+      (await db.categories.findBySlug(normalized)) ||
+      CANONICAL_CATEGORIES.find((c) => c.slug === normalized || c.code === normalized);
     if (!found) {
       throw new NotFoundException(`Category "${slug}" not found`);
     }
@@ -78,9 +83,9 @@ export class CategoriesController {
   ) {
     const limit = parseInt(limitStr || '20', 10);
     const normalized = slug.toLowerCase();
-    const category = CANONICAL_CATEGORIES.find(
-      (c) => c.slug === normalized || c.code === normalized
-    );
+    const category =
+      (await db.categories.findBySlug(normalized)) ||
+      CANONICAL_CATEGORIES.find((c) => c.slug === normalized || c.code === normalized);
 
     if (normalized === 'top-stories' || normalized === 'top_stories') {
       const stories = await db.stories.list(

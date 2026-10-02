@@ -16,6 +16,9 @@ import type {
   ICollectionRepository,
   IWebhookRepository,
   IProvenanceRepository,
+  IFactCheckRepository,
+  ICategoryRepository,
+  INavTabRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -35,6 +38,9 @@ import {
   MemoryCollectionRepository,
   MemoryWebhookRepository,
   MemoryProvenanceRepository,
+  MemoryFactCheckRepository,
+  MemoryCategoryRepository,
+  MemoryNavTabRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -54,6 +60,9 @@ import {
   PrismaCollectionRepository,
   PrismaWebhookRepository,
   PrismaProvenanceRepository,
+  PrismaFactCheckRepository,
+  PrismaCategoryRepository,
+  PrismaNavTabRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -83,6 +92,9 @@ export class DatabaseService {
   public collections: ICollectionRepository;
   public webhooks: IWebhookRepository;
   public provenance: IProvenanceRepository;
+  public factChecks: IFactCheckRepository;
+  public categories: ICategoryRepository;
+  public navTabs: INavTabRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -101,6 +113,9 @@ export class DatabaseService {
   private memoryCollections = new MemoryCollectionRepository();
   private memoryWebhooks = new MemoryWebhookRepository();
   private memoryProvenance = new MemoryProvenanceRepository();
+  private memoryFactChecks = new MemoryFactCheckRepository();
+  private memoryCategories = new MemoryCategoryRepository();
+  private memoryNavTabs = new MemoryNavTabRepository();
 
   private isPrismaActive = false;
 
@@ -149,6 +164,9 @@ export class DatabaseService {
     this.collections = this.memoryCollections;
     this.webhooks = this.memoryWebhooks;
     this.provenance = this.memoryProvenance;
+    this.factChecks = this.memoryFactChecks;
+    this.categories = this.memoryCategories;
+    this.navTabs = this.memoryNavTabs;
   }
 
   /**
@@ -181,6 +199,9 @@ export class DatabaseService {
         this.collections = new PrismaCollectionRepository(getPrisma);
         this.webhooks = new PrismaWebhookRepository(getPrisma);
         this.provenance = new PrismaProvenanceRepository(getPrisma);
+        this.factChecks = new PrismaFactCheckRepository(getPrisma);
+        this.categories = new PrismaCategoryRepository(getPrisma);
+        this.navTabs = new PrismaNavTabRepository(getPrisma);
         this.isPrismaActive = true;
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 16 domains).');
         return true;
@@ -242,6 +263,9 @@ export class DatabaseService {
     const collectionSnap = this.memoryCollections.snapshot();
     const webhookSnap = this.memoryWebhooks.snapshot();
     const provenanceSnap = this.memoryProvenance.snapshot();
+    const factCheckSnap = this.memoryFactChecks.snapshot();
+    const categorySnap = this.memoryCategories.snapshot();
+    const navTabSnap = this.memoryNavTabs.snapshot();
 
     try {
       const result = await work(null);
@@ -264,6 +288,9 @@ export class DatabaseService {
       this.memoryCollections.restore(collectionSnap);
       this.memoryWebhooks.restore(webhookSnap);
       this.memoryProvenance.restore(provenanceSnap);
+      this.memoryFactChecks.restore(factCheckSnap);
+      this.memoryCategories.restore(categorySnap);
+      this.memoryNavTabs.restore(navTabSnap);
       throw err;
     } finally {
       this.releaseTransactionLock();
@@ -300,6 +327,9 @@ export class DatabaseService {
     this.memoryCollections.clear();
     this.memoryWebhooks.clear();
     this.memoryProvenance.clear();
+    this.memoryFactChecks.clear();
+    this.memoryCategories.clear();
+    this.memoryNavTabs.clear();
   }
 }
 

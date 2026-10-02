@@ -35,6 +35,7 @@ import type {
   StorySearchResultItem,
   TopicDossier,
   SpecialDesk,
+  NavTab,
 } from '@ai-news/schemas';
 
 // ---------------------------------------------------------------------------
@@ -421,6 +422,14 @@ export async function getCategoryStories(slug: string, limit = 20) {
     `/api/categories/${encodeURIComponent(slug)}/stories?limit=${limit}`
   );
   return res.data;
+}
+
+export async function listNavTabs(): Promise<NavTab[]> {
+  try {
+    return await request<NavTab[]>('/api/navigation/tabs');
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------

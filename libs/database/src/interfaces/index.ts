@@ -15,3 +15,6 @@ export * from './newsletter.repository';
 export * from './collection.repository';
 export * from './webhook.repository';
 export * from './provenance.repository';
+export * from './fact-check.repository';
+export * from './category.repository';
+export * from './nav-tab.repository';

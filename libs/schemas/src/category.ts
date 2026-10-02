@@ -22,17 +22,69 @@ export const SubCategorySchema = z.object({
 export type SubCategory = z.infer<typeof SubCategorySchema>;
 
 export const CategorySchema = z.object({
+  id: z.string().optional(),
   slug: z.string().min(1),
   name: z.string().min(1),
-  code: CategoryCodeSchema,
+  code: z.string(),
   description: z.string().default(''),
   icon: z.string().optional(),
   sortOrder: z.number().int().default(0),
   storyCount: z.number().int().nonnegative().default(0),
   isPinned: z.boolean().default(false),
   subCategories: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 export type Category = z.infer<typeof CategorySchema>;
+
+export const NavTabSchema = z.object({
+  id: z.string().optional(),
+  tabId: z.string().min(1),
+  name: z.string().min(1),
+  href: z.string().min(1),
+  icon: z.string().optional(),
+  sortOrder: z.number().int().default(0),
+  active: z.boolean().default(true),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type NavTab = z.infer<typeof NavTabSchema>;
+
+export const BASELINE_NAV_TABS: NavTab[] = [
+  { tabId: 'top', name: 'Top Stories', href: '/', icon: 'Star', sortOrder: 1, active: true },
+  {
+    tabId: 'for-you',
+    name: 'For You',
+    href: '/for-you',
+    icon: 'Sparkles',
+    sortOrder: 2,
+    active: true,
+  },
+  {
+    tabId: 'following',
+    name: 'Following',
+    href: '/?tab=following',
+    icon: 'BookmarkCheck',
+    sortOrder: 3,
+    active: true,
+  },
+  {
+    tabId: 'explore',
+    name: 'Explore',
+    href: '/explore',
+    icon: 'Compass',
+    sortOrder: 4,
+    active: true,
+  },
+  {
+    tabId: 'tips',
+    name: 'Tip Line',
+    href: '/tips',
+    icon: 'ShieldAlert',
+    sortOrder: 5,
+    active: true,
+  },
+];
 
 export const SpecialDeskSchema = z.object({
   id: z.string().min(1),

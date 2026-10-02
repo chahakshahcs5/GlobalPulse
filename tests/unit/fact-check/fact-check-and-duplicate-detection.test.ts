@@ -211,6 +211,32 @@ describe('Fact-Check Credibility Engine & Duplicate Detection (F12, F13)', () =>
       expect(checks[0].checker).toBeDefined();
     });
 
+    it('serves fact-checks directly from database repository dynamically', async () => {
+      const factCheckService = new FactCheckService(db);
+      await db.factChecks.create({
+        id: 'fc_custom_db_test',
+        claim: 'Autonomous rovers detected subterranean ice lakes on Titan.',
+        claimant: 'Planetary Journal',
+        rating: 'TRUE',
+        summary: 'Radar altimetry and seismic soundings confirm liquid sub-surface reserves.',
+        checker: 'Astrobiology Verification Desk',
+        sources: ['NASA Jet Propulsion Laboratory'],
+        checkedAt: new Date().toISOString(),
+      });
+
+      const listFromService = await factCheckService.listFactChecks();
+      expect(listFromService.some((fc) => fc.id === 'fc_custom_db_test')).toBe(true);
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/fact-checks',
+        headers: { authorization: `Bearer ${readerToken}` },
+      });
+      expect(res.statusCode).toBe(200);
+      const checks = JSON.parse(res.body);
+      expect(checks.some((fc: { id: string }) => fc.id === 'fc_custom_db_test')).toBe(true);
+    });
+
     it('retrieves story credibility via GET /api/stories/:id/credibility', async () => {
       const res = await app.inject({
         method: 'GET',

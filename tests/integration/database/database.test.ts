@@ -232,6 +232,11 @@ describe('Production Database Core Integration Tests', () => {
       expect(flagship).toBeDefined();
       expect(flagship?.blocks.length).toBe(4);
       expect(flagship?.currentVersionNumber).toBe(2);
+
+      const factChecks = await db.factChecks.list();
+      expect(factChecks.length).toBeGreaterThanOrEqual(3);
+      expect(factChecks.some((fc) => fc.rating === 'FALSE')).toBe(true);
+      expect(factChecks.some((fc) => fc.rating === 'TRUE')).toBe(true);
     });
   });
 });

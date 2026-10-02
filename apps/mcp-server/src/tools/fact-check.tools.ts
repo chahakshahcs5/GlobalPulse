@@ -86,7 +86,7 @@ export function registerFactCheckTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const factChecks = factCheckService.listFactChecks();
+        const factChecks = await factCheckService.listFactChecks();
         return mcpJsonResponse({
           total: factChecks.length,
           factChecks,

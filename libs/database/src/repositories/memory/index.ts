@@ -15,3 +15,6 @@ export * from './newsletter.memory';
 export * from './collection.memory';
 export * from './webhook.memory';
 export * from './provenance.memory';
+export * from './fact-check.memory';
+export * from './category.memory';
+export * from './nav-tab.memory';

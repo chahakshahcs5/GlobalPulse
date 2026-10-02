@@ -30,8 +30,8 @@ export class FactCheckController {
 
   @Get('fact-checks')
   @RequireScope('news:read')
-  listFactChecks(): FactCheckClaim[] {
-    return this.factCheckService.listFactChecks();
+  async listFactChecks(): Promise<FactCheckClaim[]> {
+    return await this.factCheckService.listFactChecks();
   }
 
   @Get('stories/:id/credibility')

@@ -633,3 +633,33 @@ model StoryShare {
   @@map("story_shares")
 }
 
+model Category {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  code          String
+  name          String
+  description   String?
+  icon          String?
+  sortOrder     Int      @default(0)
+  isPinned      Boolean  @default(false)
+  subCategories String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@map("categories")
+}
+
+model NavTab {
+  id        String   @id @default(uuid())
+  tabId     String   @unique
+  name      String
+  href      String
+  icon      String?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("nav_tabs")
+}
+

@@ -90,9 +90,9 @@ export const FactCheckWidget: React.FC = () => {
                   "{fc.claim}"
                 </p>
 
-                {fc.explanation && (
+                {(fc.explanation || fc.summary) && (
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {fc.explanation}
+                    {fc.explanation || fc.summary}
                   </p>
                 )}
 

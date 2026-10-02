@@ -1,6 +1,22 @@
+import fs from 'fs';
+import path from 'path';
+
+function loadEnvFile() {
+  const envPath = path.resolve(__dirname, '../../../.env');
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match && !process.env[match[1]]) {
+        process.env[match[1]] = match[2]?.trim();
+      }
+    }
+  }
+}
+loadEnvFile();
 import { DatabaseService } from '../src/database.service';
 import { logger } from '@ai-news/observability';
-import type { Story } from '@ai-news/schemas';
+import { type Story, CANONICAL_CATEGORIES, BASELINE_NAV_TABS } from '@ai-news/schemas';
 
 export async function seedDatabase(db: DatabaseService): Promise<void> {
   logger.info('Starting enterprise database seed with canonical schema records...');
@@ -42,7 +58,10 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   ];
 
   for (const topic of topics) {
-    await db.topics.create(topic);
+    const existing = await db.topics.findById(topic.id);
+    if (!existing) {
+      await db.topics.create(topic);
+    }
   }
 
   // 2. Entities
@@ -74,7 +93,10 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   ];
 
   for (const entity of entities) {
-    await db.entities.create(entity);
+    const existing = await db.entities.findById(entity.id);
+    if (!existing) {
+      await db.entities.create(entity);
+    }
   }
 
   // 3. Publishers & Primary Sources
@@ -165,7 +187,10 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   ];
 
   for (const pub of publishers) {
-    await db.publishers.create(pub);
+    const existing = await db.publishers.findById(pub.id);
+    if (!existing) {
+      await db.publishers.create(pub);
+    }
   }
 
   const sources = [
@@ -247,7 +272,10 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   ];
 
   for (const source of sources) {
-    await db.sources.create(source);
+    const existing = await db.sources.findById(source.id);
+    if (!existing) {
+      await db.sources.create(source);
+    }
   }
 
   // 4. Flagship Multi-Version Story
@@ -343,43 +371,115 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     ],
   };
 
-  await db.stories.create(story);
+  const existingStory = await db.stories.findById(story.id);
+  if (!existingStory) {
+    await db.stories.create(story);
 
-  // Versions
-  await db.stories.createVersion({
-    id: 'ver_brics_v1',
-    storyId: story.id,
-    versionNumber: 1,
-    title: 'BRICS Expansion 2026: Preliminary Consensus Reached',
-    summary: 'Summit opens with draft agreement on expanded membership.',
-    changeSummary: 'Initial breaking news dispatch.',
-    blocks: [story.blocks[1]],
-    authorId: 'usr_spark_agent',
-    clientType: 'gemini_spark',
-    createdAt: '2026-09-26T07:00:00Z',
-  });
+    // Versions
+    await db.stories.createVersion({
+      id: 'ver_brics_v1',
+      storyId: story.id,
+      versionNumber: 1,
+      title: 'BRICS Expansion 2026: Preliminary Consensus Reached',
+      summary: 'Summit opens with draft agreement on expanded membership.',
+      changeSummary: 'Initial breaking news dispatch.',
+      blocks: [story.blocks[1]],
+      authorId: 'usr_spark_agent',
+      clientType: 'gemini_spark',
+      createdAt: '2026-09-26T07:00:00Z',
+    });
 
-  await db.stories.createVersion({
-    id: 'ver_brics_v2',
-    storyId: story.id,
-    versionNumber: 2,
-    title: story.title,
-    summary: story.summary,
-    changeSummary:
-      'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
-    blocks: story.blocks,
-    authorId: 'usr_spark_agent',
-    clientType: 'gemini_spark',
-    createdAt: '2026-09-26T10:00:00Z',
-  });
+    await db.stories.createVersion({
+      id: 'ver_brics_v2',
+      storyId: story.id,
+      versionNumber: 2,
+      title: story.title,
+      summary: story.summary,
+      changeSummary:
+        'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
+      blocks: story.blocks,
+      authorId: 'usr_spark_agent',
+      clientType: 'gemini_spark',
+      createdAt: '2026-09-26T10:00:00Z',
+    });
+  }
+
+  // 6. Fact Checks
+  const factChecks = [
+    {
+      id: 'fc_01',
+      claim: 'Solar storms completely dismantled international undersea internet cables.',
+      claimant: 'Viral Social Media Posts',
+      rating: 'FALSE' as const,
+      summary:
+        'Undersea fiber optic cables operate via light pulses immune to geomagnetic fluctuations. Only surface equipment experienced minor transient surges.',
+      checker: 'GlobalPulse Verification Desk',
+      sources: ['NOAA Space Weather Prediction Center', 'International Cable Protection Committee'],
+      checkedAt: new Date().toISOString(),
+    },
+    {
+      id: 'fc_02',
+      claim: 'Central Banks quietly agreed to eliminate physical cash currencies by 2027.',
+      claimant: 'Blog Speculation',
+      rating: 'FALSE' as const,
+      summary:
+        'Central Bank Digital Currencies (CBDCs) are experimental supplements. Official policy frameworks explicitly mandate cash availability.',
+      checker: 'Reuters Fact Check',
+      sources: ['Bank for International Settlements', 'Federal Reserve Board Policy Release'],
+      checkedAt: new Date().toISOString(),
+    },
+    {
+      id: 'fc_03',
+      claim: 'CERN set a new quantum entanglement record in particle collision density.',
+      claimant: 'Physics Conference Dispatches',
+      rating: 'TRUE' as const,
+      summary:
+        'Peer-reviewed measurements at the Large Hadron Collider confirm unprecedented quantum correlation metrics.',
+      checker: 'Science Verification Network',
+      sources: ['Physical Review Letters', 'CERN Directorate'],
+      checkedAt: new Date().toISOString(),
+    },
+  ];
+
+  for (const fc of factChecks) {
+    const existing = await db.factChecks.findById(fc.id);
+    if (!existing) {
+      await db.factChecks.create(fc);
+    }
+  }
+
+  // 7. Categories
+  for (const cat of CANONICAL_CATEGORIES) {
+    const existing = await db.categories.findBySlug(cat.slug);
+    if (!existing) {
+      await db.categories.create(cat);
+    }
+  }
+
+  // 8. Navigation Tabs
+  for (const tab of BASELINE_NAV_TABS) {
+    const existing = await db.navTabs.findById(tab.tabId);
+    if (!existing) {
+      await db.navTabs.create(tab);
+    } else {
+      await db.navTabs.update(tab);
+    }
+  }
 
   logger.info('Database seeded successfully with enterprise newsroom records.');
 }
 
 if (require.main === module) {
   const dbInstance = new DatabaseService();
-  seedDatabase(dbInstance).catch((err) => {
-    console.error('Seeding failed:', err);
-    process.exit(1);
-  });
+  dbInstance
+    .initialize()
+    .then(() => seedDatabase(dbInstance))
+    .then(() => {
+      logger.info('Database seeding completed.');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Seeding failed:', err);
+      process.exit(1);
+    });
 }

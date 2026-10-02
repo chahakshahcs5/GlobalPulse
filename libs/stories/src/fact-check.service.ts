@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { DatabaseService } from '@ai-news/database';
+import { type DatabaseService, BASELINE_FACT_CHECKS } from '@ai-news/database';
 import type {
   FactCheckClaim,
   StoryCredibilityAssessment,
@@ -9,41 +9,7 @@ import type {
   CheckDuplicateInput,
 } from '@ai-news/schemas';
 
-export const SEED_FACT_CHECKS: FactCheckClaim[] = [
-  {
-    id: 'fc_01',
-    claim: 'Solar storms completely dismantled international undersea internet cables.',
-    claimant: 'Viral Social Media Posts',
-    rating: 'FALSE',
-    summary:
-      'Undersea fiber optic cables operate via light pulses immune to geomagnetic fluctuations. Only surface equipment experienced minor transient surges.',
-    checker: 'GlobalPulse Verification Desk',
-    sources: ['NOAA Space Weather Prediction Center', 'International Cable Protection Committee'],
-    checkedAt: new Date().toISOString(),
-  },
-  {
-    id: 'fc_02',
-    claim: 'Central Banks quietly agreed to eliminate physical cash currencies by 2027.',
-    claimant: 'Blog Speculation',
-    rating: 'FALSE',
-    summary:
-      'Central Bank Digital Currencies (CBDCs) are experimental supplements. Official policy frameworks explicitly mandate cash availability.',
-    checker: 'Reuters Fact Check',
-    sources: ['Bank for International Settlements', 'Federal Reserve Board Policy Release'],
-    checkedAt: new Date().toISOString(),
-  },
-  {
-    id: 'fc_03',
-    claim: 'CERN set a new quantum entanglement record in particle collision density.',
-    claimant: 'Physics Conference Dispatches',
-    rating: 'TRUE',
-    summary:
-      'Peer-reviewed measurements at the Large Hadron Collider confirm unprecedented quantum correlation metrics.',
-    checker: 'Science Verification Network',
-    sources: ['Physical Review Letters', 'CERN Directorate'],
-    checkedAt: new Date().toISOString(),
-  },
-];
+export const SEED_FACT_CHECKS: FactCheckClaim[] = BASELINE_FACT_CHECKS;
 
 function tokenize(text: string): Set<string> {
   const words = text
@@ -78,22 +44,22 @@ function extractTrigrams(text: string): string[] {
 }
 
 export class FactCheckService {
-  private factChecks: FactCheckClaim[] = [...SEED_FACT_CHECKS];
-
   constructor(private readonly db: DatabaseService) {}
 
-  listFactChecks(): FactCheckClaim[] {
-    return [...this.factChecks];
+  async listFactChecks(): Promise<FactCheckClaim[]> {
+    return await this.db.factChecks.list();
   }
 
-  addFactCheck(claim: Omit<FactCheckClaim, 'id' | 'checkedAt'>): FactCheckClaim {
+  async addFactCheck(
+    claim: Omit<FactCheckClaim, 'id' | 'checkedAt'> & { id?: string; checkedAt?: string }
+  ): Promise<FactCheckClaim> {
     const newClaim: FactCheckClaim = {
       ...claim,
-      id: `fc_${randomUUID().replace(/-/g, '').slice(0, 12)}`,
-      checkedAt: new Date().toISOString(),
+      id: claim.id || `fc_${randomUUID().replace(/-/g, '').slice(0, 12)}`,
+      checkedAt: claim.checkedAt || new Date().toISOString(),
+      sources: claim.sources || [],
     };
-    this.factChecks.unshift(newClaim);
-    return newClaim;
+    return await this.db.factChecks.create(newClaim);
   }
 
   /**
@@ -156,7 +122,8 @@ export class FactCheckService {
 
     // Factor 4: Check against known debunked assertions in the fact-check knowledge base
     const storyText = `${story.title} ${story.summary}`.toLowerCase();
-    for (const fc of this.factChecks) {
+    const factChecks = await this.listFactChecks();
+    for (const fc of factChecks) {
       const claimKeywords = fc.claim
         .toLowerCase()
         .split(/\s+/)

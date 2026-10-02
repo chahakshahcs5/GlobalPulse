@@ -8,6 +8,7 @@ const PUBLIC_CACHE_ROUTES = [
   /^\/api\/stories\/[a-zA-Z0-9_-]+$/,
   /^\/api\/topics(\/.*)?$/,
   /^\/api\/categories(\/.*)?$/,
+  /^\/api\/navigation(\/.*)?$/,
   /^\/api\/entities(\/.*)?$/,
 ];
 

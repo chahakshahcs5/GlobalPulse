@@ -15,3 +15,6 @@ export * from './newsletter.prisma';
 export * from './collection.prisma';
 export * from './webhook.prisma';
 export * from './provenance.prisma';
+export * from './fact-check.prisma';
+export * from './category.prisma';
+export * from './nav-tab.prisma';
