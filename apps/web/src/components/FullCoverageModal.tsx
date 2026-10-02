@@ -12,7 +12,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { getStoryFullCoverage } from '../lib/api-client';
-import { DEMO_FULL_COVERAGE } from '../lib/news-data';
+import { getOrSynthesizeFullCoverage } from '../lib/news-data';
+import { useAllStories } from '../lib/news-store';
 
 interface FullCoverageModalProps {
   slug: string | null;
@@ -36,6 +37,7 @@ export interface CoverageTimelineItem {
   headline?: string;
   event?: string;
   detail?: string;
+  source?: string;
 }
 
 export interface CoverageFactCheck {
@@ -63,6 +65,7 @@ export interface CoverageData {
 export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onClose }) => {
   const [cluster, setCluster] = useState<CoverageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { stories } = useAllStories();
 
   useEffect(() => {
     if (!slug) {
@@ -73,33 +76,44 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
     let isMounted = true;
     setIsLoading(true);
 
+    const story = stories?.find((s) => s.slug === slug || s.id === slug);
+    const fallbackCluster = getOrSynthesizeFullCoverage(slug, story, stories || []);
+
     getStoryFullCoverage(slug)
       .then((data) => {
         if (!isMounted) return;
-        if (data && (data.perspectives || data.title)) {
-          setCluster(data);
-        } else if (DEMO_FULL_COVERAGE[slug]) {
-          // Only match if the slug strictly matches this demo entry
-          setCluster(DEMO_FULL_COVERAGE[slug]);
+        if (data && (data.perspectives?.length || data.title)) {
+          // Merge API data with synthesized fallback for completeness
+          const apiData = data as unknown as {
+            perspectives?: CoveragePerspective[];
+            timeline?: CoverageTimelineItem[];
+            factCheck?: CoverageFactCheck;
+            [key: string]: unknown;
+          };
+          setCluster({
+            ...fallbackCluster,
+            ...apiData,
+            perspectives: apiData.perspectives?.length
+              ? apiData.perspectives
+              : fallbackCluster.perspectives,
+            timeline: apiData.timeline?.length ? apiData.timeline : fallbackCluster.timeline,
+            factCheck: apiData.factCheck?.verdict ? apiData.factCheck : fallbackCluster.factCheck,
+          } as unknown as CoverageData);
         } else {
-          setCluster(null);
+          setCluster(fallbackCluster as unknown as CoverageData);
         }
         setIsLoading(false);
       })
       .catch(() => {
         if (!isMounted) return;
-        if (DEMO_FULL_COVERAGE[slug]) {
-          setCluster(DEMO_FULL_COVERAGE[slug]);
-        } else {
-          setCluster(null);
-        }
+        setCluster(fallbackCluster as unknown as CoverageData);
         setIsLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [slug, stories]);
 
   if (!slug) return null;
 
@@ -265,13 +279,13 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
                       <div key={idx} className="relative pl-5">
                         <span className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-blue-600"></span>
                         <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
-                          {item.time}
+                          {item.time || item.date}
                         </span>
                         <h5 className="font-bold text-xs text-slate-900 dark:text-white mt-0.5">
-                          {item.headline}
+                          {item.headline || item.event}
                         </h5>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {item.detail}
+                          {item.detail || item.source}
                         </p>
                       </div>
                     ))}

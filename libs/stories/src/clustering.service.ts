@@ -51,12 +51,15 @@ export class ClusteringService {
     storyId: string,
     orgId: string = 'org_default'
   ): Promise<FullCoverageResult> {
-    const leadStory = await this.db.stories.findById(storyId, orgId);
+    let leadStory = await this.db.stories.findById(storyId, orgId);
+    if (!leadStory) {
+      leadStory = await this.db.stories.findBySlug(storyId, orgId);
+    }
     if (!leadStory) {
       throw new Error(`Story with id ${storyId} was not found`);
     }
 
-    let cluster = await this.db.clusters.findByStoryId(storyId, orgId);
+    let cluster = await this.db.clusters.findByStoryId(leadStory.id, orgId);
 
     if (!cluster) {
       // Auto-cluster candidate stories from database
@@ -187,6 +190,48 @@ export class ClusteringService {
       if (s) relatedStories.push(s);
     }
 
+    // Hydrate fact-check verification for this story
+    let factCheckData:
+      | {
+          verdict: string;
+          confidence?: number;
+          verificationNote?: string;
+          officialSources?: string[];
+        }
+      | undefined = undefined;
+
+    try {
+      const allClaims = await this.db.factChecks.list({ limit: 50 });
+      const leadWords = leadStory.title
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 4);
+      const matchedClaim =
+        allClaims.find((c) => {
+          const claimText = (c.claim + ' ' + (c.summary || '')).toLowerCase();
+          return leadWords.some((w) => claimText.includes(w));
+        }) || allClaims[0];
+
+      if (matchedClaim) {
+        factCheckData = {
+          verdict: matchedClaim.rating || 'VERIFIED',
+          confidence:
+            matchedClaim.rating === 'TRUE'
+              ? 0.99
+              : matchedClaim.rating === 'MOSTLY_TRUE'
+                ? 0.95
+                : 0.88,
+          verificationNote: matchedClaim.summary || matchedClaim.claim,
+          officialSources:
+            matchedClaim.sources && matchedClaim.sources.length > 0
+              ? matchedClaim.sources
+              : [matchedClaim.checker || 'GlobalPulse Verification Desk'],
+        };
+      }
+    } catch {
+      // Fallback gracefully if fact checks repo is unpopulated
+    }
+
     return {
       clusterId: cluster.id,
       storyId: leadStory.id,
@@ -196,6 +241,7 @@ export class ClusteringService {
       relatedStories,
       perspectives: cluster.perspectives,
       timeline: cluster.timeline,
+      factCheck: factCheckData,
     };
   }
 

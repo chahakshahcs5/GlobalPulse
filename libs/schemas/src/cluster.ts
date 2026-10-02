@@ -51,6 +51,14 @@ export const CreateClusterInputSchema = z.object({
 });
 export type CreateClusterInput = z.infer<typeof CreateClusterInputSchema>;
 
+export const FullCoverageFactCheckSchema = z.object({
+  verdict: z.string(),
+  confidence: z.number().optional(),
+  verificationNote: z.string().optional(),
+  officialSources: z.array(z.string()).optional(),
+});
+export type FullCoverageFactCheck = z.infer<typeof FullCoverageFactCheckSchema>;
+
 export const FullCoverageResultSchema = z.object({
   clusterId: z.string(),
   storyId: z.string(),
@@ -60,5 +68,6 @@ export const FullCoverageResultSchema = z.object({
   relatedStories: z.array(StorySchema),
   perspectives: z.array(ClusterPerspectiveSchema),
   timeline: z.array(ClusterTimelineItemSchema),
+  factCheck: FullCoverageFactCheckSchema.optional(),
 });
 export type FullCoverageResult = z.infer<typeof FullCoverageResultSchema>;

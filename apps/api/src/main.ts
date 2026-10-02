@@ -21,6 +21,18 @@ async function bootstrap() {
   logger.info('Initializing Database Engine...');
   await db.initialize();
 
+  // Auto-seed in-memory or unseeded database so all stories, clusters, and fact-checks are live via API
+  try {
+    const existingStories = await db.stories.listPaginated({ limit: 1 }, 'org_default');
+    if (existingStories.total === 0) {
+      logger.info('Database empty; auto-seeding canonical enterprise records from seed.ts...');
+      const { seedDatabase } = await import('@ai-news/database');
+      await seedDatabase(db);
+    }
+  } catch (seedErr) {
+    logger.warn(`Auto-seeding check notice: ${String(seedErr)}`);
+  }
+
   // Wire SSE broadcasting: story, engagement, notification & scheduling events flow to connected clients
   const realtime = RealtimeService.getInstance();
   setStoryBroadcaster((channel, eventName, data) => {

@@ -2999,6 +2999,544 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       createdAt: '2026-10-02T10:45:00Z',
       updatedAt: '2026-10-02T12:15:00Z',
     },
+    {
+      id: 'cls_semiconductor_consortium',
+      organizationId: 'org_default',
+      title: 'Global 2nm Semiconductor Manufacturing & Patent Consortium',
+      summary:
+        'Major foundries and chip designers agree to cross-licensing pact and standardized High-NA EUV lithography tooling.',
+      leadStoryId: 'sty_semi_01',
+      storyIds: ['sty_semi_01', 'sty_ai_01'],
+      topic: 'top_semiconductors',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'Wall Street Journal',
+          headline: 'Leading Foundries Announce Joint 2nm Process Rules to Avert Fab Bottlenecks',
+          excerpt:
+            'Uniform GAAFET transistor libraries will allow fabless designers to multi-source wafer runs without redesign.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/tech/2nm-foundry-consortium-standard',
+          timeAgo: '4 hours ago',
+          angle: 'analytical',
+          stance: 'Interoperable packaging addresses global supply-chain fragmentation.',
+        },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'EE Times',
+          headline: 'High-NA EUV Scanner Deployment Achieves 80% Commercial Yield Threshold',
+          excerpt:
+            '0.55 NA optics deliver required sub-8nm edge placement accuracy on 300mm test wafers.',
+          sourceType: 'industry',
+          url: 'https://eetimes.com/high-na-euv-commercial-yield-validation',
+          timeAgo: '2 hours ago',
+          angle: 'scientific',
+          stance: 'Tool maturity outpaces industry skepticism, locking in 2027 volume ramp.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 27, 08:30 UTC',
+          event: 'Foundry consortium ratifies unified 2nm PDK specification',
+          source: 'SEMICON Global',
+          storyId: 'sty_semi_01',
+        },
+        {
+          date: 'Sep 27, 12:00 UTC',
+          event: 'Joint statement issues open packaging patent pool guidelines',
+          source: 'Consortium Secretariat',
+          storyId: 'sty_semi_01',
+        },
+      ],
+      createdAt: '2026-09-27T08:30:00Z',
+      updatedAt: '2026-09-27T14:00:00Z',
+    },
+    {
+      id: 'cls_iter_fusion_energy',
+      organizationId: 'org_default',
+      title: 'Magnetic Fusion Energy Q>1 Steady-State Milestone',
+      summary:
+        'High-temperature superconducting magnets maintain continuous fusion burn for 120 seconds, unlocking commercial pilot design.',
+      leadStoryId: 'sty_fusion_01',
+      storyIds: ['sty_fusion_01', 'sty_climate_01'],
+      topic: 'top_fusion_energy',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'Nature Energy',
+          headline: 'Continuous Q=1.35 Net Energy Confinement Realized in Compact Tokamak',
+          excerpt:
+            'Barium copper oxide magnet coils sustain 24-Tesla fields without thermal quench.',
+          sourceType: 'academic',
+          url: 'https://nature.com/articles/s41560-026-01422-9',
+          timeAgo: '3 hours ago',
+          angle: 'scientific',
+          stance:
+            'Superconducting tape economics enable compact, low-cost commercial fusion plants.',
+        },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'Reuters Science Wire',
+          headline: 'Energy Ministers Commit Capital for First Grid-Tied Fusion Prototype by 2032',
+          excerpt:
+            'International coalition pledges $14B to scale engineering test reactors based on superconducting magnets.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/energy/superconducting-fusion-milestone-2026',
+          timeAgo: '5 hours ago',
+          angle: 'institutional',
+          stance: 'Public-private funding accelerates grid connection timelines.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 28, 06:15 UTC',
+          event: 'Plasma discharge reaches stable 120-second plateau at 150 million degrees',
+          source: 'Fusion Test Facility Control Room',
+          storyId: 'sty_fusion_01',
+        },
+        {
+          date: 'Sep 28, 07:30 UTC',
+          event: 'Diagnostic calorimeters confirm 1.35 net thermal energy factor',
+          source: 'Independent Review Panel',
+          storyId: 'sty_fusion_01',
+        },
+      ],
+      createdAt: '2026-09-28T06:15:00Z',
+      updatedAt: '2026-09-28T10:00:00Z',
+    },
+    {
+      id: 'cls_central_banks_liquidity',
+      organizationId: 'org_default',
+      title: 'Multilateral Central Bank Liquidity & FX Settlement Network',
+      summary:
+        'Sovereign reserve banks initiate automated cross-currency liquidity backstops to protect against dollar volatility spikes.',
+      leadStoryId: 'sty_markets_01',
+      storyIds: ['sty_markets_01', 'sty_brics_flagship'],
+      topic: 'top_macroeconomics',
+      category: 'business',
+      perspectives: [
+        {
+          storyId: 'sty_markets_01',
+          publisher: 'The Economist',
+          headline: 'Central Banks Build Parallel Clearing Rails to De-Risk Reserves',
+          excerpt:
+            'Direct bilateral swap arrangements reduce reliance on intermediary correspondent banking networks.',
+          sourceType: 'analysis',
+          url: 'https://economist.com/finance-and-economics/multilateral-fx-clearing-rails',
+          timeAgo: '3 hours ago',
+          angle: 'analytical',
+          stance: 'Diversified settlement architecture increases global financial resilience.',
+        },
+        {
+          storyId: 'sty_markets_01',
+          publisher: 'Bloomberg Markets',
+          headline: 'FX Liquidity Swaps Settle in Real-Time Under New Multilateral Accord',
+          excerpt:
+            'First 24 hours of operation process $18B in sovereign trade settlements without friction.',
+          sourceType: 'wire',
+          url: 'https://bloomberg.com/news/articles/2026-09-29/fx-clearing-grid-volume-record',
+          timeAgo: '1 hour ago',
+          angle: 'industry',
+          stance: 'Turnover rates confirm strong commercial appetite for non-intermediary rails.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 29, 09:00 UTC',
+          event: 'Multilateral swap protocol activated across 12 participating central banks',
+          source: 'BIS Monetary Panel',
+          storyId: 'sty_markets_01',
+        },
+        {
+          date: 'Sep 29, 13:45 UTC',
+          event: 'First automated trade settlement tranche executes cleanly',
+          source: 'Operations Clearinghouse',
+          storyId: 'sty_markets_01',
+        },
+      ],
+      createdAt: '2026-09-29T09:00:00Z',
+      updatedAt: '2026-09-29T15:00:00Z',
+    },
+    {
+      id: 'cls_quantum_processor_breakthrough',
+      organizationId: 'org_default',
+      title: 'Topological Quantum Processing & Fault-Tolerant Logical Qubits',
+      summary:
+        'Majorana zero mode braiding demonstrates 10,000 logical qubits with sub-1e-6 error thresholds under commercial cryogenics.',
+      leadStoryId: 'sty_quantum_01',
+      storyIds: ['sty_quantum_01', 'sty_pick_quantum_crypto_01'],
+      topic: 'top_quantum_computing',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_quantum_01',
+          publisher: 'MIT Technology Review',
+          headline: 'Topological Protection Solves the Quantum Decroherence Bottleneck',
+          excerpt:
+            'Non-Abelian braiding protects qubit states natively at the hardware level, bypassing millions of physical helper qubits.',
+          sourceType: 'academic',
+          url: 'https://technologyreview.com/2026/09/28/topological-quantum-processor-majorana',
+          timeAgo: '4 hours ago',
+          angle: 'scientific',
+          stance:
+            'Hardware-level protection compresses fault-tolerant commercial timeline by decades.',
+        },
+        {
+          storyId: 'sty_quantum_01',
+          publisher: 'Financial Times Tech',
+          headline: 'Enterprise Cloud Giants Line Up for Topological QPU Compute Slots',
+          excerpt:
+            'Pharmaceutical and materials science consortiums book initial quantum chemical simulation batches.',
+          sourceType: 'industry',
+          url: 'https://ft.com/tech/topological-quantum-processor-enterprise-compute',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance: 'Commercial demand for quantum chemistry modeling exceeds initial fab capacity.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 28, 14:00 UTC',
+          event: '10,000-logical-qubit benchmark successfully executes Bernstein-Vazirani proof',
+          source: 'Quantum Standards Laboratory',
+          storyId: 'sty_quantum_01',
+        },
+        {
+          date: 'Sep 28, 16:30 UTC',
+          event: 'Commercial cloud SDK released for quantum simulation clusters',
+          source: 'Developer Consortium',
+          storyId: 'sty_quantum_01',
+        },
+      ],
+      createdAt: '2026-09-28T14:00:00Z',
+      updatedAt: '2026-09-28T18:00:00Z',
+    },
+    {
+      id: 'cls_lunar_gateway_orbit',
+      organizationId: 'org_default',
+      title: 'International Lunar Gateway Polar Orbit Insertion',
+      summary:
+        'Crew habitat and logistics modules complete autonomous burn to settle into Near-Rectilinear Halo Orbit around lunar south pole.',
+      leadStoryId: 'sty_space_01',
+      storyIds: ['sty_space_01', 'sty_pick_space_mining_01'],
+      topic: 'top_space_exploration',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_space_01',
+          publisher: 'Aviation Week & Space Technology',
+          headline: 'Gateway Station Enters Permanent Halo Orbit Above Lunar South Pole',
+          excerpt:
+            'Solar electric propulsion system fires precisely to place Gateway in continuous line-of-sight with Earth.',
+          sourceType: 'industry',
+          url: 'https://aviationweek.com/space/lunar-gateway-near-rectilinear-halo-orbit',
+          timeAgo: '5 hours ago',
+          angle: 'industry',
+          stance: 'Uninterrupted communication enables continuous robotic rover teleoperation.',
+        },
+        {
+          storyId: 'sty_space_01',
+          publisher: 'ESA Mission Dispatch',
+          headline: 'International Crew Habitat Life Support Systems Verify 100% Nominal Readouts',
+          excerpt:
+            'Oxygen replenishment and closed-loop water reclamation subsystems pass orbital certification.',
+          sourceType: 'institutional',
+          url: 'https://esa.int/gateway/orbit-insertion-subsystem-status',
+          timeAgo: '3 hours ago',
+          angle: 'official',
+          stance: 'Station is fully primed for upcoming international astronaut expedition.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 29, 05:30 UTC',
+          event: 'Gateway electric propulsion engines commence perilune orbital insertion burn',
+          source: 'Mission Control Center Houston',
+          storyId: 'sty_space_01',
+        },
+        {
+          date: 'Sep 29, 08:00 UTC',
+          event: 'Near-Rectilinear Halo Orbit lock verified by Deep Space Network antennas',
+          source: 'ESA Darmstadt Ground Station',
+          storyId: 'sty_space_01',
+        },
+      ],
+      createdAt: '2026-09-29T05:30:00Z',
+      updatedAt: '2026-09-29T10:00:00Z',
+    },
+    {
+      id: 'cls_solid_state_grid_storage',
+      organizationId: 'org_default',
+      title: 'Global Grid Integration of 500 GWh Solid-State Energy Storage',
+      summary:
+        'Deployment of ceramic electrolyte batteries stabilizes intercontinental renewable transmission corridors and cuts peak power tariffs.',
+      leadStoryId: 'sty_climate_01',
+      storyIds: ['sty_climate_01', 'sty_pick_grid_storage_01'],
+      topic: 'top_climate_transition',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_climate_01',
+          publisher: 'Bloomberg Green',
+          headline: 'Solid-State Battery Installations Surpass 500 GWh Milestone Worldwide',
+          excerpt:
+            'Utility-scale projects prove 20-year cycle longevity with zero degradation at high ambient temperatures.',
+          sourceType: 'industry',
+          url: 'https://bloomberg.com/green/solid-state-grid-500gwh-milestone',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance: 'Elimination of thermal runaway safeguards high-density urban transformer yards.',
+        },
+        {
+          storyId: 'sty_climate_01',
+          publisher: 'Clean Energy Wire',
+          headline: 'Grid Operators Cut Peaker Plant Reliance by 40% Following Storage Expansion',
+          excerpt:
+            'Instantaneous millisecond battery discharge handles transient renewable drop-offs during storm fronts.',
+          sourceType: 'analysis',
+          url: 'https://cleanenergywire.org/solid-state-peaker-plant-reduction',
+          timeAgo: '4 hours ago',
+          angle: 'analytical',
+          stance:
+            'Grid stability proves renewables can safely satisfy 90%+ of baseline industrial load.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 29, 09:30 UTC',
+          event: 'Interconnection councils certify 500 GWh aggregate operational threshold',
+          source: 'Global Energy Transition Council',
+          storyId: 'sty_climate_01',
+        },
+        {
+          date: 'Sep 29, 14:00 UTC',
+          event: 'Tariff regulators record 35% decline in regional peak power surcharges',
+          source: 'International Energy Agency',
+          storyId: 'sty_climate_01',
+        },
+      ],
+      createdAt: '2026-09-29T09:30:00Z',
+      updatedAt: '2026-09-29T16:00:00Z',
+    },
+    {
+      id: 'cls_pan_coronavirus_mrna',
+      organizationId: 'org_default',
+      title: 'Broad-Spectrum Pan-Coronavirus mRNA Therapeutic Phase 3 Clearance',
+      summary:
+        'Conserved viral stem epitope formulation neutralizes all known coronaviral lineages with durable mucosal immunity.',
+      leadStoryId: 'sty_health_01',
+      storyIds: ['sty_health_01', 'sty_pick_crispr_01'],
+      topic: 'top_biotech_genomics',
+      category: 'health',
+      perspectives: [
+        {
+          storyId: 'sty_health_01',
+          publisher: 'The Lancet',
+          headline:
+            'Phase 3 Clinical Trial Demonstrates 96% Efficacy Across Diverse Viral Lineages',
+          excerpt:
+            'Broad neutralizing antibody titers remain stable past 12 months with zero immune escape.',
+          sourceType: 'academic',
+          url: 'https://thelancet.com/journals/lancet/pan-coronavirus-phase3-validation',
+          timeAgo: '3 hours ago',
+          angle: 'scientific',
+          stance: 'Epitope stabilization eliminates need for seasonal vaccine reformulation.',
+        },
+        {
+          storyId: 'sty_health_01',
+          publisher: 'WHO Global Health Wire',
+          headline: 'World Health Organization Authorizes Pre-Qualification for Global Stockpile',
+          excerpt:
+            'Therapeutic distributed under universal licensing treaty to guarantee equitable developing-nation access.',
+          sourceType: 'wire',
+          url: 'https://who.int/news/pan-coronavirus-therapeutic-stockpile-accord',
+          timeAgo: '1 hour ago',
+          angle: 'institutional',
+          stance: 'Equitable global distribution halts future zoonotic spillover pandemic chains.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 30, 08:00 UTC',
+          event: 'Data Safety Monitoring Board unblinds Phase 3 efficacy dataset',
+          source: 'Consortium Coordinating Center Geneva',
+          storyId: 'sty_health_01',
+        },
+        {
+          date: 'Sep 30, 11:30 UTC',
+          event: 'Regulators initiate expedited rolling approval protocol across 40 countries',
+          source: 'Global Health Authority Network',
+          storyId: 'sty_health_01',
+        },
+      ],
+      createdAt: '2026-09-30T08:00:00Z',
+      updatedAt: '2026-09-30T13:00:00Z',
+    },
+    {
+      id: 'cls_zero_day_power_grids',
+      organizationId: 'org_default',
+      title: 'Coordinated Zero-Day Patch Deployment Across Critical Power Grids',
+      summary:
+        'Cybersecurity task forces distribute cryptographically signed firmware to isolate remote SCADA vulnerabilities in continental grids.',
+      leadStoryId: 'sty_cyber_01',
+      storyIds: ['sty_cyber_01'],
+      topic: 'top_cybersecurity',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_cyber_01',
+          publisher: 'Wired Security',
+          headline: 'Emergency Firmware Patch Deployed to Thousands of Substation Relays',
+          excerpt:
+            'Automated verification scripts confirm vulnerability neutralized without a single kilowatt of outage.',
+          sourceType: 'industry',
+          url: 'https://wired.com/security/power-grid-zero-day-coordinated-patch',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance:
+            'Zero-downtime hot-patching architecture prevents potential systemic blackout threats.',
+        },
+        {
+          storyId: 'sty_cyber_01',
+          publisher: 'Cyber Security Agency Brief',
+          headline: 'National Infrastructure Regulators Confirm Threat Actor Access Denied',
+          excerpt:
+            'Forensic honeypot telemetry indicates intruder scripts failed to execute payload past defensive airgaps.',
+          sourceType: 'official',
+          url: 'https://cisa.gov/alerts/substation-scada-zero-day-mitigation',
+          timeAgo: '4 hours ago',
+          angle: 'official',
+          stance: 'International cyber coordination neutralized threat prior to weaponization.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Sep 30, 10:00 UTC',
+          event: 'Threat intelligence alliance discovers unpatched SCADA communication flaw',
+          source: 'CERT Joint Operations',
+          storyId: 'sty_cyber_01',
+        },
+        {
+          date: 'Sep 30, 14:15 UTC',
+          event: 'Coordinated air-gapped cryptographic update rolled out to 12,000 substations',
+          source: 'Power Reliability Council',
+          storyId: 'sty_cyber_01',
+        },
+      ],
+      createdAt: '2026-09-30T10:00:00Z',
+      updatedAt: '2026-09-30T16:00:00Z',
+    },
+    {
+      id: 'cls_synthetic_cinema_venice',
+      organizationId: 'org_default',
+      title: 'Venice Biennale Awards Fully Synthetic Generative Feature Film',
+      summary:
+        'International jury recognizes human-directed neural cinema, sparking intense debate on intellectual property and artistic agency.',
+      leadStoryId: 'sty_culture_01',
+      storyIds: ['sty_culture_01'],
+      topic: 'top_culture_cinema',
+      category: 'culture',
+      perspectives: [
+        {
+          storyId: 'sty_culture_01',
+          publisher: 'Variety',
+          headline: 'Venice Film Festival Awards Golden Lion to Neural Cinematography Pioneer',
+          excerpt:
+            'Jury commends emotional depth and innovative non-linear narrative rendered entirely via diffusion engines.',
+          sourceType: 'industry',
+          url: 'https://variety.com/film/venice-biennale-synthetic-feature-golden-lion',
+          timeAgo: '5 hours ago',
+          angle: 'industry',
+          stance:
+            'Technological leap transforms film production from capital-intensive to imagination-driven.',
+        },
+        {
+          storyId: 'sty_culture_01',
+          publisher: 'Cahiers du Cinéma',
+          headline: 'The Author in the Age of Generative Latent Space',
+          excerpt:
+            'Critics argue the director remains the singular creative compass directing algorithmic aesthetics.',
+          sourceType: 'analysis',
+          url: 'https://cahiersducinema.com/art-cinematographique-ia-2026',
+          timeAgo: '3 hours ago',
+          angle: 'analytical',
+          stance: 'Prompting and directorial curation constitute genuine cinematic authorship.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 01, 16:00 UTC',
+          event: 'Venice International Film Festival screens synthetic feature in main competition',
+          source: 'Biennale Cinema Press Office',
+          storyId: 'sty_culture_01',
+        },
+        {
+          date: 'Oct 01, 20:30 UTC',
+          event: 'Jury awards Golden Lion citing groundbreaking visual poetry',
+          source: 'Palazzo del Cinema Jury Declaration',
+          storyId: 'sty_culture_01',
+        },
+      ],
+      createdAt: '2026-10-01T16:00:00Z',
+      updatedAt: '2026-10-01T22:00:00Z',
+    },
+    {
+      id: 'cls_starship_flight7_telemetry',
+      organizationId: 'org_default',
+      title: 'Starship Flight 7 Orbital Flight Test & Tower Catch',
+      summary:
+        'Super Heavy booster and orbital ship achieve full trajectory objectives with dual robotic chopstick mechanical recovery.',
+      leadStoryId: 'sty_liveblog_starship',
+      storyIds: ['sty_liveblog_starship', 'sty_space_01'],
+      topic: 'top_space_exploration',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'NASASpaceFlight',
+          headline: 'Super Heavy Booster and Ship Both Recovered Intact in Landmark Flight 7',
+          excerpt:
+            'Mechanical catch arms capture falling vehicle within 5 centimeters of centerline tolerance.',
+          sourceType: 'industry',
+          url: 'https://nasaspaceflight.com/starship-flight-7-catch-success',
+          timeAgo: '1 hour ago',
+          angle: 'industry',
+          stance:
+            'Rapid orbital reusability makes interplanetary payload costs plummet exponentially.',
+        },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'Reuters Aerospace',
+          headline: 'Space Regulators Clear High-Cadence Commercial Flight License Protocol',
+          excerpt:
+            'Federal Aviation Administration issues programmatic environmental finding supporting 25 launches annually.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/aerospace/faa-starship-orbital-cadence-2026',
+          timeAgo: '3 hours ago',
+          angle: 'institutional',
+          stance:
+            'Regulatory approval unlocks routine lunar logistics and Mars cargo architecture.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 12:00 UTC',
+          event: '33 Raptor 3 engines ignite for flawless liftoff from Starbase orbital pad',
+          source: 'SpaceX Mission Control',
+          storyId: 'sty_liveblog_starship',
+        },
+        {
+          date: 'Oct 02, 12:08 UTC',
+          event: 'Super Heavy booster caught out of mid-air by launch tower chopsticks',
+          source: 'Flight Test Telemetry Stream',
+          storyId: 'sty_liveblog_starship',
+        },
+      ],
+      createdAt: '2026-10-02T12:00:00Z',
+      updatedAt: '2026-10-02T13:30:00Z',
+    },
   ];
 
   for (const cluster of clusters) {
@@ -3567,7 +4105,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   }
 
   logger.info(
-    'Database seeded successfully with enterprise newsroom records (10 Users, 16 Topics, 14 Entities, 8 Publishers, 14 Sources, 18 Stories, 4 Events, 8 Clusters, 5 Liveblog Entries, 3 Collections, 4 Comments, Reactions, Bookmarks, and 18 Fact Checks).'
+    'Database seeded successfully with enterprise newsroom records (10 Users, 16 Topics, 14 Entities, 8 Publishers, 14 Sources, 18 Stories, 4 Events, 18 Clusters, 5 Liveblog Entries, 3 Collections, 4 Comments, Reactions, Bookmarks, and 18 Fact Checks).'
   );
 }
 
