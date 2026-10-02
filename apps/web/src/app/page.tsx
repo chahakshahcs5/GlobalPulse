@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useNewsClusters } from '../lib/cluster-builder';
@@ -360,6 +360,21 @@ function GoogleNewsContent() {
     if (!aMatch && bMatch) return 1;
     return 0;
   });
+
+  // Curated picks for the right-hand "Picks for you" module
+  const picksForYou = useMemo(() => {
+    // Prioritize personalized recommendations from forYouClusters, fallback to all clusters
+    const candidates = forYouClusters.length > 0 ? forYouClusters : clusters;
+    if (candidates.length === 0) return [];
+
+    // In 'top' mode with multiple clusters, avoid duplicating the main lead hero story
+    if (feedMode === 'top' && candidates.length > 1) {
+      return candidates.slice(1, 5);
+    }
+
+    // In 'for-you', 'following', or when few stories exist, show up to 4 personalized recommendations
+    return candidates.slice(0, 4);
+  }, [clusters, forYouClusters, feedMode]);
 
   // Clusters matching followed categories, followed topics, and followed sources for "Following"
   const followedClusters = clusters.filter((c) => {
@@ -953,42 +968,51 @@ function GoogleNewsContent() {
             </div>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {clusters.slice(1, 4).map((c) => {
-                const isBookmarked = bookmarks.includes(c.leadStory.slug);
-                return (
-                  <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-blue-600 dark:text-blue-400">
-                        {c.leadStory.publisher}
-                      </span>
-                      <button
-                        onClick={() => toggleBookmark(c.leadStory.slug)}
-                        className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
-                          isBookmarked ? 'text-blue-600' : 'text-slate-400'
-                        }`}
-                        title={isBookmarked ? 'Saved' : 'Save for later'}
+              {picksForYou.length === 0 ? (
+                <div className="py-4 text-center text-xs text-slate-400">
+                  <p>No personalized picks available yet.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Follow topics or read stories to populate your feed.
+                  </p>
+                </div>
+              ) : (
+                picksForYou.map((c) => {
+                  const isBookmarked = bookmarks.includes(c.leadStory.slug);
+                  return (
+                    <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-blue-600 dark:text-blue-400">
+                          {c.leadStory.publisher}
+                        </span>
+                        <button
+                          onClick={() => toggleBookmark(c.leadStory.slug)}
+                          className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
+                            isBookmarked ? 'text-blue-600' : 'text-slate-400'
+                          }`}
+                          title={isBookmarked ? 'Saved' : 'Save for later'}
+                        >
+                          <Bookmark
+                            className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`}
+                          />
+                        </button>
+                      </div>
+
+                      <Link
+                        href={`/stories/${c.leadStory.slug}`}
+                        className="block text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug"
                       >
-                        <Bookmark
-                          className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`}
-                        />
-                      </button>
-                    </div>
+                        {c.leadStory.headline}
+                      </Link>
 
-                    <Link
-                      href={`/stories/${c.leadStory.slug}`}
-                      className="block text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug"
-                    >
-                      {c.leadStory.headline}
-                    </Link>
-
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                      <span>{c.leadStory.timeAgo}</span>
-                      <span>•</span>
-                      <span>{c.category}</span>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                        <span>{c.leadStory.timeAgo}</span>
+                        <span>•</span>
+                        <span>{c.category}</span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 

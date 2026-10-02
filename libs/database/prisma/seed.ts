@@ -16,10 +16,74 @@ function loadEnvFile() {
 loadEnvFile();
 import { DatabaseService } from '../src/database.service';
 import { logger } from '@ai-news/observability';
-import { type Story, CANONICAL_CATEGORIES, BASELINE_NAV_TABS } from '@ai-news/schemas';
+import {
+  type Story,
+  type StoryVersion,
+  CANONICAL_CATEGORIES,
+  BASELINE_NAV_TABS,
+} from '@ai-news/schemas';
 
 export async function seedDatabase(db: DatabaseService): Promise<void> {
   logger.info('Starting enterprise database seed with canonical schema records...');
+
+  // 0. Baseline Users
+  const baselineUsers = [
+    {
+      id: 'usr_admin',
+      organizationId: 'org_default',
+      name: 'Elena Rostova',
+      email: 'admin@news.platform',
+      role: 'admin' as const,
+      clientType: 'human_web' as const,
+      status: 'active' as const,
+      bio: 'Editor-in-Chief & Lead Newsroom Administrator',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'usr_editor',
+      organizationId: 'org_default',
+      name: 'Marcus Vance',
+      email: 'editor@news.platform',
+      role: 'editor' as const,
+      clientType: 'human_web' as const,
+      status: 'active' as const,
+      bio: 'Senior Managing Editor for Global Desk',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'usr_spark_agent',
+      organizationId: 'org_default',
+      name: 'Gemini Spark Agent',
+      email: 'spark-agent@local.test',
+      role: 'ai_agent' as const,
+      clientType: 'gemini_spark' as const,
+      status: 'active' as const,
+      bio: 'Autonomous investigative reporter powered by Gemini 2.5 Flash',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'usr_chatgpt_agent',
+      organizationId: 'org_default',
+      name: 'ChatGPT Research Agent',
+      email: 'chatgpt-agent@local.test',
+      role: 'ai_agent' as const,
+      clientType: 'chatgpt' as const,
+      status: 'active' as const,
+      bio: 'Deep-research and verification agent powered by OpenAI o3-mini',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+
+  for (const u of baselineUsers) {
+    const existing = await db.users.findById(u.id);
+    if (!existing) {
+      await db.users.create(u);
+    }
+  }
 
   // 1. Taxonomy Topics
   const topics = [
@@ -52,6 +116,38 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       name: 'Nuclear Fusion Energy',
       description: 'Commercial net-energy gain milestones, tokamaks, and magnet breakthroughs.',
       aliases: ['fusion', 'tokamak', 'plasma-physics'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'top_semiconductors',
+      organizationId: 'org_default',
+      slug: 'semiconductors',
+      name: 'Semiconductors',
+      description: 'Advanced lithography, 2nm fabrication nodes, packaging, and wafer foundries.',
+      aliases: ['chips', 'lithography', 'euv', 'foundries'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'top_ai_agents',
+      organizationId: 'org_default',
+      slug: 'autonomous-ai-agents',
+      name: 'Autonomous AI Agents',
+      description:
+        'Agentic workflows, multi-agent collaboration, benchmarks, and production evaluation.',
+      aliases: ['agents', 'autonomous-systems', 'llm-agents'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'top_macroeconomics',
+      organizationId: 'org_default',
+      slug: 'macroeconomics',
+      name: 'Global Macroeconomics',
+      description:
+        'Central bank policies, sovereign liquidity facilities, currency reserves, and inflation benchmarks.',
+      aliases: ['monetary-policy', 'central-banks', 'liquidity', 'currencies'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -269,6 +365,45 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'src_techcrunch_01',
+      organizationId: 'org_default',
+      publisherId: 'pub_techcrunch',
+      domain: 'techcrunch.com',
+      url: 'https://techcrunch.com/2026/09/27/semiconductor-consortium-2nm-patent-pool',
+      canonicalUrl: 'https://techcrunch.com/2026/09/27/semiconductor-consortium-2nm-patent-pool',
+      title: 'Global Chipmakers Form Unified 2nm Patent Alliance',
+      publisher: 'TechCrunch',
+      author: 'Silicon & Hardware Desk',
+      publishedAt: '2026-09-27T11:00:00Z',
+      retrievedAt: new Date().toISOString(),
+      language: 'en',
+      sourceType: 'NEWS_ARTICLE' as const,
+      permissibleExcerpt:
+        'The consortium aligns High-NA EUV optical tolerances and chiplet packaging standards under a shared patent pool.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'src_bloomberg_01',
+      organizationId: 'org_default',
+      publisherId: 'pub_bloomberg',
+      domain: 'bloomberg.com',
+      url: 'https://bloomberg.com/news/articles/2026-09-29/central-banks-activate-liquidity-facility',
+      canonicalUrl:
+        'https://bloomberg.com/news/articles/2026-09-29/central-banks-activate-liquidity-facility',
+      title: 'Central Banks Inaugurate Bilateral FX Clearing Grid',
+      publisher: 'Bloomberg Markets',
+      author: 'Global Financial Wire',
+      publishedAt: '2026-09-29T13:30:00Z',
+      retrievedAt: new Date().toISOString(),
+      language: 'en',
+      sourceType: 'NEWS_ARTICLE' as const,
+      permissibleExcerpt:
+        'The multilateral liquidity architecture mitigates settlement risk across currency pairs through automated collateral pledging.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ];
 
   for (const source of sources) {
@@ -278,130 +413,318 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     }
   }
 
-  // 4. Flagship Multi-Version Story
-  const story: Story = {
-    id: 'sty_brics_flagship',
-    organizationId: 'org_default',
-    slug: 'brics-expansion-2026-global-economic-realignment',
-    title: 'BRICS Expansion 2026: Historic Geoeconomic Shift Finalized in New Delhi',
-    summary:
-      'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
-    status: 'PUBLISHED',
-    articleType: 'breaking_news',
-    authorId: 'usr_spark_agent',
-    createdByClient: 'gemini_spark',
-    createdVia: 'mcp',
-    currentVersionNumber: 2,
-    heroImageUrl:
-      'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80',
-    publishedAt: '2026-09-26T10:00:00Z',
-    createdAt: '2026-09-26T07:00:00Z',
-    updatedAt: '2026-09-26T10:00:00Z',
-    topicIds: ['top_brics_2026'],
-    entityIds: ['ent_india'],
-    sourceIds: ['src_reuters_01', 'src_mea_gov'],
-    blocks: [
-      {
-        id: 'blk_what_changed',
-        blockType: 'what_changed',
-        sortOrder: 0,
-        data: {
-          previousVersionNumber: 1,
-          updatedAt: '2026-09-26T10:00:00Z',
-          items: [
-            {
-              changeType: 'added',
-              description: 'Incorporated ratified New Delhi Declaration official excerpts.',
+  // 4. Multi-Domain Editorial Stories
+  const storiesToSeed: Array<{
+    story: Story;
+    versions: StoryVersion[];
+  }> = [
+    {
+      story: {
+        id: 'sty_brics_flagship',
+        organizationId: 'org_default',
+        slug: 'brics-expansion-2026-global-economic-realignment',
+        title: 'BRICS Expansion 2026: Historic Geoeconomic Shift Finalized in New Delhi',
+        summary:
+          'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
+        status: 'PUBLISHED',
+        articleType: 'breaking_news',
+        authorId: 'usr_spark_agent',
+        createdByClient: 'gemini_spark',
+        createdVia: 'mcp',
+        currentVersionNumber: 2,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-09-26T10:00:00Z',
+        createdAt: '2026-09-26T07:00:00Z',
+        updatedAt: '2026-09-26T10:00:00Z',
+        topicIds: ['top_brics_2026', 'top_geopolitics'],
+        entityIds: ['ent_india'],
+        sourceIds: ['src_reuters_01', 'src_mea_gov'],
+        blocks: [
+          {
+            id: 'blk_what_changed',
+            blockType: 'what_changed',
+            sortOrder: 0,
+            data: {
+              previousVersionNumber: 1,
+              updatedAt: '2026-09-26T10:00:00Z',
+              items: [
+                {
+                  changeType: 'added',
+                  description: 'Incorporated ratified New Delhi Declaration official excerpts.',
+                },
+                {
+                  changeType: 'updated',
+                  description:
+                    'Updated D3 economic projection chart reflecting revised purchasing-power output.',
+                },
+              ],
             },
-            {
-              changeType: 'updated',
-              description:
-                'Updated D3 economic projection chart reflecting revised purchasing-power output.',
+          },
+          {
+            id: 'blk_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'NEW DELHI — In a historic unanimous vote, member states formally ratified the accession of four partner economies, establishing a unified multilateral settlement mechanism.',
+              format: 'markdown',
             },
-          ],
-        },
+          },
+        ],
       },
-      {
-        id: 'blk_lead',
-        blockType: 'paragraph',
-        sortOrder: 1,
-        data: {
-          text: 'NEW DELHI — In a historic unanimous vote, member states formally ratified the accession of four partner economies, establishing a unified multilateral settlement mechanism.',
-          format: 'markdown',
+      versions: [
+        {
+          id: 'ver_brics_v1',
+          storyId: 'sty_brics_flagship',
+          versionNumber: 1,
+          title: 'BRICS Expansion 2026: Preliminary Consensus Reached',
+          summary: 'Summit opens with draft agreement on expanded membership.',
+          changeSummary: 'Initial breaking news dispatch.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-09-26T07:00:00Z',
         },
-      },
-      {
-        id: 'blk_chart_gdp',
-        blockType: 'chart',
-        sortOrder: 2,
-        data: {
-          chartType: 'bar',
-          title: 'Combined Economic Output ($ Trillion PPP)',
-          xAxis: { key: 'year', label: 'Fiscal Year', type: 'category' },
-          yAxis: { label: 'Trillion USD' },
-          series: [{ name: 'Combined Output', key: 'gdp', color: '#3b82f6' }],
-          values: [
-            { year: '2022', gdp: 29.5 },
-            { year: '2024', gdp: 35.2 },
-            { year: '2026 Proj', gdp: 41.8 },
-          ],
-          sourceAttribution: 'World Bank & BRICS Secretariat 2026',
+        {
+          id: 'ver_brics_v2',
+          storyId: 'sty_brics_flagship',
+          versionNumber: 2,
+          title: 'BRICS Expansion 2026: Historic Geoeconomic Shift Finalized in New Delhi',
+          summary:
+            'Ten member nations formally ratify expansion protocols and introduce a multi-currency trade clearing architecture.',
+          changeSummary:
+            'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-09-26T10:00:00Z',
         },
-      },
-      {
-        id: 'blk_timeline',
-        blockType: 'timeline',
-        sortOrder: 3,
-        data: {
-          title: 'Summit Progression',
-          items: [
-            {
-              date: '08:00 UTC',
-              headline: 'Draft Protocol Circulated',
-              body: 'Ministerial delegations finalized technical wording for bilateral clearing systems.',
+      ],
+    },
+    {
+      story: {
+        id: 'sty_semi_01',
+        organizationId: 'org_default',
+        slug: 'global-semiconductor-consortium-formed',
+        title: 'Global Semiconductor Consortium Establishes 2nm Lithography Standard',
+        summary:
+          'Leading fabrication foundries and research universities establish an open patent pool for advanced packaging and gate-all-around architectures.',
+        status: 'PUBLISHED',
+        articleType: 'technology',
+        authorId: 'usr_chatgpt_agent',
+        createdByClient: 'chatgpt',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-09-27T12:00:00Z',
+        createdAt: '2026-09-27T08:00:00Z',
+        updatedAt: '2026-09-27T12:00:00Z',
+        topicIds: ['top_semiconductors', 'top_ai_agents'],
+        entityIds: ['ent_tsmc'],
+        sourceIds: ['src_techcrunch_01', 'src_reuters_01'],
+        blocks: [
+          {
+            id: 'blk_semi_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Consortium Highlights',
+              bulletPoints: [
+                'Unification of High-NA EUV optical tolerances across major equipment vendors.',
+                'Open-standard chiplet interconnect framework targeting under 0.8pJ/bit power dissipation.',
+              ],
             },
-            {
-              date: '10:00 UTC',
-              headline: 'Declaration Ratified',
-              body: 'Heads of state executed signature protocols before the plenary assembly.',
+          },
+          {
+            id: 'blk_semi_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'TAIPEI — In a strategic shift toward interoperable fabrication, a coalition of top semiconductor foundries and research institutes announced a shared framework for 2-nanometer process nodes, aiming to reduce multi-billion-dollar R&D redundancies.',
+              format: 'markdown',
             },
-          ],
-        },
+          },
+        ],
       },
-    ],
-  };
+      versions: [
+        {
+          id: 'ver_semi_v1',
+          storyId: 'sty_semi_01',
+          versionNumber: 1,
+          title: 'Global Semiconductor Consortium Establishes 2nm Lithography Standard',
+          summary:
+            'Leading fabrication foundries and research universities establish an open patent pool for advanced packaging and gate-all-around architectures.',
+          changeSummary: 'Initial publication of global lithography standard.',
+          blocks: [],
+          authorId: 'usr_chatgpt_agent',
+          clientType: 'chatgpt',
+          createdAt: '2026-09-27T12:00:00Z',
+        },
+      ],
+    },
+    {
+      story: {
+        id: 'sty_fusion_01',
+        organizationId: 'org_default',
+        slug: 'fusion-reactor-test-reaches-net-energy-gain',
+        title: 'Magnetic Fusion Reactor Sustains Net Energy Gain for 120 Seconds',
+        summary:
+          'High-temperature superconducting magnets maintain steady-state fusion plasma at an unprecedented 1.35x Q-factor.',
+        status: 'PUBLISHED',
+        articleType: 'science',
+        authorId: 'usr_spark_agent',
+        createdByClient: 'gemini_spark',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-09-28T07:30:00Z',
+        createdAt: '2026-09-28T07:30:00Z',
+        updatedAt: '2026-09-28T07:30:00Z',
+        topicIds: ['top_energy_fusion'],
+        entityIds: ['ent_india'],
+        sourceIds: ['src_reuters_01'],
+        blocks: [
+          {
+            id: 'blk_fusion_lead',
+            blockType: 'paragraph',
+            sortOrder: 0,
+            data: {
+              text: 'OXFORD — Experimental physicists achieved a major milestone toward grid-scale nuclear fusion, maintaining a plasma burning phase for two full minutes with a net positive energy return.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_fusion_v1',
+          storyId: 'sty_fusion_01',
+          versionNumber: 1,
+          title: 'Magnetic Fusion Reactor Sustains Net Energy Gain for 120 Seconds',
+          summary:
+            'High-temperature superconducting magnets maintain steady-state fusion plasma at an unprecedented 1.35x Q-factor.',
+          changeSummary: 'First verified net-gain plasma containment run.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-09-28T07:30:00Z',
+        },
+      ],
+    },
+    {
+      story: {
+        id: 'sty_markets_01',
+        organizationId: 'org_default',
+        slug: 'central-banks-multilateral-liquidity-facility-operational',
+        title: 'Sovereign Central Banks Operationalize Multilateral Liquidity Facility',
+        summary:
+          'A consortium of emerging and G20 central banks activates cross-border settlement channels with automated risk-hedging corridors.',
+        status: 'PUBLISHED',
+        articleType: 'business',
+        authorId: 'usr_admin',
+        createdByClient: 'human_web',
+        createdVia: 'admin',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-09-29T14:00:00Z',
+        createdAt: '2026-09-29T11:00:00Z',
+        updatedAt: '2026-09-29T14:00:00Z',
+        topicIds: ['top_macroeconomics', 'top_geopolitics'],
+        entityIds: ['ent_india'],
+        sourceIds: ['src_bloomberg_01', 'src_hindu_02'],
+        blocks: [
+          {
+            id: 'blk_markets_lead',
+            blockType: 'paragraph',
+            sortOrder: 0,
+            data: {
+              text: 'BASEL — Central monetary authorities confirmed operational readiness for multi-currency clearing grids, providing real-time liquidity swaps without USD intermediary routing.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_markets_v1',
+          storyId: 'sty_markets_01',
+          versionNumber: 1,
+          title: 'Sovereign Central Banks Operationalize Multilateral Liquidity Facility',
+          summary:
+            'A consortium of emerging and G20 central banks activates cross-border settlement channels with automated risk-hedging corridors.',
+          changeSummary: 'Operational launch verification.',
+          blocks: [],
+          authorId: 'usr_admin',
+          clientType: 'human_web',
+          createdAt: '2026-09-29T14:00:00Z',
+        },
+      ],
+    },
+    {
+      story: {
+        id: 'sty_ai_01',
+        organizationId: 'org_default',
+        slug: 'autonomous-ai-agents-code-generation-benchmark',
+        title:
+          'Autonomous AI Agents Surpass Human Verification Benchmarks in Critical Infrastructure',
+        summary:
+          'Rigorous evaluations across telecommunications and power grids demonstrate multi-agent verification loops achieve 99.98% zero-defect rate.',
+        status: 'PUBLISHED',
+        articleType: 'technology',
+        authorId: 'usr_spark_agent',
+        createdByClient: 'gemini_spark',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-09-30T09:15:00Z',
+        createdAt: '2026-09-30T08:00:00Z',
+        updatedAt: '2026-09-30T09:15:00Z',
+        topicIds: ['top_ai_agents', 'top_semiconductors'],
+        entityIds: ['ent_tsmc'],
+        sourceIds: ['src_techcrunch_01', 'src_reuters_01'],
+        blocks: [
+          {
+            id: 'blk_ai_lead',
+            blockType: 'paragraph',
+            sortOrder: 0,
+            data: {
+              text: 'SAN FRANCISCO — Autonomous agent teams operating under formal verification architectures have demonstrated zero-defect deployment across multi-tier production telemetry systems.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_ai_v1',
+          storyId: 'sty_ai_01',
+          versionNumber: 1,
+          title:
+            'Autonomous AI Agents Surpass Human Verification Benchmarks in Critical Infrastructure',
+          summary:
+            'Rigorous evaluations across telecommunications and power grids demonstrate multi-agent verification loops achieve 99.98% zero-defect rate.',
+          changeSummary: 'Benchmark publication release.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-09-30T09:15:00Z',
+        },
+      ],
+    },
+  ];
 
-  const existingStory = await db.stories.findById(story.id);
-  if (!existingStory) {
-    await db.stories.create(story);
-
-    // Versions
-    await db.stories.createVersion({
-      id: 'ver_brics_v1',
-      storyId: story.id,
-      versionNumber: 1,
-      title: 'BRICS Expansion 2026: Preliminary Consensus Reached',
-      summary: 'Summit opens with draft agreement on expanded membership.',
-      changeSummary: 'Initial breaking news dispatch.',
-      blocks: [story.blocks[1]],
-      authorId: 'usr_spark_agent',
-      clientType: 'gemini_spark',
-      createdAt: '2026-09-26T07:00:00Z',
-    });
-
-    await db.stories.createVersion({
-      id: 'ver_brics_v2',
-      storyId: story.id,
-      versionNumber: 2,
-      title: story.title,
-      summary: story.summary,
-      changeSummary:
-        'Added What-Changed summary, D3 economic projection chart, and ratified declaration citations.',
-      blocks: story.blocks,
-      authorId: 'usr_spark_agent',
-      clientType: 'gemini_spark',
-      createdAt: '2026-09-26T10:00:00Z',
-    });
+  for (const item of storiesToSeed) {
+    const existingStory = await db.stories.findById(item.story.id);
+    if (!existingStory) {
+      await db.stories.create(item.story);
+      for (const ver of item.versions) {
+        await db.stories.createVersion(ver);
+      }
+    }
   }
 
   // 6. Fact Checks
