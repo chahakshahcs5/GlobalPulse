@@ -47,19 +47,58 @@
 }
 
 /* Reader Font Size Scaling */
-.reader-size-sm {
-  font-size: 0.95rem;
-  line-height: 1.65;
+.reader-size-sm,
+.reader-size-sm p,
+.reader-size-sm li,
+.reader-size-sm blockquote {
+  font-size: 0.925rem !important;
+  line-height: 1.65 !important;
 }
 
-.reader-size-md {
-  font-size: 1.1rem;
-  line-height: 1.75;
+.reader-size-md,
+.reader-size-md p,
+.reader-size-md li,
+.reader-size-md blockquote {
+  font-size: 1.125rem !important;
+  line-height: 1.8 !important;
 }
 
-.reader-size-lg {
-  font-size: 1.25rem;
-  line-height: 1.85;
+.reader-size-lg,
+.reader-size-lg p,
+.reader-size-lg li,
+.reader-size-lg blockquote {
+  font-size: 1.35rem !important;
+  line-height: 1.95 !important;
+}
+
+.reader-size-sm h1 {
+  font-size: 1.875rem !important;
+}
+.reader-size-sm h2 {
+  font-size: 1.5rem !important;
+}
+.reader-size-sm h3 {
+  font-size: 1.25rem !important;
+}
+
+.reader-size-md h1 {
+  font-size: 2.25rem !important;
+}
+.reader-size-md h2 {
+  font-size: 1.875rem !important;
+}
+.reader-size-md h3 {
+  font-size: 1.5rem !important;
+}
+
+.reader-size-lg h1 {
+  font-size: 2.625rem !important;
+}
+.reader-size-lg h2 {
+  font-size: 2.25rem !important;
+}
+.reader-size-lg h3 {
+  font-size: 1.75rem !important;
 }
 
 /* Economic Times Scrolling Market Ticker */

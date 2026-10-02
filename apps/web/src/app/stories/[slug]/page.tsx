@@ -39,6 +39,24 @@ export default function StoryPage() {
   const bookmarks = useBookmarks();
 
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg'>('md');
+
+  // Restore reader font size preference from localStorage
+  useEffect(() => {
+    try {
+      const savedSize = localStorage.getItem('globalpulse_reader_font_size') as
+        'sm' | 'md' | 'lg' | null;
+      if (savedSize && (savedSize === 'sm' || savedSize === 'md' || savedSize === 'lg')) {
+        setFontSize(savedSize);
+      }
+    } catch {}
+  }, []);
+
+  const handleFontSizeChange = (size: 'sm' | 'md' | 'lg') => {
+    setFontSize(size);
+    try {
+      localStorage.setItem('globalpulse_reader_font_size', size);
+    } catch {}
+  };
   const [copied, setCopied] = useState(false);
   const [isFullCoverageOpen, setIsFullCoverageOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -425,7 +443,15 @@ export default function StoryPage() {
         />
 
         {/* Executive Summary */}
-        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+        <p
+          className={`text-slate-600 dark:text-slate-300 leading-relaxed font-normal transition-all duration-200 ${
+            fontSize === 'sm'
+              ? 'text-sm sm:text-base'
+              : fontSize === 'lg'
+                ? 'text-lg sm:text-xl'
+                : 'text-base sm:text-lg'
+          }`}
+        >
           {story.summary}
         </p>
 
@@ -466,26 +492,35 @@ export default function StoryPage() {
             {/* Font Sizer */}
             <div className="flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700">
               <button
-                onClick={() => setFontSize('sm')}
-                className={`px-2 py-0.5 rounded-full text-xs font-bold transition ${
-                  fontSize === 'sm' ? 'bg-white dark:bg-slate-700 shadow-xs' : 'text-slate-400'
+                onClick={() => handleFontSizeChange('sm')}
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                  fontSize === 'sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
+                title="Decrease font size"
               >
                 A-
               </button>
               <button
-                onClick={() => setFontSize('md')}
-                className={`px-2 py-0.5 rounded-full text-xs font-bold transition ${
-                  fontSize === 'md' ? 'bg-white dark:bg-slate-700 shadow-xs' : 'text-slate-400'
+                onClick={() => handleFontSizeChange('md')}
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                  fontSize === 'md'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
+                title="Standard font size"
               >
                 A
               </button>
               <button
-                onClick={() => setFontSize('lg')}
-                className={`px-2 py-0.5 rounded-full text-xs font-bold transition ${
-                  fontSize === 'lg' ? 'bg-white dark:bg-slate-700 shadow-xs' : 'text-slate-400'
+                onClick={() => handleFontSizeChange('lg')}
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                  fontSize === 'lg'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
+                title="Increase font size"
               >
                 A+
               </button>
@@ -601,7 +636,7 @@ export default function StoryPage() {
 
       {/* Article Content with Dynamic Font Scaling & Metered Paywall (F30) */}
       <div
-        className={`space-y-6 ${
+        className={`space-y-6 transition-all duration-200 ${
           fontSize === 'sm'
             ? 'reader-size-sm'
             : fontSize === 'lg'
