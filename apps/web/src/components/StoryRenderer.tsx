@@ -1007,23 +1007,23 @@ const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = ({ data
   const [selectedSymbol, setSelectedSymbol] = React.useState<string | null>(null);
 
   return (
-    <div className="my-8 rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 p-5 shadow-xl">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+    <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-4">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
             Live Market & Numerical Ticker
           </span>
           {data.title && (
-            <span className="text-xs font-medium text-slate-400 border-l border-slate-700 pl-2.5">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-2.5">
               {data.title}
             </span>
           )}
         </div>
-        <span className="text-[11px] font-mono text-slate-500">
+        <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
           Refreshes every {data.refreshIntervalSeconds || 30}s
         </span>
       </div>
@@ -1053,19 +1053,19 @@ const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = ({ data
               onClick={() => setSelectedSymbol(isSelected ? null : item.symbol)}
               className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                 isSelected
-                  ? 'border-indigo-500 bg-indigo-950/20 shadow-lg ring-1 ring-indigo-500/50'
-                  : 'border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-800/40'
+                  ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/20 shadow-xs ring-1 ring-indigo-500/50'
+                  : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                <span className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
                   {item.symbol}
                 </span>
                 <span
                   className={`text-xs font-bold flex items-center gap-0.5 px-2 py-0.5 rounded ${
                     isPositive
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                      : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
                   }`}
                 >
                   <span>{isPositive ? '↑' : '↓'}</span>
@@ -1076,10 +1076,12 @@ const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = ({ data
                 </span>
               </div>
 
-              <div className="text-xs text-slate-400 line-clamp-1 mb-1">{item.label}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-1">
+                {item.label}
+              </div>
 
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-2xl font-black text-slate-100 tracking-tight font-mono">
+                <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
                   {item.unit && item.unit !== '%' ? item.unit : ''}
                   {item.value.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
@@ -1148,25 +1150,27 @@ const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = (
   const hasVoted = Boolean(votedOptionId) || data.closed;
 
   return (
-    <div className="my-8 rounded-2xl border border-indigo-900/40 bg-gradient-to-br from-slate-900 via-slate-900/80 to-indigo-950/20 p-6 shadow-xl">
-      <div className="flex items-center justify-between gap-3 mb-3 border-b border-slate-800 pb-3">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+    <div className="my-8 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 dark:from-slate-900 dark:via-slate-900/90 dark:to-indigo-950/30 p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-3 mb-4 border-b border-indigo-100 dark:border-slate-800 pb-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-500 animate-pulse" />
           Interactive Reader Poll
         </span>
         <div className="flex items-center gap-2">
           {data.closed && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
               Poll Closed
             </span>
           )}
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400">
             {totalVotes.toLocaleString()} {totalVotes === 1 ? 'vote' : 'votes'}
           </span>
         </div>
       </div>
 
-      <h4 className="text-lg sm:text-xl font-bold text-slate-100 mb-4">{data.question}</h4>
+      <h4 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4 leading-snug">
+        {data.question}
+      </h4>
 
       <div className="space-y-3">
         {options.map((opt) => {
@@ -1179,14 +1183,16 @@ const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = (
                 key={opt.id}
                 className={`relative rounded-xl overflow-hidden border p-3.5 transition-all ${
                   isSelected
-                    ? 'border-indigo-500 bg-indigo-950/40 text-slate-100 ring-1 ring-indigo-500'
-                    : 'border-slate-800 bg-slate-900/40 text-slate-300'
+                    ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 text-slate-900 dark:text-slate-100 ring-1 ring-indigo-400/40 dark:ring-indigo-500/40'
+                    : 'border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/40 text-slate-800 dark:text-slate-300'
                 }`}
               >
                 {/* Progress bar background fill */}
                 <div
                   className={`absolute inset-y-0 left-0 transition-all duration-700 ease-out ${
-                    isSelected ? 'bg-indigo-600/30' : 'bg-slate-800/40'
+                    isSelected
+                      ? 'bg-indigo-200/60 dark:bg-indigo-600/30'
+                      : 'bg-slate-100 dark:bg-slate-800/40'
                   }`}
                   style={{ width: `${percentage}%` }}
                 />
@@ -1194,15 +1200,15 @@ const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = (
                 <div className="relative z-10 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                      <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
                         ✓
                       </span>
                     )}
-                    <span className="text-sm font-medium">{opt.text}</span>
+                    <span className="text-sm font-semibold">{opt.text}</span>
                   </div>
                   <div className="flex items-baseline gap-2 font-mono text-xs">
-                    <span className="font-bold">{percentage}%</span>
-                    <span className="text-slate-400">({opt.voteCount})</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{percentage}%</span>
+                    <span className="text-slate-500 dark:text-slate-400">({opt.voteCount})</span>
                   </div>
                 </div>
               </div>
@@ -1214,15 +1220,15 @@ const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = (
               key={opt.id}
               onClick={() => handleVote(opt.id)}
               disabled={isSubmitting}
-              className="w-full text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-indigo-500/60 hover:bg-slate-800/80 transition-all flex items-center justify-between group cursor-pointer text-slate-200"
+              className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/90 transition-all flex items-center justify-between group cursor-pointer shadow-2xs hover:shadow-xs"
             >
               <div className="flex items-center gap-3">
-                <span className="w-4 h-4 rounded-full border border-slate-600 group-hover:border-indigo-400 group-hover:scale-110 transition-all" />
-                <span className="text-sm font-medium group-hover:text-white transition-colors">
+                <span className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 group-hover:border-indigo-600 dark:group-hover:border-indigo-400 group-hover:scale-110 transition-all shrink-0" />
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-950 dark:group-hover:text-white transition-colors leading-normal">
                   {opt.text}
                 </span>
               </div>
-              <span className="text-xs text-slate-500 group-hover:text-indigo-400 transition-colors">
+              <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-3">
                 Vote →
               </span>
             </button>
@@ -1231,13 +1237,15 @@ const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = (
       </div>
 
       {hasVoted && (
-        <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+        <div className="mt-4 pt-3 border-t border-indigo-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>
             {votedOptionId
               ? 'Thank you for contributing your perspective.'
               : 'Voting is now closed.'}
           </span>
-          <span className="font-mono text-[11px] text-slate-500">Live consensus tally</span>
+          <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+            Live consensus tally
+          </span>
         </div>
       )}
     </div>
@@ -1295,9 +1303,9 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
   };
 
   return (
-    <div className="my-8 rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 p-6 shadow-xl text-slate-100 overflow-hidden">
+    <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden">
       {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
         <div className="flex items-center gap-2">
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${config.badgeClass}`}
@@ -1305,7 +1313,7 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
             <span>{config.icon}</span>
             <span>{config.label}</span>
           </span>
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
             {data.pageCount} {data.pageCount === 1 ? 'Page' : 'Pages'}
           </span>
         </div>
@@ -1314,7 +1322,7 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
           href={data.documentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-medium border border-slate-200 dark:border-slate-700 transition cursor-pointer"
         >
           <span>View Source Document</span>
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1330,9 +1338,13 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
 
       {/* Document Title & Description */}
       <div className="mt-4">
-        <h4 className="text-lg font-bold text-slate-100 leading-snug">{data.title}</h4>
+        <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+          {data.title}
+        </h4>
         {data.description && (
-          <p className="mt-1 text-sm text-slate-400 leading-relaxed">{data.description}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            {data.description}
+          </p>
         )}
         {data.sourceAttribution && (
           <div className="mt-2 text-xs text-slate-500 font-mono">
@@ -1343,15 +1355,15 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
 
       {/* Highlights / Evidence Section */}
       {data.highlights && data.highlights.length > 0 && (
-        <div className="mt-6 pt-5 border-t border-slate-800/60">
+        <div className="mt-6 pt-5 border-t border-slate-200/80 dark:border-slate-800/60">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Verified Highlight Excerpts ({data.highlights.length})
             </div>
             {activeHighlight && (
               <button
                 onClick={() => handleCopy(activeHighlight.excerpt)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline transition flex items-center gap-1 cursor-pointer font-semibold"
               >
                 <span>{copiedExcerpt ? '✓ Copied' : 'Copy Excerpt'}</span>
               </button>
@@ -1364,10 +1376,10 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
               <button
                 key={idx}
                 onClick={() => setActiveHighlightIndex(idx)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
                   activeHighlightIndex === idx
-                    ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30'
-                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-slate-200/70 dark:border-slate-700/60'
                 }`}
               >
                 P. {hl.page} {hl.tag ? `• ${hl.tag}` : ''}
@@ -1377,25 +1389,27 @@ const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> =
 
           {/* Active Highlight Excerpt Card */}
           {activeHighlight && (
-            <div className="mt-4 p-4 rounded-xl border border-indigo-500/20 bg-indigo-950/20 relative">
+            <div className="mt-4 p-4 rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 relative">
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-indigo-500/20 text-indigo-300">
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
                   Page {activeHighlight.page}
                 </span>
                 {activeHighlight.tag && (
-                  <span className="text-xs font-semibold text-slate-300">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     {activeHighlight.tag}
                   </span>
                 )}
               </div>
 
-              <blockquote className="text-sm font-serif italic text-slate-200 pl-3 border-l-2 border-indigo-400 my-2 leading-relaxed">
+              <blockquote className="text-sm font-serif italic text-slate-800 dark:text-slate-200 pl-3 border-l-2 border-indigo-500 my-2 leading-relaxed">
                 "{activeHighlight.excerpt}"
               </blockquote>
 
               {activeHighlight.note && (
-                <div className="mt-3 pt-2 border-t border-indigo-500/10 text-xs text-slate-400 flex items-start gap-1.5">
-                  <span className="text-indigo-400 font-bold">Annotation:</span>
+                <div className="mt-3 pt-2 border-t border-indigo-200/60 dark:border-indigo-500/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
+                  <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                    Annotation:
+                  </span>
                   <span>{activeHighlight.note}</span>
                 </div>
               )}
