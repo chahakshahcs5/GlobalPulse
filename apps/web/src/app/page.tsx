@@ -16,7 +16,6 @@ import {
   Sparkles,
   Bookmark,
   ArrowRight,
-  Star,
   BookmarkCheck,
   History,
   Globe2,
@@ -416,75 +415,12 @@ function GoogleNewsContent() {
       {/* Real-time Breaking News Ticker */}
       <BreakingTicker />
 
-      {/* Feed Context Header & Controls (Top Stories, For You, Following are managed via the primary Header) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          {feedMode === 'top' && (
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-              <Star className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Top Stories</span>
-            </div>
-          )}
-          {feedMode === 'for-you' && (
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Personalized for You</span>
-            </div>
-          )}
-          {feedMode === 'following' && (
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
-              <BookmarkCheck className="w-3.5 h-3.5" />
-              <span>Following Stream</span>
-            </div>
-          )}
-          {feedMode === 'history' && (
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
-              <History className="w-3.5 h-3.5" />
-              <span>Reading History</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => switchFeedMode(feedMode === 'history' ? 'top' : 'history')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
-              feedMode === 'history'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-            title="View reading history"
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>Recently Read</span>
-          </button>
-
-          {/* Regional Edition Selector (F14) */}
-          <div className="flex items-center gap-2 text-xs">
-            <Globe2 className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-400 hidden sm:inline">Edition:</span>
-            <select
-              value={edition}
-              onChange={(e) => handleEditionChange(e.target.value as RegionalEdition)}
-              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-none rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-1 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="global">Global Edition</option>
-              <option value="india">India Edition</option>
-              <option value="us">United States</option>
-              <option value="europe">Europe</option>
-              <option value="asia">Asia-Pacific</option>
-              <option value="mideast">Middle East & Gulf</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Google News 2-Column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Top Stories Stream (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                 {feedMode === 'top' && 'Top stories'}
@@ -493,27 +429,59 @@ function GoogleNewsContent() {
                 {feedMode === 'history' && 'Reading history'}
               </h1>
               <p
-                className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium"
+                className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5"
                 suppressHydrationWarning
               >
                 {todayFormatted} • {edition.toUpperCase()} REGION
               </p>
             </div>
 
-            {selectedTopic && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Filtered by:</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
-                  #{selectedTopic}
-                </span>
-                <button
-                  onClick={() => setSelectedTopic(null)}
-                  className="text-xs text-blue-600 hover:underline font-semibold"
+            <div className="flex flex-wrap items-center gap-3">
+              {selectedTopic && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Filtered by:</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                    #{selectedTopic}
+                  </span>
+                  <button
+                    onClick={() => setSelectedTopic(null)}
+                    className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => switchFeedMode(feedMode === 'history' ? 'top' : 'history')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                  feedMode === 'history'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60'
+                }`}
+                title="View reading history"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Recently Read</span>
+              </button>
+
+              {/* Regional Edition Selector (F14) */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <Globe2 className="w-3.5 h-3.5 text-slate-400" />
+                <select
+                  value={edition}
+                  onChange={(e) => handleEditionChange(e.target.value as RegionalEdition)}
+                  className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
-                  Clear
-                </button>
+                  <option value="global">Global Edition</option>
+                  <option value="india">India Edition</option>
+                  <option value="us">United States</option>
+                  <option value="europe">Europe</option>
+                  <option value="asia">Asia-Pacific</option>
+                  <option value="mideast">Middle East &amp; Gulf</option>
+                </select>
               </div>
-            )}
+            </div>
           </div>
 
           {/* VIEW: READING HISTORY (F12) */}
