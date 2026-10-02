@@ -147,7 +147,7 @@ export async function listStories(params?: ListStoriesParams): Promise<Story[]> 
     if (params?.topicId) searchParams.set('topicId', params.topicId);
     if (params?.entityId) searchParams.set('entityId', params.entityId);
     if (params?.query) searchParams.set('query', params.query);
-    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.limit) searchParams.set('limit', String(Math.min(params.limit, 500)));
 
     const qs = searchParams.toString();
     const response = await request<{ data: Story[]; total: number }>(

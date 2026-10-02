@@ -35,7 +35,7 @@ export class TimelineRenderer {
     data: TimelineBlock['data'],
     layout: 'horizontal' | 'vertical' = 'horizontal',
     width = 800,
-    height = 250,
+    height = 240,
     theme: 'dark' | 'light' = 'dark'
   ): string {
     const isDark = theme === 'dark';
@@ -43,76 +43,160 @@ export class TimelineRenderer {
     const textColor = isDark ? '#f8fafc' : '#0f172a';
     const subtextColor = isDark ? '#94a3b8' : '#64748b';
     const trackColor = isDark ? '#334155' : '#cbd5e1';
+    const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(248, 250, 252, 0.9)';
+    const cardBorder = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
     const activeColor = '#3b82f6';
 
     const items = this.transformItems(data);
     let elements = '';
-    const effectiveHeight =
-      layout === 'vertical' ? Math.max(height, 70 + items.length * 90 + 30) : height;
+
+    const wrapLines = (text: string, maxCharsPerLine: number, maxLines = 2): string[] => {
+      if (!text) return [];
+      const words = text.trim().split(/\s+/);
+      const lines: string[] = [];
+      let currentLine = '';
+
+      for (const word of words) {
+        if ((currentLine + (currentLine ? ' ' : '') + word).length <= maxCharsPerLine) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          if (lines.length >= maxLines) break;
+          currentLine = word;
+        }
+      }
+      if (currentLine && lines.length < maxLines) {
+        lines.push(currentLine);
+      }
+      return lines;
+    };
 
     if (layout === 'horizontal') {
-      const lineY = 80;
-      const startX = items.length <= 2 ? 150 : items.length === 3 ? 125 : 95;
+      const lineY = 82;
+      const count = items.length;
+      const startX = count <= 2 ? 200 : count === 3 ? 140 : 100;
       const endX = width - startX;
-      const stepX = items.length > 1 ? (endX - startX) / (items.length - 1) : 0;
+      const stepX = count > 1 ? (endX - startX) / (count - 1) : 0;
+      const cardWidth = count <= 2 ? 260 : count === 3 ? 200 : 160;
+      const maxHeadlineChars = count <= 2 ? 32 : count === 3 ? 24 : 18;
+      const maxBodyChars = count <= 2 ? 38 : count === 3 ? 28 : 22;
 
       // Base Track Line
       elements += `<line x1="${startX}" y1="${lineY}" x2="${endX}" y2="${lineY}" stroke="${trackColor}" stroke-width="4" stroke-linecap="round" />`;
 
       items.forEach((item, idx) => {
-        const cx = items.length === 1 ? width / 2 : startX + idx * stepX;
-        const displayHeadline =
-          item.headline.length > 30 ? `${item.headline.slice(0, 28)}…` : item.headline;
-        const displaySnippet = item.body.length > 30 ? `${item.body.slice(0, 28)}...` : item.body;
+        const cx = count === 1 ? width / 2 : startX + idx * stepX;
+        const headlineLines = wrapLines(item.headline, maxHeadlineChars, 2);
+        const bodyLines = wrapLines(item.body, maxBodyChars, 2);
 
-        // Node circle
-        elements += `
+        // Date pill badge above track
+        const dateBadge = `
+          <rect x="${cx - 50}" y="${lineY - 38}" width="100" height="22" rx="11" fill="${isDark ? 'rgba(59,130,246,0.18)' : 'rgba(59,130,246,0.1)'}" stroke="${isDark ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)'}" stroke-width="1" />
+          <text x="${cx}" y="${lineY - 23}" text-anchor="middle" font-size="11" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
+        `;
+
+        // Node circle with pulse
+        const nodeCircles = `
           <circle cx="${cx}" cy="${lineY}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
           <circle cx="${cx}" cy="${lineY}" r="5" fill="${activeColor}" />
-          <!-- Date Badge -->
-          <rect x="${cx - 45}" y="${lineY - 40}" width="90" height="24" rx="12" fill="${isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)'}" />
-          <text x="${cx}" y="${lineY - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
-          <!-- Headline -->
-          <text x="${cx}" y="${lineY + 36}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(displayHeadline)}</text>
-          <!-- Body snippet -->
-          <text x="${cx}" y="${lineY + 54}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(displaySnippet)}</text>
+        `;
+
+        // Milestone card below track
+        const cardH = 92;
+        const cardTopY = lineY + 16;
+        const cardBox = `
+          <rect x="${cx - cardWidth / 2}" y="${cardTopY}" width="${cardWidth}" height="${cardH}" rx="10" fill="${cardBg}" stroke="${cardBorder}" stroke-width="1" />
+        `;
+
+        // Headline lines
+        const hlTspans = headlineLines
+          .map(
+            (line, lIdx) =>
+              `<tspan x="${cx}" dy="${lIdx === 0 ? 0 : 16}">${escapeXml(line)}</tspan>`
+          )
+          .join('');
+        const headlineY = cardTopY + 22;
+        const headlineText = `
+          <text x="${cx}" y="${headlineY}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${hlTspans}</text>
+        `;
+
+        // Body lines
+        const bodyStartY = headlineY + headlineLines.length * 16 + 6;
+        const bodyTspans = bodyLines
+          .map(
+            (line, lIdx) =>
+              `<tspan x="${cx}" dy="${lIdx === 0 ? 0 : 14}">${escapeXml(line)}</tspan>`
+          )
+          .join('');
+        const bodyText = `
+          <text x="${cx}" y="${bodyStartY}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${bodyTspans}</text>
+        `;
+
+        elements += `
+          <g class="timeline-milestone-node">
+            ${dateBadge}
+            ${nodeCircles}
+            ${cardBox}
+            ${headlineText}
+            ${bodyText}
+          </g>
         `;
       });
+
+      const effectiveHeight = 210;
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${effectiveHeight}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
+          <text x="30" y="30" font-size="16" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(data.title || 'Chronology of Events')}</text>
+          ${elements}
+        </svg>
+      `;
     } else {
       // Vertical Track Layout
-      const spineX = 50;
-      const startY = 80;
-      const endY = startY + (items.length - 1) * 90;
+      const spineX = 45;
+      const startY = 70;
+      const stepY = 95;
+      const endY = startY + (items.length - 1) * stepY;
+      const effectiveHeight = Math.max(height, startY + items.length * stepY + 25);
 
       if (items.length > 1) {
         elements += `<line x1="${spineX}" y1="${startY}" x2="${spineX}" y2="${endY}" stroke="${trackColor}" stroke-width="4" stroke-linecap="round" />`;
       }
 
       items.forEach((item, idx) => {
-        const cy = startY + idx * 90;
+        const cy = startY + idx * stepY;
+        const bodyLines = wrapLines(item.body, 70, 2);
+        const bodyTspans = bodyLines
+          .map(
+            (line, lIdx) => `<tspan x="72" dy="${lIdx === 0 ? 0 : 15}">${escapeXml(line)}</tspan>`
+          )
+          .join('');
+
         elements += `
-          <circle cx="${spineX}" cy="${cy}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
-          <text x="${spineX}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${activeColor}" font-family="system-ui, sans-serif">${item.stepNumber}</text>
-          
-          <!-- Date Badge -->
-          <rect x="76" y="${cy - 24}" width="80" height="20" rx="10" fill="${isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)'}" />
-          <text x="116" y="${cy - 10}" text-anchor="middle" font-size="10" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
-          
-          <!-- Headline -->
-          <text x="166" y="${cy - 10}" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(item.headline)}</text>
-          
-          <!-- Body -->
-          <text x="76" y="${cy + 14}" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(item.body.slice(0, 75))}${item.body.length > 75 ? '...' : ''}</text>
+          <g class="timeline-vertical-node">
+            <circle cx="${spineX}" cy="${cy}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
+            <text x="${spineX}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${activeColor}" font-family="system-ui, sans-serif">${item.stepNumber}</text>
+            
+            <!-- Date Badge -->
+            <rect x="72" y="${cy - 22}" width="86" height="20" rx="10" fill="${isDark ? 'rgba(59,130,246,0.18)' : 'rgba(59,130,246,0.1)'}" />
+            <text x="115" y="${cy - 8}" text-anchor="middle" font-size="10" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
+            
+            <!-- Headline -->
+            <text x="172" y="${cy - 8}" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(item.headline)}</text>
+            
+            <!-- Body snippet -->
+            <text x="72" y="${cy + 16}" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${bodyTspans}</text>
+          </g>
         `;
       });
-    }
 
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${effectiveHeight}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
-        <text x="30" y="32" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(data.title || 'Chronology of Events')}</text>
-        ${elements}
-      </svg>
-    `;
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${effectiveHeight}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
+          <text x="30" y="32" font-size="16" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(data.title || 'Chronology of Events')}</text>
+          ${elements}
+        </svg>
+      `;
+    }
   }
 }
 

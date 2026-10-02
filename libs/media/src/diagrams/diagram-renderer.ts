@@ -40,17 +40,55 @@ export class DiagramRenderer {
     const nodeBg = isDark ? '#1e293b' : '#f1f5f9';
     const nodeBorder = isDark ? '#3b82f6' : '#2563eb';
 
-    // Parse simple node definitions or render code preview
-    const lines = diagramData.definition.split('\n').filter((l) => l.trim().length > 0);
+    // Safely resolve definition or synthesize from legacy elements/connections
+    let rawDefinition = diagramData?.definition || '';
+    const rawAny = diagramData as unknown as Record<string, unknown> | undefined;
+
+    if (!rawDefinition && rawAny) {
+      if (typeof rawAny.mermaid === 'string') {
+        rawDefinition = rawAny.mermaid;
+      } else if (typeof rawAny.code === 'string') {
+        rawDefinition = rawAny.code;
+      } else if (Array.isArray(rawAny.elements)) {
+        const elems = rawAny.elements as Array<{ id: string; label?: string }>;
+        const conns = (rawAny.connections || []) as Array<{
+          from: string;
+          to: string;
+          label?: string;
+        }>;
+        const lines: string[] = ['flowchart LR'];
+        if (conns.length > 0) {
+          conns.forEach((c) => {
+            const fromLabel = elems.find((e) => e.id === c.from)?.label || c.from;
+            const toLabel = elems.find((e) => e.id === c.to)?.label || c.to;
+            const edge = c.label ? `-->|${c.label}|` : '-->';
+            lines.push(`  ["${fromLabel}"] ${edge} ["${toLabel}"]`);
+          });
+        } else {
+          elems.forEach((e) => {
+            lines.push(`  ["${e.label || e.id}"]`);
+          });
+        }
+        rawDefinition = lines.join('\n');
+      }
+    }
+
+    if (!rawDefinition.trim()) {
+      rawDefinition =
+        'flowchart LR\n  A[System Ingestion] --> B[Processing Engine]\n  B --> C[Verified Output]';
+    }
+
+    const format = (diagramData?.format || 'mermaid').toUpperCase();
+    const lines = rawDefinition.split('\n').filter((l) => l.trim().length > 0);
 
     return `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(diagramData.title || 'Diagram')}">
-        <text x="30" y="36" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(diagramData.title || 'Architecture & Flow Diagram')}</text>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(diagramData?.title || 'Diagram')}">
+        <text x="30" y="36" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(diagramData?.title || 'Architecture & Flow Diagram')}</text>
         <g transform="translate(30, 60)">
           <rect width="${width - 60}" height="${height - 100}" rx="8" fill="${nodeBg}" stroke="${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}" />
           <!-- Header Badge -->
           <rect x="20" y="20" width="100" height="24" rx="6" fill="${nodeBorder}" />
-          <text x="70" y="36" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="system-ui, sans-serif">${diagramData.format.toUpperCase()}</text>
+          <text x="70" y="36" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="system-ui, sans-serif">${format}</text>
           
           <!-- Code snippet representation -->
           <text x="24" y="80" font-size="13" font-family="ui-monospace, monospace" fill="${isDark ? '#38bdf8' : '#0284c7'}">${escapeXml(lines[0] || 'graph TD')}</text>

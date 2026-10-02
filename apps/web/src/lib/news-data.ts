@@ -1879,6 +1879,36 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
           format: 'markdown',
         },
       },
+      {
+        id: 'blk_semi_table',
+        blockType: 'table',
+        sortOrder: 2,
+        data: {
+          title: '2nm Node Geometry Comparison Matrix',
+          headers: [
+            'Process Metric',
+            '3nm FinFET Benchmark',
+            '2nm GAA Standard',
+            'Performance Delta',
+          ],
+          rows: [
+            ['Logic Density (MTr/mm²)', '215', '310', '+44%'],
+            ['Operating Voltage (V)', '0.75V', '0.62V', '-17%'],
+            ['Interconnect Energy (pJ/bit)', '1.4', '0.78', '-44%'],
+          ],
+        },
+      },
+      {
+        id: 'blk_semi_quote',
+        blockType: 'quote',
+        sortOrder: 3,
+        data: {
+          quote:
+            'Accelerated computing and 2nm architecture represent the single largest performance inflection in semiconductor history.',
+          attribution: 'Jensen Huang',
+          title: 'CEO, NVIDIA',
+        },
+      },
     ],
   },
   {
@@ -1911,6 +1941,50 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
         data: {
           text: 'OXFORD — Experimental physicists achieved a major milestone toward grid-scale nuclear fusion, maintaining a plasma burning phase for two full minutes with a net positive energy return.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_fusion_chart',
+        blockType: 'chart',
+        sortOrder: 1,
+        data: {
+          chartType: 'line',
+          title: 'Steady-State Plasma Core Temperature (keV)',
+          xAxis: { key: 'seconds', label: 'Confinement Duration (Seconds)', type: 'linear' },
+          yAxis: { label: 'Core Temp (keV)' },
+          series: [{ name: 'Plasma Temperature', key: 'temp', color: '#ef4444' }],
+          values: [
+            { seconds: '0', temp: 2.1 },
+            { seconds: '30', temp: 12.8 },
+            { seconds: '60', temp: 15.4 },
+            { seconds: '90', temp: 15.9 },
+            { seconds: '120', temp: 16.1 },
+          ],
+          sourceAttribution: 'Culham Centre for Fusion Energy & Nature 2026',
+        },
+      },
+      {
+        id: 'blk_fusion_stat',
+        blockType: 'statistic',
+        sortOrder: 2,
+        data: {
+          value: '1.35x Q-Factor',
+          label: 'Empirical Net Energy Output Gain Ratio',
+          trend: 'up',
+          trendValue: '+35% above breakeven',
+          context: 'Continuous high-temperature superconducting magnet stabilization',
+        },
+      },
+      {
+        id: 'blk_fusion_citation',
+        blockType: 'citation',
+        sortOrder: 3,
+        data: {
+          claim:
+            'Steady-state deuterium-tritium plasma sustained continuously beyond 120s with positive Q-factor.',
+          sourceIds: ['src_nature_01'],
+          quoteExcerpt:
+            'Continuous plasma confinement observed without disruptive edge-localized modes.',
         },
       },
     ],
@@ -2088,6 +2162,45 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
           format: 'markdown',
         },
       },
+      {
+        id: 'blk_robotics_comparison',
+        blockType: 'comparison',
+        sortOrder: 2,
+        data: {
+          title: 'Assembly Architecture Comparison: Bipedal Humanoid vs. Fixed Gantry Arms',
+          subjectA: {
+            name: 'Bipedal Humanoid System (Gen 3)',
+            points: [
+              'Dynamic mobility navigates legacy factory walkways without civil refits',
+              '22-DoF dexterous multi-finger hands handle flexible wire harness routing',
+              'Rapid task retraining via vision-language-action zero-shot foundation models',
+              'Shared human-robot workspace safety with compliant impedance force sensing',
+            ],
+          },
+          subjectB: {
+            name: 'Traditional Fixed Gantry Automation',
+            points: [
+              'Requires dedicated protective safety cages and floor excavation footprint',
+              'Rigid pneumatic tooling restricted to predefined single-task jigs',
+              'Months of mechanical retooling needed for vehicle chassis design revisions',
+              'High high-speed repeat accuracy but zero environmental adaptiveness',
+            ],
+          },
+        },
+      },
+      {
+        id: 'blk_robotics_stat',
+        blockType: 'statistic',
+        sortOrder: 3,
+        data: {
+          value: '99.4%',
+          label: 'Autonomous First-Pass Yield',
+          trend: 'up',
+          trendValue: '+8.2% vs human manual baseline',
+          context: 'Measured over 120,000 cumulative production hours on live assembly lines.',
+          sourceAttribution: 'Automotive Manufacturing Robotics Consortium',
+        },
+      },
     ],
   },
   {
@@ -2114,12 +2227,76 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
     updatedAt: '2026-10-02T11:15:00Z',
     blocks: [
       {
+        id: 'blk_neuro_sum',
+        blockType: 'summary',
+        sortOrder: 0,
+        data: {
+          headline: 'Neuromorphic Benchmark Findings',
+          bulletPoints: [
+            'Dynamic energy consumption under 450 milliwatts at 120 frames per second.',
+            'Asynchronous temporal event processing eliminates synchronous clock power loss.',
+            'Seamless integration with satellite attitude-control optical navigation arrays.',
+          ],
+        },
+      },
+      {
         id: 'p_neuro_lead',
         blockType: 'paragraph',
-        sortOrder: 0,
+        sortOrder: 1,
         data: {
           text: 'ZURICH — In high-altitude orbital and atmospheric trials, neuromorphic silicon mimics the synaptic firing of biological retinas, slashing power consumption tenfold while outperforming standard GPU accelerators in high-speed visual tracking.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_neuro_flow',
+        blockType: 'flow',
+        sortOrder: 2,
+        data: {
+          title: 'Event-Based Neuromorphic Processing Pipeline',
+          steps: [
+            {
+              stepNumber: 1,
+              title: 'Event-Camera Microsecond Sensing',
+              description:
+                'Asynchronous pixels detect logarithmic changes in luminance with microsecond temporal resolution.',
+              status: 'completed',
+            },
+            {
+              stepNumber: 2,
+              title: 'Spike Packet Encoding',
+              description:
+                'Binary action potentials generated only when pixel intensity changes exceed adaptive noise thresholds.',
+              status: 'completed',
+            },
+            {
+              stepNumber: 3,
+              title: 'Crossbar Synaptic Routing',
+              description:
+                'Non-volatile memristor crossbars execute in-memory matrix-vector multiply without off-chip DRAM bus latency.',
+              status: 'active',
+            },
+            {
+              stepNumber: 4,
+              title: 'Sub-Watt Inference Actuation',
+              description:
+                'Downstream flight control surfaces actuate within 1.2 milliseconds while consuming under 450mW total system power.',
+              status: 'pending',
+            },
+          ],
+        },
+      },
+      {
+        id: 'blk_neuro_image',
+        blockType: 'image',
+        sortOrder: 3,
+        data: {
+          url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
+          altText: 'Micrograph of Neuromorphic Silicon Die',
+          caption:
+            'Electron microscope scan of the event-based spiking neural network silicon core showing synaptic crossbar arrays.',
+          credit: 'ETH Zurich & Fraunhofer Institute',
+          aspectRatio: '16:9',
         },
       },
     ],
@@ -2149,12 +2326,70 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
     updatedAt: '2026-10-02T11:30:00Z',
     blocks: [
       {
+        id: 'blk_crispr_sum',
+        blockType: 'summary',
+        sortOrder: 0,
+        data: {
+          headline: 'Therapeutic Trial Results',
+          bulletPoints: [
+            'Lipid nanoparticle delivery system achieves organ-specific cardiac tropism.',
+            'Base editing repairs single-nucleotide pathogenic mutation with 94.2% efficiency.',
+            'Longitudinal biopsies verify zero off-target genomic insertions across 12-month follow-up.',
+          ],
+        },
+      },
+      {
         id: 'p_crispr_lead',
         blockType: 'paragraph',
-        sortOrder: 0,
+        sortOrder: 1,
         data: {
           text: 'BOSTON — Genetic medicine marked a watershed triumph as researchers reported that systemic lipid-nanoparticle infusion successfully corrected hereditary cardiomyopathy in 48 trial patients, reversing progressive ventricular stiffness.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_crispr_slides',
+        blockType: 'slide_deck',
+        sortOrder: 2,
+        data: {
+          title: 'Phase 3 In-Vivo Base Editing Clinical Dossier',
+          slides: [
+            {
+              slideNumber: 1,
+              title: 'Target Mutation & Molecular Mechanism',
+              body: 'Hereditary cardiomyopathy is driven by a single point mutation in the MYH7 sarcomeric gene causing myocardial hypertrophy.',
+              bullets: [
+                'Point mutation c.1208G>A identified in 100% of trial cohort',
+                'Engineered adenine base editor targets precise codon without double-strand break',
+                'Zero bystander nucleotide deaminations observed in pre-clinical screening',
+              ],
+              imageUrl:
+                'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1200&q=80',
+              sourceAttribution: 'New England Journal of Medicine 2026',
+            },
+            {
+              slideNumber: 2,
+              title: 'Organ-Specific Nanoparticle Delivery',
+              body: 'Ionizable lipid nanoparticles engineered with cardiac-tropic peptide ligands achieve selective cardiomyocyte uptake.',
+              bullets: [
+                '87% myocardial uptake with hepatic clearance below 12%',
+                'Single intravenous infusion administration without invasive catheterization',
+                'Transient mRNA expression clears within 48 hours post-infusion',
+              ],
+              sourceAttribution: 'Bioengineered Therapeutics Consortium',
+            },
+            {
+              slideNumber: 3,
+              title: 'Longitudinal Patient Recovery Outcomes',
+              body: 'Echocardiograms and exercise stress testing demonstrate dramatic reversal of diastolic dysfunction at 12-month evaluation.',
+              bullets: [
+                'Left ventricular wall thickness reduced by 3.8mm on average',
+                'Peak VO2 exercise capacity improved by 42% across all 48 patients',
+                '100% patient survival with zero arrhythmic adverse events recorded',
+              ],
+              sourceAttribution: 'Global Phase 3 Safety Monitoring Board',
+            },
+          ],
         },
       },
     ],
@@ -2184,12 +2419,49 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
     updatedAt: '2026-10-02T11:45:00Z',
     blocks: [
       {
+        id: 'blk_lunar_sum',
+        blockType: 'summary',
+        sortOrder: 0,
+        data: {
+          headline: 'Prospecting Mission Discoveries',
+          bulletPoints: [
+            'Synthetic aperture radar penetrates 8 meters beneath lunar regolith.',
+            'Estimated propellant production capacity equivalent to 1,200 Mars transit missions.',
+            'International commercial mining consortium files joint extraction claims under Artemis Accords.',
+          ],
+        },
+      },
+      {
         id: 'p_lunar_lead',
         blockType: 'paragraph',
-        sortOrder: 0,
+        sortOrder: 1,
         data: {
           text: 'BENGALURU/HOUSTON — Deep orbital radar scans of the lunar south pole have confirmed subterranean glaciers exceeding 600 million tons of pure water ice, transforming long-term deep-space exploration economics.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_lunar_gallery',
+        blockType: 'gallery',
+        sortOrder: 2,
+        data: {
+          title: 'South Pole Radar Cartography & Prospecting Scans',
+          images: [
+            {
+              url: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1200&q=80',
+              altText: 'Shackleton Crater Rim Elevation Profile',
+              caption:
+                'Synthetic aperture radar topographic mapping showing permanently shadowed interior basins.',
+              credit: 'Lunar Reconnaissance Orbiter / ISRO Chandrayaan Data',
+            },
+            {
+              url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+              altText: 'Subsurface Hydrogen Abundance Map',
+              caption:
+                'Neutron spectrometer readings highlighting volatile hydrogen deposits exceeding 4.2% water equivalent by mass.',
+              credit: 'Planetary Science Institute',
+            },
+          ],
         },
       },
     ],
@@ -2219,12 +2491,43 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
     updatedAt: '2026-10-02T12:00:00Z',
     blocks: [
       {
+        id: 'blk_grid_sum',
+        blockType: 'summary',
+        sortOrder: 0,
+        data: {
+          headline: 'Storage Economics & Safety',
+          bulletPoints: [
+            'Abundant non-toxic raw material eliminates cobalt and nickel supply chain bottlenecks.',
+            'Thermal runaway risk reduced to near zero through Prussian blue analogue cathode chemistry.',
+            'Round-trip efficiency verified at 91.5% across 4,000 accelerated stress cycles.',
+          ],
+        },
+      },
+      {
         id: 'p_grid_lead',
         blockType: 'paragraph',
-        sortOrder: 0,
+        sortOrder: 1,
         data: {
           text: 'MELBOURNE/PHOENIX — In the largest non-lithium utility installation to date, electrical transmission operators interconnected a 1.2 gigawatt-hour sodium-ion battery park, proving that abundant sea-salt derivatives can reliably anchor renewable electrical grids.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_grid_imagediff',
+        blockType: 'image_diff',
+        sortOrder: 2,
+        data: {
+          beforeUrl:
+            'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80',
+          afterUrl:
+            'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1200&q=80',
+          beforeLabel: 'Conventional LFP Under Stress',
+          afterLabel: 'Prussian Blue Sodium-Ion (Cold Run)',
+          caption:
+            'Comparative thermal imaging under 3C continuous discharge: Sodium-ion cells show zero thermal hotspots with a 38°C lower core operating temperature.',
+          orientation: 'horizontal',
+          defaultSplitPercent: 50,
+          credit: 'Renewable Energy Systems Laboratory',
         },
       },
     ],
@@ -2253,12 +2556,38 @@ export const EXTENDED_NEWS_STORIES: Story[] = [
     updatedAt: '2026-10-02T12:15:00Z',
     blocks: [
       {
+        id: 'blk_qkd_sum',
+        blockType: 'summary',
+        sortOrder: 0,
+        data: {
+          headline: 'Quantum Encryption Highlights',
+          bulletPoints: [
+            'Information-theoretic security immune to Shor’s quantum algorithm attacks.',
+            'Satellite-to-ground optical tracking locks beam drift within 1.4 microradians.',
+            'Immediate failover adoption across 14 central and commercial clearing nodes.',
+          ],
+        },
+      },
+      {
         id: 'p_qkd_lead',
         blockType: 'paragraph',
-        sortOrder: 0,
+        sortOrder: 1,
         data: {
           text: 'GENEVA/LONDON — Multilateral clearing authorities have initiated the first continuous quantum-secured financial communications corridor, using low-Earth orbit satellites transmitting entangled photon pairs to secure inter-bank payment instructions.',
           format: 'markdown',
+        },
+      },
+      {
+        id: 'blk_qkd_diagram',
+        blockType: 'diagram',
+        sortOrder: 2,
+        data: {
+          title: 'Satellite-to-Ground Entangled QKD Architecture',
+          format: 'mermaid',
+          definition:
+            'graph LR\n  SAT[LEO QKD Satellite] -->|Downlink Beam 1| GS1[Frankfurt Ground Station]\n  SAT -->|Downlink Beam 2| GS2[London Ground Station]\n  GS1 -->|Encrypted Session Key| BB1[Bundesbank Node]\n  GS2 -->|Encrypted Session Key| BB2[Bank of England Node]\n  BB1 <-->|Post-Quantum Interbank Corridor| BB2',
+          caption:
+            'Synchronized photon-entanglement distribution downlinks establishing cryptographic one-time pad verification between Frankfurt and London clearing nodes.',
         },
       },
     ],

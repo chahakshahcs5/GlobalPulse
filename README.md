@@ -11,10 +11,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-505%20passing-brightgreen.svg)](<>)
 
-### 🏷️ Topics & Keywords
-
-`ai-news` • `model-context-protocol` • `mcp` • `mcp-server` • `nextjs` • `fastify` • `graphql` • `mercurius` • `server-sent-events` • `real-time` • `newsroom` • `editorial-cms` • `multimedia-publishing` • `prisma` • `postgresql` • `typescript` • `monorepo` • `gemini` • `openai` • `claude`
-
 A production-grade, modern, interactive, animated multimedia news publishing platform designed from the ground up as an **AI-operable application**. External AI agents—such as Google Gemini, Gemini Spark, ChatGPT / OpenAI agents, Claude, and enterprise MCP clients—operate the newsroom remotely through the **Model Context Protocol (MCP)** and **GraphQL Mercurius API**.
 
 ---

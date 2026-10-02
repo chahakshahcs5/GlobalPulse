@@ -79,11 +79,44 @@ export class D3ChartRenderer {
 
     const hasYLabel = Boolean(chartData.yAxis?.label);
     const hasXLabel = Boolean(chartData.xAxis?.label);
+    const hasFootnote = Boolean(chartData.sourceAttribution);
+    const showLegend = series.length > 1 || (series.length === 1 && Boolean(series[0].name));
+
+    // Dynamic top padding to prevent title, subtitle, and legend from colliding
+    const paddingLeft = hasYLabel ? 82 : 65;
+    const paddingRight = 40;
+    const hasSubtitle = Boolean(chartData.subtitle);
+
+    // Calculate dynamic legend row positions
+    let legendSvg = '';
+    let currentLegendX = paddingLeft;
+    let currentLegendY = hasSubtitle ? 66 : 50;
+
+    if (showLegend) {
+      series.forEach((s) => {
+        const itemWidth = Math.max(90, Math.ceil(s.name.length * 7.2) + 36);
+        if (currentLegendX + itemWidth > width - paddingRight && currentLegendX > paddingLeft) {
+          currentLegendX = paddingLeft;
+          currentLegendY += 22;
+        }
+        legendSvg += `
+          <g transform="translate(${currentLegendX}, ${currentLegendY})">
+            <rect width="12" height="12" rx="2.5" fill="${s.color}" />
+            <text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
+          </g>
+        `;
+        currentLegendX += itemWidth;
+      });
+    }
+
+    const paddingTop = showLegend ? currentLegendY + 24 : hasSubtitle ? 68 : 50;
+    const paddingBottom = (hasXLabel ? 55 : 38) + (hasFootnote ? 18 : 0);
+
     const padding = {
-      top: 65,
-      right: 40,
-      bottom: hasXLabel ? 72 : 55,
-      left: hasYLabel ? 82 : 65,
+      top: paddingTop,
+      right: paddingRight,
+      bottom: paddingBottom,
+      left: paddingLeft,
     };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
@@ -97,9 +130,14 @@ export class D3ChartRenderer {
     let svgElements = '';
 
     // Title & Subtitle Header
-    svgElements += `<text x="${padding.left}" y="30" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    svgElements += `<text x="${padding.left}" y="28" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
     if (chartData.subtitle) {
-      svgElements += `<text x="${padding.left}" y="48" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+      svgElements += `<text x="${padding.left}" y="46" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    // Legend
+    if (showLegend && legendSvg) {
+      svgElements += legendSvg;
     }
 
     // Y Axis Label
@@ -124,7 +162,7 @@ export class D3ChartRenderer {
 
     // X Axis Title
     if (chartData.xAxis.label) {
-      svgElements += `<text x="${padding.left + chartW / 2}" y="${padding.top + chartH + 46}" text-anchor="middle" font-size="12" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.xAxis.label)}</text>`;
+      svgElements += `<text x="${padding.left + chartW / 2}" y="${padding.top + chartH + 44}" text-anchor="middle" font-size="12" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.xAxis.label)}</text>`;
     }
 
     // Baseline axis line
@@ -209,24 +247,9 @@ export class D3ChartRenderer {
       });
     }
 
-    // Legend
-    let legendX = width - padding.right;
-    series
-      .slice()
-      .reverse()
-      .forEach((s) => {
-        legendX -= 120;
-        svgElements += `
-        <g transform="translate(${legendX}, 30)">
-          <rect width="12" height="12" rx="2" fill="${s.color}" />
-          <text x="18" y="10" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
-        </g>
-      `;
-      });
-
     // Source Attribution Footnote
     if (chartData.sourceAttribution) {
-      svgElements += `<text x="${width - padding.right}" y="${height - 12}" text-anchor="end" font-size="11" fill="${subtextColor}" font-style="italic" font-family="system-ui, -apple-system, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>`;
+      svgElements += `<text x="${width - padding.right}" y="${height - 12}" text-anchor="end" font-size="10" fill="${subtextColor}" font-style="italic" font-family="system-ui, -apple-system, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>`;
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(chartData.title)}">${svgElements}</svg>`;
@@ -586,7 +609,8 @@ export class D3ChartRenderer {
     const subtextColor = isDark ? '#94a3b8' : '#64748b';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-    const padding = { top: 80, right: 50, bottom: 40, left: 50 };
+    const hasSubtitle = Boolean(chartData.subtitle);
+    const padding = { top: hasSubtitle ? 100 : 80, right: 50, bottom: 40, left: 50 };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
@@ -610,9 +634,9 @@ export class D3ChartRenderer {
     const barH = Math.min(22, rowH * 0.6);
 
     let elements = '';
-    elements += `<text x="40" y="32" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.title)}</text>`;
+    elements += `<text x="40" y="28" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.title)}</text>`;
     if (chartData.subtitle) {
-      elements += `<text x="40" y="52" font-size="13" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+      elements += `<text x="40" y="48" font-size="12" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
     }
 
     elements += `<text x="${centerX - 80}" y="${padding.top - 14}" text-anchor="end" font-size="13" font-weight="700" fill="${colorA}" font-family="system-ui, sans-serif">${escapeXml(seriesA.name)}</text>`;
