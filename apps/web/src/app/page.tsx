@@ -380,11 +380,11 @@ function GoogleNewsContent() {
 
     // In 'top' mode with multiple clusters, avoid duplicating the main lead hero story
     if (feedMode === 'top' && candidates.length > 1) {
-      return candidates.slice(1, 5);
+      return candidates.slice(1, 7);
     }
 
-    // In 'for-you', 'following', or when few stories exist, show up to 4 personalized recommendations
-    return candidates.slice(0, 4);
+    // In 'for-you', 'following', or when few stories exist, show up to 6 personalized recommendations
+    return candidates.slice(0, 6);
   }, [clusters, forYouClusters, feedMode]);
 
   // Clusters matching followed categories, followed topics, and followed sources for "Following"

@@ -2158,6 +2158,417 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
         },
       ],
     },
+
+    // Story 13: Picks For You — Humanoid Robotics (Summary, Lead, Quote, Chart)
+    {
+      story: {
+        id: 'sty_pick_robotics_01',
+        organizationId: 'org_default',
+        slug: 'humanoid-robotics-factory-floor-deployment-automotive',
+        title: 'Humanoid Robotics Accelerate 24/7 Factory Floor Deployment in Automotive Assembly',
+        summary:
+          'Autonomous bipedal robots achieve 99.4% task completion rates in high-precision battery pack assembly and chassis wiring.',
+        status: 'PUBLISHED',
+        articleType: 'technology',
+        authorId: 'usr_spark_agent',
+        createdByClient: 'gemini_spark',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T11:00:00Z',
+        createdAt: '2026-10-02T09:00:00Z',
+        updatedAt: '2026-10-02T11:00:00Z',
+        topicIds: ['top_ai_agents', 'top_semiconductors'],
+        entityIds: ['ent_demis_hassabis', 'ent_jensen_huang'],
+        sourceIds: ['src_techcrunch_01', 'src_mit_tech_01'],
+        blocks: [
+          {
+            id: 'blk_robotics_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Robotics Assembly Milestones',
+              bulletPoints: [
+                'Continuous 24-hour shift cycle validation across two commercial pilot plants.',
+                'Sub-millimeter connector insertion precision using tactile feedback sensors.',
+                'Zero safety halts recorded over 120,000 cumulative autonomous production hours.',
+              ],
+            },
+          },
+          {
+            id: 'blk_robotics_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'STUTTGART/DETROIT — Commercial automotive manufacturing reached an autonomous inflection point as bipedal humanoid robots took over continuous battery module wiring across two high-volume assembly lines, operating without human intervention.',
+              format: 'markdown',
+            },
+          },
+          {
+            id: 'blk_robotics_quote',
+            blockType: 'quote',
+            sortOrder: 2,
+            data: {
+              quote:
+                'Tactile reinforcement learning has closed the dexterity gap. Humanoid units are no longer laboratory curiosities; they are core capital equipment.',
+              attribution: 'Dr. Clara Lindqvist',
+              title: 'VP of Manufacturing Automation',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_robotics_v1',
+          storyId: 'sty_pick_robotics_01',
+          versionNumber: 1,
+          title:
+            'Humanoid Robotics Accelerate 24/7 Factory Floor Deployment in Automotive Assembly',
+          summary:
+            'Autonomous bipedal robots achieve 99.4% task completion rates in high-precision battery pack assembly and chassis wiring.',
+          changeSummary: 'Initial publication.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-10-02T11:00:00Z',
+        },
+      ],
+    },
+
+    // Story 14: Picks For You — Neuromorphic Silicon (Summary, Lead, Quote)
+    {
+      story: {
+        id: 'sty_pick_neuromorphic_01',
+        organizationId: 'org_default',
+        slug: 'neuromorphic-ai-chips-edge-inference-power-cut',
+        title: 'Neuromorphic AI Chips Cut Edge Inference Power by 90% in Drone and Satellite Tests',
+        summary:
+          'Event-based spiking neural network silicon delivers sub-watt real-time computer vision without thermal throttling in extreme environments.',
+        status: 'PUBLISHED',
+        articleType: 'technology',
+        authorId: 'usr_chatgpt_agent',
+        createdByClient: 'chatgpt',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T11:15:00Z',
+        createdAt: '2026-10-02T09:30:00Z',
+        updatedAt: '2026-10-02T11:15:00Z',
+        topicIds: ['top_semiconductors', 'top_ai_agents'],
+        entityIds: ['ent_demis_hassabis'],
+        sourceIds: ['src_nature_01', 'src_techcrunch_01'],
+        blocks: [
+          {
+            id: 'blk_neuro_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Neuromorphic Benchmark Findings',
+              bulletPoints: [
+                'Dynamic energy consumption under 450 milliwatts at 120 frames per second.',
+                'Asynchronous temporal event processing eliminates synchronous clock power loss.',
+                'Seamless integration with satellite attitude-control optical navigation arrays.',
+              ],
+            },
+          },
+          {
+            id: 'blk_neuro_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'ZURICH — In high-altitude orbital and atmospheric trials, neuromorphic silicon mimics the synaptic firing of biological retinas, slashing power consumption tenfold while outperforming standard GPU accelerators in high-speed visual tracking.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_neuro_v1',
+          storyId: 'sty_pick_neuromorphic_01',
+          versionNumber: 1,
+          title:
+            'Neuromorphic AI Chips Cut Edge Inference Power by 90% in Drone and Satellite Tests',
+          summary:
+            'Event-based spiking neural network silicon delivers sub-watt real-time computer vision without thermal throttling in extreme environments.',
+          changeSummary: 'Initial publication.',
+          blocks: [],
+          authorId: 'usr_chatgpt_agent',
+          clientType: 'chatgpt',
+          createdAt: '2026-10-02T11:15:00Z',
+        },
+      ],
+    },
+
+    // Story 15: Picks For You — CRISPR Clinical Milestone (Summary, Lead, Quote)
+    {
+      story: {
+        id: 'sty_pick_crispr_01',
+        organizationId: 'org_default',
+        slug: 'in-vivo-crispr-gene-therapy-cardiomyopathy-trial',
+        title:
+          'Targeted In-Vivo CRISPR Therapy Reverses Rare Hereditary Cardiomyopathy in Clinical Trials',
+        summary:
+          'Phase 3 clinical trial demonstrates 94% restoration of cardiac muscle protein expression without off-target double-strand breaks.',
+        status: 'PUBLISHED',
+        articleType: 'science',
+        authorId: 'usr_journalist_amara',
+        createdByClient: 'human_web',
+        createdVia: 'web',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T11:30:00Z',
+        createdAt: '2026-10-02T10:00:00Z',
+        updatedAt: '2026-10-02T11:30:00Z',
+        topicIds: ['top_biotechnology', 'top_healthcare'],
+        entityIds: ['ent_who'],
+        sourceIds: ['src_nature_01'],
+        blocks: [
+          {
+            id: 'blk_crispr_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Therapeutic Trial Results',
+              bulletPoints: [
+                'Lipid nanoparticle delivery system achieves organ-specific cardiac tropism.',
+                'Base editing repairs single-nucleotide pathogenic mutation with 94.2% efficiency.',
+                'Longitudinal biopsies verify zero off-target genomic insertions across 12-month follow-up.',
+              ],
+            },
+          },
+          {
+            id: 'blk_crispr_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'BOSTON — Genetic medicine marked a watershed triumph as researchers reported that systemic lipid-nanoparticle infusion successfully corrected hereditary cardiomyopathy in 48 trial patients, reversing progressive ventricular stiffness.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_crispr_v1',
+          storyId: 'sty_pick_crispr_01',
+          versionNumber: 1,
+          title:
+            'Targeted In-Vivo CRISPR Therapy Reverses Rare Hereditary Cardiomyopathy in Clinical Trials',
+          summary:
+            'Phase 3 clinical trial demonstrates 94% restoration of cardiac muscle protein expression without off-target double-strand breaks.',
+          changeSummary: 'Initial clinical dispatch.',
+          blocks: [],
+          authorId: 'usr_journalist_amara',
+          clientType: 'human_web',
+          createdAt: '2026-10-02T11:30:00Z',
+        },
+      ],
+    },
+
+    // Story 16: Picks For You — Lunar Water-Ice Prospecting (Summary, Lead, Quote)
+    {
+      story: {
+        id: 'sty_pick_space_mining_01',
+        organizationId: 'org_default',
+        slug: 'lunar-prospector-detects-water-ice-shackleton-rim',
+        title:
+          'Commercial Lunar Prospector Detects Massive Volatile Water-Ice Deposits at Shackleton Rim',
+        summary:
+          'Neutron spectrometer radar mapping confirms over 600 million metric tons of extractable water-ice reserves in permanently shadowed craters.',
+        status: 'PUBLISHED',
+        articleType: 'science',
+        authorId: 'usr_journalist_david',
+        createdByClient: 'human_web',
+        createdVia: 'web',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T11:45:00Z',
+        createdAt: '2026-10-02T10:15:00Z',
+        updatedAt: '2026-10-02T11:45:00Z',
+        topicIds: ['top_space_exploration'],
+        entityIds: ['ent_isro'],
+        sourceIds: ['src_reuters_01'],
+        blocks: [
+          {
+            id: 'blk_lunar_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Prospecting Mission Discoveries',
+              bulletPoints: [
+                'Synthetic aperture radar penetrates 8 meters beneath lunar regolith.',
+                'Estimated propellant production capacity equivalent to 1,200 Mars transit missions.',
+                'International commercial mining consortium files joint extraction claims under Artemis Accords.',
+              ],
+            },
+          },
+          {
+            id: 'blk_lunar_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'BENGALURU/HOUSTON — Deep orbital radar scans of the lunar south pole have confirmed subterranean glaciers exceeding 600 million tons of pure water ice, transforming long-term deep-space exploration economics.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_lunar_v1',
+          storyId: 'sty_pick_space_mining_01',
+          versionNumber: 1,
+          title:
+            'Commercial Lunar Prospector Detects Massive Volatile Water-Ice Deposits at Shackleton Rim',
+          summary:
+            'Neutron spectrometer radar mapping confirms over 600 million metric tons of extractable water-ice reserves in permanently shadowed craters.',
+          changeSummary: 'Space exploration report.',
+          blocks: [],
+          authorId: 'usr_journalist_david',
+          clientType: 'human_web',
+          createdAt: '2026-10-02T11:45:00Z',
+        },
+      ],
+    },
+
+    // Story 17: Picks For You — Sodium-Ion Grid Megapacks (Summary, Lead, Quote)
+    {
+      story: {
+        id: 'sty_pick_grid_storage_01',
+        organizationId: 'org_default',
+        slug: 'sodium-ion-megapacks-surpass-lithium-grid-storage',
+        title:
+          'Next-Gen Sodium-Ion Megapacks Surpass Lithium in Long-Duration Grid Frequency Balancing',
+        summary:
+          'Utility operators deploy 1.2 GWh non-flammable sodium-ion storage system, reducing Levelized Cost of Storage to $42 per megawatt-hour.',
+        status: 'PUBLISHED',
+        articleType: 'science',
+        authorId: 'usr_editor',
+        createdByClient: 'human_web',
+        createdVia: 'web',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T12:00:00Z',
+        createdAt: '2026-10-02T10:30:00Z',
+        updatedAt: '2026-10-02T12:00:00Z',
+        topicIds: ['top_clean_energy', 'top_climate_transition'],
+        entityIds: ['ent_iter'],
+        sourceIds: ['src_bloomberg_01'],
+        blocks: [
+          {
+            id: 'blk_grid_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Storage Economics & Safety',
+              bulletPoints: [
+                'Abundant non-toxic raw material eliminates cobalt and nickel supply chain bottlenecks.',
+                'Thermal runaway risk reduced to near zero through Prussian blue analogue cathode chemistry.',
+                'Round-trip efficiency verified at 91.5% across 4,000 accelerated stress cycles.',
+              ],
+            },
+          },
+          {
+            id: 'blk_grid_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'MELBOURNE/PHOENIX — In the largest non-lithium utility installation to date, electrical transmission operators interconnected a 1.2 gigawatt-hour sodium-ion battery park, proving that abundant sea-salt derivatives can reliably anchor renewable electrical grids.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_grid_v1',
+          storyId: 'sty_pick_grid_storage_01',
+          versionNumber: 1,
+          title:
+            'Next-Gen Sodium-Ion Megapacks Surpass Lithium in Long-Duration Grid Frequency Balancing',
+          summary:
+            'Utility operators deploy 1.2 GWh non-flammable sodium-ion storage system, reducing Levelized Cost of Storage to $42 per megawatt-hour.',
+          changeSummary: 'Energy storage dispatch.',
+          blocks: [],
+          authorId: 'usr_editor',
+          clientType: 'human_web',
+          createdAt: '2026-10-02T12:00:00Z',
+        },
+      ],
+    },
+
+    // Story 18: Picks For You — Quantum Key Distribution (Summary, Lead, Quote)
+    {
+      story: {
+        id: 'sty_pick_quantum_crypto_01',
+        organizationId: 'org_default',
+        slug: 'quantum-key-distribution-satellite-network-banking',
+        title:
+          'Quantum Key Distribution Satellite Network Shields Cross-Border Banking Settlements',
+        summary:
+          'Entangled photon downlinks achieve 1.2 Mbps secret key exchange across 7,000 kilometers, establishing post-quantum banking security.',
+        status: 'PUBLISHED',
+        articleType: 'technology',
+        authorId: 'usr_spark_agent',
+        createdByClient: 'gemini_spark',
+        createdVia: 'mcp',
+        currentVersionNumber: 1,
+        heroImageUrl:
+          'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1600&q=80',
+        publishedAt: '2026-10-02T12:15:00Z',
+        createdAt: '2026-10-02T10:45:00Z',
+        updatedAt: '2026-10-02T12:15:00Z',
+        topicIds: ['top_quantum_computing', 'top_macroeconomics'],
+        entityIds: ['ent_cern'],
+        sourceIds: ['src_ft_01', 'src_nature_01'],
+        blocks: [
+          {
+            id: 'blk_qkd_sum',
+            blockType: 'summary',
+            sortOrder: 0,
+            data: {
+              headline: 'Quantum Encryption Highlights',
+              bulletPoints: [
+                'Information-theoretic security immune to Shor’s quantum algorithm attacks.',
+                'Satellite-to-ground optical tracking locks beam drift within 1.4 microradians.',
+                'Immediate failover adoption across 14 central and commercial clearing nodes.',
+              ],
+            },
+          },
+          {
+            id: 'blk_qkd_lead',
+            blockType: 'paragraph',
+            sortOrder: 1,
+            data: {
+              text: 'GENEVA/LONDON — Multilateral clearing authorities have initiated the first continuous quantum-secured financial communications corridor, using low-Earth orbit satellites transmitting entangled photon pairs to secure inter-bank payment instructions.',
+              format: 'markdown',
+            },
+          },
+        ],
+      },
+      versions: [
+        {
+          id: 'ver_qkd_v1',
+          storyId: 'sty_pick_quantum_crypto_01',
+          versionNumber: 1,
+          title:
+            'Quantum Key Distribution Satellite Network Shields Cross-Border Banking Settlements',
+          summary:
+            'Entangled photon downlinks achieve 1.2 Mbps secret key exchange across 7,000 kilometers, establishing post-quantum banking security.',
+          changeSummary: 'Quantum network deployment.',
+          blocks: [],
+          authorId: 'usr_spark_agent',
+          clientType: 'gemini_spark',
+          createdAt: '2026-10-02T12:15:00Z',
+        },
+      ],
+    },
   ];
 
   for (const item of storiesToSeed) {
@@ -2378,6 +2789,215 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       ],
       createdAt: '2026-09-27T11:00:00Z',
       updatedAt: '2026-09-30T10:00:00Z',
+    },
+    {
+      id: 'cls_robotics_factory',
+      organizationId: 'org_default',
+      title: 'Humanoid Robotics Assembly & Factory Automation',
+      summary:
+        'Continuous 24-hour humanoid robotics operations transform automotive chassis and battery assembly lines.',
+      leadStoryId: 'sty_pick_robotics_01',
+      storyIds: ['sty_pick_robotics_01', 'sty_ai_01'],
+      topic: 'top_ai_agents',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'TechCrunch',
+          headline: 'Humanoid Robots Move from Lab Pilots to 24/7 Factory Work',
+          excerpt: 'Automotive OEMs integrate tactile bipedal units into battery module assembly.',
+          sourceType: 'industry',
+          url: 'https://techcrunch.com/2026/10/02/humanoid-robotics-automotive-assembly',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance: 'Efficiency and dexterity milestones confirm long-term economic viability.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 09:00 UTC',
+          event: 'Pilot plant completes 120,000 incident-free autonomous hours',
+          source: 'Stuttgart Automation Consortium',
+          storyId: 'sty_pick_robotics_01',
+        },
+      ],
+      createdAt: '2026-10-02T09:00:00Z',
+      updatedAt: '2026-10-02T11:00:00Z',
+    },
+    {
+      id: 'cls_neuromorphic_silicon',
+      organizationId: 'org_default',
+      title: 'Neuromorphic Silicon & Sub-Watt Edge AI Intelligence',
+      summary:
+        'Event-based spiking neural network silicon delivers sub-watt real-time vision for drones and orbital satellites.',
+      leadStoryId: 'sty_pick_neuromorphic_01',
+      storyIds: ['sty_pick_neuromorphic_01', 'sty_semi_01'],
+      topic: 'top_semiconductors',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_pick_neuromorphic_01',
+          publisher: 'Nature Electronics',
+          headline: 'Bio-Inspired Spiking Silicon Cuts Sensor Power Draw 90%',
+          excerpt:
+            'Asynchronous event vision eliminates synchronous clock heat in extreme conditions.',
+          sourceType: 'academic',
+          url: 'https://nature.com/articles/s41928-026-00412-x',
+          timeAgo: '3 hours ago',
+          angle: 'scientific',
+          stance: 'Physical emulation of mammalian retinal neurons solves edge power bottlenecks.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 09:30 UTC',
+          event: 'Orbital and drone flight testing confirms sub-450mW real-time inference',
+          source: 'Zurich AI Hardware Summit',
+          storyId: 'sty_pick_neuromorphic_01',
+        },
+      ],
+      createdAt: '2026-10-02T09:30:00Z',
+      updatedAt: '2026-10-02T11:15:00Z',
+    },
+    {
+      id: 'cls_crispr_therapeutics',
+      organizationId: 'org_default',
+      title: 'Precision In-Vivo Gene Editing Reverses Genetic Cardiomyopathy',
+      summary:
+        'Targeted lipid-nanoparticle base editing achieves 94% correction efficiency in clinical trials.',
+      leadStoryId: 'sty_pick_crispr_01',
+      storyIds: ['sty_pick_crispr_01'],
+      topic: 'top_biotechnology',
+      category: 'health',
+      perspectives: [
+        {
+          storyId: 'sty_pick_crispr_01',
+          publisher: 'The Lancet',
+          headline: 'Systemic Lipid Nanoparticle In-Vivo Gene Correction Validated',
+          excerpt:
+            'Phase 3 multicenter trial demonstrates safety and cardiac muscle function restoration.',
+          sourceType: 'academic',
+          url: 'https://thelancet.com/journals/lancet/article/PIIS0140-6736(26)01982-3',
+          timeAgo: '4 hours ago',
+          angle: 'scientific',
+          stance: 'Clean base-editing technology avoids risky double-strand DNA breaks.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 10:00 UTC',
+          event: 'Phase 3 trial unblinds 12-month biopsy data confirming 94% correction',
+          source: 'Global Health Consortium',
+          storyId: 'sty_pick_crispr_01',
+        },
+      ],
+      createdAt: '2026-10-02T10:00:00Z',
+      updatedAt: '2026-10-02T11:30:00Z',
+    },
+    {
+      id: 'cls_lunar_resources',
+      organizationId: 'org_default',
+      title: 'Lunar South Pole Volatile Water-Ice Commercialization',
+      summary:
+        'Neutron spectrometer radar mapping confirms 600 million metric tons of extractable water ice in Shackleton Crater.',
+      leadStoryId: 'sty_pick_space_mining_01',
+      storyIds: ['sty_pick_space_mining_01', 'sty_liveblog_starship'],
+      topic: 'top_space_exploration',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_pick_space_mining_01',
+          publisher: 'Aviation Week',
+          headline: 'In-Situ Propellant Economics Transform Deep Space Architecture',
+          excerpt: 'Extractable ice enables high-cadence refueling depots at lunar gateway orbits.',
+          sourceType: 'industry',
+          url: 'https://aviationweek.com/space/lunar-ice-reserves-prospecting-survey',
+          timeAgo: '5 hours ago',
+          angle: 'industry',
+          stance:
+            'Commercial extraction rights will determine next-generation interplanetary cadence.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 10:15 UTC',
+          event: 'Synthetic aperture radar validates subterranean glaciers across 8m depth',
+          source: 'Artemis Science Directorate',
+          storyId: 'sty_pick_space_mining_01',
+        },
+      ],
+      createdAt: '2026-10-02T10:15:00Z',
+      updatedAt: '2026-10-02T11:45:00Z',
+    },
+    {
+      id: 'cls_sodium_grid',
+      organizationId: 'org_default',
+      title: 'Long-Duration Sodium-Ion Grid Energy Storage Breakthrough',
+      summary:
+        'Interconnection of 1.2 GWh non-flammable sodium-ion megapacks demonstrates low-cost renewable grid stabilization.',
+      leadStoryId: 'sty_pick_grid_storage_01',
+      storyIds: ['sty_pick_grid_storage_01', 'sty_fusion_01'],
+      topic: 'top_clean_energy',
+      category: 'science',
+      perspectives: [
+        {
+          storyId: 'sty_pick_grid_storage_01',
+          publisher: 'Bloomberg Energy',
+          headline: 'Sodium-Ion Battery Storage Undercuts Lithium on Utility Economics',
+          excerpt: 'Levelized cost of storage falls to $42/MWh with non-toxic, abundant minerals.',
+          sourceType: 'industry',
+          url: 'https://bloomberg.com/energy/sodium-ion-grid-utility-revolution',
+          timeAgo: '6 hours ago',
+          angle: 'industry',
+          stance: 'Prussian blue cathode design provides immune safety against thermal runaway.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 10:30 UTC',
+          event: '1.2 GWh utility park completes 4,000-cycle frequency response validation',
+          source: 'Energy Transition Registry',
+          storyId: 'sty_pick_grid_storage_01',
+        },
+      ],
+      createdAt: '2026-10-02T10:30:00Z',
+      updatedAt: '2026-10-02T12:00:00Z',
+    },
+    {
+      id: 'cls_quantum_security',
+      organizationId: 'org_default',
+      title: 'Quantum Key Distribution & Inter-Bank Settlement Protection',
+      summary:
+        'Entangled photon satellite links secure cross-border multilateral banking settlements against post-quantum decryptors.',
+      leadStoryId: 'sty_pick_quantum_crypto_01',
+      storyIds: ['sty_pick_quantum_crypto_01', 'sty_quantum_01'],
+      topic: 'top_quantum_computing',
+      category: 'technology',
+      perspectives: [
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'Financial Times',
+          headline: 'Central Banks Pilot Entangled Photon Crypto Links for Settlement Rails',
+          excerpt:
+            'QKD downlinks achieve 1.2 Mbps secret key rate across intercontinental gateways.',
+          sourceType: 'industry',
+          url: 'https://ft.com/technology/quantum-secured-interbank-settlement-clearing',
+          timeAgo: '7 hours ago',
+          angle: 'analytical',
+          stance:
+            'Physics-based encryption guarantees long-term immunity against algorithmic cryptanalysis.',
+        },
+      ],
+      timeline: [
+        {
+          date: 'Oct 02, 10:45 UTC',
+          event: 'Satellite-to-ground downlink demonstrates 1.4 microradian beam lock',
+          source: 'European Quantum Consortium',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
+      ],
+      createdAt: '2026-10-02T10:45:00Z',
+      updatedAt: '2026-10-02T12:15:00Z',
     },
   ];
 
@@ -2607,8 +3227,20 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   try {
     await db.engagement.toggleBookmark('usr_reader_sarah', 'sty_ai_01', 'org_default');
     await db.engagement.toggleBookmark('usr_reader_sarah', 'sty_semi_01', 'org_default');
+    await db.engagement.toggleBookmark('usr_reader_sarah', 'sty_pick_robotics_01', 'org_default');
+    await db.engagement.toggleBookmark('usr_reader_sarah', 'sty_pick_crispr_01', 'org_default');
     await db.engagement.toggleBookmark('usr_reader_aravind', 'sty_brics_flagship', 'org_default');
     await db.engagement.toggleBookmark('usr_reader_aravind', 'sty_markets_01', 'org_default');
+    await db.engagement.toggleBookmark(
+      'usr_reader_aravind',
+      'sty_pick_grid_storage_01',
+      'org_default'
+    );
+    await db.engagement.toggleBookmark(
+      'usr_reader_aravind',
+      'sty_pick_quantum_crypto_01',
+      'org_default'
+    );
   } catch (err) {
     logger.debug(`Bookmarks seeding notice: ${String(err)}`);
   }
@@ -2617,8 +3249,27 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   try {
     await db.engagement.saveReadingProgress('usr_reader_sarah', 'sty_brics_flagship', 100, true);
     await db.engagement.saveReadingProgress('usr_reader_sarah', 'sty_ai_01', 85, false);
+    await db.engagement.saveReadingProgress(
+      'usr_reader_sarah',
+      'sty_pick_neuromorphic_01',
+      100,
+      true
+    );
+    await db.engagement.saveReadingProgress('usr_reader_sarah', 'sty_pick_robotics_01', 65, false);
     await db.engagement.saveReadingProgress('usr_reader_aravind', 'sty_brics_flagship', 100, true);
     await db.engagement.saveReadingProgress('usr_reader_aravind', 'sty_fusion_01', 50, false);
+    await db.engagement.saveReadingProgress(
+      'usr_reader_aravind',
+      'sty_pick_space_mining_01',
+      80,
+      false
+    );
+    await db.engagement.saveReadingProgress(
+      'usr_reader_aravind',
+      'sty_pick_grid_storage_01',
+      100,
+      true
+    );
   } catch (err) {
     logger.debug(`Reading progress seeding notice: ${String(err)}`);
   }
@@ -2760,6 +3411,134 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
       url: 'https://news.platform/fact-checks/fc_08',
       checkedAt: '2026-10-01T14:00:00Z',
     },
+    {
+      id: 'fc_09',
+      claim: 'Quantum computers cracked 4096-bit RSA cryptographic keys in 30 seconds.',
+      claimant: 'Cybersecurity Rumor Threads & Hacker Forums',
+      rating: 'FALSE',
+      summary:
+        "State-of-the-art quantum processors operate up to 1,200 noisy physical qubits, far below the estimated millions of fault-tolerant logical qubits required by Shor's algorithm for 4096-bit RSA factoring.",
+      checker: 'National Cryptographic Verification Alliance',
+      sources: ['NIST Post-Quantum Cryptography Consortium', 'MIT Quantum Lab'],
+      url: 'https://news.platform/fact-checks/fc_09',
+      checkedAt: '2026-10-02T11:00:00Z',
+    },
+    {
+      id: 'fc_10',
+      claim:
+        'Formal mathematical verification guarantees zero logical flaws in autonomous software code deployment.',
+      claimant: 'Enterprise DevOps Vendor Whitepapers',
+      rating: 'MOSTLY_TRUE',
+      summary:
+        'SMT solvers mathematically prove boundary conditions and typed safety invariants; however, specifications written with flawed requirements or underspecified constraints can still yield logic errors.',
+      checker: 'ACM Formal Methods Bureau',
+      sources: ['Association for Computing Machinery', 'IEEE Software Engineering Journal'],
+      url: 'https://news.platform/fact-checks/fc_10',
+      checkedAt: '2026-10-02T09:30:00Z',
+    },
+    {
+      id: 'fc_11',
+      claim:
+        'Advanced High-NA EUV lithography machines were secretly diverted to uncertified fabrication facilities.',
+      claimant: 'Geopolitical Investigative Newsletter',
+      rating: 'FALSE',
+      summary:
+        'Satellite logistics tracking, optical serial hashing, and multilateral Wassenaar treaty export telemetry confirm all High-NA tools are physically sealed and accounted for at certified foundries.',
+      checker: 'Semiconductor Trade Compliance Bureau',
+      sources: ['ASML Investor Disclosures', 'Wassenaar Arrangement Secretariat'],
+      url: 'https://news.platform/fact-checks/fc_11',
+      checkedAt: '2026-10-01T16:45:00Z',
+    },
+    {
+      id: 'fc_12',
+      claim:
+        'Small Modular Nuclear Reactors (SMRs) are already powering commercial AI datacenters at gigawatt scale in 2026.',
+      claimant: 'Tech Investor Keynote Presentations',
+      rating: 'MIXTURE',
+      summary:
+        'Regulatory permits and site preparation agreements have been executed for datacenter co-location, but physical commercial power generation from SMRs will not reach the grid before late 2028.',
+      checker: 'Global Energy & Datacenter Truth Project',
+      sources: ['Nuclear Regulatory Commission (NRC)', 'International Energy Agency'],
+      url: 'https://news.platform/fact-checks/fc_12',
+      checkedAt: '2026-10-01T14:15:00Z',
+    },
+    {
+      id: 'fc_13',
+      claim:
+        'Generative voice cloning breached biometric voice authentication at tier-1 international banks.',
+      claimant: 'Financial Security Podcast',
+      rating: 'MOSTLY_TRUE',
+      summary:
+        'Controlled red-team audits demonstrated synthetic voice models spoofed legacy 2G acoustic verification protocols, prompting banks to mandate multi-factor physical passkeys and behavioral liveness telemetry.',
+      checker: 'Banking Cyber Fraud Task Force',
+      sources: ['Financial Stability Board', 'European Banking Authority'],
+      url: 'https://news.platform/fact-checks/fc_13',
+      checkedAt: '2026-09-30T15:20:00Z',
+    },
+    {
+      id: 'fc_14',
+      claim:
+        'A major orbital satellite collision cascade occurred in low Earth orbit between commercial constellations.',
+      claimant: 'Anonymous Aviation Tracker Posts',
+      rating: 'FALSE',
+      summary:
+        'Automated collision-avoidance thrusters performed nominal avoidance burns with minimum miss distances exceeding 4.2 km. Space Command radar logs confirm zero fragmentation events.',
+      checker: 'Combined Space Operations Center',
+      sources: ['US Space Command (USSPACECOM)', 'European Space Agency SSA'],
+      url: 'https://news.platform/fact-checks/fc_14',
+      checkedAt: '2026-09-30T10:00:00Z',
+    },
+    {
+      id: 'fc_15',
+      claim:
+        'Automotive OEMs commenced deliveries of passenger EVs with 1,000-kilometer solid-state batteries.',
+      claimant: 'Automotive Influencer Channels',
+      rating: 'MIXTURE',
+      summary:
+        'Pilot test fleets equipped with semi-solid-state cells have achieved 1,000 km test routes, but mass-market commercial consumer deliveries with 100% solid-state ceramic electrolytes remain slated for 2027-2028.',
+      checker: 'Automotive Technology Verification Council',
+      sources: ['SAE International', 'Society of Motor Manufacturers'],
+      url: 'https://news.platform/fact-checks/fc_15',
+      checkedAt: '2026-09-29T17:30:00Z',
+    },
+    {
+      id: 'fc_16',
+      claim:
+        'BRICS member states executed 85% of their mutual bilateral trade without third-party currency conversion in Q3 2026.',
+      claimant: 'Economic Summit Commentary',
+      rating: 'TRUE',
+      summary:
+        'Official central monetary balance audits confirm 84.7% of member-to-member merchandise trade cleared through local currency nostro accounts and national payment gateways during Q3 2026.',
+      checker: 'GlobalPulse Economic Verification Desk',
+      sources: ['Reserve Bank of India Monthly Bulletin', 'Bank for International Settlements'],
+      url: 'https://news.platform/fact-checks/fc_16',
+      checkedAt: '2026-09-29T11:45:00Z',
+    },
+    {
+      id: 'fc_17',
+      claim: 'Graphene sieve nanofiltration cut seawater desalination energy requirements by 70%.',
+      claimant: 'Clean Water Innovation Press Releases',
+      rating: 'MOSTLY_TRUE',
+      summary:
+        'Single-atom carbon membrane pilots demonstrated a 68% decrease in hydraulic pressure requirements compared to legacy polyamide reverse osmosis, though membrane durability under biofouling is undergoing 12-month endurance trials.',
+      checker: 'International Desalination & Water Bureau',
+      sources: ['Nature Water', 'International Desalination Association'],
+      url: 'https://news.platform/fact-checks/fc_17',
+      checkedAt: '2026-09-28T16:10:00Z',
+    },
+    {
+      id: 'fc_18',
+      claim:
+        'An autonomous algorithmic trading agent loop triggered an emergency 15-minute trading halt on the Tokyo Stock Exchange.',
+      claimant: 'Financial Social Feeds',
+      rating: 'TRUE',
+      summary:
+        'Exchange regulators confirmed automated circuit breakers tripped after high-frequency cross-currency arbitrage agent clusters simultaneously liquidated leveraged yen positions within 42 milliseconds.',
+      checker: 'Financial Markets Regulatory Surveillance',
+      sources: ['Japan Financial Services Agency', 'Tokyo Stock Exchange Operational Disclosures'],
+      url: 'https://news.platform/fact-checks/fc_18',
+      checkedAt: '2026-09-28T07:15:00Z',
+    },
   ];
 
   for (const fc of factChecks) {
@@ -2788,7 +3567,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
   }
 
   logger.info(
-    'Database seeded successfully with enterprise newsroom records (10 Users, 16 Topics, 14 Entities, 8 Publishers, 14 Sources, 12 Stories, 4 Events, 2 Clusters, 5 Liveblog Entries, 3 Collections, 4 Comments, Reactions, Bookmarks, and 8 Fact Checks).'
+    'Database seeded successfully with enterprise newsroom records (10 Users, 16 Topics, 14 Entities, 8 Publishers, 14 Sources, 18 Stories, 4 Events, 8 Clusters, 5 Liveblog Entries, 3 Collections, 4 Comments, Reactions, Bookmarks, and 18 Fact Checks).'
   );
 }
 

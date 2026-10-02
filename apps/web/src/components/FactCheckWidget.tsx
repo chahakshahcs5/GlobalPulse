@@ -36,7 +36,7 @@ export const FactCheckWidget: React.FC = () => {
     };
   }, []);
 
-  const displayedChecks = factChecks.slice(0, 3);
+  const displayedChecks = factChecks.slice(0, 4);
 
   const getRatingBadge = (ratingRaw?: string) => {
     const r = (ratingRaw || 'UNVERIFIED').toUpperCase();
