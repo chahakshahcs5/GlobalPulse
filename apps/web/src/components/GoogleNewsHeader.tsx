@@ -154,6 +154,24 @@ export const GoogleNewsHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [shortcutLabel, setShortcutLabel] = useState('Ctrl K');
+
+  // Global keyboard shortcut: Ctrl+K / Cmd+K to open or toggle search
+  useEffect(() => {
+    if (typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)) {
+      setShortcutLabel('⌘K');
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     try {
@@ -263,7 +281,7 @@ export const GoogleNewsHeader: React.FC = () => {
                 Search topics, locations & verified sources
               </span>
               <kbd className="hidden lg:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-slate-500 dark:text-slate-300">
-                ⌘K
+                {shortcutLabel}
               </kbd>
             </button>
           </div>

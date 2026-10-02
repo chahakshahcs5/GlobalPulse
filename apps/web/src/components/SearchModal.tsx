@@ -31,12 +31,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const { stories } = useAllStories();
 
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        if (isOpen) onClose();
-        else setQuery('');
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
