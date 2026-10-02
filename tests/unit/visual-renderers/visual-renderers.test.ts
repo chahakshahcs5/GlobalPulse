@@ -245,6 +245,38 @@ describe('Multimedia & Visual Story Engines (Unit Tests)', () => {
       expect(svg).toContain('(+15)');
       expect(svg).toContain('(-3)');
     });
+
+    it('renders a scatter chart with dynamic tick scales, axis labels, trendline, and callouts', () => {
+      const scatterData: ChartBlock['data'] = {
+        chartType: 'scatter',
+        title: 'Logical Gate Error Rate vs. Operating Temperature',
+        xAxis: { key: 'tempKelvin', label: 'Cryostat Temp (Kelvin)', type: 'linear' },
+        yAxis: { label: 'Gate Error Rate (10^-6)' },
+        series: [{ name: 'Topological Architecture', key: 'errorRate', color: '#8b5cf6' }],
+        values: [
+          { tempKelvin: '0.015', errorRate: 0.12 },
+          { tempKelvin: '0.050', errorRate: 0.22 },
+          { tempKelvin: '0.100', errorRate: 0.45 },
+          { tempKelvin: '0.250', errorRate: 1.25 },
+        ],
+        sourceAttribution: 'Copenhagen Quantum Foundry & Physical Review Letters 2026',
+      };
+
+      const svg = D3ChartRenderer.renderToSvg(scatterData, {
+        width: 800,
+        height: 440,
+        theme: 'light',
+      });
+      expect(svg).toContain('Logical Gate Error Rate vs. Operating Temperature');
+      expect(svg).toContain('Cryostat Temp (Kelvin)');
+      expect(svg).toContain('Gate Error Rate (10^-6)');
+      expect(svg).toContain('polyline');
+      expect(svg).toContain('0.12');
+      expect(svg).toContain('1.25');
+      expect(svg).not.toMatch(
+        /<text[^>]*>1<\/text>[\s\S]*<text[^>]*>1<\/text>[\s\S]*<text[^>]*>1<\/text>/
+      );
+    });
   });
 
   describe('MapLibre Geo Engine', () => {

@@ -22,10 +22,6 @@ export class D3ChartRenderer {
     const subtextColor = isDark ? '#94a3b8' : '#64748b';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-    const padding = { top: 70, right: 40, bottom: 60, left: 70 };
-    const chartW = width - padding.left - padding.right;
-    const chartH = height - padding.top - padding.bottom;
-
     if (chartData.chartType === 'donut') {
       return this.renderDonut(chartData, width, height, isDark);
     }
@@ -64,17 +60,33 @@ export class D3ChartRenderer {
 
     // Find numeric Y bounds
     let minY = chartData.yAxis.min ?? 0;
-    let maxY = chartData.yAxis.max ?? -Infinity;
+    let rawMaxY = chartData.yAxis.max ?? -Infinity;
     for (const row of chartData.values) {
       for (const s of series) {
         const val = Number(row[s.key] ?? 0);
-        if (val > maxY) maxY = val;
+        if (val > rawMaxY) rawMaxY = val;
         if (val < minY) minY = val;
       }
     }
-    if (maxY <= minY) maxY = minY + 10;
-    // Add 10% headroom
-    maxY = maxY * 1.1;
+    if (rawMaxY <= minY) rawMaxY = minY + 10;
+
+    // Use nice ticks algorithm for clean, readable steps
+    const niceTickInfo = getNiceTicks(minY, rawMaxY, 5);
+    const maxY = niceTickInfo.max;
+    minY = niceTickInfo.min;
+    const ticksList = niceTickInfo.ticks;
+    const range = maxY - minY;
+
+    const hasYLabel = Boolean(chartData.yAxis?.label);
+    const hasXLabel = Boolean(chartData.xAxis?.label);
+    const padding = {
+      top: 65,
+      right: 40,
+      bottom: hasXLabel ? 72 : 55,
+      left: hasYLabel ? 82 : 65,
+    };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
 
     // Helper scales
     const scaleX = (index: number) => padding.left + (index + 0.5) * (chartW / xCategories.length);
@@ -85,28 +97,38 @@ export class D3ChartRenderer {
     let svgElements = '';
 
     // Title & Subtitle Header
-    svgElements += `<text x="${padding.left}" y="32" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    svgElements += `<text x="${padding.left}" y="30" font-size="18" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
     if (chartData.subtitle) {
-      svgElements += `<text x="${padding.left}" y="52" font-size="13" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+      svgElements += `<text x="${padding.left}" y="48" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
     }
 
-    // Y Grid lines & Labels (5 ticks)
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const tickVal = minY + (i / ticks) * (maxY - minY);
+    // Y Axis Label
+    if (chartData.yAxis.label) {
+      svgElements += `<text transform="rotate(-90)" x="${-(padding.top + chartH / 2)}" y="${22}" text-anchor="middle" font-size="11" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.yAxis.label)}</text>`;
+    }
+
+    // Y Grid lines & Labels
+    for (const tickVal of ticksList) {
       const y = scaleY(tickVal);
       svgElements += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="${gridColor}" stroke-dasharray="3,3" />`;
-      const formattedVal = chartData.yAxis.format
-        ? `${chartData.yAxis.format}${tickVal.toFixed(0)}`
-        : tickVal.toFixed(0);
-      svgElements += `<text x="${padding.left - 12}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${formattedVal}</text>`;
+      const numStr = formatChartValue(tickVal, range);
+      const formattedVal = chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr;
+      svgElements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${formattedVal}</text>`;
     }
 
     // X Axis ticks & Labels
     xCategories.forEach((cat, idx) => {
       const x = scaleX(idx);
-      svgElements += `<text x="${x}" y="${padding.top + chartH + 24}" text-anchor="middle" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(cat)}</text>`;
+      svgElements += `<text x="${x}" y="${padding.top + chartH + 20}" text-anchor="middle" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(cat)}</text>`;
     });
+
+    // X Axis Title
+    if (chartData.xAxis.label) {
+      svgElements += `<text x="${padding.left + chartW / 2}" y="${padding.top + chartH + 46}" text-anchor="middle" font-size="12" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.xAxis.label)}</text>`;
+    }
+
+    // Baseline axis line
+    svgElements += `<line x1="${padding.left}" y1="${padding.top + chartH}" x2="${width - padding.right}" y2="${padding.top + chartH}" stroke="${subtextColor}" stroke-opacity="0.3" stroke-width="1.5" />`;
 
     // Render chart type specific data elements
     if (chartData.chartType === 'line' || chartData.chartType === 'area') {
@@ -163,11 +185,26 @@ export class D3ChartRenderer {
       });
     } else if (chartData.chartType === 'scatter') {
       series.forEach((s) => {
+        // Trendline / guide curve
+        const points = chartData.values.map((v, idx) => {
+          const val = Number(v[s.key] ?? 0);
+          return `${scaleX(idx)},${scaleY(val)}`;
+        });
+        svgElements += `<polyline points="${points.join(' ')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-dasharray="4,4" opacity="0.45" />`;
+
         chartData.values.forEach((v, idx) => {
           const val = Number(v[s.key] ?? 0);
           const cx = scaleX(idx);
           const cy = scaleY(val);
-          svgElements += `<circle cx="${cx}" cy="${cy}" r="6" fill="${s.color}" fill-opacity="0.8" stroke="#ffffff" stroke-width="1.5" />`;
+
+          // Subtle glow ring
+          svgElements += `<circle cx="${cx}" cy="${cy}" r="12" fill="${s.color}" fill-opacity="0.16" />`;
+          // Main core point
+          svgElements += `<circle cx="${cx}" cy="${cy}" r="6" fill="${s.color}" stroke="#ffffff" stroke-width="2" />`;
+
+          // Value callout badge text above point
+          const valText = formatChartValue(val, range);
+          svgElements += `<text x="${cx}" y="${cy - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="${s.color}" font-family="system-ui, -apple-system, sans-serif">${valText}</text>`;
         });
       });
     }
@@ -694,4 +731,45 @@ function escapeXml(unsafe?: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+function getNiceTicks(
+  min: number,
+  max: number,
+  count = 5
+): { ticks: number[]; step: number; min: number; max: number } {
+  const range = max - min;
+  if (range <= 0) return { ticks: [min], step: 1, min, max: min + 1 };
+  const roughStep = range / count;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const normalizedStep = roughStep / magnitude;
+
+  let niceStep = 1;
+  if (normalizedStep < 1.5) niceStep = 1;
+  else if (normalizedStep < 3) niceStep = 2;
+  else if (normalizedStep < 7) niceStep = 5;
+  else niceStep = 10;
+
+  const step = Number((niceStep * magnitude).toFixed(8));
+  const start = Number((Math.floor(min / step) * step).toFixed(8));
+  const end = Number((Math.ceil(max / step) * step).toFixed(8));
+
+  const ticks: number[] = [];
+  for (let val = start; val <= end + step * 0.001; val += step) {
+    ticks.push(Number(val.toFixed(8)));
+  }
+  return { ticks, step, min: start, max: end };
+}
+
+function formatChartValue(val: number, range: number): string {
+  if (Math.abs(val) < 1e-9) return '0';
+  if (range <= 0.05) return val.toFixed(3);
+  if (range <= 0.5) return val.toFixed(2);
+  if (range <= 5) {
+    const formatted = val.toFixed(2).replace(/\.?0+$/, '');
+    return formatted === '' ? '0' : formatted;
+  }
+  if (range >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+  if (range >= 10000) return `${(val / 1000).toFixed(0)}k`;
+  return val % 1 === 0 ? val.toFixed(0) : val.toFixed(1);
 }

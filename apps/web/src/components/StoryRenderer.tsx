@@ -195,11 +195,23 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     }
 
     case 'chart': {
-      const svg = D3ChartRenderer.renderToSvg(block.data, { theme, width: 800, height: 420 });
+      const svg = D3ChartRenderer.renderToSvg(block.data, { theme, width: 800, height: 440 });
       return (
-        <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3">
-          <div dangerouslySetInnerHTML={{ __html: svg }} />
-        </div>
+        <figure className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all hover:shadow-md">
+          <div className="p-3 sm:p-4">
+            <div dangerouslySetInnerHTML={{ __html: svg }} />
+          </div>
+          {(block.data.subtitle || block.data.sourceAttribution) && (
+            <figcaption className="px-5 py-2.5 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap justify-between items-center gap-2">
+              <span>{block.data.subtitle || block.data.title}</span>
+              {block.data.sourceAttribution && (
+                <span className="font-mono text-[11px]">
+                  Source: {block.data.sourceAttribution}
+                </span>
+              )}
+            </figcaption>
+          )}
+        </figure>
       );
     }
 
