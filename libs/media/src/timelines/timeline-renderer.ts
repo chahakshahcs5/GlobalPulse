@@ -74,15 +74,18 @@ export class TimelineRenderer {
     if (layout === 'horizontal') {
       const lineY = 82;
       const count = items.length;
-      const startX = count <= 2 ? 200 : count === 3 ? 140 : 100;
+      const startX = count <= 2 ? 160 : count === 3 ? 120 : 80;
       const endX = width - startX;
       const stepX = count > 1 ? (endX - startX) / (count - 1) : 0;
-      const cardWidth = count <= 2 ? 260 : count === 3 ? 200 : 160;
-      const maxHeadlineChars = count <= 2 ? 32 : count === 3 ? 24 : 18;
-      const maxBodyChars = count <= 2 ? 38 : count === 3 ? 28 : 22;
+      const cardWidth = count <= 2 ? 300 : count === 3 ? 230 : 180;
+      const maxHeadlineChars = count <= 2 ? 40 : count === 3 ? 30 : 22;
+      const maxBodyChars = count <= 2 ? 46 : count === 3 ? 35 : 26;
 
       // Base Track Line
       elements += `<line x1="${startX}" y1="${lineY}" x2="${endX}" y2="${lineY}" stroke="${trackColor}" stroke-width="4" stroke-linecap="round" />`;
+
+      const cardH = 110;
+      const cardTopY = lineY + 16;
 
       items.forEach((item, idx) => {
         const cx = count === 1 ? width / 2 : startX + idx * stepX;
@@ -102,8 +105,6 @@ export class TimelineRenderer {
         `;
 
         // Milestone card below track
-        const cardH = 92;
-        const cardTopY = lineY + 16;
         const cardBox = `
           <rect x="${cx - cardWidth / 2}" y="${cardTopY}" width="${cardWidth}" height="${cardH}" rx="10" fill="${cardBg}" stroke="${cardBorder}" stroke-width="1" />
         `;
@@ -143,7 +144,7 @@ export class TimelineRenderer {
         `;
       });
 
-      const effectiveHeight = 210;
+      const effectiveHeight = cardTopY + cardH + 16;
 
       return `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${effectiveHeight}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(data.title || 'Timeline')}">
