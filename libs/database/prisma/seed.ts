@@ -1598,7 +1598,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
             blockType: 'audio',
             sortOrder: 1,
             data: {
-              url: 'https://news.platform/audio/dispatches/quantum-topological-qubits-briefing.mp3',
+              url: '/audio/quantum-topological-qubits-briefing.mp3',
               title: 'GlobalPulse Deep Dive: Inside the Majorana Topological Qubit Breakthrough',
               narrator: 'Elena Rostova & David Chen',
               durationSeconds: 245,
