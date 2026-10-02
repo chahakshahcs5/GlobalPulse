@@ -446,25 +446,53 @@ export function useStoryReactions(storyId: string) {
   const [summary, setSummary] = useState<{
     counts: Record<string, number>;
     userReactions: string[];
-  }>({
-    counts: { like: 0, insightful: 0, important: 0, heart: 0 },
-    userReactions: [],
+  }>(() => {
+    if (typeof window !== 'undefined' && storyId) {
+      try {
+        const cached = localStorage.getItem(`globalpulse_reactions_${storyId}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.counts && Array.isArray(parsed?.userReactions)) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return {
+      counts: { like: 0, insightful: 0, important: 0, heart: 0 },
+      userReactions: [],
+    };
   });
+
+  const lastLocalToggleRef = useRef<number>(0);
+
+  const saveToCache = useCallback(
+    (data: { counts: Record<string, number>; userReactions: string[] }) => {
+      if (typeof window !== 'undefined' && storyId) {
+        try {
+          localStorage.setItem(`globalpulse_reactions_${storyId}`, JSON.stringify(data));
+        } catch {}
+      }
+    },
+    [storyId]
+  );
 
   const fetchReactions = useCallback(async () => {
     if (!storyId) return;
     try {
       const data = await api.getStoryReactions(storyId);
       if (data) {
-        setSummary({
+        const newSummary = {
           counts: data.counts || { like: 0, insightful: 0, important: 0, heart: 0 },
           userReactions: data.userReactions || [],
-        });
+        };
+        setSummary(newSummary);
+        saveToCache(newSummary);
       }
     } catch {
       // Fallback
     }
-  }, [storyId]);
+  }, [storyId, saveToCache]);
 
   useEffect(() => {
     fetchReactions();
@@ -474,6 +502,10 @@ export function useStoryReactions(storyId: string) {
         event.type === 'reaction.updated' &&
         (event.data as Record<string, unknown> | undefined)?.storyId === storyId
       ) {
+        // Skip redundant refetch if current user just toggled locally to avoid flickering
+        if (Date.now() - lastLocalToggleRef.current < 2000) {
+          return;
+        }
         fetchReactions();
       }
     });
@@ -482,6 +514,31 @@ export function useStoryReactions(storyId: string) {
   }, [fetchReactions, storyId]);
 
   const toggleReaction = async (reactionType: string) => {
+    lastLocalToggleRef.current = Date.now();
+
+    // 1. OPTIMISTIC UPDATE: update local state instantly without waiting for API round-trip
+    setSummary((prev) => {
+      const hasReacted = prev.userReactions.includes(reactionType);
+      const nextUserReactions = hasReacted
+        ? prev.userReactions.filter((r) => r !== reactionType)
+        : [...prev.userReactions, reactionType];
+
+      const currentCount = prev.counts[reactionType] || 0;
+      const nextCount = hasReacted ? Math.max(0, currentCount - 1) : currentCount + 1;
+
+      const nextSummary = {
+        counts: {
+          ...prev.counts,
+          [reactionType]: nextCount,
+        },
+        userReactions: nextUserReactions,
+      };
+
+      saveToCache(nextSummary);
+      return nextSummary;
+    });
+
+    // 2. Network sync in background
     try {
       const res = await api.toggleStoryReaction(storyId, reactionType);
       if (res?.summary) {
@@ -489,9 +546,15 @@ export function useStoryReactions(storyId: string) {
           counts: res.summary.counts,
           userReactions: res.summary.userReactions,
         });
+        saveToCache({
+          counts: res.summary.counts,
+          userReactions: res.summary.userReactions,
+        });
       }
     } catch (err) {
       console.error('Failed to toggle reaction:', err);
+      // Revert to server state on error
+      fetchReactions();
     }
   };
 

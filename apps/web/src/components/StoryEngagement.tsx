@@ -245,16 +245,24 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
               <button
                 key={cfg.type}
                 onClick={() => toggleReaction(cfg.type)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 cursor-pointer select-none active:scale-90 ${
                   hasReacted
-                    ? `${cfg.color} shadow-xs font-bold scale-105`
-                    : 'text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+                    ? `${cfg.color} shadow-xs font-bold scale-105 ring-2 ring-blue-500/20`
+                    : 'text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750'
                 }`}
                 title={`React with ${cfg.label}`}
               >
-                <Icon className={`w-3.5 h-3.5 ${hasReacted ? 'fill-current' : ''}`} />
+                <Icon
+                  className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                    hasReacted ? 'fill-current scale-110' : ''
+                  }`}
+                />
                 <span>{cfg.label}</span>
-                {count > 0 && <span className="font-mono text-[11px] opacity-80">({count})</span>}
+                {count > 0 && (
+                  <span className="font-mono text-[11px] font-bold opacity-90 transition-opacity">
+                    ({count})
+                  </span>
+                )}
               </button>
             );
           })}
@@ -264,7 +272,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
         <div className="flex items-center gap-2">
           <button
             onClick={handleBookmark}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer select-none active:scale-95 ${
               isBookmarked
                 ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                 : 'text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -276,7 +284,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
 
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer select-none active:scale-95"
           >
             {copied ? (
               <>
@@ -299,7 +307,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveEngagementTab('comments')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer select-none active:scale-95 ${
                 activeEngagementTab === 'comments'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -320,7 +328,7 @@ export const StoryEngagement: React.FC<StoryEngagementProps> = ({ storyId, story
 
             <button
               onClick={() => setActiveEngagementTab('perspectives')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer select-none active:scale-95 ${
                 activeEngagementTab === 'perspectives'
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
