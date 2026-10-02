@@ -52,8 +52,8 @@ export class TimelineRenderer {
 
     if (layout === 'horizontal') {
       const lineY = 80;
-      const startX = 60;
-      const endX = width - 60;
+      const startX = items.length <= 2 ? 150 : items.length === 3 ? 125 : 95;
+      const endX = width - startX;
       const stepX = items.length > 1 ? (endX - startX) / (items.length - 1) : 0;
 
       // Base Track Line
@@ -61,6 +61,10 @@ export class TimelineRenderer {
 
       items.forEach((item, idx) => {
         const cx = items.length === 1 ? width / 2 : startX + idx * stepX;
+        const displayHeadline =
+          item.headline.length > 30 ? `${item.headline.slice(0, 28)}…` : item.headline;
+        const displaySnippet = item.body.length > 30 ? `${item.body.slice(0, 28)}...` : item.body;
+
         // Node circle
         elements += `
           <circle cx="${cx}" cy="${lineY}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
@@ -69,9 +73,9 @@ export class TimelineRenderer {
           <rect x="${cx - 45}" y="${lineY - 40}" width="90" height="24" rx="12" fill="${isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)'}" />
           <text x="${cx}" y="${lineY - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="${activeColor}" font-family="system-ui, sans-serif">${escapeXml(item.date)}</text>
           <!-- Headline -->
-          <text x="${cx}" y="${lineY + 36}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(item.headline)}</text>
+          <text x="${cx}" y="${lineY + 36}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(displayHeadline)}</text>
           <!-- Body snippet -->
-          <text x="${cx}" y="${lineY + 54}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(item.body.slice(0, 35))}${item.body.length > 35 ? '...' : ''}</text>
+          <text x="${cx}" y="${lineY + 54}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(displaySnippet)}</text>
         `;
       });
     } else {
