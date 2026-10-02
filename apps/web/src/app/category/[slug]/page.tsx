@@ -198,7 +198,7 @@ export default function CategoryPage() {
       {subCategories.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs">
           <span className="text-slate-400 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1 shrink-0">
-            <Filter className="w-3 h-3 text-blue-500" /> Desks:
+            <Filter className="w-3 h-3 text-blue-500" /> Desks (Sub-sections):
           </span>
           <button
             onClick={() => setSelectedSub(null)}
@@ -221,7 +221,7 @@ export default function CategoryPage() {
                     ? 'bg-blue-600 text-white shadow-xs font-bold'
                     : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60'
                 }`}
-                title={`Filter dispatches by ${sub}`}
+                title={`Filter stories by ${sub}`}
               >
                 {sub}
               </button>
@@ -256,10 +256,10 @@ export default function CategoryPage() {
             <div className="p-10 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
               <Filter className="w-8 h-8 mx-auto text-blue-500/70" />
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                No Dispatches Found in the &ldquo;{selectedSub}&rdquo; Desk
+                No Stories Found in the &ldquo;{selectedSub}&rdquo; Desk
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                No published dispatches currently match the {selectedSub} desk in {categoryName}.
+                No published stories currently match the {selectedSub} desk in {categoryName}.
               </p>
               <div className="pt-2">
                 <button
@@ -277,7 +277,7 @@ export default function CategoryPage() {
             <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
               <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                No Dispatches in {categoryName}
+                No Stories in {categoryName}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 There are currently no published stories categorized under {categoryName}. Check

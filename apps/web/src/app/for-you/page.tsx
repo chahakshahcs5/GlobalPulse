@@ -199,12 +199,12 @@ export default function ForYouPage() {
               <Sparkles className="w-3.5 h-3.5" /> Transparent Algorithmic Feed
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
-              {stories.length} Dispatches Tailored
+              {stories.length} Stories Tailored
             </span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            For You: Explainable Dispatches
+            For You: Personalized Stories
           </h1>
 
           <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed">
@@ -241,7 +241,7 @@ export default function ForYouPage() {
         <div className="flex items-center gap-2 overflow-x-auto">
           {(
             [
-              { id: 'all', label: 'All Dispatches' },
+              { id: 'all', label: 'All Stories' },
               { id: 'quick', label: 'Quick (≤3m)' },
               { id: 'balanced', label: 'Standard (3-5m)' },
               { id: 'deep_dive', label: 'Deep Dive (5m+)' },
@@ -407,17 +407,17 @@ export default function ForYouPage() {
             <Sparkles className="w-6 h-6" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            No Dispatches Match This Filter
+            No Stories Match This Filter
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
             We couldn't find any recommendations matching this reading depth. Try switching to
-            &quot;All Dispatches&quot; or tuning your algorithm preferences.
+            &quot;All Stories&quot; or tuning your algorithm preferences.
           </p>
           <button
             onClick={() => setSelectedDepth('all')}
             className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
           >
-            Show All Dispatches
+            Show All Stories
           </button>
         </div>
       )}

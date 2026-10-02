@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Compass,
@@ -131,6 +131,11 @@ export default function ExploreHubPage() {
     );
   });
 
+  // Total Desks (Editorial Sub-sections) count across categories
+  const totalDesksCount = useMemo(() => {
+    return filteredCategories.reduce((acc, c) => acc + (c.subCategories?.length || 0), 0);
+  }, [filteredCategories]);
+
   // Filter Topics
   const filteredTopics = topics.filter((t) => {
     const matchesCategory =
@@ -245,20 +250,25 @@ export default function ExploreHubPage() {
       {/* SECTION 1: NEWS CATEGORIES */}
       {(activeTab === 'all' || activeTab === 'categories') && (
         <section className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div className="space-y-1">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-blue-600" />
-                <span>Categories ({filteredCategories.length})</span>
-              </h2>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-blue-600" />
+                  <span>Categories ({filteredCategories.length})</span>
+                </h2>
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                  <span>{totalDesksCount} Editorial Desks</span>
+                </span>
+              </div>
               <p className="text-xs sm:text-sm text-slate-500">
-                Core news verticals and editorial bureaus loaded dynamically from the newsroom
-                database.
+                Core news categories and specialized editorial desks (sub-sections) covering global
+                affairs.
               </p>
             </div>
             <Link
               href="/categories"
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0"
             >
               <span>View Categories Directory</span>
               <span>→</span>
@@ -268,6 +278,7 @@ export default function ExploreHubPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCategories.map((cat) => {
               const isFollowed = followedCategories.includes(cat.name);
+              const deskCount = cat.subCategories?.length || 0;
               return (
                 <div
                   key={cat.id || cat.slug}
@@ -275,9 +286,16 @@ export default function ExploreHubPage() {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xl px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
-                        {cat.icon || '📁'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+                          {cat.icon || '📁'}
+                        </span>
+                        {deskCount > 0 && (
+                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">
+                            {deskCount} {deskCount === 1 ? 'Desk' : 'Desks'}
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => toggleFollowCategory(cat.name)}
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
@@ -310,30 +328,55 @@ export default function ExploreHubPage() {
                     </Link>
 
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
-                      {cat.description || 'Verified news bureau dispatches and breaking reporting.'}
+                      {cat.description || 'Verified news reporting and curated editorial stories.'}
                     </p>
 
                     {cat.subCategories && cat.subCategories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {(cat.subCategories as string[]).slice(0, 3).map((sub: string) => (
-                          <span
-                            key={sub}
-                            className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium"
-                          >
-                            {sub}
-                          </span>
-                        ))}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                          {cat.subCategories.length} Editorial{' '}
+                          {cat.subCategories.length === 1 ? 'Desk' : 'Desks'}:
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {(cat.subCategories as string[]).slice(0, 3).map((sub: string) => (
+                            <span
+                              key={sub}
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium"
+                            >
+                              {sub}
+                            </span>
+                          ))}
+                          {cat.subCategories.length > 3 && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full text-slate-400 font-medium">
+                              +{cat.subCategories.length - 3} more
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-400 text-[11px]">
-                      {cat.storyCount ? `${cat.storyCount} dispatches` : 'Live bureau'}
-                    </span>
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-medium font-mono">
+                      {deskCount > 0 && (
+                        <span>
+                          <strong className="text-slate-700 dark:text-slate-300">
+                            {deskCount}
+                          </strong>{' '}
+                          {deskCount === 1 ? 'desk' : 'desks'}
+                        </span>
+                      )}
+                      {deskCount > 0 && <span>•</span>}
+                      <span>
+                        <strong className="text-slate-700 dark:text-slate-300">
+                          {cat.storyCount || 0}
+                        </strong>{' '}
+                        {cat.storyCount === 1 ? 'story' : 'stories'}
+                      </span>
+                    </div>
                     <Link
                       href={`/category/${cat.slug}`}
-                      className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline"
+                      className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline cursor-pointer"
                     >
                       <span>Browse Stories</span>
                       <ArrowRight className="w-3 h-3" />
@@ -579,7 +622,7 @@ export default function ExploreHubPage() {
             <span>Independent Verification Desk</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-            Explore All Fact-Checked Dispatches & Debunks
+            Explore All Fact-Checked Claims & Debunks
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl">
             Audit our full ledger of evaluated claims, scientific verifications, and viral social

@@ -251,10 +251,16 @@ export default function CategoriesDirectoryPage() {
       {/* Categories Grid */}
       {!isLoading && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
-              Primary Newsroom Categories ({filteredCategories.length})
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
+                Primary Newsroom Categories ({filteredCategories.length})
+              </h2>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+                {filteredCategories.reduce((acc, c) => acc + (c.subCategories?.length || 0), 0)}{' '}
+                Total Editorial Desks
+              </span>
+            </div>
             <span className="text-xs font-mono text-slate-400">
               {followedCategories.length} Categories Followed
             </span>
@@ -265,6 +271,7 @@ export default function CategoriesDirectoryPage() {
               const code = cat.code || cat.slug;
               const count = cat.storyCount ?? getStoryCount(code, cat.slug);
               const isFollowed = followedCategories.includes(cat.name);
+              const deskCount = cat.subCategories?.length || 0;
               return (
                 <div
                   key={cat.id || cat.slug}
@@ -272,9 +279,16 @@ export default function CategoriesDirectoryPage() {
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
-                        {cat.icon || '📁'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+                          {cat.icon || '📁'}
+                        </span>
+                        {deskCount > 0 && (
+                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">
+                            {deskCount} {deskCount === 1 ? 'Desk' : 'Desks'}
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => toggleFollow(cat.name)}
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
@@ -310,11 +324,11 @@ export default function CategoriesDirectoryPage() {
                       </p>
                     </div>
 
-                    {/* Subcategories */}
+                    {/* Subcategories / Desks */}
                     {cat.subCategories && cat.subCategories.length > 0 && (
                       <div className="space-y-1.5 pt-2">
                         <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                          Specialized Subcategories
+                          {cat.subCategories.length} Editorial Desks (Sub-sections)
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {cat.subCategories.map((sub) => (
@@ -332,9 +346,21 @@ export default function CategoriesDirectoryPage() {
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-400 text-[11px]">
-                      {count ? `${count} Active Dispatches` : 'Continuous Bureau Feed'}
-                    </span>
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-medium font-mono">
+                      {deskCount > 0 && (
+                        <span>
+                          <strong className="text-slate-700 dark:text-slate-300">
+                            {deskCount}
+                          </strong>{' '}
+                          {deskCount === 1 ? 'desk' : 'desks'}
+                        </span>
+                      )}
+                      {deskCount > 0 && <span>•</span>}
+                      <span>
+                        <strong className="text-slate-700 dark:text-slate-300">{count || 0}</strong>{' '}
+                        {count === 1 ? 'story' : 'stories'}
+                      </span>
+                    </div>
                     <Link
                       href={`/category/${cat.slug}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline font-bold transition flex items-center gap-1"
