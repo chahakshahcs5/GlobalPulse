@@ -220,22 +220,24 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
     case 'statistic': {
       const { value, label, trend, trendValue, context } = block.data;
       return (
-        <div className="my-6 p-6 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="my-6 p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {label}
             </span>
-            <div className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight mt-1">
+            <div className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {value}
             </div>
-            {context && <p className="text-xs text-slate-400 mt-1">{context}</p>}
+            {context && (
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{context}</p>
+            )}
           </div>
           {trend && (
             <div
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 self-start sm:self-center ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 self-start sm:self-center border ${
                 trend === 'up'
-                  ? 'bg-emerald-500/10 text-emerald-400'
-                  : 'bg-rose-500/10 text-rose-400'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
+                  : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'
               }`}
             >
               <span>{trend === 'up' ? '↑' : '↓'}</span>
@@ -248,10 +250,12 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
 
     case 'callout': {
       const stylesMap: Record<string, string> = {
-        info: 'border-blue-500/30 bg-blue-950/20 text-blue-200',
-        warning: 'border-amber-500/30 bg-amber-950/20 text-amber-200',
-        tip: 'border-emerald-500/30 bg-emerald-950/20 text-emerald-200',
-        critical: 'border-rose-500/30 bg-rose-950/20 text-rose-200',
+        info: 'border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200',
+        warning:
+          'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200',
+        tip: 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200',
+        critical:
+          'border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-200',
       };
       const styles = stylesMap[block.data.style] || stylesMap.info;
 
@@ -269,11 +273,11 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
           <img
             src={block.data.url}
             alt={block.data.altText}
-            className="w-full rounded-xl object-cover border border-slate-800 max-h-[500px]"
+            className="w-full rounded-xl object-cover border border-slate-200 dark:border-slate-800 max-h-[500px]"
             loading="lazy"
           />
           {(block.data.caption || block.data.credit) && (
-            <figcaption className="text-xs text-slate-400 mt-2 flex justify-between px-1">
+            <figcaption className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex justify-between px-1">
               <span>{block.data.caption}</span>
               {block.data.credit && <span className="font-mono">Credit: {block.data.credit}</span>}
             </figcaption>
@@ -340,26 +344,30 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
 
     case 'citation': {
       return (
-        <div className="my-3 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/30 text-xs text-slate-400 flex items-center justify-between">
+        <div className="my-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-300">Verified Claim:</span>
-            <span>"{block.data.claim}"</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-300">
+              Verified Claim:
+            </span>
+            <span className="text-slate-700 dark:text-slate-300">"{block.data.claim}"</span>
           </div>
-          <span className="font-mono text-indigo-400">Sources: {block.data.sourceIds.length}</span>
+          <span className="font-mono text-indigo-600 dark:text-indigo-400">
+            Sources: {block.data.sourceIds.length}
+          </span>
         </div>
       );
     }
 
     case 'table': {
       return (
-        <div className="my-6 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
+        <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm">
           {block.data.title && (
-            <div className="p-3 font-bold text-sm text-slate-200 border-b border-slate-800">
+            <div className="p-3 font-bold text-sm text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800">
               {block.data.title}
             </div>
           )}
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-800/60 text-slate-200 font-semibold border-b border-slate-700">
+          <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 {block.data.headers.map((h: string, i: number) => (
                   <th key={i} className="px-4 py-3">
@@ -368,9 +376,12 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {block.data.rows.map((row: string[], rIdx: number) => (
-                <tr key={rIdx} className="hover:bg-slate-800/30">
+                <tr
+                  key={rIdx}
+                  className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                >
                   {row.map((cell: string, cIdx: number) => (
                     <td key={cIdx} className="px-4 py-2.5">
                       {cell}
@@ -381,7 +392,7 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
             </tbody>
           </table>
           {block.data.footer && (
-            <div className="p-2.5 border-t border-slate-800 text-xs text-slate-500 italic text-right">
+            <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 italic text-right">
               {block.data.footer}
             </div>
           )}
@@ -397,12 +408,14 @@ const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({ b
 const GalleryBlockView: React.FC<{ data: GalleryBlock['data'] }> = ({ data }) => {
   return (
     <div className="my-8">
-      {data.title && <h4 className="text-xl font-bold text-slate-100 mb-4">{data.title}</h4>}
+      {data.title && (
+        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{data.title}</h4>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.images.map((img, idx) => (
           <figure
             key={idx}
-            className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900/40 hover:border-indigo-500/50 transition-all"
+            className="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 hover:border-indigo-500/50 transition-all shadow-sm"
           >
             <img
               src={img.url}
@@ -411,7 +424,7 @@ const GalleryBlockView: React.FC<{ data: GalleryBlock['data'] }> = ({ data }) =>
               loading="lazy"
             />
             {(img.caption || img.credit) && (
-              <figcaption className="p-3 text-xs bg-slate-900/90 text-slate-300 border-t border-slate-800/60">
+              <figcaption className="p-3 text-xs bg-slate-50/95 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800/60">
                 {img.caption && <div className="line-clamp-2">{img.caption}</div>}
                 {img.credit && (
                   <div className="text-slate-500 font-mono mt-1">Credit: {img.credit}</div>
@@ -430,27 +443,27 @@ const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) => {
     switch (status) {
       case 'completed':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/20">
             COMPLETED
           </span>
         );
       case 'active':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 dark:bg-blue-500/10 text-blue-800 dark:text-blue-400 border border-blue-300 dark:border-blue-500/20 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-ping" />
             IN PROGRESS
           </span>
         );
       case 'blocked':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border border-rose-300 dark:border-rose-500/20">
             BLOCKED
           </span>
         );
       case 'pending':
       default:
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-300 dark:border-slate-500/20">
             PENDING
           </span>
         );
@@ -458,19 +471,23 @@ const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) => {
   };
 
   return (
-    <div className="my-8 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-      {data.title && <h4 className="text-xl font-bold text-slate-100 mb-6">{data.title}</h4>}
-      <div className="relative pl-6 border-l-2 border-slate-700/60 space-y-6">
+    <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm">
+      {data.title && (
+        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">{data.title}</h4>
+      )}
+      <div className="relative pl-6 border-l-2 border-slate-300 dark:border-slate-700/60 space-y-6">
         {data.steps.map((s, idx) => (
           <div key={idx} className="relative">
-            <div className="absolute -left-[31px] top-0.5 w-6 h-6 rounded-full bg-slate-800 border-2 border-indigo-500 text-indigo-400 font-bold text-xs flex items-center justify-center">
+            <div className="absolute -left-[31px] top-0.5 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold text-xs flex items-center justify-center shadow-xs">
               {s.stepNumber}
             </div>
             <div className="flex items-center gap-3 mb-1">
-              <h5 className="font-bold text-base text-slate-100">{s.title}</h5>
+              <h5 className="font-bold text-base text-slate-900 dark:text-slate-100">{s.title}</h5>
               {statusBadge(s.status)}
             </div>
-            <p className="text-sm text-slate-300 leading-relaxed">{s.description}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              {s.description}
+            </p>
           </div>
         ))}
       </div>
@@ -651,30 +668,30 @@ const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({ data }
   if (!slide) return null;
 
   return (
-    <div className="my-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-md shadow-xl">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+    <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 backdrop-blur-md shadow-md">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             Interactive Slide Deck
           </span>
-          <h4 className="text-xl font-bold text-slate-100">{data.title}</h4>
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h4>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
             disabled={currentSlide === 0}
-            className="p-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition-colors"
+            className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-slate-300 transition-colors"
             aria-label="Previous slide"
           >
             ‹
           </button>
-          <span className="text-xs font-mono font-medium text-slate-400 px-1">
+          <span className="text-xs font-mono font-medium text-slate-600 dark:text-slate-400 px-1">
             {currentSlide + 1} / {data.slides.length}
           </span>
           <button
             onClick={() => setCurrentSlide((prev) => Math.min(data.slides.length - 1, prev + 1))}
             disabled={currentSlide === data.slides.length - 1}
-            className="p-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition-colors"
+            className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-slate-300 transition-colors"
             aria-label="Next slide"
           >
             ›
@@ -685,24 +702,31 @@ const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({ data }
         <img
           src={slide.imageUrl}
           alt={slide.title}
-          className="w-full h-56 sm:h-72 object-cover rounded-lg mb-4 border border-slate-800"
+          className="w-full h-56 sm:h-72 object-cover rounded-lg mb-4 border border-slate-200 dark:border-slate-800"
           loading="lazy"
         />
       )}
-      <h5 className="text-lg font-bold text-slate-100 mb-2">{slide.title}</h5>
-      {slide.body && <p className="text-slate-300 text-sm leading-relaxed mb-3">{slide.body}</p>}
+      <h5 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">{slide.title}</h5>
+      {slide.body && (
+        <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-3">
+          {slide.body}
+        </p>
+      )}
       {slide.bullets && slide.bullets.length > 0 && (
         <ul className="space-y-1.5 mb-4">
           {slide.bullets.map((b, idx) => (
-            <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
-              <span className="text-indigo-400 font-bold">•</span>
+            <li
+              key={idx}
+              className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+            >
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold">•</span>
               <span>{b}</span>
             </li>
           ))}
         </ul>
       )}
       {slide.sourceAttribution && (
-        <div className="text-xs text-slate-500 italic mt-3 pt-3 border-t border-slate-800/60">
+        <div className="text-xs text-slate-500 italic mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60">
           Source: {slide.sourceAttribution}
         </div>
       )}
@@ -712,30 +736,38 @@ const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({ data }
 
 const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = ({ data }) => {
   return (
-    <div className="my-8 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-      {data.title && <h4 className="text-xl font-bold text-slate-100 mb-5">{data.title}</h4>}
+    <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-6 shadow-sm">
+      {data.title && (
+        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-5">{data.title}</h4>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-blue-500/20 bg-blue-950/10 p-5">
-          <h5 className="font-bold text-base text-blue-400 border-b border-blue-500/20 pb-2 mb-3">
+        <div className="rounded-xl border border-blue-200 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-950/10 p-5">
+          <h5 className="font-bold text-base text-blue-700 dark:text-blue-400 border-b border-blue-200 dark:border-blue-500/20 pb-2 mb-3">
             {data.subjectA.name}
           </h5>
           <ul className="space-y-2">
             {data.subjectA.points.map((pt, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
-                <span className="text-blue-400 font-bold mt-0.5">•</span>
+              <li
+                key={idx}
+                className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+              >
+                <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">•</span>
                 <span>{pt}</span>
               </li>
             ))}
           </ul>
         </div>
-        <div className="rounded-xl border border-purple-500/20 bg-purple-950/10 p-5">
-          <h5 className="font-bold text-base text-purple-400 border-b border-purple-500/20 pb-2 mb-3">
+        <div className="rounded-xl border border-purple-200 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-950/10 p-5">
+          <h5 className="font-bold text-base text-purple-700 dark:text-purple-400 border-b border-purple-200 dark:border-purple-500/20 pb-2 mb-3">
             {data.subjectB.name}
           </h5>
           <ul className="space-y-2">
             {data.subjectB.points.map((pt, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
-                <span className="text-purple-400 font-bold mt-0.5">•</span>
+              <li
+                key={idx}
+                className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+              >
+                <span className="text-purple-600 dark:text-purple-400 font-bold mt-0.5">•</span>
                 <span>{pt}</span>
               </li>
             ))}
@@ -753,12 +785,12 @@ const SourceBlockView: React.FC<{ data: SourceBlock['data'] }> = ({ data }) => {
     .replace(/(^-|-$)/g, '');
 
   return (
-    <div className="my-4 p-4 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+    <div className="my-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-colors">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Link
             href={`/sources/${pubSlug}`}
-            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 hover:text-white hover:bg-indigo-600/30 border border-indigo-500/20 transition-colors"
+            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-indigo-700 dark:text-indigo-400 hover:text-white hover:bg-indigo-600/80 border border-slate-200 dark:border-indigo-500/20 transition-colors"
             title={`View all coverage & sources from ${data.publisher}`}
           >
             {data.publisher}
@@ -769,13 +801,13 @@ const SourceBlockView: React.FC<{ data: SourceBlock['data'] }> = ({ data }) => {
             </span>
           )}
         </div>
-        <h5 className="font-semibold text-sm text-slate-100">{data.title}</h5>
+        <h5 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{data.title}</h5>
       </div>
       <a
         href={data.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="self-start sm:self-center px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
+        className="self-start sm:self-center px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors"
       >
         <span>View Primary Source</span>
         <span className="text-slate-400">↗</span>
@@ -786,28 +818,28 @@ const SourceBlockView: React.FC<{ data: SourceBlock['data'] }> = ({ data }) => {
 
 const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
   return (
-    <div className="my-4 p-4 rounded-xl border border-slate-800 bg-slate-900/40 flex items-center justify-between gap-4">
+    <div className="my-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex items-center justify-between gap-4 shadow-sm">
       <div className="flex items-center gap-3.5">
         {data.avatarUrl ? (
           <img
             src={data.avatarUrl}
             alt={data.name}
-            className="w-12 h-12 rounded-full object-cover border border-slate-700"
+            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-lg">
+          <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
             {data.name.slice(0, 2).toUpperCase()}
           </div>
         )}
         <div>
           <div className="flex items-center gap-2">
-            <h5 className="font-bold text-base text-slate-100">{data.name}</h5>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <h5 className="font-bold text-base text-slate-900 dark:text-slate-100">{data.name}</h5>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
               {data.type}
             </span>
           </div>
           {data.description && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 max-w-xl">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2 max-w-xl">
               {data.description}
             </p>
           )}
@@ -815,7 +847,7 @@ const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
       </div>
       <Link
         href={`/entities/${data.entityId}`}
-        className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors whitespace-nowrap"
+        className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap"
       >
         Dossier →
       </Link>
@@ -825,8 +857,8 @@ const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
 
 const RelatedStoriesBlockView: React.FC<{ data: RelatedStoriesBlock['data'] }> = ({ data }) => {
   return (
-    <div className="my-8 rounded-xl border border-slate-800 bg-slate-900/30 p-5">
-      <h5 className="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3">
+    <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-5 shadow-sm">
+      <h5 className="font-bold text-sm uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
         {data.title || 'Related Coverage'}
       </h5>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -834,12 +866,12 @@ const RelatedStoriesBlockView: React.FC<{ data: RelatedStoriesBlock['data'] }> =
           <Link
             key={idx}
             href={`/stories/${sId}`}
-            className="p-3 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-indigo-500/40 hover:bg-slate-800/40 transition-all flex items-center justify-between group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all flex items-center justify-between group shadow-xs"
           >
-            <span className="text-sm font-medium text-slate-200 group-hover:text-indigo-400 transition-colors">
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               Story Dispatch: {sId}
             </span>
-            <span className="text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all text-sm">
+            <span className="text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all text-sm">
               →
             </span>
           </Link>
