@@ -97,6 +97,7 @@ function notifyStoryMutation() {
  */
 export function useAllStories() {
   const [stories, setStories] = useState<Story[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isApiConnected, setIsApiConnected] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const fetchInProgress = useRef(false);
@@ -119,6 +120,7 @@ export function useAllStories() {
     } finally {
       hasAttemptedFetch.current = true;
       fetchInProgress.current = false;
+      setIsLoading(false);
     }
   }, []);
 
@@ -158,16 +160,16 @@ export function useAllStories() {
     };
   }, [fetchStories]);
 
-  return { stories, isApiConnected, isDemoMode };
+  return { stories, isLoading, isApiConnected, isDemoMode };
 }
 
 /**
  * Fetches only published stories for the reader-facing feed.
  */
 export function usePublishedStories() {
-  const { stories, isApiConnected, isDemoMode } = useAllStories();
+  const { stories, isLoading, isApiConnected, isDemoMode } = useAllStories();
   const published = stories.filter((s) => s.status === 'PUBLISHED');
-  return { stories: published, isApiConnected, isDemoMode };
+  return { stories: published, isLoading, isApiConnected, isDemoMode };
 }
 
 // ---------------------------------------------------------------------------

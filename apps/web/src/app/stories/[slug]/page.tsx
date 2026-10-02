@@ -17,7 +17,6 @@ import {
   Copy,
   X,
   Zap,
-  Loader2,
   Play,
   Pause,
   Layers,
@@ -37,6 +36,7 @@ import { StoryEngagement } from '../../../components/StoryEngagement';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 import { PaywallBarrier } from '../../../components/PaywallBarrier';
 import { AskArticleDrawer } from '../../../components/AskArticleDrawer';
+import { StoryDetailSkeleton } from '../../../components/StorySkeletons';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../../../lib/date-utils';
 
 export default function StoryPage() {
@@ -258,14 +258,7 @@ export default function StoryPage() {
   }, [story]);
 
   if (isLoadingStory) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-4">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-        <p className="text-slate-500 text-sm font-medium">
-          Resolving dispatch and structured blocks...
-        </p>
-      </div>
-    );
+    return <StoryDetailSkeleton />;
   }
 
   if (!story) {

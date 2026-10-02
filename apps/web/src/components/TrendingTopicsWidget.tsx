@@ -64,9 +64,13 @@ export const TrendingTopicsWidget: React.FC<TrendingTopicsWidgetProps> = ({ onSe
       </div>
 
       {isLoading ? (
-        <div className="flex flex-wrap gap-1.5 animate-pulse">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-6 w-20 bg-slate-100 dark:bg-slate-800 rounded-full" />
+        <div className="flex flex-wrap gap-1.5 animate-in fade-in duration-200">
+          {[72, 88, 64, 96, 76, 84].map((width, idx) => (
+            <div
+              key={idx}
+              className="h-6.5 bg-slate-200/80 dark:bg-slate-800/80 rounded-full animate-shimmer"
+              style={{ width: `${width}px` }}
+            />
           ))}
         </div>
       ) : (

@@ -268,15 +268,29 @@ export default function ForYouPage() {
 
       {/* Loading Skeleton */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4"
+              className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 space-y-5 shadow-xs"
             >
-              <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/3" />
-              <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-3/4" />
-              <div className="h-16 bg-slate-100/60 dark:bg-slate-800/60 rounded" />
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-40 bg-slate-200/80 dark:bg-slate-800/80 rounded-full animate-shimmer" />
+                <div className="h-4 w-16 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-5 w-11/12 bg-slate-200/80 dark:bg-slate-800/80 rounded-lg animate-shimmer" />
+                <div className="h-5 w-3/4 bg-slate-200/80 dark:bg-slate-800/80 rounded-lg animate-shimmer" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3.5 w-full bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+                <div className="h-3.5 w-5/6 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+                <div className="h-3.5 w-2/3 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              </div>
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                <div className="h-4 w-32 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+                <div className="h-4 w-20 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              </div>
             </div>
           ))}
         </div>

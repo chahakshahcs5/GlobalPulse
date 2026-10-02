@@ -253,10 +253,38 @@ export const WeatherWidget: React.FC = () => {
 
   if (isLoading && !weather) {
     return (
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3 animate-pulse">
-        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/3" />
-        <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-        <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded w-full" />
+      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-4 shadow-xs space-y-3.5 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-blue-500/50" />
+            <div className="h-4 w-32 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+          </div>
+          <div className="h-4 w-14 bg-slate-200/80 dark:bg-slate-800/80 rounded-full animate-shimmer" />
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-slate-200/80 dark:bg-slate-800/80 rounded-xl animate-shimmer" />
+            <div className="space-y-1">
+              <div className="h-7 w-20 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              <div className="h-3 w-24 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+            </div>
+          </div>
+          <div className="space-y-1.5 text-right">
+            <div className="h-3 w-16 ml-auto bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+            <div className="h-3 w-14 ml-auto bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-1 py-1">
+              <div className="h-3 w-8 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              <div className="w-6 h-6 bg-slate-200/80 dark:bg-slate-800/80 rounded-md my-0.5 animate-shimmer" />
+              <div className="h-3 w-6 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

@@ -86,9 +86,20 @@ export const FactCheckWidget: React.FC = () => {
       </div>
 
       {isLoading && (
-        <div className="space-y-2 animate-pulse">
-          <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-xl" />
-          <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+        <div className="space-y-2.5 pt-1 animate-in fade-in duration-200">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-28 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+                <div className="h-4 w-16 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              </div>
+              <div className="h-3.5 w-full bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+              <div className="h-3.5 w-4/5 bg-slate-200/80 dark:bg-slate-800/80 rounded animate-shimmer" />
+            </div>
+          ))}
         </div>
       )}
 

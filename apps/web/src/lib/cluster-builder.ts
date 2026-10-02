@@ -156,7 +156,7 @@ export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] 
  * CMS human stories and MCP autonomous AI dispatches.
  */
 export function useNewsClusters() {
-  const { stories } = useAllStories();
+  const { stories, isLoading } = useAllStories();
 
   const clusters = useMemo(() => {
     return buildClustersFromStories(stories);
@@ -169,6 +169,7 @@ export function useNewsClusters() {
     clusters,
     leadCluster,
     secondaryClusters,
+    isLoading,
     totalStoriesCount: stories.length,
   };
 }

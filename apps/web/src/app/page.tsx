@@ -13,6 +13,12 @@ import { TrendingTopicsWidget } from '../components/TrendingTopicsWidget';
 import { FullCoverageModal } from '../components/FullCoverageModal';
 import { useAllStories, useBookmarks, toggleBookmark, useTaxonomy } from '../lib/news-store';
 import {
+  LeadStoryCardSkeleton,
+  ClusterCardSkeleton,
+  HomePageSkeleton,
+  PicksForYouSkeleton,
+} from '../components/StorySkeletons';
+import {
   Sparkles,
   Bookmark,
   ArrowRight,
@@ -132,7 +138,12 @@ function GoogleNewsContent() {
   const [followedSources, setFollowedSources] = useState<string[]>([]);
 
   const { stories: userStories } = useAllStories();
-  const { clusters, leadCluster, secondaryClusters } = useNewsClusters();
+  const {
+    clusters,
+    leadCluster,
+    secondaryClusters,
+    isLoading: isClustersLoading,
+  } = useNewsClusters();
   const { topics: taxonomyTopics, categories: taxonomyCategories } = useTaxonomy();
   const bookmarks = useBookmarks();
 
@@ -788,58 +799,69 @@ function GoogleNewsContent() {
           {/* VIEW: TOP STORIES (DEFAULT) */}
           {feedMode === 'top' && (
             <>
-              {/* Lead Story with Multi-Source Perspectives & Full Coverage */}
-              {!selectedTopic && effectiveLeadCluster && (
-                <GoogleNewsLeadCard
-                  cluster={effectiveLeadCluster}
-                  onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
-                />
-              )}
+              {isClustersLoading ? (
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <LeadStoryCardSkeleton />
+                  <ClusterCardSkeleton />
+                  <ClusterCardSkeleton />
+                  <ClusterCardSkeleton />
+                </div>
+              ) : (
+                <>
+                  {/* Lead Story with Multi-Source Perspectives & Full Coverage */}
+                  {!selectedTopic && effectiveLeadCluster && (
+                    <GoogleNewsLeadCard
+                      cluster={effectiveLeadCluster}
+                      onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+                    />
+                  )}
 
-              {/* Secondary Story Clusters */}
-              <div className="space-y-4">
-                {paginatedClusters.map((cluster) => (
-                  <GoogleNewsClusterCard
-                    key={cluster.id}
-                    cluster={cluster}
-                    onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
-                  />
-                ))}
-              </div>
-
-              {clusters.length === 0 && (
-                <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
-                  <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    No Published Stories Yet
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    Dispatches drafted in the Editorial CMS or published by autonomous AI agents
-                    will appear here in real time.
-                  </p>
-                  <div className="pt-2">
-                    <Link
-                      href="/admin"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Open Editorial CMS</span>
-                    </Link>
+                  {/* Secondary Story Clusters */}
+                  <div className="space-y-4">
+                    {paginatedClusters.map((cluster) => (
+                      <GoogleNewsClusterCard
+                        key={cluster.id}
+                        cluster={cluster}
+                        onOpenFullCoverage={(slug) => setActiveFullCoverageSlug(slug)}
+                      />
+                    ))}
                   </div>
-                </div>
-              )}
 
-              {/* F17: Infinite Scroll / Load More Dispatches */}
-              {hasMore && (
-                <div className="pt-2 text-center">
-                  <button
-                    onClick={() => setVisibleCount((prev) => prev + 4)}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition shadow-xs cursor-pointer"
-                  >
-                    <span>Load More Stories</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
+                  {clusters.length === 0 && (
+                    <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-3">
+                      <Newspaper className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        No Published Stories Yet
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                        Dispatches drafted in the Editorial CMS or published by autonomous AI agents
+                        will appear here in real time.
+                      </p>
+                      <div className="pt-2">
+                        <Link
+                          href="/admin"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Open Editorial CMS</span>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* F17: Infinite Scroll / Load More Dispatches */}
+                  {hasMore && (
+                    <div className="pt-2 text-center">
+                      <button
+                        onClick={() => setVisibleCount((prev) => prev + 4)}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition shadow-xs cursor-pointer"
+                      >
+                        <span>Load More Stories</span>
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* User Stories / AI Agent Generated Dispatches Carousel Section */}
@@ -927,71 +949,75 @@ function GoogleNewsContent() {
           <WeatherWidget />
 
           {/* "Picks for you" Curated Module */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span>Picks for you</span>
-              </div>
-              <span className="text-[11px] text-slate-400">Personalized</span>
-            </div>
-
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {picksForYou.length === 0 ? (
-                <div className="py-4 text-center text-xs text-slate-400">
-                  <p>No personalized picks available yet.</p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Follow topics or read stories to populate your feed.
-                  </p>
+          {isClustersLoading ? (
+            <PicksForYouSkeleton />
+          ) : (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Picks for you</span>
                 </div>
-              ) : (
-                picksForYou.map((c) => {
-                  const isBookmarked = bookmarks.includes(c.leadStory.slug);
-                  return (
-                    <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <div className="flex items-center gap-1.5">
-                          {c.leadStory.isSubscriberOnly && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                              <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                              Exclusive
+                <span className="text-[11px] text-slate-400">Personalized</span>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {picksForYou.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-slate-400">
+                    <p>No personalized picks available yet.</p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Follow topics or read stories to populate your feed.
+                    </p>
+                  </div>
+                ) : (
+                  picksForYou.map((c) => {
+                    const isBookmarked = bookmarks.includes(c.leadStory.slug);
+                    return (
+                      <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            {c.leadStory.isSubscriberOnly && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                                Exclusive
+                              </span>
+                            )}
+                            <span className="font-bold text-blue-600 dark:text-blue-400">
+                              {c.leadStory.publisher}
                             </span>
-                          )}
-                          <span className="font-bold text-blue-600 dark:text-blue-400">
-                            {c.leadStory.publisher}
-                          </span>
+                          </div>
+                          <button
+                            onClick={() => toggleBookmark(c.leadStory.slug)}
+                            className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
+                              isBookmarked ? 'text-blue-600' : 'text-slate-400'
+                            }`}
+                            title={isBookmarked ? 'Saved' : 'Save for later'}
+                          >
+                            <Bookmark
+                              className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`}
+                            />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => toggleBookmark(c.leadStory.slug)}
-                          className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
-                            isBookmarked ? 'text-blue-600' : 'text-slate-400'
-                          }`}
-                          title={isBookmarked ? 'Saved' : 'Save for later'}
+
+                        <Link
+                          href={`/stories/${c.leadStory.slug}`}
+                          className="block text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug"
                         >
-                          <Bookmark
-                            className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-blue-600' : ''}`}
-                          />
-                        </button>
-                      </div>
+                          {c.leadStory.headline}
+                        </Link>
 
-                      <Link
-                        href={`/stories/${c.leadStory.slug}`}
-                        className="block text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug"
-                      >
-                        {c.leadStory.headline}
-                      </Link>
-
-                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                        <span>{c.leadStory.timeAgo}</span>
-                        <span>•</span>
-                        <span>{c.category}</span>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                          <span>{c.leadStory.timeAgo}</span>
+                          <span>•</span>
+                          <span>{c.category}</span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* In the News Trending Pills */}
           <TrendingTopicsWidget onSelectTopic={(topic) => setSelectedTopic(topic)} />
@@ -1012,13 +1038,7 @@ function GoogleNewsContent() {
 
 export default function GoogleNewsHomePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center text-slate-400">
-          Loading GlobalPulse News...
-        </div>
-      }
-    >
+    <Suspense fallback={<HomePageSkeleton />}>
       <GoogleNewsContent />
     </Suspense>
   );
