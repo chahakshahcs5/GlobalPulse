@@ -342,6 +342,29 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('AsyncLocalStorage Principal Isolation');
       expect(html).toContain('18 Complete Section 38 Tools');
     });
+
+    it('renders Special Pop-Up Desk Page with adaptive theme, hero masthead, and stream status', async () => {
+      const { renderToString } = await import('react-dom/server');
+      const SpecialDeskPage = (await import('../../../apps/web/src/app/desks/[slug]/page.js'))
+        .default;
+
+      const html = renderToString(
+        React.createElement(
+          React.Suspense,
+          { fallback: null },
+          React.createElement(SpecialDeskPage, {
+            params: {
+              slug: 'frontier-ai-compute-governance',
+            } as unknown as Promise<{ slug: string }>,
+          })
+        )
+      );
+
+      expect(html).toContain('Special Pop-Up Desk');
+      expect(html).toContain('Live Pop-Up News Desk');
+      expect(html).toContain('Top Stories');
+      expect(html).toContain('Share Coverage');
+    });
   });
 
   describe('Large Display Experience (4K / Kiosk)', () => {

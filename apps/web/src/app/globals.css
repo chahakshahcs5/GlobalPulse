@@ -235,3 +235,15 @@
 .dark .skeleton-bone {
   background-color: #1e293b;
 }
+
+/* Glass Card Adaptive Styling */
+.glass-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+.dark .glass-card,
+[data-theme='dark'] .glass-card {
+  background-color: rgba(15, 23, 42, 0.6);
+  border-color: #1e293b;
+}
