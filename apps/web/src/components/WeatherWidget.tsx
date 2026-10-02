@@ -53,7 +53,7 @@ export const WEATHER_CITIES: WeatherCityConfig[] = [
 export const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<LiveWeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCityKey, setSelectedCityKey] = useState<string>('new-delhi');
+  const [selectedCityKey, setSelectedCityKey] = useState<string>('auto');
 
   useEffect(() => {
     try {
@@ -73,21 +73,67 @@ export const WeatherWidget: React.FC = () => {
       let lon = 77.209;
       let city = 'New Delhi';
 
-      if (cityKey === 'gps') {
+      if (cityKey === 'auto' || cityKey === 'gps') {
+        let detected = false;
+
+        // 1. Try browser GPS with timeout
         if (typeof window !== 'undefined' && 'geolocation' in navigator) {
           try {
             const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                timeout: 3000,
+                enableHighAccuracy: false,
+              });
             });
             lat = pos.coords.latitude;
             lon = pos.coords.longitude;
-            city = 'Local Weather (GPS)';
+            detected = true;
+
+            // Reverse geocode coordinates to real city name
+            try {
+              const geoRes = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+              );
+              if (geoRes.ok) {
+                const geoData = await geoRes.json();
+                const place = geoData.locality || geoData.city || geoData.principalSubdivision;
+                city = place
+                  ? `${place}${geoData.countryCode ? `, ${geoData.countryCode}` : ''}`
+                  : 'Current Location';
+              }
+            } catch {
+              city = 'Current Location';
+            }
           } catch {
-            const def = WEATHER_CITIES[0];
-            lat = def.lat;
-            lon = def.lon;
-            city = def.name;
+            // Geolocation denied or timed out, gracefully fallback to IP geolocation
           }
+        }
+
+        // 2. Fallback to free real-time IP Geolocation if GPS didn't resolve
+        if (!detected && typeof window !== 'undefined') {
+          try {
+            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              if (ipData.latitude && ipData.longitude) {
+                lat = parseFloat(ipData.latitude);
+                lon = parseFloat(ipData.longitude);
+                city = `${ipData.city || 'Local'}${
+                  ipData.country_code ? `, ${ipData.country_code}` : ''
+                }`;
+                detected = true;
+              }
+            }
+          } catch {
+            // Fallback to default
+          }
+        }
+
+        if (!detected) {
+          const def = WEATHER_CITIES[0];
+          lat = def.lat;
+          lon = def.lon;
+          city = def.name;
         }
       } else {
         const found = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
@@ -138,7 +184,7 @@ export const WeatherWidget: React.FC = () => {
       const currentCityConfig = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
 
       setWeather({
-        city: currentCityConfig.name,
+        city: cityKey === 'auto' ? 'Current Location' : currentCityConfig.name,
         temperature: 24,
         condition: 'Partly Cloudy',
         icon: '⛅',
@@ -193,10 +239,10 @@ export const WeatherWidget: React.FC = () => {
             title="Switch weather location"
           >
             <option
-              value="gps"
+              value="auto"
               className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
             >
-              📍 Local (GPS Device)
+              📍 Current Location (Auto)
             </option>
             {WEATHER_CITIES.map((c) => (
               <option
@@ -228,8 +274,10 @@ export const WeatherWidget: React.FC = () => {
             <div className="text-2xl font-black text-slate-900 dark:text-white leading-none">
               {weather.temperature}°C
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-              {weather.condition}
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 flex items-center gap-1.5">
+              <span>{weather.condition}</span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold">{weather.city}</span>
             </div>
           </div>
         </div>
