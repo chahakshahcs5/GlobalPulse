@@ -3083,7 +3083,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
             blockType: 'video',
             sortOrder: 2,
             data: {
-              url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+              url: '/videos/starship-downlink.mp4',
               posterUrl:
                 'https://images.unsplash.com/photo-1517976487502-5f79b47e2c90?auto=format&fit=crop&w=1600&q=80',
               aspectRatio: '16:9',

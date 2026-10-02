@@ -344,7 +344,7 @@ export function StoryEditorDrawer({
         id: Date.now().toString(),
         type: 'video',
         data: {
-          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          url: '/videos/starship-downlink.mp4',
           caption: 'Live video dispatch and ministerial press briefing.',
           durationSeconds: 180,
         },
