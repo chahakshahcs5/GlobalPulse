@@ -53,6 +53,7 @@ export interface GoogleNewsCluster {
     imageUrl: string;
     author: string;
     excerpt: string;
+    isSubscriberOnly?: boolean;
   };
   relatedArticles: RelatedSourceArticle[];
   timeline?: Array<{ time: string; headline: string; publisher: string }>;
@@ -432,6 +433,7 @@ export const GOOGLE_NEWS_CLUSTERS: GoogleNewsCluster[] = [
       author: 'Silicon Technology Desk',
       excerpt:
         'Foundry giants and leading research universities established an open patent pool for 2-nanometer gate-all-around architectures.',
+      isSubscriberOnly: true,
     },
     relatedArticles: [
       {
@@ -467,6 +469,7 @@ export const GOOGLE_NEWS_CLUSTERS: GoogleNewsCluster[] = [
       author: 'Physics Correspondent',
       excerpt:
         'Physicists maintained steady-state burning plasma at a record 1.35x Q-factor for two full minutes.',
+      isSubscriberOnly: true,
     },
     relatedArticles: [
       {

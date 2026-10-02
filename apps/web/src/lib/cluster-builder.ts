@@ -141,6 +141,7 @@ export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] 
           'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80',
         author: story.authorId === 'usr_admin' ? 'Editorial Board' : story.authorId,
         excerpt: story.summary,
+        isSubscriberOnly: story.isSubscriberOnly,
       },
       relatedArticles,
     });

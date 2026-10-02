@@ -26,6 +26,7 @@ import {
   Newspaper,
   Building2,
   Layers,
+  Star,
 } from 'lucide-react';
 import { DEMO_PUBLISHERS } from '../lib/demo-data';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
@@ -873,9 +874,17 @@ function GoogleNewsContent() {
                           className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2 hover:shadow-md transition"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-extrabold text-blue-600 dark:text-blue-400">
-                              {story.articleType.replace('_', ' ').toUpperCase()}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {story.isSubscriberOnly && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                  Subscriber Exclusive
+                                </span>
+                              )}
+                              <span className="font-extrabold text-blue-600 dark:text-blue-400">
+                                {story.articleType.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </div>
                             <span
                               className="text-[11px] text-slate-400 font-mono"
                               suppressHydrationWarning
@@ -941,9 +950,17 @@ function GoogleNewsContent() {
                   return (
                     <div key={c.id} className="py-2.5 first:pt-1 last:pb-1 space-y-1">
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-blue-600 dark:text-blue-400">
-                          {c.leadStory.publisher}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {c.leadStory.isSubscriberOnly && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                              <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                              Exclusive
+                            </span>
+                          )}
+                          <span className="font-bold text-blue-600 dark:text-blue-400">
+                            {c.leadStory.publisher}
+                          </span>
+                        </div>
                         <button
                           onClick={() => toggleBookmark(c.leadStory.slug)}
                           className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${

@@ -189,6 +189,7 @@ export async function saveUserStory(
     sourceIds: storyData.sourceIds || [],
     blocks: storyData.blocks || [],
     heroImageUrl: storyData.heroImageUrl,
+    isSubscriberOnly: storyData.isSubscriberOnly,
   });
 
   // If the story should be published immediately, publish it
@@ -215,6 +216,7 @@ export async function updateUserStory(
     topicIds: storyData.topicIds,
     entityIds: storyData.entityIds,
     heroImageUrl: storyData.heroImageUrl,
+    isSubscriberOnly: storyData.isSubscriberOnly,
   });
 
   // 2. If blocks are provided, commit a new version snapshot

@@ -124,6 +124,7 @@ export class StoryService {
       sourceIds: validated.sourceIds || [],
       blocks: validatedBlocks,
       heroImageUrl: validated.heroImageUrl,
+      isSubscriberOnly: validated.isSubscriberOnly ?? false,
       wordCount: metrics.wordCount,
       readingTimeMinutes: metrics.readingTimeMinutes,
       createdVia: ctx.createdVia || 'mcp',
@@ -218,6 +219,10 @@ export class StoryService {
       entityIds: validated.entityIds ?? existing.entityIds,
       heroImageUrl:
         validated.heroImageUrl !== undefined ? validated.heroImageUrl : existing.heroImageUrl,
+      isSubscriberOnly:
+        validated.isSubscriberOnly !== undefined
+          ? validated.isSubscriberOnly
+          : existing.isSubscriberOnly,
       updatedAt: new Date().toISOString(),
     };
 

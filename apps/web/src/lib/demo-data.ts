@@ -398,6 +398,7 @@ export const DEMO_STORIES: Story[] = [
     sourceIds: ['src_reuters'],
     heroImageUrl:
       'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
+    isSubscriberOnly: true,
     createdVia: 'mcp',
     createdByClient: 'chatgpt',
     authorId: 'usr_chatgpt_agent',
@@ -465,6 +466,7 @@ export const DEMO_STORIES: Story[] = [
     sourceIds: ['src_reuters'],
     heroImageUrl:
       'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1600&q=80',
+    isSubscriberOnly: true,
     createdVia: 'mcp',
     createdByClient: 'gemini',
     authorId: 'usr_gemini_agent',

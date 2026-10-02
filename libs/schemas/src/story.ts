@@ -83,6 +83,7 @@ export const StorySchema = z.object({
   categories: z.array(z.string()).optional(),
   blocks: z.array(StoryBlockSchema).default([]),
   heroImageUrl: z.string().url().optional(),
+  isSubscriberOnly: z.boolean().optional(),
   createdVia: CreatedViaSchema,
   createdByClient: ClientTypeSchema,
   authorId: z.string().min(1),
@@ -108,6 +109,7 @@ export const CreateStoryInputSchema = z.object({
   categories: z.array(z.string()).optional().default([]),
   blocks: z.array(StoryBlockSchema).optional().default([]),
   heroImageUrl: z.string().url().optional(),
+  isSubscriberOnly: z.boolean().optional(),
   idempotencyKey: z.string().max(200).optional(),
 });
 export type CreateStoryInput = z.input<typeof CreateStoryInputSchema>;
@@ -122,6 +124,7 @@ export const UpdateStoryInputSchema = z.object({
   entityIds: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
   heroImageUrl: z.string().url().optional(),
+  isSubscriberOnly: z.boolean().optional(),
 });
 export type UpdateStoryInput = z.infer<typeof UpdateStoryInputSchema>;
 

@@ -521,6 +521,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
         createdAt: '2026-09-27T08:00:00Z',
         updatedAt: '2026-09-27T12:00:00Z',
         topicIds: ['top_semiconductors', 'top_ai_agents'],
+        isSubscriberOnly: true,
         entityIds: ['ent_tsmc'],
         sourceIds: ['src_techcrunch_01', 'src_reuters_01'],
         blocks: [
@@ -583,6 +584,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
         createdAt: '2026-09-28T07:30:00Z',
         updatedAt: '2026-09-28T07:30:00Z',
         topicIds: ['top_energy_fusion'],
+        isSubscriberOnly: true,
         entityIds: ['ent_india'],
         sourceIds: ['src_reuters_01'],
         blocks: [
@@ -684,6 +686,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
         createdAt: '2026-09-30T08:00:00Z',
         updatedAt: '2026-09-30T09:15:00Z',
         topicIds: ['top_ai_agents', 'top_semiconductors'],
+        isSubscriberOnly: true,
         entityIds: ['ent_tsmc'],
         sourceIds: ['src_techcrunch_01', 'src_reuters_01'],
         blocks: [

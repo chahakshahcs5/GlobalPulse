@@ -16,6 +16,7 @@ import {
   AlertCircle,
   TrendingUp,
   Eye,
+  Star,
 } from 'lucide-react';
 import type { Story, StoryBlock, ArticleType } from '@ai-news/schemas';
 import {
@@ -67,6 +68,7 @@ export function StoryEditorDrawer({
   const [bullet2, setBullet2] = useState('');
   const [bullet3, setBullet3] = useState('');
   const [mediaBlocks, setMediaBlocks] = useState<MediaBlockDraft[]>([]);
+  const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
 
   // Pre-populate fields when editing an existing story, or reset for new
   useEffect(() => {
@@ -80,6 +82,7 @@ export function StoryEditorDrawer({
           : 'Senior Staff Journalist'
       );
       setHeroImageUrl(editingStory.heroImageUrl || '');
+      setIsSubscriberOnly(Boolean(editingStory.isSubscriberOnly));
       if (editingStory.status === 'PUBLISHED') setSubmitMode('PUBLISH');
       else if (editingStory.status === 'IN_REVIEW') setSubmitMode('REVIEW');
       else if (editingStory.status === 'SCHEDULED') setSubmitMode('SCHEDULE');
@@ -252,6 +255,7 @@ export function StoryEditorDrawer({
       setBullet2('');
       setBullet3('');
       setMediaBlocks([]);
+      setIsSubscriberOnly(false);
       setSubmitMode('PUBLISH');
       setScheduledAtInput('');
       setViewMode('compose');
@@ -584,6 +588,7 @@ export function StoryEditorDrawer({
           articleType: category,
           topicIds: [`top_${category}`],
           heroImageUrl: heroImageUrl.trim() || undefined,
+          isSubscriberOnly,
           blocks: newBlocks,
           changeSummary: `Editorial revision by ${authorName}`,
         });
@@ -606,6 +611,7 @@ export function StoryEditorDrawer({
           entityIds: [],
           sourceIds: [],
           heroImageUrl: heroImageUrl.trim() || undefined,
+          isSubscriberOnly,
           authorId: `usr_${authorName.toLowerCase().replace(/\s+/g, '_')}`,
           blocks: newBlocks,
         });
@@ -753,6 +759,31 @@ export function StoryEditorDrawer({
                   <option value="sports">Sports</option>
                   <option value="health">Health & Medicine</option>
                 </select>
+              </div>
+
+              {/* Subscriber Exclusive Access Toggle */}
+              <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">
+                      Subscriber Only Story
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Restrict full article access and investigative dossier to GlobalPulse Digital
+                      subscribers.
+                    </div>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isSubscriberOnly}
+                    onChange={(e) => setIsSubscriberOnly(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
               </div>
 
               <div>

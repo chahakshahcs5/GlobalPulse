@@ -16,6 +16,7 @@ import {
   Clock,
   ArrowLeft,
   Check,
+  Star,
 } from 'lucide-react';
 import type { Story, AlgorithmTuning, DepthPreference } from '@ai-news/schemas';
 
@@ -319,6 +320,15 @@ export default function ForYouPage() {
 
                   {/* Metadata Chips */}
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    {story.isSubscriberOnly && (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                          Subscriber Exclusive
+                        </span>
+                        <span>&bull;</span>
+                      </>
+                    )}
                     <span className="uppercase text-blue-600 dark:text-blue-400 font-bold text-[10px]">
                       {story.articleType.replace('_', ' ')}
                     </span>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Bookmark, Share2, Clock, Check } from 'lucide-react';
+import { Bookmark, Share2, Clock, Check, Star } from 'lucide-react';
 import type { GoogleNewsCluster } from '../lib/news-data';
 import { toggleBookmark, useBookmarks } from '../lib/news-store';
 
@@ -39,6 +39,12 @@ export const GoogleNewsLeadCard: React.FC<GoogleNewsLeadCardProps> = ({
             {/* Publisher & Timestamp */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs">
+                {cluster.leadStory.isSubscriberOnly && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                    Subscriber Exclusive
+                  </span>
+                )}
                 <span className="font-extrabold text-blue-600 dark:text-blue-400">
                   {cluster.leadStory.publisher}
                 </span>
