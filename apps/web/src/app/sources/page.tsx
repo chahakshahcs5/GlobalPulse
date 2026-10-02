@@ -109,10 +109,14 @@ export default function SourcesPage() {
       <div className="space-y-4 pb-6 border-b border-slate-800">
         <div className="flex items-center gap-2 text-xs font-mono text-blue-400 font-bold uppercase tracking-wider">
           <Link href="/" className="hover:text-white transition flex items-center gap-1">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Newsroom
+            <ArrowLeft className="w-3.5 h-3.5" /> Newsroom Home
           </Link>
           <span>/</span>
-          <span>SOURCES & PROVENANCE DIRECTORY</span>
+          <Link href="/explore" className="hover:text-white transition">
+            Explore
+          </Link>
+          <span>/</span>
+          <span>Sources & Publishers Only</span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

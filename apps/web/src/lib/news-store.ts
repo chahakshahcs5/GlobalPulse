@@ -724,10 +724,12 @@ export interface NewsCategory {
   id: string;
   name: string;
   slug: string;
+  code?: string;
   description: string;
   icon?: string;
   storyCount?: number;
   isCustom?: boolean;
+  subCategories?: string[];
 }
 
 export interface NewsTopic {
