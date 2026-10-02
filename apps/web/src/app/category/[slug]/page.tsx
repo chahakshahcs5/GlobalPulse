@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useNewsClusters } from '../../../lib/cluster-builder';
-import { useCategoryStories } from '../../../lib/news-store';
+import { useCategoryStories, useTaxonomy } from '../../../lib/news-store';
 import { GoogleNewsLeadCard } from '../../../components/GoogleNewsLeadCard';
 import { GoogleNewsClusterCard } from '../../../components/GoogleNewsClusterCard';
 import { WeatherWidget } from '../../../components/WeatherWidget';
@@ -17,19 +17,33 @@ import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
 export default function CategoryPage() {
   const params = useParams();
   const slug = (params?.slug as string) || '';
-  const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1);
   const [activeFullCoverageSlug, setActiveFullCoverageSlug] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
 
-  // Dynamic API stories for this category
+  // Dynamic API stories and taxonomy for this category
   const { stories: categoryStories } = useCategoryStories(slug);
   const { clusters: allClusters } = useNewsClusters();
+  const { categories } = useTaxonomy();
 
+  const currentCategory = categories.find(
+    (c) =>
+      c.slug.toLowerCase() === slug.toLowerCase() ||
+      (c.code && c.code.toLowerCase() === slug.toLowerCase())
+  );
   const canonical = CANONICAL_CATEGORIES.find(
     (c) =>
       c.slug.toLowerCase() === slug.toLowerCase() || c.code.toLowerCase() === slug.toLowerCase()
   );
-  const subCategories = canonical?.subCategories || [];
+
+  const categoryName =
+    currentCategory?.name ||
+    canonical?.name ||
+    (slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : 'Category');
+
+  const subCategories =
+    currentCategory?.subCategories && currentCategory.subCategories.length > 0
+      ? currentCategory.subCategories
+      : canonical?.subCategories || [];
 
   const filteredStories = selectedSub
     ? categoryStories.filter((s) => {

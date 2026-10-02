@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
@@ -102,5 +112,92 @@ export class CategoriesController {
     );
 
     return ApiResponse.paginated(stories, stories.length, limit);
+  }
+
+  @Post()
+  @RequireScope('news:write')
+  async createCategory(
+    @Body()
+    body: {
+      name: string;
+      slug?: string;
+      code?: string;
+      description?: string;
+      icon?: string;
+      subCategories?: string[];
+    }
+  ) {
+    const slug = (body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+    const newCat: Category = {
+      id: `cat_${slug}`,
+      slug,
+      code: (body.code || slug).toLowerCase(),
+      name: body.name,
+      description: body.description || '',
+      icon: body.icon || '📁',
+      sortOrder: 10,
+      storyCount: 0,
+      isPinned: false,
+      subCategories: body.subCategories || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    return db.categories.create(newCat);
+  }
+
+  @Post(':slug/desks')
+  @RequireScope('news:write')
+  async addCategoryDesk(@Param('slug') slug: string, @Body() body: { desk: string }) {
+    const desk = (body.desk || '').trim();
+    if (!desk) throw new NotFoundException('Desk name is required');
+    const normalized = slug.toLowerCase();
+    let found = await db.categories.findBySlug(normalized);
+    if (!found) {
+      const canonical = CANONICAL_CATEGORIES.find(
+        (c) => c.slug === normalized || c.code === normalized
+      );
+      if (!canonical) throw new NotFoundException(`Category "${slug}" not found`);
+      found = await db.categories.create({
+        ...canonical,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    const currentSubs = Array.isArray(found.subCategories) ? [...found.subCategories] : [];
+    if (!currentSubs.includes(desk)) {
+      currentSubs.push(desk);
+      found.subCategories = currentSubs;
+      found.updatedAt = new Date().toISOString();
+      await db.categories.update(found);
+    }
+    return found;
+  }
+
+  @Delete(':slug/desks/:desk')
+  @RequireScope('news:write')
+  async removeCategoryDesk(@Param('slug') slug: string, @Param('desk') desk: string) {
+    const normalized = slug.toLowerCase();
+    let found = await db.categories.findBySlug(normalized);
+    if (!found) {
+      const canonical = CANONICAL_CATEGORIES.find(
+        (c) => c.slug === normalized || c.code === normalized
+      );
+      if (!canonical) throw new NotFoundException(`Category "${slug}" not found`);
+      found = await db.categories.create({
+        ...canonical,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    const currentSubs = Array.isArray(found.subCategories) ? [...found.subCategories] : [];
+    const filtered = currentSubs.filter(
+      (s) => s.toLowerCase() !== decodeURIComponent(desk).toLowerCase()
+    );
+    found.subCategories = filtered;
+    found.updatedAt = new Date().toISOString();
+    await db.categories.update(found);
+    return found;
   }
 }

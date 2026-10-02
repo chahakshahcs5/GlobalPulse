@@ -10,9 +10,20 @@ interface TaxonomyManagementTabProps {
 }
 
 export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps) {
-  const { categories, topics, addCategory, deleteCategory, addTopic, deleteTopic } = useTaxonomy();
+  const {
+    categories,
+    topics,
+    addCategory,
+    deleteCategory,
+    addDesk,
+    removeDesk,
+    addTopic,
+    deleteTopic,
+  } = useTaxonomy();
 
   const [activeSubTab, setActiveSubTab] = useState<'categories' | 'topics'>('categories');
+  const [addingDeskForSlug, setAddingDeskForSlug] = useState<string | null>(null);
+  const [deskInputValue, setDeskInputValue] = useState('');
 
   // Category form state
   const [catName, setCatName] = useState('');
@@ -395,7 +406,7 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                 key={cat.id}
                 className="p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="space-y-1">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{cat.icon || '📁'}</span>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
@@ -411,6 +422,94 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
                     )}
                   </div>
                   <p className="text-xs text-slate-500 line-clamp-1">{cat.description}</p>
+
+                  {/* Desks / Subcategories */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">
+                      Desks ({cat.subCategories?.length || 0}):
+                    </span>
+                    {(cat.subCategories || []).map((desk) => (
+                      <span
+                        key={desk}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-[11px] font-medium"
+                      >
+                        <span>{desk}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeDesk(cat.slug, desk);
+                            onSuccess(`Desk "${desk}" removed from ${cat.name}.`);
+                          }}
+                          className="hover:text-rose-500 p-0.5 text-xs font-bold leading-none"
+                          title={`Remove ${desk} desk`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+
+                    {addingDeskForSlug === cat.slug ? (
+                      <div className="inline-flex items-center gap-1">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={deskInputValue}
+                          onChange={(e) => setDeskInputValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (deskInputValue.trim()) {
+                                addDesk(cat.slug, deskInputValue.trim());
+                                onSuccess(`Desk "${deskInputValue}" added to ${cat.name}!`);
+                                setDeskInputValue('');
+                                setAddingDeskForSlug(null);
+                              }
+                            } else if (e.key === 'Escape') {
+                              setAddingDeskForSlug(null);
+                              setDeskInputValue('');
+                            }
+                          }}
+                          placeholder="New desk..."
+                          className="px-2 py-0.5 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-28"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (deskInputValue.trim()) {
+                              addDesk(cat.slug, deskInputValue.trim());
+                              onSuccess(`Desk "${deskInputValue}" added to ${cat.name}!`);
+                              setDeskInputValue('');
+                              setAddingDeskForSlug(null);
+                            }
+                          }}
+                          className="px-2 py-0.5 text-[11px] bg-blue-600 text-white rounded font-bold hover:bg-blue-700"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddingDeskForSlug(null);
+                            setDeskInputValue('');
+                          }}
+                          className="text-[11px] text-slate-400 hover:text-slate-600 px-1"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddingDeskForSlug(cat.slug);
+                          setDeskInputValue('');
+                        }}
+                        className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline px-1.5 py-0.5 rounded border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-400"
+                      >
+                        + Add Desk
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">

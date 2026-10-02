@@ -849,10 +849,12 @@ export function useTaxonomy() {
               id: (ac as { id?: string }).id || `cat_${slug}`,
               name: ac.name,
               slug,
+              code: ac.code,
               description: ac.description || '',
               icon: CATEGORY_ICON_MAP[slug] || ac.icon || '🏷️',
               storyCount: dynamicCount,
               isPinned: ac.isPinned,
+              subCategories: Array.isArray(ac.subCategories) ? ac.subCategories : [],
             };
           })
         : [];
@@ -1007,6 +1009,64 @@ export function useTaxonomy() {
     });
   }, []);
 
+  const addDesk = useCallback(
+    async (categorySlug: string, deskName: string) => {
+      const cleanDesk = deskName.trim();
+      if (!cleanDesk) return;
+      try {
+        await api.addCategoryDesk(categorySlug, cleanDesk);
+        await loadTaxonomy();
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {
+        setCategories((prev) => {
+          const updated = prev.map((c) =>
+            c.slug === categorySlug || c.code === categorySlug
+              ? {
+                  ...c,
+                  subCategories: Array.from(new Set([...(c.subCategories || []), cleanDesk])),
+                }
+              : c
+          );
+          try {
+            localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
+            window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+          } catch {}
+          return updated;
+        });
+      }
+    },
+    [loadTaxonomy]
+  );
+
+  const removeDesk = useCallback(
+    async (categorySlug: string, deskName: string) => {
+      try {
+        await api.removeCategoryDesk(categorySlug, deskName);
+        await loadTaxonomy();
+        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+      } catch {
+        setCategories((prev) => {
+          const updated = prev.map((c) =>
+            c.slug === categorySlug || c.code === categorySlug
+              ? {
+                  ...c,
+                  subCategories: (c.subCategories || []).filter(
+                    (s) => s.toLowerCase() !== deskName.toLowerCase()
+                  ),
+                }
+              : c
+          );
+          try {
+            localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
+            window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+          } catch {}
+          return updated;
+        });
+      }
+    },
+    [loadTaxonomy]
+  );
+
   return {
     categories,
     topics,
@@ -1014,6 +1074,8 @@ export function useTaxonomy() {
     isLoading,
     addCategory,
     deleteCategory,
+    addDesk,
+    removeDesk,
     addTopic,
     deleteTopic,
     refetch: loadTaxonomy,

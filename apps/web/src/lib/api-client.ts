@@ -417,6 +417,22 @@ export async function listCategories(): Promise<Category[]> {
   return request<Category[]>('/api/categories');
 }
 
+export async function addCategoryDesk(categorySlug: string, desk: string): Promise<Category> {
+  return request<Category>(`/api/categories/${encodeURIComponent(categorySlug)}/desks`, {
+    method: 'POST',
+    body: JSON.stringify({ desk }),
+  });
+}
+
+export async function removeCategoryDesk(categorySlug: string, desk: string): Promise<Category> {
+  return request<Category>(
+    `/api/categories/${encodeURIComponent(categorySlug)}/desks/${encodeURIComponent(desk)}`,
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
 export async function getCategoryStories(slug: string, limit = 20) {
   const res = await request<{ data: Story[] }>(
     `/api/categories/${encodeURIComponent(slug)}/stories?limit=${limit}`
