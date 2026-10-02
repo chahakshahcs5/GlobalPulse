@@ -1,4 +1,4 @@
-import type { Story, Source, Entity, Event, Publisher } from '@ai-news/schemas';
+import type { Story, Source, Entity, Event, Publisher, FactCheckClaim } from '@ai-news/schemas';
 
 export const DEMO_PUBLISHERS: Record<string, Publisher> = {
   pub_the_hindu: {
@@ -653,3 +653,106 @@ export const DEMO_EVENTS: Record<string, Event> = {
     updatedAt: '2026-09-26T07:30:00Z',
   },
 };
+
+export const DEMO_FACT_CHECKS: FactCheckClaim[] = [
+  {
+    id: 'fc_01',
+    claim: 'Solar storms completely dismantled international undersea internet cables.',
+    claimant: 'Viral Social Media Posts',
+    rating: 'FALSE',
+    summary:
+      'Undersea fiber optic cables operate via light pulses immune to geomagnetic fluctuations. Only surface equipment experienced minor transient surges.',
+    checker: 'GlobalPulse Verification Desk',
+    sources: ['NOAA Space Weather Prediction Center', 'International Cable Protection Committee'],
+    url: 'https://www.swpc.noaa.gov',
+    checkedAt: '2026-10-02T10:00:00Z',
+  },
+  {
+    id: 'fc_02',
+    claim: 'Central Banks quietly agreed to eliminate physical cash currencies by 2027.',
+    claimant: 'Blog Speculation',
+    rating: 'FALSE',
+    summary:
+      'Central Bank Digital Currencies (CBDCs) are experimental supplements. Official policy frameworks explicitly mandate cash availability.',
+    checker: 'Reuters Fact Check',
+    sources: ['Bank for International Settlements', 'Federal Reserve Board Policy Release'],
+    url: 'https://www.bis.org',
+    checkedAt: '2026-10-02T08:30:00Z',
+  },
+  {
+    id: 'fc_03',
+    claim: 'CERN set a new quantum entanglement record in particle collision density.',
+    claimant: 'Physics Conference Dispatches',
+    rating: 'TRUE',
+    summary:
+      'Peer-reviewed measurements at the Large Hadron Collider confirm unprecedented quantum correlation metrics in top-quark pairs.',
+    checker: 'Science Verification Network',
+    sources: ['Physical Review Letters', 'CERN Directorate'],
+    url: 'https://home.cern',
+    checkedAt: '2026-10-01T18:00:00Z',
+  },
+  {
+    id: 'fc_04',
+    claim:
+      'Leaked benchmark indicates frontier AI model reached autonomous artificial general intelligence.',
+    claimant: 'Anonymous Tech Forum Leak',
+    rating: 'FALSE',
+    summary:
+      'The leaked document was an unverified prompt-engineering benchmark with synthetic evaluations and missing validation telemetry.',
+    checker: 'Tech & AI Verification Bureau',
+    sources: ['Frontier Model Forum', 'Stanford AI Index Consortium'],
+    url: 'https://aiindex.stanford.edu',
+    checkedAt: '2026-10-01T12:00:00Z',
+  },
+  {
+    id: 'fc_05',
+    claim: 'Antarctic winter sea ice extent hit an all-time 45-year satellite record high in 2026.',
+    claimant: 'Climate Denialist Podcast',
+    rating: 'FALSE',
+    summary:
+      'Copernicus and NSIDC satellite sensor arrays confirmed sea ice extent was 1.2 million sq km below the 1991-2020 climatological mean.',
+    checker: 'Global Climate Science Desk',
+    sources: ['Copernicus Climate Change Service', 'National Snow and Ice Data Center (NSIDC)'],
+    url: 'https://nsidc.org',
+    checkedAt: '2026-09-30T16:00:00Z',
+  },
+  {
+    id: 'fc_06',
+    claim:
+      'World Health Organization initiated global advisory regarding bioaccumulative microplastics in cardiovascular tissue.',
+    claimant: 'Medical Research Digest',
+    rating: 'MOSTLY_TRUE',
+    summary:
+      'WHO published an updated technical advisory urging stricter monitoring of nanoplastics in cardiovascular circulation, but did not declare a binding emergency.',
+    checker: 'Health Verification Network',
+    sources: ['World Health Organization Bulletin', 'The Lancet Oncology'],
+    url: 'https://www.who.int',
+    checkedAt: '2026-09-29T14:00:00Z',
+  },
+  {
+    id: 'fc_07',
+    claim:
+      'Commercial nuclear fusion facility achieved continuous net-positive power supply to national electrical grid.',
+    claimant: 'Viral Clean Energy Clip',
+    rating: 'MIXTURE',
+    summary:
+      'The pilot reactor achieved transient Q > 1.25 energy gain in a magnetic containment test pulse, but grid interconnection is scheduled for 2029 pilot trials.',
+    checker: 'Energy Intelligence Wire',
+    sources: ['International Atomic Energy Agency (IAEA)', 'ITER Organization'],
+    url: 'https://www.iaea.org',
+    checkedAt: '2026-09-28T11:20:00Z',
+  },
+  {
+    id: 'fc_08',
+    claim:
+      'International Monetary Fund mandated gold-backed reserves for cross-border bilateral settlements.',
+    claimant: 'Finance Telegram Channels',
+    rating: 'FALSE',
+    summary:
+      'The IMF Articles of Agreement explicitly maintain Special Drawing Rights (SDRs) and multi-currency foreign exchange reserves without gold mandate.',
+    checker: 'Reuters Fact Check',
+    sources: ['International Monetary Fund Media Advisory', 'BIS Quarterly Review'],
+    url: 'https://www.imf.org',
+    checkedAt: '2026-09-27T09:15:00Z',
+  },
+];

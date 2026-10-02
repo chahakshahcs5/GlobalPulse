@@ -571,6 +571,31 @@ export default function ExploreHubPage() {
         </section>
       )}
 
+      {/* SECTION 4: FACT CHECK & VERIFICATION BUREAU */}
+      <section className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-linear-to-r from-emerald-500/10 via-slate-50 to-indigo-500/10 dark:from-emerald-950/20 dark:via-slate-900 dark:to-indigo-950/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="space-y-2 text-center sm:text-left">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Independent Verification Desk</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+            Explore All Fact-Checked Dispatches & Debunks
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+            Audit our full ledger of evaluated claims, scientific verifications, and viral social
+            media debunks complete with primary source evidence.
+          </p>
+        </div>
+
+        <Link
+          href="/fact-checks"
+          className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
+        >
+          <span>Explore Fact Checks</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </section>
+
       {/* Floating Notification Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-2xl bg-slate-900 text-white border border-slate-700 shadow-xl text-xs font-semibold flex items-center gap-2 animate-in slide-in-from-bottom-3">

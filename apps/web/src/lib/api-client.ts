@@ -37,6 +37,7 @@ import type {
   SpecialDesk,
   NavTab,
 } from '@ai-news/schemas';
+import { DEMO_FACT_CHECKS } from './demo-data';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -786,9 +787,11 @@ export async function getTopic(slugOrId: string): Promise<Topic | null> {
 export async function listFactChecks(): Promise<FactCheckClaim[]> {
   try {
     const res = await request<FactCheckClaim[] | { data: FactCheckClaim[] }>('/api/fact-checks');
-    return Array.isArray(res) ? res : res?.data || [];
+    const items = Array.isArray(res) ? res : res?.data || [];
+    if (items.length > 0) return items;
+    return DEMO_FACT_CHECKS;
   } catch {
-    return [];
+    return DEMO_FACT_CHECKS;
   }
 }
 
