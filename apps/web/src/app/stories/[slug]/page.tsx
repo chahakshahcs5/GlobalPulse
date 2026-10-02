@@ -749,7 +749,7 @@ export default function StoryPage() {
             <span className="text-base">🔬</span>
             <span>
               <strong>Investigative Deep Dive Edition:</strong> Unabridged technical reporting,
-              document registries, and investigative dossier enabled.
+              document registries, and investigative deep-dive brief enabled.
             </span>
           </div>
           <button
@@ -809,7 +809,7 @@ export default function StoryPage() {
               depth={readingDepth}
             />
 
-            {/* F10 Deep Dive Investigative Intelligence Dossier */}
+            {/* F10 Deep Dive Investigative Background Report */}
             {readingDepth === 'deep_dive' && (
               <section className="pt-6 my-8 border-t-2 border-indigo-500/30 bg-gradient-to-b from-indigo-50/50 dark:from-indigo-950/20 to-transparent p-6 rounded-3xl space-y-6">
                 <div className="flex items-center justify-between">
@@ -819,7 +819,7 @@ export default function StoryPage() {
                     </span>
                     <div>
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                        Investigative Intelligence Dossier
+                        Investigative Background Report
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         Deep Dive analysis compiled from primary wire feeds, cryptographic
@@ -828,7 +828,7 @@ export default function StoryPage() {
                     </div>
                   </div>
                   <span className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
-                    Unabridged Dossier
+                    Full Investigative Report
                   </span>
                 </div>
 
@@ -840,7 +840,7 @@ export default function StoryPage() {
                     </div>
                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                       Direct source provenance verified across international regulatory filings and
-                      peer-reviewed dispatches.
+                      peer-reviewed publications.
                     </p>
                     <div className="pt-2 flex items-center justify-between text-[11px]">
                       <span className="text-indigo-600 dark:text-indigo-400 font-medium">

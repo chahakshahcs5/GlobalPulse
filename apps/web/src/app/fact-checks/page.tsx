@@ -225,7 +225,7 @@ export default function FactChecksPage() {
               <span>Submit Disputed Claim to Tip Line</span>
             </Link>
             <a
-              href="#dossiers"
+              href="#claims"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-xs sm:text-sm backdrop-blur-xs transition-all"
             >
               <span>Explore All Verified Claims</span>
@@ -283,11 +283,11 @@ export default function FactChecksPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div id="dossiers" className="space-y-4 pt-4">
+      <div id="claims" className="space-y-4 pt-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Investigative Dossiers
+              Verified Fact-Check Reports
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Showing {filteredChecks.length} of {factChecks.length} verified claims
@@ -353,7 +353,7 @@ export default function FactChecksPage() {
             No Claims Match Your Filter
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try resetting your search query or verdict category to browse all verified dossiers.
+            Try resetting your search query or verdict category to browse all verified fact-checks.
           </p>
           <button
             onClick={() => {

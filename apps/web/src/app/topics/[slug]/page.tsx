@@ -104,7 +104,7 @@ export default function TopicPage({ params }: TopicPageProps) {
           </Link>
           <span>/</span>
           <span className="uppercase tracking-wider font-semibold text-slate-700 dark:text-slate-300">
-            Topic Dossier
+            Topic Overview
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export default function TopicPage({ params }: TopicPageProps) {
         <div className="relative z-10 space-y-4 max-w-3xl">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> Verified Editorial Dossier
+              <Sparkles className="w-3.5 h-3.5" /> Verified Topic Hub
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
               {stories.length} {stories.length === 1 ? 'Story' : 'Stories'} Tracked

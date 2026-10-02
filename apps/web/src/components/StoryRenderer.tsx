@@ -850,9 +850,9 @@ const EntityBlockView: React.FC<{ data: EntityBlock['data'] }> = ({ data }) => {
       </div>
       <Link
         href={`/entities/${data.entityId}`}
-        className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap"
+        className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
       >
-        Dossier →
+        Profile →
       </Link>
     </div>
   );

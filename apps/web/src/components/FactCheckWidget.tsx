@@ -149,7 +149,7 @@ export const FactCheckWidget: React.FC = () => {
                 <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
                   <span>Verified by {fc.checker || 'FactCheck Bureau'}</span>
                   <span className="text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
-                    View Dossier →
+                    View Fact Check →
                   </span>
                 </div>
               </Link>

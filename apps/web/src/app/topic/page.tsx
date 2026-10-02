@@ -113,7 +113,7 @@ export default function TopicsOnlyPage() {
         </h1>
 
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-          Follow granular beats, emerging technology clusters, and geopolitical dossiers. Followed
+          Follow granular beats, emerging technology clusters, and geopolitical topic hubs. Followed
           topics dynamically customize your{' '}
           <Link href="/?tab=following" className="text-purple-600 hover:underline font-semibold">
             Following stream
@@ -231,9 +231,9 @@ export default function TopicsOnlyPage() {
                   </span>
                   <Link
                     href={`/topics/${top.slug}`}
-                    className="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 hover:underline"
+                    className="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 hover:underline cursor-pointer"
                   >
-                    <span>View Dossier</span>
+                    <span>Explore Topic</span>
                     <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
