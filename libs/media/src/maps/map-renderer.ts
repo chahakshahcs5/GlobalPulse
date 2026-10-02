@@ -28,17 +28,28 @@ export class MapRenderer {
       streets: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     };
 
+    const centerCoords = parseCoordinates(mapData.center) || [0, 20];
+    const markers = (mapData.markers || [])
+      .map((m) => {
+        const coords = parseCoordinates(
+          (m as unknown as { coordinates?: unknown }).coordinates || m
+        );
+        if (!coords) return null;
+        return {
+          coordinates: coords,
+          title: m.title || (m as unknown as { label?: string }).label || 'Marker',
+          description: m.description,
+        };
+      })
+      .filter((m): m is NonNullable<typeof m> => Boolean(m));
+
     return {
       container: containerId,
       style: styleUrls[mapData.style] || styleUrls.dark,
-      center: mapData.center,
-      zoom: mapData.zoom,
+      center: centerCoords,
+      zoom: mapData.zoom || 2,
       interactive: true,
-      markers: mapData.markers?.map((m) => ({
-        coordinates: m.coordinates,
-        title: m.title,
-        description: m.description,
-      })),
+      markers,
     };
   }
 
@@ -134,18 +145,36 @@ export class MapRenderer {
       <line x1="0" y1="${tropicSY}" x2="${width}" y2="${tropicSY}" stroke="${gridColor}" stroke-dasharray="2,3" />
     `;
 
+    // Safely collect valid markers from diverse coordinate formats
+    const validMarkers: Array<{ coords: [number, number]; title: string; description?: string }> =
+      [];
+
+    if (Array.isArray(mapData.markers)) {
+      mapData.markers.forEach((m) => {
+        if (!m) return;
+        const coords = parseCoordinates(
+          (m as unknown as { coordinates?: unknown }).coordinates || m
+        );
+        if (coords) {
+          validMarkers.push({
+            coords,
+            title:
+              m.title ||
+              (m as unknown as { label?: string }).label ||
+              (m as unknown as { name?: string }).name ||
+              'Location',
+            description: m.description,
+          });
+        }
+      });
+    }
+
     // Tracking Arc between markers if multiple exist
     let trackingArcs = '';
-    if (mapData.markers && mapData.markers.length >= 2) {
-      for (let i = 0; i < mapData.markers.length - 1; i++) {
-        const [x1, y1] = project(
-          mapData.markers[i].coordinates[0],
-          mapData.markers[i].coordinates[1]
-        );
-        const [x2, y2] = project(
-          mapData.markers[i + 1].coordinates[0],
-          mapData.markers[i + 1].coordinates[1]
-        );
+    if (validMarkers.length >= 2) {
+      for (let i = 0; i < validMarkers.length - 1; i++) {
+        const [x1, y1] = project(validMarkers[i].coords[0], validMarkers[i].coords[1]);
+        const [x2, y2] = project(validMarkers[i + 1].coords[0], validMarkers[i + 1].coords[1]);
         const midX = (x1 + x2) / 2;
         const midY = Math.min(y1, y2) - 40; // upward arch
         trackingArcs += `
@@ -156,28 +185,26 @@ export class MapRenderer {
 
     // Render Markers with legible badges
     let markerSvgs = '';
-    if (mapData.markers) {
-      mapData.markers.forEach((m) => {
-        const [x, y] = project(m.coordinates[0], m.coordinates[1]);
-        const titleSafe = escapeXml(m.title);
-        const textWidth = Math.max(70, titleSafe.length * 7 + 16);
-        const textOffsetLeft = x > width - 180;
-        const labelX = textOffsetLeft ? x - textWidth - 12 : x + 14;
-        const labelRectX = textOffsetLeft ? x - textWidth - 16 : x + 10;
+    validMarkers.forEach((m) => {
+      const [x, y] = project(m.coords[0], m.coords[1]);
+      const titleSafe = escapeXml(m.title);
+      const textWidth = Math.max(70, titleSafe.length * 7 + 16);
+      const textOffsetLeft = x > width - 180;
+      const labelX = textOffsetLeft ? x - textWidth - 12 : x + 14;
+      const labelRectX = textOffsetLeft ? x - textWidth - 16 : x + 10;
 
-        markerSvgs += `
-          <g transform="translate(${x}, ${y})">
-            <!-- Ping Waves -->
-            <circle cx="0" cy="0" r="18" fill="${pinGlow}" />
-            <circle cx="0" cy="0" r="9" fill="${pinColor}" fill-opacity="0.4" />
-            <circle cx="0" cy="0" r="5" fill="${pinColor}" stroke="#ffffff" stroke-width="1.5" />
-            <!-- Pill Backdrop -->
-            <rect x="${labelRectX - x}" y="-13" width="${textWidth}" height="24" rx="6" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />
-            <text x="${labelX - x}" y="3" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${titleSafe}</text>
-          </g>
-        `;
-      });
-    }
+      markerSvgs += `
+        <g transform="translate(${x}, ${y})">
+          <!-- Ping Waves -->
+          <circle cx="0" cy="0" r="18" fill="${pinGlow}" />
+          <circle cx="0" cy="0" r="9" fill="${pinColor}" fill-opacity="0.4" />
+          <circle cx="0" cy="0" r="5" fill="${pinColor}" stroke="#ffffff" stroke-width="1.5" />
+          <!-- Pill Backdrop -->
+          <rect x="${labelRectX - x}" y="-13" width="${textWidth}" height="24" rx="6" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />
+          <text x="${labelX - x}" y="3" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${titleSafe}</text>
+        </g>
+      `;
+    });
 
     // Layer Badges
     const paddingRight = 20;
@@ -202,7 +229,10 @@ export class MapRenderer {
     const headerWidth = Math.min(width - 40, Math.max(300, titleLength * 8.4 + 48));
     const headerHeight = 52;
 
-    const [cx, cy] = project(mapData.center[0], mapData.center[1]);
+    const centerCoords = parseCoordinates(mapData.center) || (validMarkers[0]?.coords ?? [0, 20]);
+    const [cx, cy] = project(centerCoords[0], centerCoords[1]);
+    const zoomLevel = mapData.zoom ?? 2;
+    const coordLabel = `Coordinates: ${centerCoords[1].toFixed(2)}°N, ${centerCoords[0].toFixed(2)}°E | Zoom: ${zoomLevel}x`;
 
     return `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColorStart}; border-radius: 16px; overflow: hidden;" role="img" aria-label="${escapeXml(mapTitle)}">
@@ -244,11 +274,31 @@ export class MapRenderer {
           <rect width="${headerWidth}" height="${headerHeight}" rx="10" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />
           <circle cx="20" cy="26" r="5" fill="#3b82f6" />
           <text x="34" y="23" font-size="13" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(mapTitle)}</text>
-          <text x="34" y="39" font-size="10.5" font-mono font-weight="500" fill="${subtextColor}" font-family="ui-monospace, monospace">Coordinates: ${mapData.center[1].toFixed(2)}°N, ${mapData.center[0].toFixed(2)}°E | Zoom: ${mapData.zoom}x</text>
+          <text x="34" y="39" font-size="10.5" font-mono font-weight="500" fill="${subtextColor}" font-family="ui-monospace, monospace">${coordLabel}</text>
         </g>
       </svg>
     `;
   }
+}
+
+function parseCoordinates(input: unknown): [number, number] | null {
+  if (!input) return null;
+  if (Array.isArray(input) && input.length >= 2) {
+    const lng = Number(input[0]);
+    const lat = Number(input[1]);
+    if (!isNaN(lng) && !isNaN(lat)) return [lng, lat];
+  }
+  if (typeof input === 'object') {
+    const obj = input as Record<string, unknown>;
+    if (obj.coordinates) {
+      const nested = parseCoordinates(obj.coordinates);
+      if (nested) return nested;
+    }
+    const lng = Number(obj.lng ?? obj.longitude ?? obj.lon ?? obj.x);
+    const lat = Number(obj.lat ?? obj.latitude ?? obj.y);
+    if (!isNaN(lng) && !isNaN(lat)) return [lng, lat];
+  }
+  return null;
 }
 
 function escapeXml(unsafe?: string): string {
