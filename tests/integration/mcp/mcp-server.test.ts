@@ -15,6 +15,7 @@ import { registerJobTools } from '../../../apps/mcp-server/src/tools/job.tools.j
 import { registerEngagementTools } from '../../../apps/mcp-server/src/tools/engagement.tools.js';
 import { registerUserTools } from '../../../apps/mcp-server/src/tools/user.tools.js';
 import { registerAnalyticsTools } from '../../../apps/mcp-server/src/tools/analytics.tools.js';
+import { registerWeatherTools } from '../../../apps/mcp-server/src/tools/weather.tools.js';
 import { registerResources } from '../../../apps/mcp-server/src/resources/index.js';
 import { registerPrompts } from '../../../apps/mcp-server/src/prompts/index.js';
 import { createMcpApp, mcpPrincipalStore } from '../../../apps/mcp-server/src/server.js';
@@ -82,6 +83,7 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     registerEngagementTools(server, db, getPrincipal);
     registerUserTools(server, db, getPrincipal);
     registerAnalyticsTools(server, db, getPrincipal);
+    registerWeatherTools(server, getPrincipal);
     registerResources(server, db, getPrincipal);
     registerPrompts(server);
 
@@ -670,6 +672,28 @@ describe('Remote MCP Server & Protocol Integration Tests (Priority 3)', () => {
     const subCatBody = parseJson<{ message: string; allSubCategories: string[] }>(subCatRes);
     expect(subCatBody.message).toBe('Subcategory registered.');
     expect(subCatBody.allSubCategories).toContain('Neuromorphic Hardware');
+
+    // 2b. Query dynamic desks for category
+    const getDesksRes = await client.callTool({
+      name: 'get_category_desks',
+      arguments: { categorySlug: 'technology' },
+    });
+    const desksBody = parseJson<{ categorySlug: string; desks: string[] }>(getDesksRes);
+    expect(desksBody.desks).toContain('Neuromorphic Hardware');
+
+    // 2c. Query realtime weather via Open-Meteo
+    const weatherRes = await client.callTool({
+      name: 'get_realtime_weather',
+      arguments: { city: 'Tokyo' },
+    });
+    const weatherBody = parseJson<{
+      location: { city: string; latitude: number; longitude: number };
+      current: { temperatureCelsius: number; condition: string };
+      source: string;
+    }>(weatherRes);
+    expect(weatherBody.location.city).toContain('Tokyo');
+    expect(typeof weatherBody.current.temperatureCelsius).toBe('number');
+    expect(weatherBody.source).toContain('Open-Meteo');
 
     // 3. Create story and assign categories
     const story = await db.stories.create({

@@ -272,22 +272,16 @@ export function registerTaxonomyTools(
     }
   );
 
-  // Dynamic Subcategory Registry Map
-  const dynamicSubCategories = new Map<string, string[]>();
-  for (const cat of CANONICAL_CATEGORIES) {
-    dynamicSubCategories.set(cat.code, [...(cat.subCategories || [])]);
-  }
-
-  // Category Hierarchy
+  // Category Hierarchy & Dynamic DB Desks
   server.tool(
     'list_category_hierarchy',
-    '[READ-ONLY] Retrieve all primary news categories, their nested subcategories, and story distribution.',
+    '[READ-ONLY] Retrieve all primary news categories, their nested subcategories, and story distribution from the database.',
     {},
     async () => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const allStories = await db.stories.list({ status: 'PUBLISHED', limit: 200 });
+      const allStories = await db.stories.list({ status: 'PUBLISHED', limit: 500 });
       const countsByCat = new Map<string, number>();
 
       for (const s of allStories) {
@@ -301,8 +295,11 @@ export function registerTaxonomyTools(
         }
       }
 
-      const hierarchy = CANONICAL_CATEGORIES.map((cat) => {
-        const subs = dynamicSubCategories.get(cat.code) || [];
+      const dbCategories = await db.categories.list();
+      const categoriesSource = dbCategories.length > 0 ? dbCategories : CANONICAL_CATEGORIES;
+
+      const hierarchy = categoriesSource.map((cat) => {
+        const subs = Array.isArray(cat.subCategories) ? cat.subCategories : [];
         return {
           code: cat.code,
           name: cat.name,
@@ -323,7 +320,7 @@ export function registerTaxonomyTools(
 
   server.tool(
     'create_subcategory',
-    '[WRITE] Register a new editorial subcategory under a primary category code.',
+    '[WRITE] Register a new editorial subcategory/desk under a primary category code in PostgreSQL database.',
     {
       parentCode: CategoryCodeSchema.describe(
         'Parent primary category code (e.g. "technology", "world")'
@@ -334,17 +331,117 @@ export function registerTaxonomyTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:write');
 
-      const existing = dynamicSubCategories.get(parentCode) || [];
-      if (!existing.includes(name)) {
-        existing.push(name);
-        dynamicSubCategories.set(parentCode, existing);
+      const normalized = (parentCode || '').toLowerCase();
+      let cat = await db.categories.findBySlug(normalized);
+      if (!cat) {
+        const canonical = CANONICAL_CATEGORIES.find(
+          (c) => c.slug === normalized || c.code === normalized
+        );
+        if (canonical) {
+          cat = await db.categories.create({
+            ...canonical,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (cat) {
+        const subs = Array.isArray(cat.subCategories) ? [...cat.subCategories] : [];
+        if (!subs.includes(name)) {
+          subs.push(name);
+          cat.subCategories = subs;
+          cat.updatedAt = new Date().toISOString();
+          await db.categories.update(cat);
+        }
+        return mcpJsonResponse({
+          message: 'Subcategory registered.',
+          parentCode,
+          name,
+          allSubCategories: cat.subCategories,
+        });
       }
 
       return mcpJsonResponse({
-        message: 'Subcategory registered.',
+        message: 'Category not found to register subcategory.',
         parentCode,
         name,
-        allSubCategories: existing,
+      });
+    }
+  );
+
+  server.tool(
+    'get_category_desks',
+    '[READ-ONLY] Retrieve all dynamic desks/subcategories assigned to a category in PostgreSQL database.',
+    {
+      categorySlug: z
+        .string()
+        .min(1)
+        .describe('Category slug or code (e.g. "technology", "world")'),
+    },
+    async ({ categorySlug }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const normalized = categorySlug.toLowerCase();
+      const cat =
+        (await db.categories.findBySlug(normalized)) ||
+        CANONICAL_CATEGORIES.find((c) => c.slug === normalized || c.code === normalized);
+
+      return mcpJsonResponse({
+        categorySlug,
+        name: cat?.name || categorySlug,
+        desks: cat?.subCategories || [],
+      });
+    }
+  );
+
+  server.tool(
+    'remove_category_desk',
+    '[WRITE] Remove an editorial desk or subcategory from a category in the PostgreSQL database.',
+    {
+      categorySlug: z
+        .string()
+        .min(1)
+        .describe('Category slug or code (e.g. "technology", "world")'),
+      deskName: z.string().min(1).describe('Desk/subcategory name to remove'),
+    },
+    async ({ categorySlug, deskName }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const normalized = categorySlug.toLowerCase();
+      let cat = await db.categories.findBySlug(normalized);
+      if (!cat) {
+        const canonical = CANONICAL_CATEGORIES.find(
+          (c) => c.slug === normalized || c.code === normalized
+        );
+        if (canonical) {
+          cat = await db.categories.create({
+            ...canonical,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (cat) {
+        const subs = Array.isArray(cat.subCategories) ? [...cat.subCategories] : [];
+        cat.subCategories = subs.filter((s) => s.toLowerCase() !== deskName.toLowerCase());
+        cat.updatedAt = new Date().toISOString();
+        await db.categories.update(cat);
+
+        return mcpJsonResponse({
+          message: 'Desk removed from category in database.',
+          categorySlug,
+          deskName,
+          remainingDesks: cat.subCategories,
+        });
+      }
+
+      return mcpJsonResponse({
+        message: 'Category not found.',
+        categorySlug,
       });
     }
   );
