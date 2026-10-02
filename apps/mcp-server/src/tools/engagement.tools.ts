@@ -8,7 +8,7 @@ import {
   StoryService,
   PerspectivesService,
 } from '@ai-news/stories';
-import type { PollBlock } from '@ai-news/schemas';
+import { type PollBlock, StoryReactionTypeSchema } from '@ai-news/schemas';
 import { generateOpenGraphMeta, generateSocialShareLinks } from '@ai-news/shared';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
@@ -81,6 +81,71 @@ export function registerEngagementTools(
   );
 
   server.tool(
+    'post_story_comment',
+    '[WRITE] Post a new reader or AI-agent comment/observation on a story.',
+    {
+      storyId: z.string().min(1).describe('The target story ID'),
+      content: z.string().min(1).max(2000).describe('Comment body text'),
+      authorName: z.string().optional().describe('Display author name'),
+      parentId: z.string().optional().describe('Parent comment ID if replying'),
+    },
+    async ({ storyId, content, authorName, parentId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const comment = await engagementService.createComment(
+          storyId,
+          { content, authorName, parentId },
+          {
+            organizationId: principal.organizationId,
+            authorId: principal.id,
+            authorName: authorName || principal.id,
+            authorRole:
+              principal.role === 'admin'
+                ? 'editor'
+                : (principal.role as
+                    'reader' | 'subscriber' | 'journalist' | 'editor' | 'ai_agent'),
+          }
+        );
+
+        return mcpJsonResponse({
+          message: 'Comment posted successfully.',
+          comment,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to post comment: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'delete_story_comment',
+    '[WRITE] Delete a comment from a story.',
+    {
+      commentId: z.string().min(1).describe('The comment ID to delete'),
+    },
+    async ({ commentId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const success = await engagementService.deleteComment(commentId, principal.organizationId);
+        return mcpJsonResponse({
+          success,
+          message: success
+            ? `Comment "${commentId}" deleted.`
+            : `Comment "${commentId}" not found.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to delete comment: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
     'get_story_reactions',
     '[READ-ONLY] Fetch aggregate reader reaction counts (like, insightful, important, heart) for a story.',
     {
@@ -90,8 +155,95 @@ export function registerEngagementTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const reactions = await engagementService.getReactions(storyId);
+      const reactions = await engagementService.getReactions(storyId, principal.id);
       return mcpJsonResponse(reactions);
+    }
+  );
+
+  server.tool(
+    'toggle_story_reaction',
+    '[WRITE] Add or remove an emoji reaction (like, insightful, important, heart) on a news story.',
+    {
+      storyId: z.string().min(1).describe('The story ID'),
+      reactionType: StoryReactionTypeSchema.describe(
+        'Reaction type: like, insightful, important, or heart'
+      ),
+    },
+    async ({ storyId, reactionType }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const result = await engagementService.toggleReaction(storyId, reactionType, {
+          userId: principal.id,
+          organizationId: principal.organizationId,
+        });
+
+        return mcpJsonResponse({
+          storyId,
+          reactionType,
+          active: result.active,
+          summary: result.summary,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to toggle reaction: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'toggle_story_bookmark',
+    '[WRITE] Save or unsave an article to user reading bookmarks.',
+    {
+      storyId: z.string().min(1).describe('The story ID to bookmark or un-bookmark'),
+    },
+    async ({ storyId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const result = await engagementService.toggleBookmark(storyId, {
+          userId: principal.id,
+          organizationId: principal.organizationId,
+        });
+
+        return mcpJsonResponse({
+          storyId,
+          bookmarked: result.bookmarked,
+          message: result.bookmarked
+            ? 'Story saved to bookmarks.'
+            : 'Story removed from bookmarks.',
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to toggle bookmark: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'list_story_bookmarks',
+    '[READ-ONLY] Retrieve all bookmarked stories saved by the current user.',
+    {},
+    async () => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const bookmarks = await engagementService.listBookmarks(
+          principal.id,
+          principal.organizationId
+        );
+        return mcpJsonResponse({
+          userId: principal.id,
+          total: bookmarks.length,
+          bookmarks,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to list bookmarks: ${msg}`);
+      }
     }
   );
 
@@ -117,6 +269,26 @@ export function registerEngagementTools(
         message: 'Reading progress recorded successfully.',
         progress,
       });
+    }
+  );
+
+  server.tool(
+    'get_reading_progress',
+    '[READ-ONLY] Retrieve reading completion percentage for a story.',
+    {
+      storyId: z.string().min(1).describe('The ID of the story'),
+    },
+    async ({ storyId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const progress = await engagementService.getReadingProgress(storyId, principal.id);
+        return mcpJsonResponse(progress || { storyId, percentage: 0, completed: false });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get reading progress: ${msg}`);
+      }
     }
   );
 
@@ -205,6 +377,102 @@ export function registerEngagementTools(
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return mcpErrorResponse(`Failed to generate digest: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'unsubscribe_newsletter',
+    '[ENGAGEMENT] Unsubscribe an email address from newsletter briefings.',
+    {
+      email: z.string().email().describe('Reader email address to unsubscribe'),
+    },
+    async ({ email }) => {
+      try {
+        const success = await newsletterService.unsubscribe(email);
+        return mcpJsonResponse({
+          email,
+          unsubscribed: success,
+          message: success
+            ? `Successfully unsubscribed ${email}.`
+            : `Email ${email} was not actively subscribed.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to unsubscribe: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_newsletter_subscription',
+    '[READ-ONLY] Retrieve newsletter subscription status and preferences for an email.',
+    {
+      email: z.string().email().describe('Reader email address'),
+    },
+    async ({ email }) => {
+      try {
+        const sub = await newsletterService.getSubscription(email);
+        if (!sub) {
+          return mcpJsonResponse({
+            email,
+            isSubscribed: false,
+            message: 'No active subscription found.',
+          });
+        }
+        return mcpJsonResponse({ email, isSubscribed: true, subscription: sub });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get subscription: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'list_newsletter_subscriptions',
+    '[ADMIN / READ-ONLY] List active newsletter subscribers filtered by delivery frequency or category.',
+    {
+      frequency: z.enum(['daily', 'weekly']).optional().describe('Filter by frequency'),
+      category: z.string().optional().describe('Filter by topic category'),
+    },
+    async ({ frequency, category }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireRole(principal, 'admin', 'editor');
+        AuthService.requireScope(principal, 'news:read');
+
+        const subs = await db.newsletters.listActiveSubscriptions(frequency, category);
+        return mcpJsonResponse({
+          total: subs.length,
+          subscriptions: subs,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to list newsletter subscribers: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_latest_newsletter_digest',
+    '[READ-ONLY] Retrieve the latest generated daily or weekly newsletter briefing.',
+    {
+      frequency: z.enum(['daily', 'weekly']).default('daily').describe('Digest frequency type'),
+      category: z.string().optional().describe('Topic category filter if any'),
+    },
+    async ({ frequency, category }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const digest = await db.newsletters.getLatestDigest(frequency, category);
+        if (!digest) {
+          return mcpJsonResponse({ message: 'No newsletter digest found matching criteria.' });
+        }
+        return mcpJsonResponse(digest);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get latest digest: ${msg}`);
       }
     }
   );
@@ -304,6 +572,122 @@ export function registerEngagementTools(
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return mcpErrorResponse(`Failed to add story to collection: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_collection',
+    '[READ-ONLY] Retrieve a reading list or themed collection by ID or URL slug with full populated stories.',
+    {
+      idOrSlug: z.string().min(1).describe('Collection unique ID or URL slug'),
+    },
+    async ({ idOrSlug }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        let col = await collectionService.getCollectionWithStories(
+          idOrSlug,
+          principal.organizationId
+        );
+        if (!col) {
+          col = await collectionService.getCollectionBySlug(idOrSlug, principal.organizationId);
+        }
+
+        if (!col) {
+          return mcpErrorResponse(`Collection "${idOrSlug}" not found`);
+        }
+        return mcpJsonResponse(col);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get collection: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'list_collections',
+    '[READ-ONLY] List public or user-curated reading lists and thematic story collections.',
+    {
+      onlyMine: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Filter to only collections curated by current user'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(100)
+        .default(20)
+        .describe('Max collections to retrieve'),
+    },
+    async ({ onlyMine, limit }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const collections = onlyMine
+          ? await collectionService.listUserCollections(principal.id)
+          : await collectionService.listPublicCollections(limit);
+
+        return mcpJsonResponse({
+          total: collections.length,
+          collections,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to list collections: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'remove_story_from_collection',
+    '[WRITE] Remove an article from a curated reading list collection.',
+    {
+      collectionId: z.string().min(1).describe('Target collection ID'),
+      storyId: z.string().min(1).describe('Story ID to remove'),
+    },
+    async ({ collectionId, storyId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const updated = await collectionService.removeStory(collectionId, storyId);
+        return mcpJsonResponse({
+          message: `Story ${storyId} removed from collection ${collectionId}.`,
+          collection: updated,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to remove story from collection: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'delete_collection',
+    '[WRITE] Delete a reading list or themed collection.',
+    {
+      collectionId: z.string().min(1).describe('Collection ID to delete'),
+    },
+    async ({ collectionId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const success = await collectionService.deleteCollection(collectionId);
+        return mcpJsonResponse({
+          success,
+          message: success
+            ? `Collection "${collectionId}" deleted.`
+            : `Collection "${collectionId}" not found.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to delete collection: ${msg}`);
       }
     }
   );

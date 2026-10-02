@@ -163,4 +163,170 @@ export function registerWeatherTools(
       });
     }
   );
+
+  server.tool(
+    'detect_location_weather',
+    '[READ-ONLY] Auto-detect current reader location via IP geolocation service and fetch accurate live weather and forecast.',
+    {
+      ipAddress: z
+        .string()
+        .optional()
+        .describe('Optional remote IP address to geolocate (default: auto-detect via public IP)'),
+    },
+    async ({ ipAddress }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      let lat = 28.6139;
+      let lon = 77.209;
+      let cityName = 'New Delhi, India';
+
+      try {
+        const geoUrl = ipAddress
+          ? `https://ipwho.is/${encodeURIComponent(ipAddress)}`
+          : 'https://ipwho.is/';
+        const geoRes = await fetch(geoUrl, {
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(4000),
+        });
+
+        if (geoRes.ok) {
+          const data = (await geoRes.json()) as {
+            success?: boolean;
+            city?: string;
+            region?: string;
+            country?: string;
+            latitude?: number;
+            longitude?: number;
+          };
+          if (data && data.success !== false && data.latitude && data.longitude) {
+            lat = data.latitude;
+            lon = data.longitude;
+            cityName = `${data.city || 'Local Area'}, ${data.country || ''}`
+              .trim()
+              .replace(/,\s*$/, '');
+          }
+        }
+      } catch {
+        // Fallback to New Delhi default if geo-ip fails
+      }
+
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`,
+        { headers: { Accept: 'application/json' } }
+      );
+
+      if (!weatherRes.ok) {
+        throw new Error(`Open-Meteo weather fetch failed with status ${weatherRes.status}`);
+      }
+
+      const weatherData = (await weatherRes.json()) as {
+        current?: {
+          temperature_2m?: number;
+          relative_humidity_2m?: number;
+          weather_code?: number;
+          wind_speed_10m?: number;
+        };
+        daily?: {
+          time?: string[];
+          weather_code?: number[];
+          temperature_2m_max?: number[];
+        };
+      };
+
+      const currentCode = weatherData.current?.weather_code ?? 0;
+      const condition = getWeatherCondition(currentCode);
+      const tempC = Math.round(weatherData.current?.temperature_2m ?? 20);
+      const tempF = Math.round((tempC * 9) / 5 + 32);
+
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dailyDates = weatherData.daily?.time || [];
+      const dailyCodes = weatherData.daily?.weather_code || [];
+      const dailyTemps = weatherData.daily?.temperature_2m_max || [];
+
+      const forecast = dailyDates.slice(1, 5).map((dStr, idx) => {
+        const dateObj = new Date(dStr);
+        const day = daysOfWeek[dateObj.getDay()] || 'Day';
+        const code = dailyCodes[idx + 1] ?? 0;
+        const maxC = Math.round(dailyTemps[idx + 1] ?? 20);
+        return {
+          day,
+          condition: getWeatherCondition(code),
+          temperatureMaxCelsius: maxC,
+          temperatureMaxFahrenheit: Math.round((maxC * 9) / 5 + 32),
+        };
+      });
+
+      return mcpJsonResponse({
+        detectedLocation: {
+          city: cityName,
+          latitude: lat,
+          longitude: lon,
+          resolvedVia: 'IP Geolocation',
+        },
+        current: {
+          temperatureCelsius: tempC,
+          temperatureFahrenheit: tempF,
+          condition,
+          humidityPercent: Math.round(weatherData.current?.relative_humidity_2m ?? 50),
+          windSpeedKmH: Math.round(weatherData.current?.wind_speed_10m ?? 10),
+        },
+        forecast,
+        source: 'Open-Meteo & IP Geolocation',
+      });
+    }
+  );
+
+  server.tool(
+    'get_weather_forecast',
+    '[READ-ONLY] Direct alias for get_realtime_weather to inspect multiday meteorological outlooks.',
+    {
+      city: z.string().optional().describe('City name to lookup'),
+      latitude: z.number().optional().describe('Geographic latitude'),
+      longitude: z.number().optional().describe('Geographic longitude'),
+    },
+    async (params) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      // Forward to get_realtime_weather logic
+      let lat = params.latitude;
+      let lon = params.longitude;
+      let resolvedCityName = params.city || 'New Delhi, India';
+
+      if (lat === undefined || lon === undefined) {
+        const normalized = (params.city || 'new-delhi').toLowerCase().trim();
+        const preConfig = CAPITAL_COORDINATES[normalized];
+        if (preConfig) {
+          lat = preConfig.lat;
+          lon = preConfig.lon;
+          resolvedCityName = preConfig.label;
+        } else {
+          lat = 28.6139;
+          lon = 77.209;
+        }
+      }
+
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`
+      );
+      const weatherData = (await weatherRes.json()) as {
+        current?: { temperature_2m?: number; weather_code?: number };
+        daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[] };
+      };
+
+      const tempC = Math.round(weatherData.current?.temperature_2m ?? 20);
+      return mcpJsonResponse({
+        city: resolvedCityName,
+        temperatureCelsius: tempC,
+        temperatureFahrenheit: Math.round((tempC * 9) / 5 + 32),
+        condition: getWeatherCondition(weatherData.current?.weather_code ?? 0),
+        forecast: (weatherData.daily?.time || []).slice(1, 5).map((dStr, idx) => ({
+          date: dStr,
+          temperatureMaxCelsius: weatherData.daily?.temperature_2m_max?.[idx + 1] ?? 20,
+          condition: getWeatherCondition(weatherData.daily?.weather_code?.[idx + 1] ?? 0),
+        })),
+      });
+    }
+  );
 }

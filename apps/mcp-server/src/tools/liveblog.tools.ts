@@ -77,4 +77,29 @@ export function registerLiveblogTools(
       }
     }
   );
+
+  server.tool(
+    'delete_liveblog_entry',
+    '[WRITE] Remove or retract an erroneous liveblog entry from an active live event coverage.',
+    {
+      entryId: z.string().min(1).describe('The liveblog entry ID (e.g. "lbe_123")'),
+    },
+    async ({ entryId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const success = await liveblogService.deleteEntry(entryId);
+        return mcpJsonResponse({
+          success,
+          message: success
+            ? `Liveblog entry "${entryId}" deleted.`
+            : `Liveblog entry "${entryId}" not found.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to delete liveblog entry: ${msg}`);
+      }
+    }
+  );
 }

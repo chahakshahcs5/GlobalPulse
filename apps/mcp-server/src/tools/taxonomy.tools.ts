@@ -12,7 +12,7 @@ import {
   CategoryCodeSchema,
   CreateSpecialDeskInputSchema,
 } from '@ai-news/schemas';
-import { mcpJsonResponse } from './tool-helpers';
+import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
 
 export function registerTaxonomyTools(
   server: McpServer,
@@ -371,6 +371,59 @@ export function registerTaxonomyTools(
   );
 
   server.tool(
+    'add_category_desk',
+    '[WRITE] Add an editorial desk or subcategory to a category in PostgreSQL database (alias for create_subcategory).',
+    {
+      categorySlug: z
+        .string()
+        .min(1)
+        .describe('Parent category slug or code (e.g. "technology", "world")'),
+      deskName: z.string().min(1).describe('Desk or subcategory name to add'),
+    },
+    async ({ categorySlug, deskName }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:write');
+
+      const normalized = (categorySlug || '').toLowerCase();
+      let cat = await db.categories.findBySlug(normalized);
+      if (!cat) {
+        const canonical = CANONICAL_CATEGORIES.find(
+          (c) => c.slug === normalized || c.code === normalized
+        );
+        if (canonical) {
+          cat = await db.categories.create({
+            ...canonical,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (cat) {
+        const subs = Array.isArray(cat.subCategories) ? [...cat.subCategories] : [];
+        if (!subs.includes(deskName)) {
+          subs.push(deskName);
+          cat.subCategories = subs;
+          cat.updatedAt = new Date().toISOString();
+          await db.categories.update(cat);
+        }
+        return mcpJsonResponse({
+          message: 'Desk added to category in database.',
+          categorySlug,
+          deskName,
+          allDesks: cat.subCategories,
+        });
+      }
+
+      return mcpJsonResponse({
+        message: 'Category not found to add desk.',
+        categorySlug,
+        deskName,
+      });
+    }
+  );
+
+  server.tool(
     'get_category_desks',
     '[READ-ONLY] Retrieve all dynamic desks/subcategories assigned to a category in PostgreSQL database.',
     {
@@ -544,6 +597,74 @@ export function registerTaxonomyTools(
 
       const graph = await topicService.getTopicKnowledgeGraph(principal.organizationId);
       return mcpJsonResponse(graph);
+    }
+  );
+
+  server.tool(
+    'get_special_desk',
+    '[READ-ONLY] Retrieve detailed status, theme, banner, and pinned stories of a special coverage pop-up news desk.',
+    {
+      slugOrId: z.string().min(1).describe('Special desk slug or ID (e.g. "cop30-climate-summit")'),
+    },
+    async ({ slugOrId }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const desk = await specialDeskService.getDesk(slugOrId);
+      if (!desk) {
+        return mcpErrorResponse(`Special desk "${slugOrId}" not found`);
+      }
+      return mcpJsonResponse(desk);
+    }
+  );
+
+  server.tool(
+    'list_topics',
+    '[READ-ONLY] Retrieve all editorial taxonomy topics monitored across the platform.',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const topics = await db.topics.list(principal.organizationId);
+      return mcpJsonResponse({
+        total: topics.length,
+        topics,
+      });
+    }
+  );
+
+  server.tool(
+    'list_events',
+    '[READ-ONLY] Retrieve tracked real-world ongoing news events.',
+    {
+      limit: z.number().int().positive().max(100).default(50).describe('Max events to retrieve'),
+    },
+    async ({ limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const events = await db.events.list(principal.organizationId, limit);
+      return mcpJsonResponse({
+        total: events.length,
+        events,
+      });
+    }
+  );
+
+  server.tool(
+    'list_entities',
+    '[READ-ONLY] Retrieve tracked knowledge graph named entities (people, organizations, places).',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const entities = await db.entities.list(principal.organizationId);
+      return mcpJsonResponse({
+        total: entities.length,
+        entities,
+      });
     }
   );
 }

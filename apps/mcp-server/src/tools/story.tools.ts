@@ -603,4 +603,79 @@ export function registerStoryTools(
       });
     }
   );
+
+  server.tool(
+    'get_story_by_slug',
+    '[READ-ONLY] Retrieve complete story details directly by its canonical URL slug.',
+    {
+      slug: z
+        .string()
+        .min(1)
+        .describe('The story URL slug (e.g. "cop30-climate-summit-declaration")'),
+    },
+    async ({ slug }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const story = await db.stories.findBySlug(slug, principal.organizationId);
+      if (!story) {
+        return mcpJsonResponse({ message: `Story with slug "${slug}" not found.` });
+      }
+      return mcpJsonResponse(story);
+    }
+  );
+
+  server.tool(
+    'get_breaking_ticker',
+    '[READ-ONLY] Retrieve active high-priority breaking news alerts and latest wire dispatches for marquee ticker display.',
+    {
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(20)
+        .default(6)
+        .describe('Max ticker items to retrieve'),
+    },
+    async ({ limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const notifications = await db.notifications.list(principal.organizationId, limit);
+      const breakingNotifs = notifications.filter(
+        (n) => n.type === 'breaking_news' || n.severity === 'urgent'
+      );
+
+      const publishedStories = await db.stories.list(
+        { status: 'PUBLISHED', limit },
+        principal.organizationId
+      );
+
+      const items = [
+        ...breakingNotifs.map((n) => ({
+          id: n.id,
+          topic: 'ALERT',
+          headline: n.message || n.title,
+          slug: n.storyId || '',
+          urgency: n.severity || 'urgent',
+          badge: 'BREAKING',
+          timeAgo: 'LIVE',
+        })),
+        ...publishedStories.map((s) => ({
+          id: s.id,
+          topic: (s.articleType || 'DISPATCH').replace('_', ' ').toUpperCase(),
+          headline: s.title,
+          slug: s.slug,
+          urgency: 'info',
+          badge: s.articleType === 'breaking_news' ? 'DEVELOPING' : 'WIRE',
+          timeAgo: 'LATEST',
+        })),
+      ].slice(0, limit);
+
+      return mcpJsonResponse({
+        count: items.length,
+        tickerItems: items,
+      });
+    }
+  );
 }

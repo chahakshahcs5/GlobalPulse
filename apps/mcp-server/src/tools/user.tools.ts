@@ -336,4 +336,94 @@ export function registerUserTools(
       }
     }
   );
+
+  // 9. get_user_profile
+  server.tool(
+    'get_user_profile',
+    '[READ-ONLY] Retrieve profile details, roles, permissions, and preferences for a newsroom user or current agent.',
+    {
+      user_id: z.string().optional().describe('User ID to inspect (defaults to current principal)'),
+    },
+    async ({ user_id }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const targetId = user_id || principal.id;
+        const user = await database.users.findById(targetId, principal.organizationId);
+        if (!user) {
+          return errorResponse(`User "${targetId}" not found`);
+        }
+
+        return successResponse({
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            clientType: user.clientType,
+            bio: user.bio,
+            preferences: user.preferences,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+          },
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 10. is_following_interest
+  server.tool(
+    'is_following_interest',
+    '[READ-ONLY] Check whether the active user or agent is currently following a specific topic, entity, author, or publisher.',
+    {
+      target_type: z.enum(['topic', 'entity', 'author', 'source']).describe('Type of interest'),
+      target_id: z
+        .string()
+        .min(1)
+        .describe('The unique ID or slug of the topic/entity/author/source'),
+    },
+    async ({ target_type, target_id }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const following = await database.users.isFollowing(principal.id, target_type, target_id);
+        return successResponse({
+          target_type,
+          target_id,
+          isFollowing: following,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // 11. delete_newsroom_user
+  server.tool(
+    'delete_newsroom_user',
+    '[WRITE / ADMIN] Revoke and remove a newsroom user or AI agent account.',
+    {
+      user_id: z.string().min(1).describe('The user ID to delete'),
+    },
+    async ({ user_id }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireRole(principal, 'admin');
+        AuthService.requireScope(principal, 'news:admin');
+
+        const success = await database.users.delete(user_id, principal.organizationId);
+        return successResponse({
+          success,
+          message: success ? `Newsroom user "${user_id}" deleted.` : `User "${user_id}" not found.`,
+        });
+      } catch (err: unknown) {
+        return errorResponse(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
 }

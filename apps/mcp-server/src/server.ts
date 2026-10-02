@@ -25,6 +25,7 @@ import { registerEditorialTools } from './tools/editorial.tools';
 import { registerEnterpriseTools } from './tools/enterprise.tools';
 import { registerTipTools } from './tools/tip.tools';
 import { registerWeatherTools } from './tools/weather.tools';
+import { registerNavigationTools } from './tools/navigation.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 import { resolveCorsOrigin, ALLOWED_CORS_HEADERS } from '@ai-news/shared';
@@ -136,6 +137,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     registerEnterpriseTools(targetServer, database, getPrincipal);
     registerTipTools(targetServer, database, getPrincipal);
     registerWeatherTools(targetServer, getPrincipal);
+    registerNavigationTools(targetServer, database, getPrincipal);
     registerResources(targetServer, database, getPrincipal);
     registerPrompts(targetServer);
   }

@@ -97,4 +97,80 @@ export function registerFactCheckTools(
       }
     }
   );
+
+  server.tool(
+    'create_fact_check',
+    '[WRITE] Record a verified fact-check claim, verdict rating, and debunking analysis from the verification desk.',
+    {
+      claim: z.string().min(1).describe('The exact statement or viral rumor evaluated'),
+      claimant: z.string().optional().describe('Individual or entity who originated the claim'),
+      verdict: z
+        .enum(['true', 'mostly_true', 'half_true', 'mostly_false', 'false', 'unverified'])
+        .describe('Fact-check rating'),
+      explanation: z
+        .string()
+        .min(1)
+        .describe('Detailed editorial analysis debunking or confirming the claim'),
+      sources: z.array(z.string()).default([]).describe('Source URLs verifying the assessment'),
+    },
+    async ({ claim, claimant, verdict, explanation, sources }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const ratingMap: Record<
+          string,
+          'UNVERIFIED' | 'TRUE' | 'MOSTLY_TRUE' | 'MIXTURE' | 'MOSTLY_FALSE' | 'FALSE'
+        > = {
+          true: 'TRUE',
+          mostly_true: 'MOSTLY_TRUE',
+          half_true: 'MIXTURE',
+          mostly_false: 'MOSTLY_FALSE',
+          false: 'FALSE',
+          unverified: 'UNVERIFIED',
+        };
+
+        const factCheck = await factCheckService.addFactCheck({
+          claim,
+          claimant: claimant || 'Unspecified',
+          rating: ratingMap[verdict] || 'UNVERIFIED',
+          summary: explanation,
+          checker: principal.id,
+          sources,
+        });
+
+        return mcpJsonResponse({
+          message: 'Fact-check claim recorded successfully.',
+          factCheck,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to create fact check: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_fact_check',
+    '[READ-ONLY] Retrieve a specific fact-check record by ID.',
+    {
+      factCheckId: z.string().min(1).describe('The unique fact-check ID'),
+    },
+    async ({ factCheckId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const factCheck = await db.factChecks.findById(factCheckId);
+        if (!factCheck) {
+          return mcpErrorResponse(`Fact check "${factCheckId}" not found`);
+        }
+
+        return mcpJsonResponse(factCheck);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get fact check: ${msg}`);
+      }
+    }
+  );
 }

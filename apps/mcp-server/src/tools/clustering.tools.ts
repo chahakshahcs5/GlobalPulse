@@ -120,4 +120,86 @@ export function registerClusteringTools(
       }
     }
   );
+
+  server.tool(
+    'get_story_cluster',
+    '[READ-ONLY] Retrieve details of a multi-source story cluster by its cluster ID.',
+    {
+      clusterId: z.string().min(1).describe('The unique cluster ID (e.g. "cls_123")'),
+    },
+    async ({ clusterId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:read');
+
+        const cluster = await db.clusters.getById(clusterId, principal.organizationId);
+        if (!cluster) {
+          return mcpErrorResponse(`Story cluster "${clusterId}" not found`);
+        }
+        return mcpJsonResponse(cluster);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get story cluster: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'add_story_to_cluster',
+    '[WRITE] Append an additional story ID into an existing event story cluster.',
+    {
+      clusterId: z.string().min(1).describe('Target cluster ID'),
+      storyId: z.string().min(1).describe('Story ID to append to the cluster'),
+    },
+    async ({ clusterId, storyId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const cluster = await db.clusters.getById(clusterId, principal.organizationId);
+        if (!cluster) {
+          return mcpErrorResponse(`Story cluster "${clusterId}" not found`);
+        }
+
+        if (!cluster.storyIds.includes(storyId)) {
+          cluster.storyIds.push(storyId);
+          cluster.updatedAt = new Date().toISOString();
+          await db.clusters.update(cluster);
+        }
+
+        return mcpJsonResponse({
+          message: `Story "${storyId}" added to cluster "${clusterId}".`,
+          cluster,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to add story to cluster: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'delete_story_cluster',
+    '[WRITE] Delete a story cluster grouping.',
+    {
+      clusterId: z.string().min(1).describe('The cluster ID to delete'),
+    },
+    async ({ clusterId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireScope(principal, 'news:write');
+
+        const success = await db.clusters.delete(clusterId, principal.organizationId);
+        return mcpJsonResponse({
+          success,
+          message: success
+            ? `Story cluster "${clusterId}" deleted.`
+            : `Story cluster "${clusterId}" not found.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to delete story cluster: ${msg}`);
+      }
+    }
+  );
 }

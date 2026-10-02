@@ -360,4 +360,131 @@ export function registerSourceTools(
       });
     }
   );
+
+  server.tool(
+    'get_source',
+    '[READ-ONLY] Retrieve details of a registered external source by its ID or direct URL.',
+    {
+      sourceIdOrUrl: z.string().min(1).describe('The source ID (e.g. "src_123") or full URL'),
+    },
+    async ({ sourceIdOrUrl }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      let source = await db.sources.findById(sourceIdOrUrl, principal.organizationId);
+      if (!source) {
+        source = await db.sources.findByUrl(sourceIdOrUrl, principal.organizationId);
+      }
+
+      if (!source) {
+        return mcpJsonResponse({ message: `Source "${sourceIdOrUrl}" not found.` });
+      }
+
+      return mcpJsonResponse(source);
+    }
+  );
+
+  server.tool(
+    'list_sources',
+    '[READ-ONLY] Retrieve list of recently registered external sources across the newsroom.',
+    {
+      limit: z.number().int().positive().max(100).default(50).describe('Max sources to retrieve'),
+    },
+    async ({ limit }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const sources = await db.sources.list(principal.organizationId, limit);
+      return mcpJsonResponse({
+        total: sources.length,
+        sources,
+      });
+    }
+  );
+
+  server.tool(
+    'follow_publisher',
+    '[WRITE] Direct alias for follow_source to prioritize an outlet (e.g. Bloomberg, Reuters, The Hindu) in personal news feeds.',
+    {
+      publisherIdOrSlug: z.string().min(1).describe('The publisher ID or slug to follow'),
+    },
+    async ({ publisherIdOrSlug }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      let pub = await db.publishers.findById(publisherIdOrSlug, principal.organizationId);
+      if (!pub) {
+        pub = await db.publishers.findBySlug(publisherIdOrSlug, principal.organizationId);
+      }
+      const targetId = pub ? pub.id : publisherIdOrSlug;
+
+      const record = await db.users.followTarget(principal.id, 'source', targetId);
+      if (pub) {
+        pub.followerCount = (pub.followerCount || 0) + 1;
+        await db.publishers.update(pub);
+      }
+
+      return mcpJsonResponse({
+        message: `Successfully followed publisher "${pub?.name || publisherIdOrSlug}".`,
+        follow: record,
+      });
+    }
+  );
+
+  server.tool(
+    'unfollow_publisher',
+    '[WRITE] Direct alias for unfollow_source to remove a news publisher from followed feeds.',
+    {
+      publisherIdOrSlug: z.string().min(1).describe('The publisher ID or slug to unfollow'),
+    },
+    async ({ publisherIdOrSlug }) => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      let pub = await db.publishers.findById(publisherIdOrSlug, principal.organizationId);
+      if (!pub) {
+        pub = await db.publishers.findBySlug(publisherIdOrSlug, principal.organizationId);
+      }
+      const targetId = pub ? pub.id : publisherIdOrSlug;
+
+      const success = await db.users.unfollowTarget(principal.id, 'source', targetId);
+      if (success && pub && pub.followerCount > 0) {
+        pub.followerCount -= 1;
+        await db.publishers.update(pub);
+      }
+
+      return mcpJsonResponse({
+        success,
+        message: success
+          ? `Successfully unfollowed publisher "${pub?.name || publisherIdOrSlug}".`
+          : `Was not following publisher "${pub?.name || publisherIdOrSlug}".`,
+      });
+    }
+  );
+
+  server.tool(
+    'list_followed_publishers',
+    '[READ-ONLY] Direct alias for list_followed_sources to retrieve followed news outlets.',
+    {},
+    async () => {
+      const principal = getPrincipal();
+      AuthService.requireScope(principal, 'news:read');
+
+      const followRecords = await db.users.listFollowing(principal.id, 'source');
+      const followedPublishers = await Promise.all(
+        followRecords.map(async (r) => {
+          let pub = await db.publishers.findById(r.targetId, principal.organizationId);
+          if (!pub) {
+            pub = await db.publishers.findBySlug(r.targetId, principal.organizationId);
+          }
+          return pub || { id: r.targetId, name: r.targetId };
+        })
+      );
+
+      return mcpJsonResponse({
+        count: followedPublishers.length,
+        publishers: followedPublishers,
+      });
+    }
+  );
 }

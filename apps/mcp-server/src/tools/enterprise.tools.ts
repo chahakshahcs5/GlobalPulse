@@ -307,4 +307,67 @@ export function registerEnterpriseTools(
       }
     }
   );
+
+  // --- Audit Logging & Compliance ---
+
+  server.tool(
+    'query_audit_logs',
+    '[ADMIN / AUDIT] Query immutable platform audit logs for security, content provenance, and staff activity.',
+    {
+      action: z
+        .string()
+        .optional()
+        .describe('Filter by action (e.g. "story.publish", "user.role_change")'),
+      clientType: z
+        .string()
+        .optional()
+        .describe('Filter by client type (e.g. "gemini", "human_web")'),
+      userId: z.string().optional().describe('Filter by user or agent ID'),
+      status: z.string().optional().describe('Filter by status (e.g. "success", "failure")'),
+      fromDate: z.string().optional().describe('Filter logs created at or after ISO timestamp'),
+      toDate: z.string().optional().describe('Filter logs created at or before ISO timestamp'),
+      limit: z.number().int().positive().max(100).default(50).describe('Max logs to return'),
+    },
+    async (filter) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireRole(principal, 'admin');
+        AuthService.requireScope(principal, 'news:admin');
+
+        const logs = await db.audit.query(principal.organizationId, filter);
+        return mcpJsonResponse({
+          organizationId: principal.organizationId,
+          total: logs.length,
+          logs,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to query audit logs: ${msg}`);
+      }
+    }
+  );
+
+  server.tool(
+    'get_audit_log',
+    '[ADMIN / AUDIT] Retrieve a single audit log entry by its unique ID.',
+    {
+      logId: z.string().min(1).describe('The unique audit log entry ID'),
+    },
+    async ({ logId }) => {
+      try {
+        const principal = getPrincipal();
+        AuthService.requireRole(principal, 'admin');
+        AuthService.requireScope(principal, 'news:admin');
+
+        const log = await db.audit.findById(logId);
+        if (!log) {
+          return mcpErrorResponse(`Audit log "${logId}" not found`);
+        }
+        return mcpJsonResponse(log);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return mcpErrorResponse(`Failed to get audit log: ${msg}`);
+      }
+    }
+  );
 }
