@@ -61,7 +61,7 @@ interface HeaderTabItem {
 
 const BASE_NAV_ITEMS: HeaderTabItem[] = [
   { id: 'top', tabId: 'top', name: 'Top Stories', href: '/', icon: Star },
-  { id: 'for-you', tabId: 'for-you', name: 'For You', href: '/for-you', icon: Sparkles },
+  { id: 'for-you', tabId: 'for-you', name: 'For You', href: '/?tab=for-you', icon: Sparkles },
   {
     id: 'following',
     tabId: 'following',

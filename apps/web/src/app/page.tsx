@@ -416,74 +416,66 @@ function GoogleNewsContent() {
       {/* Real-time Breaking News Ticker */}
       <BreakingTicker />
 
-      {/* Google News Feed Mode Tabs (Top Stories, For You, Following, Reading History) */}
+      {/* Feed Context Header & Controls (Top Stories, For You, Following are managed via the primary Header) */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-          <button
-            onClick={() => switchFeedMode('top')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-              feedMode === 'top'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Star className="w-3.5 h-3.5" />
-            <span>Top Stories</span>
-          </button>
+        <div className="flex items-center gap-2">
+          {feedMode === 'top' && (
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <Star className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Top Stories</span>
+            </div>
+          )}
+          {feedMode === 'for-you' && (
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Personalized for You</span>
+            </div>
+          )}
+          {feedMode === 'following' && (
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <BookmarkCheck className="w-3.5 h-3.5" />
+              <span>Following Stream</span>
+            </div>
+          )}
+          {feedMode === 'history' && (
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <History className="w-3.5 h-3.5" />
+              <span>Reading History</span>
+            </div>
+          )}
+        </div>
 
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => switchFeedMode('for-you')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-              feedMode === 'for-you'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>For You</span>
-          </button>
-
-          <button
-            onClick={() => switchFeedMode('following')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-              feedMode === 'following'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <BookmarkCheck className="w-3.5 h-3.5" />
-            <span>Following</span>
-          </button>
-
-          <button
-            onClick={() => switchFeedMode('history')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+            onClick={() => switchFeedMode(feedMode === 'history' ? 'top' : 'history')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
               feedMode === 'history'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
+            title="View reading history"
           >
             <History className="w-3.5 h-3.5" />
             <span>Recently Read</span>
           </button>
-        </div>
 
-        {/* Regional Edition Selector (F14) */}
-        <div className="flex items-center gap-2 text-xs">
-          <Globe2 className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-slate-400 hidden sm:inline">Edition:</span>
-          <select
-            value={edition}
-            onChange={(e) => handleEditionChange(e.target.value as RegionalEdition)}
-            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-none rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-1 focus:ring-blue-500 cursor-pointer"
-          >
-            <option value="global">Global Edition</option>
-            <option value="india">India Edition</option>
-            <option value="us">United States</option>
-            <option value="europe">Europe</option>
-            <option value="asia">Asia-Pacific</option>
-            <option value="mideast">Middle East & Gulf</option>
-          </select>
+          {/* Regional Edition Selector (F14) */}
+          <div className="flex items-center gap-2 text-xs">
+            <Globe2 className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-400 hidden sm:inline">Edition:</span>
+            <select
+              value={edition}
+              onChange={(e) => handleEditionChange(e.target.value as RegionalEdition)}
+              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-none rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="global">Global Edition</option>
+              <option value="india">India Edition</option>
+              <option value="us">United States</option>
+              <option value="europe">Europe</option>
+              <option value="asia">Asia-Pacific</option>
+              <option value="mideast">Middle East & Gulf</option>
+            </select>
+          </div>
         </div>
       </div>
 
