@@ -106,7 +106,7 @@ export default function SourcesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* Header Breadcrumb & Title */}
-      <div className="space-y-4 pb-6 border-b border-slate-800">
+      <div className="space-y-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
           <Link
             href="/"
@@ -289,13 +289,13 @@ export default function SourcesPage() {
                   </h3>
 
                   {src.permissibleExcerpt && (
-                    <p className="text-xs text-slate-400 italic line-clamp-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic line-clamp-3 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800/60">
                       "{src.permissibleExcerpt}"
                     </p>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs font-mono text-slate-400">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
                   <span suppressHydrationWarning>
                     {formatDeterministicDate(src.publishedAt || src.createdAt)}
                   </span>
@@ -303,7 +303,7 @@ export default function SourcesPage() {
                     href={src.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
                   >
                     <span>Visit Link</span>
                     <ExternalLink className="w-3 h-3" />
