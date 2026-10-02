@@ -3,7 +3,7 @@
 # ports are configured via .env (default: 4000/4001).
 
 services:
-  # 1. PostgreSQL 16 with pgvector extension (Sections 10, 152, 154)
+  # 1. PostgreSQL 16 with pgvector extension
   postgres:
     image: pgvector/pgvector:pg16
     container_name: globalpulse_postgres
@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Redis 7 for high-throughput job queue and SSE broker (Sections 10, 152)
+  # 2. Redis 7 for high-throughput job queue and SSE broker
   redis:
     image: redis:7-alpine
     container_name: globalpulse_redis
@@ -37,25 +37,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # 3. MinIO S3-Compatible Object Storage for media assets and variants (Section 154)
-  minio:
-    image: minio/minio:RELEASE.2024-03-05T04-48-44Z
-    container_name: globalpulse_minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
+  # 3. Database Schema Initialization & Bootstrap Seed
+  db-setup:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    command:
+      [
+        'sh',
+        '-c',
+        'pnpm --filter @ai-news/database exec prisma db push --schema=prisma/schema.prisma && pnpm --filter @ai-news/database exec prisma db execute --schema=prisma/schema.prisma --file=prisma/bootstrap.sql',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
 
   # 4. Production NestJS API Gateway & Mercurius GraphQL API
   api:
@@ -71,15 +71,29 @@ services:
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
       REDIS_URL: redis://redis:6379
-      MINIO_ENDPOINT: http://minio:9000
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:3001/mcp}
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-https://auth.globalpulse.news}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-https://api.globalpulse.news}
+      # Backblaze B2 / S3 Object Storage
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-us-east-005}
+      S3_BUCKET: ${S3_BUCKET:-news-media}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
       JWT_ISSUER: https://auth.globalpulse.news
       JWT_AUDIENCE: https://api.globalpulse.news
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -93,15 +107,26 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      MCP_PORT: 3001
+      MCP_HOST: 0.0.0.0
       HOST: 0.0.0.0
-      API_BASE_URL: http://api:3000
+      API_BASE_URL: ${API_BASE_URL:-http://api:3000}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:3001/mcp}
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-https://auth.globalpulse.news}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-https://api.globalpulse.news}
+      DEV_TOKEN_ADMIN: ${DEV_TOKEN_ADMIN:-}
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3001:3001'
     depends_on:
       postgres:
         condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
       api:
         condition: service_started
 
@@ -115,8 +140,10 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3002
-      NEXT_PUBLIC_API_URL: http://localhost:3000
-      NEXT_PUBLIC_MCP_URL: http://localhost:3001/mcp
+      API_INTERNAL_URL: http://api:3000
+      NEXT_PUBLIC_MCP_URL: ${NEXT_PUBLIC_MCP_URL:-http://localhost:3001/mcp}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3002:3002'
     depends_on:
@@ -134,13 +161,23 @@ services:
       REDIS_URL: redis://redis:6379
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
+      # Backblaze B2 / S3 Object Storage
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-us-east-005}
+      S3_BUCKET: ${S3_BUCKET:-news-media}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       postgres:
         condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
 volumes:
   postgres_data:
   redis_data:
-  minio_data:

@@ -35,27 +35,45 @@ export class S3StorageService {
     const endpoint =
       config.endpoint ||
       process.env.S3_ENDPOINT ||
+      process.env.B2_ENDPOINT ||
       process.env.MINIO_ENDPOINT ||
       'http://localhost:9000';
-    const region = config.region || process.env.S3_REGION || 'us-east-1';
-    this.bucket = config.bucket || process.env.S3_BUCKET || 'news-media';
+    const region = config.region || process.env.S3_REGION || process.env.B2_REGION || 'us-east-1';
+    this.bucket = config.bucket || process.env.S3_BUCKET || process.env.B2_BUCKET || 'news-media';
     const accessKeyId =
       config.accessKeyId ||
       process.env.S3_ACCESS_KEY ||
+      process.env.B2_APPLICATION_KEY_ID ||
+      process.env.B2_ACCESS_KEY ||
       process.env.MINIO_ROOT_USER ||
       'minioadmin';
     const secretAccessKey =
       config.secretAccessKey ||
       process.env.S3_SECRET_KEY ||
+      process.env.B2_APPLICATION_KEY ||
+      process.env.B2_SECRET_KEY ||
       process.env.MINIO_ROOT_PASSWORD ||
       'minioadminpassword';
+
+    const isB2 = endpoint.includes('backblazeb2.com');
 
     this.publicUrl =
       config.publicUrl ||
       process.env.S3_PUBLIC_URL ||
-      (process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT
-        ? `${(process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT)!.replace(/\/$/, '')}/${this.bucket}`
-        : 'https://cdn.globalpulse.news');
+      process.env.B2_PUBLIC_URL ||
+      (isB2
+        ? `https://${this.bucket}.s3.${region}.backblazeb2.com`
+        : process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT
+          ? `${(process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT)!.replace(/\/$/, '')}/${this.bucket}`
+          : 'https://cdn.globalpulse.news');
+
+    // For Backblaze B2 and AWS S3, virtual-hosted style (forcePathStyle: false) is standard;
+    // For local MinIO/RustFS, path-style (forcePathStyle: true) is required.
+    const forcePathStyle =
+      config.forcePathStyle ??
+      (process.env.S3_FORCE_PATH_STYLE !== undefined
+        ? process.env.S3_FORCE_PATH_STYLE === 'true'
+        : !isB2);
 
     try {
       this.client = new S3Client({
@@ -65,7 +83,7 @@ export class S3StorageService {
           accessKeyId,
           secretAccessKey,
         },
-        forcePathStyle: config.forcePathStyle ?? true, // Required for MinIO
+        forcePathStyle,
       });
     } catch {
       this.client = null;
@@ -191,8 +209,15 @@ export class S3StorageService {
     latencyMs: number;
   }> {
     const start = Date.now();
-    const provider =
-      process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT ? 'minio-s3' : 'embedded-s3';
+    const endpoint =
+      process.env.S3_ENDPOINT || process.env.B2_ENDPOINT || process.env.MINIO_ENDPOINT || '';
+    const provider = endpoint.includes('backblazeb2.com')
+      ? 'backblaze-b2'
+      : endpoint.includes('minio') || endpoint.includes('rustfs')
+        ? 'local-s3'
+        : endpoint
+          ? 's3-compatible'
+          : 'embedded-s3';
     if (!this.client || process.env.NODE_ENV === 'test') {
       return {
         status: 'healthy',

@@ -40,6 +40,9 @@ RUN pnpm install --frozen-lockfile
 # Copy full monorepo source tree
 COPY . .
 
+# Build Next.js production bundle
+RUN pnpm --filter @ai-news/web build
+
 # Expose Next.js Web port
 EXPOSE 3002
 
@@ -47,4 +50,4 @@ ENV NODE_ENV=production
 ENV PORT=3002
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD ["pnpm", "--filter", "@ai-news/web", "dev", "--", "-p", "3002", "-H", "0.0.0.0"]
+CMD ["pnpm", "--filter", "@ai-news/web", "exec", "next", "start", "-p", "3002", "-H", "0.0.0.0"]

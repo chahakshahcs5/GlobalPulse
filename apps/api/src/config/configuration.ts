@@ -22,9 +22,18 @@ export function getAppConfig(): AppConfig {
   const mcpPort = parseInt(process.env.MCP_PORT || '4001', 10);
   const mcpBaseUrl = process.env.MCP_BASE_URL || `http://localhost:${mcpPort}`;
   const s3Endpoint =
-    process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://localhost:9000';
-  const s3Bucket = process.env.S3_BUCKET || 'news-media';
-  const s3PublicUrl = process.env.S3_PUBLIC_URL || `${s3Endpoint}/${s3Bucket}`;
+    process.env.S3_ENDPOINT ||
+    process.env.B2_ENDPOINT ||
+    process.env.MINIO_ENDPOINT ||
+    'http://localhost:9000';
+  const s3Bucket = process.env.S3_BUCKET || process.env.B2_BUCKET || 'news-media';
+  const s3Region = process.env.S3_REGION || process.env.B2_REGION || 'us-east-005';
+  const s3PublicUrl =
+    process.env.S3_PUBLIC_URL ||
+    process.env.B2_PUBLIC_URL ||
+    (s3Endpoint.includes('backblazeb2.com')
+      ? `https://${s3Bucket}.s3.${s3Region}.backblazeb2.com`
+      : `${s3Endpoint}/${s3Bucket}`);
 
   return {
     port,
