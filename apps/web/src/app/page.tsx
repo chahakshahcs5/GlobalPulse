@@ -26,6 +26,7 @@ import {
   X as XIcon,
   Newspaper,
   Building2,
+  Layers,
 } from 'lucide-react';
 import { DEMO_PUBLISHERS } from '../lib/demo-data';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
@@ -126,6 +127,7 @@ function GoogleNewsContent() {
   const [readingHistory, setReadingHistory] = useState<
     Array<{ slug: string; title: string; category?: string; readAt: string }>
   >([]);
+  const [followedCategories, setFollowedCategories] = useState<string[]>([]);
   const [followedTopics, setFollowedTopics] = useState<string[]>([]);
   const [followedSources, setFollowedSources] = useState<string[]>([]);
 
@@ -134,13 +136,21 @@ function GoogleNewsContent() {
   const { topics: taxonomyTopics, categories: taxonomyCategories } = useTaxonomy();
   const bookmarks = useBookmarks();
 
+  const availableCategories = Array.from(new Set(taxonomyCategories.map((c) => c.name))).filter(
+    Boolean
+  );
+
   const availableTopics = Array.from(
     new Set([
       ...taxonomyTopics.map((t) => t.name),
-      ...taxonomyCategories.map((c) => c.name),
-      ...clusters.map((c) => c.category),
+      'Global Geopolitics',
+      'Nuclear Fusion Energy',
+      'BRICS Summit 2026',
+      'Autonomous AI Agents',
+      'Semiconductors',
+      'Quantum Computing',
     ])
-  ).filter(Boolean);
+  ).filter((top) => !availableCategories.includes(top));
 
   // Synchronize feedMode with URL tab parameter or window hash
   useEffect(() => {
@@ -178,11 +188,19 @@ function GoogleNewsContent() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Load reading history, followed topics, and regional edition from localStorage
+  // Load reading history, followed categories, followed topics, and regional edition from localStorage
   useEffect(() => {
     try {
       const histRaw = localStorage.getItem('globalpulse_reading_history');
       if (histRaw) setReadingHistory(JSON.parse(histRaw));
+
+      const catRaw = localStorage.getItem('globalpulse_followed_categories');
+      if (catRaw) {
+        setFollowedCategories(JSON.parse(catRaw));
+      } else if (taxonomyCategories.length > 0) {
+        setFollowedCategories(taxonomyCategories.slice(0, 4).map((c) => c.name));
+      }
+
       const followRaw = localStorage.getItem('globalpulse_following');
       if (followRaw) {
         setFollowedTopics(JSON.parse(followRaw));
@@ -202,15 +220,36 @@ function GoogleNewsContent() {
       // Safe fallback
     }
 
+    const handleCategoriesUpdate = () => {
+      try {
+        const stored = localStorage.getItem('globalpulse_followed_categories');
+        if (stored) setFollowedCategories(JSON.parse(stored));
+      } catch {}
+    };
+
+    const handleTopicsUpdate = () => {
+      try {
+        const stored = localStorage.getItem('globalpulse_following');
+        if (stored) setFollowedTopics(JSON.parse(stored));
+      } catch {}
+    };
+
     const handleSourcesUpdate = () => {
       try {
         const stored = localStorage.getItem('globalpulse_followed_sources');
         if (stored) setFollowedSources(JSON.parse(stored));
       } catch {}
     };
+
+    window.addEventListener('globalpulse_categories_updated', handleCategoriesUpdate);
+    window.addEventListener('globalpulse_following_updated', handleTopicsUpdate);
     window.addEventListener('globalpulse_sources_updated', handleSourcesUpdate);
-    return () => window.removeEventListener('globalpulse_sources_updated', handleSourcesUpdate);
-  }, [taxonomyTopics]);
+    return () => {
+      window.removeEventListener('globalpulse_categories_updated', handleCategoriesUpdate);
+      window.removeEventListener('globalpulse_following_updated', handleTopicsUpdate);
+      window.removeEventListener('globalpulse_sources_updated', handleSourcesUpdate);
+    };
+  }, [taxonomyCategories, taxonomyTopics]);
 
   // Switch tab and synchronize URL
   const switchFeedMode = (mode: FeedMode) => {
@@ -220,6 +259,21 @@ function GoogleNewsContent() {
     router.push(target, { scroll: false });
   };
 
+  // Toggle category follow
+  const toggleFollowCategory = (category: string) => {
+    setFollowedCategories((prev) => {
+      const exists = prev.includes(category);
+      const next = exists ? prev.filter((c) => c !== category) : [...prev, category];
+      try {
+        localStorage.setItem('globalpulse_followed_categories', JSON.stringify(next));
+        window.dispatchEvent(new Event('globalpulse_categories_updated'));
+      } catch {
+        // Safe fallback
+      }
+      return next;
+    });
+  };
+
   // Toggle topic follow
   const toggleFollowTopic = (topic: string) => {
     setFollowedTopics((prev) => {
@@ -227,6 +281,7 @@ function GoogleNewsContent() {
       const next = exists ? prev.filter((t) => t !== topic) : [...prev, topic];
       try {
         localStorage.setItem('globalpulse_following', JSON.stringify(next));
+        window.dispatchEvent(new Event('globalpulse_following_updated'));
       } catch {
         // Safe fallback
       }
@@ -279,24 +334,47 @@ function GoogleNewsContent() {
 
   // Personalized clusters for "For You"
   const forYouClusters = [...clusters].sort((a, b) => {
-    const aMatch = followedTopics.some(
-      (t) =>
-        a.title.toLowerCase().includes(t.toLowerCase()) ||
-        a.category.toLowerCase().includes(t.toLowerCase())
-    );
-    const bMatch = followedTopics.some(
-      (t) =>
-        b.title.toLowerCase().includes(t.toLowerCase()) ||
-        b.category.toLowerCase().includes(t.toLowerCase())
-    );
+    const aMatch =
+      followedCategories.some(
+        (cat) =>
+          a.category?.toLowerCase() === cat.toLowerCase() ||
+          a.category?.toLowerCase().includes(cat.toLowerCase())
+      ) ||
+      followedTopics.some(
+        (t) =>
+          a.title.toLowerCase().includes(t.toLowerCase()) ||
+          a.category.toLowerCase().includes(t.toLowerCase())
+      );
+    const bMatch =
+      followedCategories.some(
+        (cat) =>
+          b.category?.toLowerCase() === cat.toLowerCase() ||
+          b.category?.toLowerCase().includes(cat.toLowerCase())
+      ) ||
+      followedTopics.some(
+        (t) =>
+          b.title.toLowerCase().includes(t.toLowerCase()) ||
+          b.category.toLowerCase().includes(t.toLowerCase())
+      );
     if (aMatch && !bMatch) return -1;
     if (!aMatch && bMatch) return 1;
     return 0;
   });
 
-  // Clusters matching followed topics and followed sources for "Following"
+  // Clusters matching followed categories, followed topics, and followed sources for "Following"
   const followedClusters = clusters.filter((c) => {
-    if (followedTopics.length === 0 && followedSources.length === 0) return true;
+    if (
+      followedCategories.length === 0 &&
+      followedTopics.length === 0 &&
+      followedSources.length === 0
+    ) {
+      return true;
+    }
+    const matchesCategory = followedCategories.some((cat) => {
+      const catLow = cat.toLowerCase();
+      const cCatLow = (c.category || '').toLowerCase();
+      return cCatLow === catLow || cCatLow.includes(catLow) || catLow.includes(cCatLow);
+    });
     const matchesTopic = followedTopics.some(
       (t) =>
         c.title.toLowerCase().includes(t.toLowerCase()) ||
@@ -315,7 +393,7 @@ function GoogleNewsContent() {
         )
       );
     });
-    return matchesTopic || matchesSource;
+    return matchesCategory || matchesTopic || matchesSource;
   });
 
   return (
@@ -404,7 +482,7 @@ function GoogleNewsContent() {
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                 {feedMode === 'top' && 'Top stories'}
                 {feedMode === 'for-you' && 'Personalized for you'}
-                {feedMode === 'following' && 'Your followed topics & sources'}
+                {feedMode === 'following' && 'Your followed categories, topics & sources'}
                 {feedMode === 'history' && 'Reading history'}
               </h1>
               <p
@@ -520,17 +598,91 @@ function GoogleNewsContent() {
           {/* VIEW: FOLLOWING (F11) */}
           {feedMode === 'following' && (
             <div className="space-y-5">
+              {/* Followed & Suggested Categories Control Panel */}
+              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-blue-600" /> Followed Categories (
+                      {followedCategories.length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      News dispatches across your followed categories are prioritized in your feed.
+                    </p>
+                  </div>
+                  <Link
+                    href="/categories"
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0"
+                  >
+                    <span>Explore All Categories</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+
+                {/* Followed Categories Chips */}
+                <div className="flex flex-wrap gap-2">
+                  {followedCategories.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">
+                      No categories followed yet. Choose suggestions below:
+                    </span>
+                  ) : (
+                    followedCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => toggleFollowCategory(cat)}
+                        className="group px-3 py-1.5 rounded-full bg-blue-50 hover:bg-rose-50 dark:bg-blue-950/60 dark:hover:bg-rose-950/50 text-blue-700 hover:text-rose-600 dark:text-blue-300 dark:hover:text-rose-300 border border-blue-200 hover:border-rose-200 dark:border-blue-900 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                        title={`Click to unfollow ${cat}`}
+                      >
+                        <Check className="w-3.5 h-3.5 text-blue-600 group-hover:hidden" />
+                        <XIcon className="w-3.5 h-3.5 text-rose-500 hidden group-hover:inline" />
+                        <span>{cat}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+
+                {/* Suggested Categories to Follow */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Recommended Categories:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCategories
+                      .filter((c) => !followedCategories.includes(c))
+                      .map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => toggleFollowCategory(cat)}
+                          className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/60 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3 text-slate-400" />
+                          <span>{cat}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Followed & Suggested Topics Control Panel */}
               <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4 shadow-xs">
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                    <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics (
-                    {followedTopics.length})
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Click any tag to toggle following or unfollowing. Stories below filter
-                    dynamically.
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                      <BookmarkCheck className="w-4 h-4 text-blue-600" /> Followed Topics (
+                      {followedTopics.length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Click any tag to toggle following or unfollowing. Stories below filter
+                      dynamically.
+                    </p>
+                  </div>
+                  <Link
+                    href="/topic"
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0"
+                  >
+                    <span>Explore All Topics</span>
+                    <span>→</span>
+                  </Link>
                 </div>
 
                 {/* Followed Topics Chips */}
@@ -558,7 +710,7 @@ function GoogleNewsContent() {
                 {/* Suggested Topics to Follow */}
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Recommended to Follow:
+                    Recommended Topics:
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {availableTopics
