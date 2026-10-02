@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { VideoBlockSchema, TimelineBlockSchema, type TimelineBlock } from '@ai-news/schemas';
-import { TimelineRenderer } from '@ai-news/media';
+import {
+  VideoBlockSchema,
+  TimelineBlockSchema,
+  DiagramBlockSchema,
+  type TimelineBlock,
+  type DiagramBlock,
+} from '@ai-news/schemas';
+import { TimelineRenderer, DiagramRenderer } from '@ai-news/media';
 
 describe('Video Player & Timeline Renderer Unit Tests', () => {
   describe('Video Block Schema & URL Resolution', () => {
@@ -174,6 +180,42 @@ describe('Video Player & Timeline Renderer Unit Tests', () => {
       expect(svg).toContain('>1<');
       expect(svg).toContain('>2<');
       expect(svg).toContain('>3<');
+    });
+  });
+
+  describe('Diagram Block Schema & Architecture Visuals', () => {
+    const qkdDiagram: DiagramBlock['data'] = {
+      title: 'Satellite-to-Ground Entangled QKD Architecture',
+      format: 'mermaid',
+      definition:
+        'graph LR\n  SAT[LEO QKD Satellite] -->|Downlink Beam 1| GS1[Frankfurt Ground Station]\n  SAT -->|Downlink Beam 2| GS2[London Ground Station]\n  GS1 -->|Encrypted Session Key| BB1[Bundesbank Node]\n  GS2 -->|Encrypted Session Key| BB2[Bank of England Node]\n  BB1 <-->|Post-Quantum Interbank Corridor| BB2',
+      caption:
+        'Synchronized photon-entanglement distribution downlinks establishing cryptographic one-time pad verification between Frankfurt and London clearing nodes.',
+    };
+
+    it('validates a DiagramBlock with Mermaid definition and architecture topology', () => {
+      const block = {
+        id: 'blk_qkd_diagram',
+        blockType: 'diagram',
+        sortOrder: 3,
+        data: qkdDiagram,
+      };
+
+      const parsed = DiagramBlockSchema.safeParse(block);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.data.format).toBe('mermaid');
+        expect(parsed.data.data.title).toContain('Satellite-to-Ground Entangled QKD Architecture');
+        expect(parsed.data.data.definition).toContain('graph LR');
+        expect(parsed.data.data.definition).toContain('LEO QKD Satellite');
+      }
+    });
+
+    it('correctly validates valid and invalid Mermaid diagram definitions', () => {
+      expect(DiagramRenderer.validateMermaidDefinition(qkdDiagram.definition)).toBe(true);
+      expect(DiagramRenderer.validateMermaidDefinition('flowchart TD\nA-->B')).toBe(true);
+      expect(DiagramRenderer.validateMermaidDefinition('sequenceDiagram\nA->>B: ping')).toBe(true);
+      expect(DiagramRenderer.validateMermaidDefinition('not-a-diagram random text')).toBe(false);
     });
   });
 });
