@@ -53,7 +53,8 @@ export default function ForYouPage() {
           let primarySignal = {
             type: 'affinity',
             text: `High Affinity for ${story.articleType.replace('_', ' ')}`,
-            color: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+            color:
+              'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30',
           };
 
           if (story.topicIds && story.topicIds.length > 0) {
@@ -62,7 +63,8 @@ export default function ForYouPage() {
             primarySignal = {
               type: 'followed_topic',
               text: `Because you follow #${top}`,
-              color: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+              color:
+                'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-400 dark:border-purple-500/30',
             };
           } else if (idx % 4 === 3) {
             score += 15;
@@ -70,7 +72,8 @@ export default function ForYouPage() {
             primarySignal = {
               type: 'serendipity',
               text: 'Serendipity Discovery (Broaden Perspective)',
-              color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+              color:
+                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
             };
           } else {
             reasons.push(`Matches your ${story.articleType} reading history`);
@@ -81,7 +84,8 @@ export default function ForYouPage() {
             primarySignal = {
               type: 'resume',
               text: 'Resume Reading (In Progress)',
-              color: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+              color:
+                'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
             };
           }
 
@@ -144,28 +148,33 @@ export default function ForYouPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* Navigation Breadcrumb */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
-        <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider">
-          <Link href="/" className="hover:text-white transition flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 text-xs font-mono">
+        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">
+          <Link
+            href="/"
+            className="hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Newsroom Home
           </Link>
-          <span>/</span>
-          <span>Personalized Intelligence</span>
+          <span className="text-slate-300 dark:text-slate-700">/</span>
+          <span className="text-slate-500 dark:text-slate-400">Personalized Intelligence</span>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleDownloadDigest}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition shadow-xs cursor-pointer"
           >
             {downloadSuccess ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Briefing Saved!</span>
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                  Briefing Saved!
+                </span>
               </>
             ) : (
               <>
-                <Download className="w-3.5 h-3.5 text-blue-400" />
+                <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Offline Briefing</span>
               </>
             )}
@@ -173,7 +182,7 @@ export default function ForYouPage() {
 
           <button
             onClick={() => setIsTunerOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-xs cursor-pointer"
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>Tune Algorithm</span>
@@ -273,7 +282,7 @@ export default function ForYouPage() {
       )}
 
       {/* Feed Cards Grid */}
-      {!isLoading && (
+      {!isLoading && filteredStories.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredStories.map(({ story, score, primarySignal }) => {
             const userFeedback = feedbackGiven[story.id];
@@ -364,6 +373,28 @@ export default function ForYouPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && filteredStories.length === 0 && (
+        <div className="rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center mx-auto">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            No Dispatches Match This Filter
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            We couldn't find any recommendations matching this reading depth. Try switching to
+            &quot;All Dispatches&quot; or tuning your algorithm preferences.
+          </p>
+          <button
+            onClick={() => setSelectedDepth('all')}
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
+          >
+            Show All Dispatches
+          </button>
         </div>
       )}
 

@@ -58,24 +58,26 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-950 p-6 sm:p-8 shadow-2xl space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 sm:p-8 shadow-2xl space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white tracking-tight">Tune Your Algorithm</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                Tune Your Algorithm
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Direct algorithmic transparency. Control how your reading feed is curated.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,10 +88,11 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
           {/* Depth Preference */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
-                <BookOpen className="w-3.5 h-3.5 text-blue-400" /> Reading Depth Mode
+              <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
+                <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Reading Depth
+                Mode
               </span>
-              <span className="text-[11px] font-mono text-blue-400 uppercase font-bold">
+              <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400 uppercase font-bold">
                 {depth.replace('_', ' ')}
               </span>
             </div>
@@ -105,26 +108,33 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
                 <button
                   key={tier.id}
                   onClick={() => setDepth(tier.id)}
-                  className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between space-y-1 ${
+                  className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between space-y-1 cursor-pointer ${
                     depth === tier.id
-                      ? 'border-blue-500 bg-blue-500/10 text-white shadow-xs'
-                      : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-white shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  <span className="font-bold text-xs text-white">{tier.label}</span>
-                  <span className="text-[10px] text-slate-400 leading-tight">{tier.desc}</span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">
+                    {tier.label}
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    {tier.desc}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Serendipity Slider */}
-          <div className="space-y-2 p-4 rounded-2xl border border-slate-800/80 bg-slate-900/40">
+          <div className="space-y-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
-                <Compass className="w-3.5 h-3.5 text-emerald-400" /> Serendipity & Discovery
+              <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
+                <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />{' '}
+                Serendipity &amp; Discovery
               </span>
-              <span className="font-mono text-emerald-400 font-bold">{serendipity}%</span>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                {serendipity}%
+              </span>
             </div>
             <input
               type="range"
@@ -132,21 +142,24 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
               max="100"
               value={serendipity}
               onChange={(e) => setSerendipity(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-400">
+            <div className="flex justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
               <span>Pure Followed Beats</span>
-              <span>Exploratory & Unexpected</span>
+              <span>Exploratory &amp; Unexpected</span>
             </div>
           </div>
 
           {/* Local vs Global Slider */}
-          <div className="space-y-2 p-4 rounded-2xl border border-slate-800/80 bg-slate-900/40">
+          <div className="space-y-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Regional vs. Global Horizon
+              <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Regional vs.
+                Global Horizon
               </span>
-              <span className="font-mono text-amber-400 font-bold">{localVsGlobal}%</span>
+              <span className="font-mono text-amber-600 dark:text-amber-400 font-bold">
+                {localVsGlobal}%
+              </span>
             </div>
             <input
               type="range"
@@ -154,21 +167,24 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
               max="100"
               value={localVsGlobal}
               onChange={(e) => setLocalVsGlobal(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-400">
+            <div className="flex justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
               <span>Local Edition First</span>
               <span>Global Geopolitics</span>
             </div>
           </div>
 
           {/* Editorial Strictness Slider */}
-          <div className="space-y-2 p-4 rounded-2xl border border-slate-800/80 bg-slate-900/40">
+          <div className="space-y-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" /> Source Consensus Strictness
+              <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 font-mono uppercase text-[11px]">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Source
+                Consensus Strictness
               </span>
-              <span className="font-mono text-indigo-400 font-bold">{strictness}%</span>
+              <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                {strictness}%
+              </span>
             </div>
             <input
               type="range"
@@ -176,9 +192,9 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
               max="100"
               value={strictness}
               onChange={(e) => setStrictness(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-400">
+            <div className="flex justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
               <span>Fast Developing Wire</span>
               <span>Multi-Wire Verified</span>
             </div>
@@ -186,7 +202,7 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <button
             onClick={() => {
               setDepth('balanced');
@@ -194,7 +210,7 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
               setLocalVsGlobal(50);
               setStrictness(75);
             }}
-            className="text-xs font-mono text-slate-400 hover:text-white transition"
+            className="text-xs font-mono text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer"
           >
             Reset Defaults
           </button>
@@ -202,7 +218,7 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
           <button
             onClick={handleSave}
             disabled={saved}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow-md disabled:opacity-80"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow-md disabled:opacity-80 cursor-pointer"
           >
             {saved ? (
               <>
