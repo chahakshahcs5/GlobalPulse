@@ -1,12 +1,19 @@
 # GlobalPulse: AI-Operable Multimedia News Platform
 
+> **Next-generation AI-operable multimedia news publishing platform powered by Model Context Protocol (MCP), Next.js, Fastify, GraphQL Mercurius, and real-time Server-Sent Events (SSE).**
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black.svg)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg)](https://nextjs.org/)
 [![Fastify](https://img.shields.io/badge/Fastify-5.2-green.svg)](https://fastify.dev/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-Mercurius-e10098.svg)](https://mercurius.dev/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-orange.svg)](https://modelcontextprotocol.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%2B%20pgvector-336791.svg)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-432%20passing-brightgreen.svg)](<>)
+[![Tests](https://img.shields.io/badge/Tests-505%20passing-brightgreen.svg)](<>)
+
+### 🏷️ Topics & Keywords
+
+`ai-news` • `model-context-protocol` • `mcp` • `mcp-server` • `nextjs` • `fastify` • `graphql` • `mercurius` • `server-sent-events` • `real-time` • `newsroom` • `editorial-cms` • `multimedia-publishing` • `prisma` • `postgresql` • `typescript` • `monorepo` • `gemini` • `openai` • `claude`
 
 A production-grade, modern, interactive, animated multimedia news publishing platform designed from the ground up as an **AI-operable application**. External AI agents—such as Google Gemini, Gemini Spark, ChatGPT / OpenAI agents, Claude, and enterprise MCP clients—operate the newsroom remotely through the **Model Context Protocol (MCP)** and **GraphQL Mercurius API**.
 
