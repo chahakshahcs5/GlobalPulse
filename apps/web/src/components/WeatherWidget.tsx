@@ -39,6 +39,9 @@ export interface WeatherCityConfig {
 }
 
 export const WEATHER_CITIES: WeatherCityConfig[] = [
+  { key: 'ahmedabad', name: 'Ahmedabad', label: 'Ahmedabad, India', lat: 23.0225, lon: 72.5714 },
+  { key: 'mumbai', name: 'Mumbai', label: 'Mumbai, India', lat: 19.076, lon: 72.8777 },
+  { key: 'bengaluru', name: 'Bengaluru', label: 'Bengaluru, India', lat: 12.9716, lon: 77.5946 },
   { key: 'new-delhi', name: 'New Delhi', label: 'New Delhi, India', lat: 28.6139, lon: 77.209 },
   { key: 'new-york', name: 'New York', label: 'New York, USA', lat: 40.7128, lon: -74.006 },
   { key: 'london', name: 'London', label: 'London, UK', lat: 51.5074, lon: -0.1278 },
@@ -54,42 +57,50 @@ export const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<LiveWeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCityKey, setSelectedCityKey] = useState<string>('auto');
+  const [detectedLocationName, setDetectedLocationName] = useState<string>('');
+  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'preset'>('ip');
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('globalpulse_weather_location');
-      if (saved) {
+      if (saved && saved !== 'new-delhi') {
         setSelectedCityKey(saved);
+      } else {
+        setSelectedCityKey('auto');
       }
     } catch {
-      // Safe fallback
+      setSelectedCityKey('auto');
     }
   }, []);
 
-  const fetchLiveWeather = async (cityKey = selectedCityKey) => {
+  const fetchLiveWeather = async (cityKey = selectedCityKey, forceGps = false) => {
     setIsLoading(true);
     try {
-      let lat = 28.6139;
-      let lon = 77.209;
-      let city = 'New Delhi';
+      let lat = 23.0225;
+      let lon = 72.5714;
+      let city = 'Current Location';
+      let source: 'gps' | 'ip' | 'preset' = 'ip';
 
-      if (cityKey === 'auto' || cityKey === 'gps') {
-        let detected = false;
+      if (cityKey === 'auto' || forceGps) {
+        let resolved = false;
 
-        // 1. Try browser GPS with timeout
-        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+        // 1. If explicit GPS requested or browser geolocation available
+        if (forceGps && typeof window !== 'undefined' && 'geolocation' in navigator) {
+          setIsLocating(true);
           try {
             const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
               navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 3000,
-                enableHighAccuracy: false,
+                timeout: 10000,
+                enableHighAccuracy: true,
               });
             });
             lat = pos.coords.latitude;
             lon = pos.coords.longitude;
-            detected = true;
+            source = 'gps';
+            resolved = true;
 
-            // Reverse geocode coordinates to real city name
+            // Reverse geocode GPS coords to real city name
             try {
               const geoRes = await fetch(
                 `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
@@ -99,49 +110,71 @@ export const WeatherWidget: React.FC = () => {
                 const place = geoData.locality || geoData.city || geoData.principalSubdivision;
                 city = place
                   ? `${place}${geoData.countryCode ? `, ${geoData.countryCode}` : ''}`
-                  : 'Current Location';
+                  : 'Your GPS Location';
               }
             } catch {
-              city = 'Current Location';
+              city = 'Your GPS Location';
             }
           } catch {
-            // Geolocation denied or timed out, gracefully fallback to IP geolocation
+            // User dismissed or denied GPS prompt; fall back to IP geolocation
+          } finally {
+            setIsLocating(false);
           }
         }
 
-        // 2. Fallback to free real-time IP Geolocation if GPS didn't resolve
-        if (!detected && typeof window !== 'undefined') {
+        // 2. Real-time IP Geolocation (instant, no prompt needed, highly accurate)
+        if (!resolved && typeof window !== 'undefined') {
           try {
-            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            const ipRes = await fetch('https://ipwho.is/');
             if (ipRes.ok) {
               const ipData = await ipRes.json();
-              if (ipData.latitude && ipData.longitude) {
-                lat = parseFloat(ipData.latitude);
-                lon = parseFloat(ipData.longitude);
-                city = `${ipData.city || 'Local'}${
+              if (ipData.success && ipData.latitude && ipData.longitude) {
+                lat = ipData.latitude;
+                lon = ipData.longitude;
+                city = `${ipData.city || ipData.region || 'Local'}${
                   ipData.country_code ? `, ${ipData.country_code}` : ''
                 }`;
-                detected = true;
+                source = 'ip';
+                resolved = true;
               }
             }
           } catch {
-            // Fallback to default
+            // Try backup IP service
+            try {
+              const geojsRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+              if (geojsRes.ok) {
+                const geoData = await geojsRes.json();
+                if (geoData.latitude && geoData.longitude) {
+                  lat = parseFloat(geoData.latitude);
+                  lon = parseFloat(geoData.longitude);
+                  city = `${geoData.city || 'Local'}${geoData.country_code ? `, ${geoData.country_code}` : ''}`;
+                  source = 'ip';
+                  resolved = true;
+                }
+              }
+            } catch {}
           }
         }
 
-        if (!detected) {
-          const def = WEATHER_CITIES[0];
-          lat = def.lat;
-          lon = def.lon;
-          city = def.name;
+        if (resolved) {
+          setDetectedLocationName(city);
+          setLocationSource(source);
+        } else {
+          const fallback = WEATHER_CITIES[0]; // Ahmedabad
+          lat = fallback.lat;
+          lon = fallback.lon;
+          city = fallback.label;
+          setLocationSource('preset');
         }
       } else {
         const found = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
         lat = found.lat;
         lon = found.lon;
-        city = found.name;
+        city = found.label;
+        setLocationSource('preset');
       }
 
+      // 3. Real-time Weather Fetch via Public Open-Meteo API
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`,
         { headers: { Accept: 'application/json' } }
@@ -171,29 +204,27 @@ export const WeatherWidget: React.FC = () => {
 
       setWeather({
         city,
-        temperature: Math.round(data.current?.temperature_2m ?? 21),
+        temperature: Math.round(data.current?.temperature_2m ?? 24),
         condition,
         icon,
-        humidity: Math.round(data.current?.relative_humidity_2m ?? 55),
-        windSpeed: `${Math.round(data.current?.wind_speed_10m ?? 12)} km/h`,
+        humidity: Math.round(data.current?.relative_humidity_2m ?? 50),
+        windSpeed: `${Math.round(data.current?.wind_speed_10m ?? 10)} km/h`,
         forecast,
       });
     } catch {
       const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const today = new Date().getDay();
-      const currentCityConfig = WEATHER_CITIES.find((c) => c.key === cityKey) || WEATHER_CITIES[0];
-
       setWeather({
-        city: cityKey === 'auto' ? 'Current Location' : currentCityConfig.name,
-        temperature: 24,
-        condition: 'Partly Cloudy',
-        icon: '⛅',
-        humidity: 50,
-        windSpeed: '12 km/h',
+        city: detectedLocationName || 'Local Weather',
+        temperature: 28,
+        condition: 'Clear Sky',
+        icon: '☀️',
+        humidity: 45,
+        windSpeed: '8 km/h',
         forecast: [1, 2, 3, 4].map((offset) => ({
           day: daysOfWeek[(today + offset) % 7],
           icon: '☀️',
-          temp: 23 + offset,
+          temp: 28 + offset,
         })),
       });
     } finally {
@@ -215,6 +246,11 @@ export const WeatherWidget: React.FC = () => {
     } catch {}
   };
 
+  const handleRequestGps = () => {
+    setSelectedCityKey('auto');
+    fetchLiveWeather('auto', true);
+  };
+
   if (isLoading && !weather) {
     return (
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3 animate-pulse">
@@ -230,19 +266,19 @@ export const WeatherWidget: React.FC = () => {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300 min-w-0 max-w-[70%]">
           <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
           <select
             value={selectedCityKey}
             onChange={(e) => handleCityChange(e.target.value)}
-            className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 border-none p-0 focus:ring-0 cursor-pointer hover:text-blue-600 transition"
+            className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 border-none p-0 focus:ring-0 cursor-pointer hover:text-blue-600 transition truncate"
             title="Switch weather location"
           >
             <option
               value="auto"
               className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
             >
-              📍 Current Location (Auto)
+              📍 Auto: {detectedLocationName || 'Detecting Location...'}
             </option>
             {WEATHER_CITIES.map((c) => (
               <option
@@ -255,14 +291,21 @@ export const WeatherWidget: React.FC = () => {
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-[11px]">Live satellite</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={handleRequestGps}
+            disabled={isLocating}
+            title="Detect precise GPS location (triggers browser permission prompt)"
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40 hover:bg-blue-100 transition cursor-pointer"
+          >
+            {isLocating ? 'Locating...' : locationSource === 'gps' ? 'GPS Active' : 'Use GPS'}
+          </button>
           <button
             onClick={() => fetchLiveWeather(selectedCityKey)}
-            title="Refresh weather"
-            className="hover:text-blue-600 transition p-0.5 cursor-pointer"
+            title="Refresh live weather"
+            className="hover:text-blue-600 transition p-1 cursor-pointer"
           >
-            <RefreshCw className="w-2.5 h-2.5" />
+            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
