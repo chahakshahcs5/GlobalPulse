@@ -107,12 +107,15 @@ export default function SourcesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* Header Breadcrumb & Title */}
       <div className="space-y-4 pb-6 border-b border-slate-800">
-        <div className="flex items-center gap-2 text-xs font-mono text-blue-400 font-bold uppercase tracking-wider">
-          <Link href="/" className="hover:text-white transition flex items-center gap-1">
+        <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+          <Link
+            href="/"
+            className="hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Newsroom Home
           </Link>
           <span>/</span>
-          <Link href="/explore" className="hover:text-white transition">
+          <Link href="/explore" className="hover:text-slate-900 dark:hover:text-white transition">
             Explore
           </Link>
           <span>/</span>
@@ -121,30 +124,32 @@ export default function SourcesPage() {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
               <span>Explore Verified Sources</span>
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
                 Google News Model
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 max-w-2xl mt-2 leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl mt-2 leading-relaxed">
               Explore and follow news publications, wires, and research institutes. Both readers and
               external AI agents can follow sources to customize coverage and verify fact-checking
               provenance.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-slate-400 shrink-0">
-            <div className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-blue-400" />
+          <div className="flex items-center gap-3 text-xs font-mono text-slate-500 dark:text-slate-400 shrink-0">
+            <div className="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2 shadow-xs">
+              <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>
-                <strong className="text-white">{publishers.length}</strong> Publishers
+                <strong className="text-slate-900 dark:text-white">{publishers.length}</strong>{' '}
+                Publishers
               </span>
             </div>
-            <div className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-400" />
+            <div className="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2 shadow-xs">
+              <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>
-                <strong className="text-white">{sources.length}</strong> Cited Links
+                <strong className="text-slate-900 dark:text-white">{sources.length}</strong> Cited
+                Links
               </span>
             </div>
           </div>
@@ -155,13 +160,13 @@ export default function SourcesPage() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search publications by name or domain..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs transition-colors"
             />
           </div>
 
@@ -171,8 +176,8 @@ export default function SourcesPage() {
             type="button"
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-colors cursor-pointer ${
               showRawArticles
-                ? 'bg-blue-600/20 border-blue-500/40 text-blue-300'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-300 dark:border-blue-500/40 text-blue-700 dark:text-blue-300'
+                : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -190,8 +195,8 @@ export default function SourcesPage() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800/80 hover:border-slate-700'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800/80'
               }`}
             >
               {cat.label}
@@ -206,16 +211,16 @@ export default function SourcesPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="rounded-2xl p-6 border border-slate-800 bg-slate-900/40 animate-pulse space-y-4"
+              className="rounded-2xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 animate-pulse space-y-4 shadow-xs"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-slate-800 rounded-xl" />
+                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-slate-800 rounded w-1/2" />
-                  <div className="h-3 bg-slate-800/60 rounded w-1/3" />
+                  <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
+                  <div className="h-3 bg-slate-100/60 dark:bg-slate-800/60 rounded w-1/3" />
                 </div>
               </div>
-              <div className="h-10 bg-slate-800/40 rounded-xl" />
+              <div className="h-10 bg-slate-100/40 dark:bg-slate-800/40 rounded-xl" />
             </div>
           ))}
         </div>
@@ -225,10 +230,12 @@ export default function SourcesPage() {
       {!isLoading && !showRawArticles && (
         <>
           {filteredPublishers.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 space-y-3">
-              <Building2 className="w-10 h-10 mx-auto text-slate-500" />
-              <h3 className="text-base font-bold text-white">No Publications Found</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
+            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 space-y-3">
+              <Building2 className="w-10 h-10 mx-auto text-slate-400" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                No Publications Found
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 No news sources match your search query "{searchQuery}". Try searching for "The
                 Hindu", "Reuters", or "Bloomberg".
               </p>
@@ -252,9 +259,9 @@ export default function SourcesPage() {
       {/* Raw Cited Article URLs View (Granular Verification) */}
       {!isLoading && showRawArticles && (
         <div className="space-y-6">
-          <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-500/20 flex items-center justify-between">
-            <div className="flex items-center gap-2.5 text-xs text-blue-300">
-              <FileText className="w-4 h-4 text-blue-400" />
+          <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-xs text-blue-700 dark:text-blue-300">
+              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>
                 Displaying individual article reference links registered across all stories.
                 Specific articles (e.g. <code>thehindu.com/news1</code>) roll up into parent
@@ -267,17 +274,19 @@ export default function SourcesPage() {
             {sources.map((src) => (
               <div
                 key={src.id}
-                className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 flex flex-col justify-between space-y-3 hover:border-slate-700 transition-colors"
+                className="rounded-2xl p-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs flex flex-col justify-between space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase">
                       {src.publisher}
                     </span>
                     <span className="text-[10px] font-mono text-slate-500">{src.sourceType}</span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-white line-clamp-2">{src.title}</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">
+                    {src.title}
+                  </h3>
 
                   {src.permissibleExcerpt && (
                     <p className="text-xs text-slate-400 italic line-clamp-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">

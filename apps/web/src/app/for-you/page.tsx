@@ -182,22 +182,22 @@ export default function ForYouPage() {
       </div>
 
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950/40">
+      <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-blue-50/70 via-indigo-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-blue-950/40 shadow-xs">
         <div className="relative z-10 space-y-4 max-w-3xl">
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/40 flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" /> Transparent Algorithmic Feed
             </span>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
               {stories.length} Dispatches Tailored
             </span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight">
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
             For You: Explainable Dispatches
           </h1>
 
-          <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed">
             Every story in this feed includes transparent attribution explaining why it was
             recommended, with instant reader controls to tune your balance and diversity.
           </p>
@@ -227,7 +227,7 @@ export default function ForYouPage() {
       />
 
       {/* Depth Filter Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {(
             [
@@ -240,10 +240,10 @@ export default function ForYouPage() {
             <button
               key={tab.id}
               onClick={() => setSelectedDepth(tab.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
                 selectedDepth === tab.id
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
               }`}
             >
               {tab.label}
@@ -251,7 +251,7 @@ export default function ForYouPage() {
           ))}
         </div>
 
-        <span className="text-xs font-mono text-slate-400 shrink-0">
+        <span className="text-xs font-mono text-slate-500 dark:text-slate-400 shrink-0">
           {filteredStories.length} matches
         </span>
       </div>
@@ -262,11 +262,11 @@ export default function ForYouPage() {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-64 rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4"
+              className="h-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4"
             >
-              <div className="h-4 bg-slate-800 rounded w-1/3" />
-              <div className="h-6 bg-slate-800 rounded w-3/4" />
-              <div className="h-16 bg-slate-800/60 rounded" />
+              <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/3" />
+              <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-3/4" />
+              <div className="h-16 bg-slate-100/60 dark:bg-slate-800/60 rounded" />
             </div>
           ))}
         </div>
@@ -280,7 +280,7 @@ export default function ForYouPage() {
             return (
               <div
                 key={story.id}
-                className="glass-card rounded-3xl p-6 border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 flex flex-col justify-between space-y-5 transition"
+                className="rounded-2xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:border-blue-500/40 flex flex-col justify-between space-y-5 transition"
               >
                 <div className="space-y-4">
                   {/* Transparent "Why You Saw This" Pill */}
@@ -292,25 +292,25 @@ export default function ForYouPage() {
                       <span>{primarySignal.text}</span>
                     </span>
 
-                    <span className="text-[11px] font-mono text-slate-400">
-                      Score: <strong className="text-white">{score}</strong>
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      Score: <strong className="text-slate-900 dark:text-white">{score}</strong>
                     </span>
                   </div>
 
                   {/* Story Title & Link */}
                   <Link href={`/stories/${story.slug}`} className="block group">
-                    <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition leading-snug">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">
                       {story.title}
                     </h3>
                   </Link>
 
-                  <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
                     {story.summary}
                   </p>
 
                   {/* Metadata Chips */}
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-mono">
-                    <span className="uppercase text-blue-400 font-bold text-[10px]">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    <span className="uppercase text-blue-600 dark:text-blue-400 font-bold text-[10px]">
                       {story.articleType.replace('_', ' ')}
                     </span>
                     <span>&bull;</span>
@@ -326,16 +326,16 @@ export default function ForYouPage() {
                 </div>
 
                 {/* Footer Actions: Feedback & Read Dispatch */}
-                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                   {/* Recommendation Feedback */}
-                  <div className="flex items-center gap-1 text-slate-400">
+                  <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                     <span className="text-[10px] uppercase font-mono mr-1">Tuning:</span>
                     <button
                       onClick={() => handleFeedback(story.id, 'up')}
-                      className={`p-1.5 rounded-lg border transition ${
+                      className={`p-1.5 rounded-lg border transition cursor-pointer ${
                         userFeedback === 'up'
-                          ? 'bg-blue-600/20 text-blue-400 border-blue-500/40'
-                          : 'border-slate-800 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/40'
+                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
                       }`}
                       title="Show more like this"
                     >
@@ -343,10 +343,10 @@ export default function ForYouPage() {
                     </button>
                     <button
                       onClick={() => handleFeedback(story.id, 'down')}
-                      className={`p-1.5 rounded-lg border transition ${
+                      className={`p-1.5 rounded-lg border transition cursor-pointer ${
                         userFeedback === 'down'
-                          ? 'bg-rose-600/20 text-rose-400 border-rose-500/40'
-                          : 'border-slate-800 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-rose-50 dark:bg-rose-600/20 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-500/40'
+                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
                       }`}
                       title="Show less like this"
                     >
@@ -356,7 +356,7 @@ export default function ForYouPage() {
 
                   <Link
                     href={`/stories/${story.slug}`}
-                    className="text-blue-400 hover:text-blue-300 font-bold transition flex items-center gap-1"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-bold transition flex items-center gap-1"
                   >
                     <span>Read Dispatch</span> &rarr;
                   </Link>
