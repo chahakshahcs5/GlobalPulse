@@ -2713,8 +2713,65 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'grassroots',
           stance: 'Exporters and manufacturers benefit from reduced hedging costs.',
         },
+        {
+          storyId: 'sty_markets_01',
+          publisher: 'Bloomberg Markets',
+          headline: 'Central Banks Expand FX Clearing Grids to Settle Bilateral Energy Invoices',
+          excerpt:
+            'Direct local-currency corridors bypass dollar conversion spreads, saving an estimated $4.2B in annual transaction fees.',
+          sourceType: 'wire',
+          url: 'https://bloomberg.com/markets/brics-local-currency-clearing',
+          timeAgo: '3 hours ago',
+          angle: 'analytical',
+          stance: 'Energy-backed trade corridors accelerate alternate currency payment velocity.',
+        },
+        {
+          storyId: 'sty_brics_flagship',
+          publisher: 'The Wall Street Journal',
+          headline: 'IMF Monitors Parallel Reserves as Sovereign Clearing Accords Multiply',
+          excerpt:
+            'Multilateral monetary officials assess macroeconomic stability impacts as central banks diversify reserve asset baskets.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/economy/central-bank-reserve-diversification-brics',
+          timeAgo: '5 hours ago',
+          angle: 'institutional',
+          stance:
+            'Reserve fragmentation requires upgraded international balance-of-payments monitoring.',
+        },
+        {
+          storyId: 'sty_brics_flagship',
+          publisher: 'South China Morning Post',
+          headline:
+            'Cross-Border Trade Rails Handle Record Ruble, Rupee, and Yuan Settlement Volume',
+          excerpt:
+            'Port authorities in Shanghai, Mumbai, and Saint Petersburg confirm instantaneous electronic customs clearance using unified ledger protocols.',
+          sourceType: 'regional',
+          url: 'https://scmp.com/economy/global-economy/article/brics-cross-border-settlement',
+          timeAgo: '6 hours ago',
+          angle: 'grassroots',
+          stance:
+            'Direct merchant settlement drastically lowers supply-chain inventory financing burdens.',
+        },
+        {
+          storyId: 'sty_brics_flagship',
+          publisher: 'Al Jazeera English',
+          headline: 'Global South Nations Welcome Dollar Independence as Trade Volumes Climb',
+          excerpt:
+            'Ministers emphasize that local clearing mechanisms shield developing economies from unilateral interest rate contagion and sanctions.',
+          sourceType: 'international',
+          url: 'https://aljazeera.com/economy/brics-trade-architecture-global-south',
+          timeAgo: '7 hours ago',
+          angle: 'analytical',
+          stance: 'Monetary autonomy is an indispensable shield for sovereign development goals.',
+        },
       ],
       timeline: [
+        {
+          date: 'Sep 25, 14:00 UTC',
+          event: 'Working group of sherpas completes draft clearing house treaty',
+          source: 'BRICS Trade Working Group',
+          storyId: 'sty_brics_flagship',
+        },
         {
           date: 'Sep 26, 08:00 UTC',
           event: 'Draft Multilateral Clearing Protocol initialed by finance ministers',
@@ -2728,14 +2785,28 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           storyId: 'sty_brics_flagship',
         },
         {
+          date: 'Sep 28, 11:30 UTC',
+          event:
+            'Technical architecture interlinks central bank real-time gross settlement systems',
+          source: 'Inter-Bank Clearing Alliance',
+          storyId: 'sty_brics_flagship',
+        },
+        {
           date: 'Sep 29, 14:00 UTC',
           event: 'Central monetary authorities activate bilateral clearing grid',
           source: 'Bloomberg Markets',
           storyId: 'sty_markets_01',
         },
+        {
+          date: 'Oct 01, 09:00 UTC',
+          event:
+            'First monthly settlement reconciliation confirms zero default across $22B turnover',
+          source: 'Multilateral Clearing Bureau',
+          storyId: 'sty_brics_flagship',
+        },
       ],
-      createdAt: '2026-09-26T08:00:00Z',
-      updatedAt: '2026-09-29T15:00:00Z',
+      createdAt: '2026-09-25T14:00:00Z',
+      updatedAt: '2026-10-01T09:00:00Z',
     },
     {
       id: 'cls_ai_workforce',
@@ -2772,6 +2843,20 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'industry',
           stance: 'Efficiency gains are essential to meeting 2nm lithography deadlines.',
         },
+        {
+          storyId: 'sty_ai_01',
+          publisher: 'Reuters Technology',
+          headline:
+            'Enterprise Regulators Mandate Cryptographic Signatures on Autonomous Agent Commits',
+          excerpt:
+            'Federal cybersecurity standards require mathematical proof traces attached to all autonomous code deployments in core banking.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/technology/autonomous-ai-code-audit-standards',
+          timeAgo: '1 hour ago',
+          angle: 'institutional',
+          stance:
+            'Verifiable governance safeguards critical infrastructure against non-deterministic drift.',
+        },
       ],
       timeline: [
         {
@@ -2779,6 +2864,12 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           event: 'Semiconductor coalition ratifies AI-assisted chiplet packaging framework',
           source: 'TechCrunch',
           storyId: 'sty_semi_01',
+        },
+        {
+          date: 'Sep 29, 14:30 UTC',
+          event: 'Regulators issue guidance on zero-hallucination automated verification gates',
+          source: 'National Standards Body',
+          storyId: 'sty_ai_01',
         },
         {
           date: 'Sep 30, 09:15 UTC',
@@ -2812,17 +2903,132 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'industry',
           stance: 'Efficiency and dexterity milestones confirm long-term economic viability.',
         },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'Wall Street Journal',
+          headline:
+            'Industrial Automakers Recalculate Labor Economics as Humanoids Enter Production',
+          excerpt:
+            'Factories report 38% reduction in component misalignments with continuous dual-arm manipulation handling hazardous battery cells.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/business/automotive-humanoid-robotics-deployment',
+          timeAgo: '4 hours ago',
+          angle: 'analytical',
+          stance:
+            'Humanoid robotics bridge the automation gap in facilities designed around human geometry.',
+        },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'MIT Technology Review',
+          headline: 'Embodied Foundation Models Give Bipedal Robots Zero-Shot Tool Manipulation',
+          excerpt:
+            'Vision-language-action architectures allow factory robots to adapt to novel chassis variations without manual reprogramming.',
+          sourceType: 'academic',
+          url: 'https://technologyreview.com/2026/10/02/embodied-ai-humanoid-factory-floor',
+          timeAgo: '6 hours ago',
+          angle: 'scientific',
+          stance:
+            'End-to-end sensorimotor policies mark the transition to generalized physical intelligence.',
+        },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'Bloomberg Technology',
+          headline: 'Factory Automation Giants Invest $5B into Humanoid Production Scale',
+          excerpt:
+            'Tier-1 component suppliers ramp robotic dexterity modules to satisfy surging demand for flexible manufacturing lines.',
+          sourceType: 'industry',
+          url: 'https://bloomberg.com/news/articles/2026-10-02/humanoid-robotics-manufacturing-scale',
+          timeAgo: '3 hours ago',
+          angle: 'industry',
+          stance:
+            'Capital expenditure shifts decisively from specialized gantry robots to general-purpose humanoids.',
+        },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'IEEE Spectrum',
+          headline:
+            'Tactile Sensor Skin Delivers 0.1 Millimeter Precision for Bipedal Manipulators',
+          excerpt:
+            'High-density piezoresistive fingertip arrays give robots the ability to thread delicate wire harnesses without human intervention.',
+          sourceType: 'academic',
+          url: 'https://spectrum.ieee.org/robotics/humanoids/tactile-sensor-skin-automotive',
+          timeAgo: '5 hours ago',
+          angle: 'scientific',
+          stance:
+            'Tactile feedback closes the final dexterity hurdle in precision electro-mechanical manufacturing.',
+        },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'Reuters Manufacturing Wire',
+          headline: 'European Automakers Deploy 5,000 Humanoid Units Across Assembly Operations',
+          excerpt:
+            'Factory managers report 24/7 uptime in battery pouch stacking with zero thermal or ergonomic fatigue incidents.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/business/automotive-humanoid-robotics-rollout-2026',
+          timeAgo: '7 hours ago',
+          angle: 'institutional',
+          stance:
+            'Adoption curves in automotive assembly mirror the early robotics revolution of the 1980s.',
+        },
+        {
+          storyId: 'sty_pick_robotics_01',
+          publisher: 'Financial Times Industrial',
+          headline:
+            'The Human-Robot Collaborative Workforce: Safety Standards Pass Regulatory Muster',
+          excerpt:
+            'Strict torque-limiting joint sensors and spatial computer vision ensure robots immediately yield when human technicians enter workspace.',
+          sourceType: 'analysis',
+          url: 'https://ft.com/content/humanoid-robotics-workplace-safety-certifications',
+          timeAgo: '8 hours ago',
+          angle: 'analytical',
+          stance:
+            'Harmonized ISO safety certifications pave the way for ubiquitous co-working environments.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 01, 14:00 UTC',
+          event: 'Initial fleet of 200 humanoid units undergoes kinematic joint calibration',
+          source: 'Production Engineering Division',
+          storyId: 'sty_pick_robotics_01',
+        },
+        {
+          date: 'Oct 02, 06:30 UTC',
+          event:
+            'Assembly line supervisor switches battery pack production bay to autonomous bipedal cell',
+          source: 'Stuttgart Plant Operations',
+          storyId: 'sty_pick_robotics_01',
+        },
         {
           date: 'Oct 02, 09:00 UTC',
           event: 'Pilot plant completes 120,000 incident-free autonomous hours',
           source: 'Stuttgart Automation Consortium',
           storyId: 'sty_pick_robotics_01',
         },
+        {
+          date: 'Oct 02, 11:15 UTC',
+          event:
+            'Joint union-management review validates zero workplace safety incidents during trial',
+          source: 'Industrial Safety Oversight Board',
+          storyId: 'sty_pick_robotics_01',
+        },
+        {
+          date: 'Oct 02, 13:45 UTC',
+          event:
+            'Factory logs 4,000 consecutively assembled battery chassis packs meeting Six Sigma quality',
+          source: 'Quality Assurance Directorate',
+          storyId: 'sty_pick_robotics_01',
+        },
+        {
+          date: 'Oct 02, 15:00 UTC',
+          event:
+            'Executive committee authorizes plant-wide rollout across secondary paint and weld lines',
+          source: 'Corporate Manufacturing Board',
+          storyId: 'sty_pick_robotics_01',
+        },
       ],
-      createdAt: '2026-10-02T09:00:00Z',
-      updatedAt: '2026-10-02T11:00:00Z',
+      createdAt: '2026-10-01T14:00:00Z',
+      updatedAt: '2026-10-02T15:00:00Z',
     },
     {
       id: 'cls_neuromorphic_silicon',
@@ -2847,17 +3053,57 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'scientific',
           stance: 'Physical emulation of mammalian retinal neurons solves edge power bottlenecks.',
         },
+        {
+          storyId: 'sty_pick_neuromorphic_01',
+          publisher: 'EE Times',
+          headline: 'Commercial Foundries Tape Out First Sub-500mW Event-Based AI Accelerators',
+          excerpt:
+            'Fabless designers package neuromorphic cores for defense drones and low-Earth orbit constellation edge compute.',
+          sourceType: 'industry',
+          url: 'https://eetimes.com/neuromorphic-sub-watt-edge-tapeout',
+          timeAgo: '5 hours ago',
+          angle: 'industry',
+          stance:
+            'Asynchronous event-driven processing fundamentally upends traditional von Neumann architectures.',
+        },
+        {
+          storyId: 'sty_pick_neuromorphic_01',
+          publisher: 'Ars Technica',
+          headline: 'Why Neuromorphic Edge Silicon is the Secret Weapon for Orbital Autonomy',
+          excerpt:
+            'Spacecraft can now run real-time debris tracking and hazard navigation within strict 1-watt thermal budgets.',
+          sourceType: 'analysis',
+          url: 'https://arstechnica.com/science/neuromorphic-satellites-edge-vision',
+          timeAgo: '7 hours ago',
+          angle: 'analytical',
+          stance:
+            'Passive event listening represents the optimal paradigm for remote resource-constrained sensors.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 07:00 UTC',
+          event:
+            'High-altitude stratospheric drone completes 10-hour autonomous tracking mission powered by solar skin',
+          source: 'Zurich Flight Test Division',
+          storyId: 'sty_pick_neuromorphic_01',
+        },
         {
           date: 'Oct 02, 09:30 UTC',
           event: 'Orbital and drone flight testing confirms sub-450mW real-time inference',
           source: 'Zurich AI Hardware Summit',
           storyId: 'sty_pick_neuromorphic_01',
         },
+        {
+          date: 'Oct 02, 11:45 UTC',
+          event:
+            'Standardization committee releases open-source spiking neural network programming interfaces',
+          source: 'Neuromorphic Computing Working Group',
+          storyId: 'sty_pick_neuromorphic_01',
+        },
       ],
-      createdAt: '2026-10-02T09:30:00Z',
-      updatedAt: '2026-10-02T11:15:00Z',
+      createdAt: '2026-10-02T07:00:00Z',
+      updatedAt: '2026-10-02T11:45:00Z',
     },
     {
       id: 'cls_crispr_therapeutics',
@@ -2882,17 +3128,57 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'scientific',
           stance: 'Clean base-editing technology avoids risky double-strand DNA breaks.',
         },
+        {
+          storyId: 'sty_pick_crispr_01',
+          publisher: 'New England Journal of Medicine',
+          headline:
+            'Complete Normalization of Ejection Fraction Following Single-Dose Base Editor Infusion',
+          excerpt:
+            'Cardiomyopathy patients show sustained MYBPC3 protein expression with no detectable off-target genomic cleavage.',
+          sourceType: 'academic',
+          url: 'https://nejm.org/doi/full/10.1056/NEJMoa2601992',
+          timeAgo: '6 hours ago',
+          angle: 'scientific',
+          stance:
+            'Permanent genetic repair eliminates lifelong dependence on mechanical assistive pumps.',
+        },
+        {
+          storyId: 'sty_pick_crispr_01',
+          publisher: 'STAT News',
+          headline:
+            'Biopharma Accelerates In-Vivo Pipeline Following Breakthrough Cardiomyopathy Data',
+          excerpt:
+            'Shares surge across gene editing pioneers as regulators grant priority review for congenital cardiac therapeutics.',
+          sourceType: 'industry',
+          url: 'https://statnews.com/2026/10/02/crispr-cardiomyopathy-phase-3-pipeline',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance:
+            'Targeted organ delivery transforms gene therapy from rare monogenic niches to mainstream cardiology.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 08:00 UTC',
+          event: 'Global regulatory consortium accepts expedited biologics license application',
+          source: 'International Medicines Council',
+          storyId: 'sty_pick_crispr_01',
+        },
         {
           date: 'Oct 02, 10:00 UTC',
           event: 'Phase 3 trial unblinds 12-month biopsy data confirming 94% correction',
           source: 'Global Health Consortium',
           storyId: 'sty_pick_crispr_01',
         },
+        {
+          date: 'Oct 02, 12:15 UTC',
+          event: 'Long-term cardiology registry records 98% patient exercise tolerance recovery',
+          source: 'Cardiomyopathy Foundation',
+          storyId: 'sty_pick_crispr_01',
+        },
       ],
-      createdAt: '2026-10-02T10:00:00Z',
-      updatedAt: '2026-10-02T11:30:00Z',
+      createdAt: '2026-10-02T08:00:00Z',
+      updatedAt: '2026-10-02T12:15:00Z',
     },
     {
       id: 'cls_lunar_resources',
@@ -2917,17 +3203,59 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           stance:
             'Commercial extraction rights will determine next-generation interplanetary cadence.',
         },
+        {
+          storyId: 'sty_pick_space_mining_01',
+          publisher: 'Nature Astronomy',
+          headline:
+            'Synthetic Aperture Radar Confirms 600 Million Metric Tons of Polar Subsurface Ice',
+          excerpt:
+            'Purity levels exceeding 88% indicate minimal mineral contamination, dramatically lowering energy needed for thermal extraction.',
+          sourceType: 'academic',
+          url: 'https://nature.com/articles/s41550-026-02104-w',
+          timeAgo: '7 hours ago',
+          angle: 'scientific',
+          stance:
+            'Abundant volatile deposits solidify polar craters as permanent human exploration hubs.',
+        },
+        {
+          storyId: 'sty_pick_space_mining_01',
+          publisher: 'SpaceNews',
+          headline:
+            'International Space Resource Alliance Proposes Universal Lunar Prospecting Registry',
+          excerpt:
+            'Commercial mining ventures and sovereign agencies align on non-interference zones for ice harvesting in permanently shadowed regions.',
+          sourceType: 'analysis',
+          url: 'https://spacenews.com/lunar-water-ice-prospecting-registry-framework',
+          timeAgo: '3 hours ago',
+          angle: 'analytical',
+          stance:
+            'Clear property and utilization frameworks prevent geopolitical disputes over polar claims.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 07:30 UTC',
+          event:
+            'Polar reconnaissance orbiter completes 50-pass neutron spectroscopy scan over Shackleton Crater',
+          source: 'Deep Space Science Directorate',
+          storyId: 'sty_pick_space_mining_01',
+        },
         {
           date: 'Oct 02, 10:15 UTC',
           event: 'Synthetic aperture radar validates subterranean glaciers across 8m depth',
           source: 'Artemis Science Directorate',
           storyId: 'sty_pick_space_mining_01',
         },
+        {
+          date: 'Oct 02, 13:00 UTC',
+          event:
+            'Commercial mining joint venture selects primary landing coordinates for autonomous thermal drill rover',
+          source: 'Lunar Resources Consortium',
+          storyId: 'sty_pick_space_mining_01',
+        },
       ],
-      createdAt: '2026-10-02T10:15:00Z',
-      updatedAt: '2026-10-02T11:45:00Z',
+      createdAt: '2026-10-02T07:30:00Z',
+      updatedAt: '2026-10-02T13:00:00Z',
     },
     {
       id: 'cls_sodium_grid',
@@ -2951,17 +3279,57 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'industry',
           stance: 'Prussian blue cathode design provides immune safety against thermal runaway.',
         },
+        {
+          storyId: 'sty_pick_grid_storage_01',
+          publisher: 'Financial Times Energy',
+          headline: 'Global Utilities Switch Bulk Storage Procurement to Sodium Chemistries',
+          excerpt:
+            'Supply chains free from lithium, nickel, and cobalt bottlenecks allow rapid gigawatt-hour scale deployments.',
+          sourceType: 'analysis',
+          url: 'https://ft.com/energy/sodium-ion-bulk-utility-storage-orders',
+          timeAgo: '4 hours ago',
+          angle: 'analytical',
+          stance:
+            'Mineral abundance insulates grid decarbonization from commodity geopolitical spikes.',
+        },
+        {
+          storyId: 'sty_pick_grid_storage_01',
+          publisher: 'IEEE Spectrum',
+          headline:
+            'Thermal Quench Immunity Demonstrated Across 1.2 GWh Continuous Megapack Testing',
+          excerpt:
+            'Zero degradation observed over 4,000 extreme-temperature cycles, establishing 25-year operational warranties.',
+          sourceType: 'academic',
+          url: 'https://spectrum.ieee.org/energy/sodium-ion-grid-thermal-immunity',
+          timeAgo: '2 hours ago',
+          angle: 'scientific',
+          stance:
+            'Non-flammable aqueous electrolytes remove stringent fire-suppression requirements for urban substations.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 08:45 UTC',
+          event: '12 regional substation transformers complete grid interconnect synchronization',
+          source: 'Regional Power Grid Authority',
+          storyId: 'sty_pick_grid_storage_01',
+        },
         {
           date: 'Oct 02, 10:30 UTC',
           event: '1.2 GWh utility park completes 4,000-cycle frequency response validation',
           source: 'Energy Transition Registry',
           storyId: 'sty_pick_grid_storage_01',
         },
+        {
+          date: 'Oct 02, 12:45 UTC',
+          event:
+            'Energy reliability commission certifies plant for primary frequency regulation reserve',
+          source: 'National Grid Oversight Board',
+          storyId: 'sty_pick_grid_storage_01',
+        },
       ],
-      createdAt: '2026-10-02T10:30:00Z',
-      updatedAt: '2026-10-02T12:00:00Z',
+      createdAt: '2026-10-02T08:45:00Z',
+      updatedAt: '2026-10-02T12:45:00Z',
     },
     {
       id: 'cls_quantum_security',
@@ -2987,17 +3355,143 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           stance:
             'Physics-based encryption guarantees long-term immunity against algorithmic cryptanalysis.',
         },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'Nature Physics',
+          headline:
+            'Satellite-to-Ground Entangled Photon Links Sustain Sub-1% Quantum Bit Error Rate',
+          excerpt:
+            'High-speed adaptive optics on ground receivers cancel atmospheric turbulence, maintaining photon coherence over 2,400km orbital baselines.',
+          sourceType: 'academic',
+          url: 'https://nature.com/articles/s41567-026-00892-z',
+          timeAgo: '5 hours ago',
+          angle: 'scientific',
+          stance:
+            'Hardware verification validates quantum cryptography as ready for operational deployment.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'Bloomberg Technology',
+          headline:
+            'SWIFT and BIS Back Satellite Quantum Security Standards for Sovereign Reserves',
+          excerpt:
+            'A coalition of 14 central clearing depositories adopts automated one-time pad key refreshment to counter harvest-now-decrypt-later adversaries.',
+          sourceType: 'analysis',
+          url: 'https://bloomberg.com/news/articles/2026-10-02/swift-bis-satellite-quantum-keys',
+          timeAgo: '3 hours ago',
+          angle: 'analytical',
+          stance:
+            'Institutional adoption insulates global payments from projected quantum computing decryption threats.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'Reuters Global Wire',
+          headline:
+            'International Banking Consortium Enacts Protocol for Quantum-Protected Multilateral Clearing',
+          excerpt:
+            'Direct satellite downlinks across Zurich, Singapore, and New York complete live clearing runs with zero packet compromise.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/technology/quantum-banking-settlement-accord-2026',
+          timeAgo: '1 hour ago',
+          angle: 'institutional',
+          stance:
+            'Standardized quantum key exchange removes bilateral counterparty cybersecurity exposure.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'The Wall Street Journal',
+          headline:
+            'Clearinghouses Face Multibillion-Dollar Upgrade Race for Post-Quantum Compliance',
+          excerpt:
+            'Top custodian banks warn that retrofitting legacy SWIFT payment gateways will require dedicated hardware security modules across 4,000 branch endpoints.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/finance/quantum-cryptography-banking-migration',
+          timeAgo: '6 hours ago',
+          angle: 'analytical',
+          stance: 'Implementation costs will be heavily frontloaded, favoring scale players.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'Wired Science',
+          headline: 'How Satellite-Based Entangled Photons Beat the Fiber Distance Limit',
+          excerpt:
+            'While terrestrial optical fibers lose signal integrity beyond 100km without quantum repeaters, vacuum-based orbital beams traverse thousands of miles unattenuated.',
+          sourceType: 'industry',
+          url: 'https://wired.com/science/quantum-entanglement-satellites-explained',
+          timeAgo: '8 hours ago',
+          angle: 'scientific',
+          stance: 'Orbital QKD leapfrogs decades of terrestrial repeater engineering hurdles.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'The Economist',
+          headline: 'The Geopolitics of Sovereign Quantum Cryptographic Bastions',
+          excerpt:
+            'Nations lacking domestic orbital quantum infrastructure risk strategic blindness in financial surveillance and inter-bank secrecy.',
+          sourceType: 'opinion',
+          url: 'https://economist.com/international/geopolitics-quantum-communications',
+          timeAgo: '9 hours ago',
+          angle: 'analytical',
+          stance: 'Cryptographic sovereignty is becoming as pivotal as physical energy reserves.',
+        },
+        {
+          storyId: 'sty_pick_quantum_crypto_01',
+          publisher: 'MIT Technology Review',
+          headline:
+            'Quantum Random Number Generators on Orbit Pass Strict Continuous Randomness Audits',
+          excerpt:
+            'Photonic shot noise sensors generate true non-deterministic entropy seeds at 2.4 Gbps, passing all Dieharder and NIST SP 800-22 tests.',
+          sourceType: 'academic',
+          url: 'https://technologyreview.com/2026/10/02/quantum-entropy-satellite-orbit',
+          timeAgo: '10 hours ago',
+          angle: 'scientific',
+          stance:
+            'True physical randomness closes side-channel vulnerabilities inherent in pseudo-random algorithms.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 06:00 UTC',
+          event:
+            'Low-Earth orbit quantum satellite establishes initial optical beacon with Zurich ground station',
+          source: 'European Space Operations Centre',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
+        {
+          date: 'Oct 02, 08:15 UTC',
+          event: 'Atmospheric adaptive optics sensors achieve sub-second wavefront calibration',
+          source: 'Mount Säntis Observatory',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
         {
           date: 'Oct 02, 10:45 UTC',
           event: 'Satellite-to-ground downlink demonstrates 1.4 microradian beam lock',
           source: 'European Quantum Consortium',
           storyId: 'sty_pick_quantum_crypto_01',
         },
+        {
+          date: 'Oct 02, 12:30 UTC',
+          event: '14 central bank clearing nodes execute live cryptographic key rotation',
+          source: 'Bank for International Settlements',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
+        {
+          date: 'Oct 02, 14:00 UTC',
+          event:
+            'Consortium publishes audit confirming 0.8% quantum bit error rate across 10GB test tranche',
+          source: 'National Institute of Standards and Technology',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
+        {
+          date: 'Oct 02, 15:30 UTC',
+          event:
+            'Financial Stability Board approves operational guidelines for cross-border QKD corridors',
+          source: 'FSB Secretariat Basel',
+          storyId: 'sty_pick_quantum_crypto_01',
+        },
       ],
-      createdAt: '2026-10-02T10:45:00Z',
-      updatedAt: '2026-10-02T12:15:00Z',
+      createdAt: '2026-10-02T06:00:00Z',
+      updatedAt: '2026-10-02T15:30:00Z',
     },
     {
       id: 'cls_semiconductor_consortium',
@@ -3034,8 +3528,79 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'scientific',
           stance: 'Tool maturity outpaces industry skepticism, locking in 2027 volume ramp.',
         },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'Financial Times Tech',
+          headline: 'TSMC, Intel, and Samsung Ratify Reciprocal Cross-Licensing Framework',
+          excerpt:
+            'Historic IP-sharing agreement removes multi-jurisdictional patent litigation risk surrounding backside power delivery.',
+          sourceType: 'analysis',
+          url: 'https://ft.com/tech/2nm-foundry-cross-licensing-pact',
+          timeAgo: '3 hours ago',
+          angle: 'institutional',
+          stance:
+            'Cross-licensing ensures multi-fab supply-chain redundancy for enterprise AI hyperscalers.',
+        },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'Nikkei Asia',
+          headline:
+            'Asian Foundry Ecosystem Accelerates High-NA EUV Pilot Runs for 2027 Production',
+          excerpt:
+            'Equipment installations in Tainan and Pyeongtaek reach operational readiness ahead of scheduled commercial tape-outs.',
+          sourceType: 'regional',
+          url: 'https://asia.nikkei.com/business/tech/asia-2nm-foundry-ramp-2027',
+          timeAgo: '5 hours ago',
+          angle: 'regional',
+          stance: 'Regional supply-chain integration cushions against geopolitical export shocks.',
+        },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'Reuters Technology',
+          headline: 'Global Chip Coalition Pledges Open Standards for 3D Chiplet Interconnects',
+          excerpt:
+            'Standardized die-to-die optical interfaces will allow mixing logic, memory, and analog tiles on a single substrate.',
+          sourceType: 'wire',
+          url: 'https://reuters.example.com/technology/chiplet-interconnect-open-standard-2026',
+          timeAgo: '6 hours ago',
+          angle: 'industry',
+          stance:
+            'Modular packaging decouples transistor shrinkage from monolithic yield penalties.',
+        },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'MIT Technology Review',
+          headline: 'Atomic-Layer GAAFET Etching Overcomes Quantum Tunneling Leakage',
+          excerpt:
+            'Nanosheet channels thinned to 3 nanometers maintain sharp on/off switching ratios at 0.65-volt operating points.',
+          sourceType: 'academic',
+          url: 'https://technologyreview.com/2026/09/27/gaafet-nanosheet-atomic-etching',
+          timeAgo: '8 hours ago',
+          angle: 'scientific',
+          stance:
+            'Atomic precision lithography preserves Moore Law efficiency scaling into the next decade.',
+        },
+        {
+          storyId: 'sty_semi_01',
+          publisher: 'Bloomberg Markets',
+          headline:
+            'Semiconductor Equipment Stocks Surge on 2nm Tooling Capital Expenditure Commitments',
+          excerpt:
+            'Foundries announce combined $85B capital allocation across lithography, metrology, and cleanroom automation.',
+          sourceType: 'wire',
+          url: 'https://bloomberg.com/news/articles/2026-09-27/2nm-tooling-capex-surge',
+          timeAgo: '9 hours ago',
+          angle: 'analytical',
+          stance: 'Unprecedented equipment orders signal resilient long-term semiconductor demand.',
+        },
       ],
       timeline: [
+        {
+          date: 'Sep 26, 16:00 UTC',
+          event: 'Lead foundry executives convene closed-door summit at SEMICON Taiwan',
+          source: 'Executive Steering Group',
+          storyId: 'sty_semi_01',
+        },
         {
           date: 'Sep 27, 08:30 UTC',
           event: 'Foundry consortium ratifies unified 2nm PDK specification',
@@ -3048,9 +3613,28 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           source: 'Consortium Secretariat',
           storyId: 'sty_semi_01',
         },
+        {
+          date: 'Sep 27, 15:30 UTC',
+          event: 'Lithography toolmaker verifies sub-8nm edge placement accuracy on pilot line',
+          source: 'ASML Technical Briefing',
+          storyId: 'sty_semi_01',
+        },
+        {
+          date: 'Sep 28, 10:00 UTC',
+          event: 'Hyperscale cloud providers submit initial 2nm AI accelerator tape-out requests',
+          source: 'Open Compute Project',
+          storyId: 'sty_semi_01',
+        },
+        {
+          date: 'Sep 29, 14:00 UTC',
+          event:
+            'Trade ministries issue coordinated regulatory clearance for patent pool structure',
+          source: 'International Antitrust Bureau',
+          storyId: 'sty_semi_01',
+        },
       ],
-      createdAt: '2026-09-27T08:30:00Z',
-      updatedAt: '2026-09-27T14:00:00Z',
+      createdAt: '2026-09-26T16:00:00Z',
+      updatedAt: '2026-09-29T14:00:00Z',
     },
     {
       id: 'cls_iter_fusion_energy',
@@ -3088,8 +3672,82 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           angle: 'institutional',
           stance: 'Public-private funding accelerates grid connection timelines.',
         },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'BBC Science',
+          headline: 'Fusion Milestone Hailed as Most Credible Clean Baseload Power Contender',
+          excerpt:
+            'Maintaining two continuous minutes of burning plasma proves magnetic stability without expensive gigawatt wall losses.',
+          sourceType: 'general',
+          url: 'https://bbc.com/news/science-environment-fusion-milestone',
+          timeAgo: '4 hours ago',
+          angle: 'general',
+          stance:
+            'Public enthusiasm surges as fusion transitions from theoretical physics to electrical engineering.',
+        },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'Wired Tech',
+          headline: 'Inside the Private Fusion Race: High-Field Magnets Shrink Tokamaks by 90%',
+          excerpt:
+            'Compact magnetic field strength allows startup reactors to achieve burning conditions in facilities the size of a gymnasium.',
+          sourceType: 'industry',
+          url: 'https://wired.com/story/private-fusion-superconducting-magnets',
+          timeAgo: '6 hours ago',
+          angle: 'industry',
+          stance:
+            'Modular construction turns multi-decade international megaprojects into fast-turnaround capital builds.',
+        },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'The Wall Street Journal',
+          headline:
+            'Utility Consortia Sign First Commercial Power Purchase Offtake Letters for Fusion',
+          excerpt:
+            'Power generators lock in long-term supply pacts targeting 2035 commercial grid delivery to power AI data centers.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/business/energy/utility-fusion-power-purchase-agreements',
+          timeAgo: '7 hours ago',
+          angle: 'analytical',
+          stance:
+            'Energy-hungry tech hyperscalers are guaranteeing future fusion plant revenue streams.',
+        },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'IEEE Spectrum',
+          headline:
+            'Tritium Breeding Blankets Achieve Self-Sustaining Regeneration Ratio in Test Loop',
+          excerpt:
+            'Beryllium-liquid lithium neutron multipliers demonstrate 1.15 tritium breeding ratio, solving long-term fuel scarcity fears.',
+          sourceType: 'academic',
+          url: 'https://spectrum.ieee.org/energy/nuclear/fusion-tritium-breeding-ratio',
+          timeAgo: '8 hours ago',
+          angle: 'scientific',
+          stance:
+            'Fuel self-sufficiency removes the last major resource bottleneck for magnetic confinement plants.',
+        },
+        {
+          storyId: 'sty_fusion_01',
+          publisher: 'The Guardian Environment',
+          headline:
+            'Environmental Regulators Classify Fusion Waste as Low-Level Recyclable Byproduct',
+          excerpt:
+            'Unlike conventional fission, materials activate for decades rather than millennia, simplifying decommissioning protocols.',
+          sourceType: 'opinion',
+          url: 'https://theguardian.com/environment/2026/sep/28/fusion-waste-classification-clean-energy',
+          timeAgo: '9 hours ago',
+          angle: 'analytical',
+          stance:
+            'Benign environmental footprint reinforces fusion as the optimal companion to solar and wind.',
+        },
       ],
       timeline: [
+        {
+          date: 'Sep 28, 04:30 UTC',
+          event: 'Cryogenic magnet chilldown reaches 4 Kelvin superconducting baseline',
+          source: 'Plant Diagnostics Division',
+          storyId: 'sty_fusion_01',
+        },
         {
           date: 'Sep 28, 06:15 UTC',
           event: 'Plasma discharge reaches stable 120-second plateau at 150 million degrees',
@@ -3102,9 +3760,28 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           source: 'Independent Review Panel',
           storyId: 'sty_fusion_01',
         },
+        {
+          date: 'Sep 28, 11:00 UTC',
+          event: 'Tritium breeding diagnostic logs 1.15 breeding ratio during extended pulse',
+          source: 'IAEA Liaison Office',
+          storyId: 'sty_fusion_01',
+        },
+        {
+          date: 'Sep 28, 14:30 UTC',
+          event: 'Consortium presents telemetry to international energy ministers in Paris',
+          source: 'Energy Ministerial Assembly',
+          storyId: 'sty_fusion_01',
+        },
+        {
+          date: 'Sep 29, 09:00 UTC',
+          event:
+            'Public-private consortium initiates engineering procurement for 500MW grid prototype',
+          source: 'Commercial Fusion Alliance',
+          storyId: 'sty_fusion_01',
+        },
       ],
-      createdAt: '2026-09-28T06:15:00Z',
-      updatedAt: '2026-09-28T10:00:00Z',
+      createdAt: '2026-09-28T04:30:00Z',
+      updatedAt: '2026-09-29T09:00:00Z',
     },
     {
       id: 'cls_central_banks_liquidity',
@@ -3519,12 +4196,88 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           stance:
             'Regulatory approval unlocks routine lunar logistics and Mars cargo architecture.',
         },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'Aviation Week',
+          headline: 'Dual Catch Verification Confirms 24-Hour Turnaround Economics for Heavy Lift',
+          excerpt:
+            'Post-flight thermal imaging on heat shield tiles shows negligible degradation across forward flaps and nosecone apex.',
+          sourceType: 'industry',
+          url: 'https://aviationweek.com/space/starship-flight-7-dual-tower-catch',
+          timeAgo: '2 hours ago',
+          angle: 'industry',
+          stance:
+            'Orbital hardware inspection confirms hardware readiness for immediate propellant reloading.',
+        },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'The Wall Street Journal',
+          headline: 'Satellite Megaconstellation Operators Queue for 150-Ton Payload Slots',
+          excerpt:
+            'Telecommunications and defense satellite providers calculate cost-per-kilogram plummeting below $100.',
+          sourceType: 'analysis',
+          url: 'https://wsj.com/business/aerospace/starship-commercial-payload-pricing',
+          timeAgo: '4 hours ago',
+          angle: 'analytical',
+          stance: 'Unprecedented payload capacity fundamentally expands commercial space commerce.',
+        },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'BBC News Science',
+          headline: 'Spectacular Mid-Air Tower Catch Brings Artemis Moon Landing Milestones Closer',
+          excerpt:
+            'NASA leadership congratulates engineering teams as critical lunar human landing system milestones unlock.',
+          sourceType: 'general',
+          url: 'https://bbc.com/news/science-space-starship-flight-7',
+          timeAgo: '5 hours ago',
+          angle: 'general',
+          stance: 'Reusability milestone keeps Artemis astronaut lunar landing schedule on track.',
+        },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'IEEE Spectrum',
+          headline: 'Raptor 3 Internal Cooling Channels Eliminate External Fire Blankets',
+          excerpt:
+            '3D-printed internal regenerative manifolds shave 1,200 kilograms of structural mass while improving thermal margins.',
+          sourceType: 'academic',
+          url: 'https://spectrum.ieee.org/aerospace/space-flight/raptor-3-regenerative-cooling',
+          timeAgo: '6 hours ago',
+          angle: 'scientific',
+          stance:
+            'Engine manufacturing advances enable high reliability during radical aerodynamic deceleration.',
+        },
+        {
+          storyId: 'sty_liveblog_starship',
+          publisher: 'Ars Technica',
+          headline:
+            'Flight 7 Telemetry Proves Ship Catch Dynamics Were Even Smoother Than the Booster',
+          excerpt:
+            'Laser radar guidance systems adjusted vehicle approach vectors within 20 milliseconds of final aerodynamic flare.',
+          sourceType: 'analysis',
+          url: 'https://arstechnica.com/space/starship-flight-7-telemetry-deep-dive',
+          timeAgo: '8 hours ago',
+          angle: 'analytical',
+          stance:
+            'Autonomous precision landing algorithms have decisively conquered hypersonic vehicle recovery.',
+        },
       ],
       timeline: [
+        {
+          date: 'Oct 02, 11:30 UTC',
+          event: 'Propellant loading of 4,500 tons subcooled liquid methane and oxygen completed',
+          source: 'Launch Control Team',
+          storyId: 'sty_liveblog_starship',
+        },
         {
           date: 'Oct 02, 12:00 UTC',
           event: '33 Raptor 3 engines ignite for flawless liftoff from Starbase orbital pad',
           source: 'SpaceX Mission Control',
+          storyId: 'sty_liveblog_starship',
+        },
+        {
+          date: 'Oct 02, 12:02 UTC',
+          event: 'Hot-staging ring separates cleanly as Starship upper stage continues to orbit',
+          source: 'Orbital Telemetry Stream',
           storyId: 'sty_liveblog_starship',
         },
         {
@@ -3533,8 +4286,20 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
           source: 'Flight Test Telemetry Stream',
           storyId: 'sty_liveblog_starship',
         },
+        {
+          date: 'Oct 02, 13:05 UTC',
+          event: 'Starship completes atmospheric reentry blackout with heat shield intact',
+          source: 'Starlink Video Relay',
+          storyId: 'sty_liveblog_starship',
+        },
+        {
+          date: 'Oct 02, 13:12 UTC',
+          event: 'Starship executes flip maneuver and settles into secondary catch arms at Pad B',
+          source: 'Starbase Recovery Operations',
+          storyId: 'sty_liveblog_starship',
+        },
       ],
-      createdAt: '2026-10-02T12:00:00Z',
+      createdAt: '2026-10-02T11:30:00Z',
       updatedAt: '2026-10-02T13:30:00Z',
     },
   ];
@@ -3543,6 +4308,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     const existing = await db.clusters.getById(cluster.id, cluster.organizationId);
     if (!existing) {
       await db.clusters.create(cluster);
+    } else {
+      await db.clusters.update(cluster);
     }
   }
 

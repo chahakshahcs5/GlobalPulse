@@ -333,8 +333,56 @@ export const DEMO_FULL_COVERAGE: Record<string, FullCoverageCluster> = {
         tone: 'cautious',
         isWire: true,
       },
+      {
+        publisher: 'The Wall Street Journal',
+        headline:
+          'Clearinghouses Face Multibillion-Dollar Upgrade Race for Post-Quantum Compliance',
+        sourceType: 'Financial Analysis',
+        url: 'https://wsj.com',
+        excerpt:
+          'Top custodian banks warn that retrofitting legacy SWIFT payment gateways will require dedicated hardware security modules across 4,000 branch endpoints.',
+        timeAgo: '6 hours ago',
+        tone: 'analytical',
+      },
+      {
+        publisher: 'Wired Science',
+        headline: 'How Satellite-Based Entangled Photons Beat the Fiber Distance Limit',
+        sourceType: 'Tech Deep Dive',
+        url: 'https://wired.com',
+        excerpt:
+          'While terrestrial optical fibers lose signal integrity beyond 100km without quantum repeaters, vacuum-based orbital beams traverse thousands of miles unattenuated.',
+        timeAgo: '8 hours ago',
+        tone: 'analytical',
+      },
+      {
+        publisher: 'The Economist',
+        headline: 'The Geopolitics of Sovereign Quantum Cryptographic Bastions',
+        sourceType: 'Macro Strategy',
+        url: 'https://economist.com',
+        excerpt:
+          'Nations lacking domestic orbital quantum infrastructure risk strategic blindness in financial surveillance and inter-bank secrecy.',
+        timeAgo: '9 hours ago',
+        tone: 'analytical',
+      },
+      {
+        publisher: 'MIT Technology Review',
+        headline:
+          'Quantum Random Number Generators on Orbit Pass Strict Continuous Randomness Audits',
+        sourceType: 'Academic Review',
+        url: 'https://technologyreview.com',
+        excerpt:
+          'Photonic shot noise sensors generate true non-deterministic entropy seeds at 2.4 Gbps, passing all Dieharder and NIST SP 800-22 tests.',
+        timeAgo: '10 hours ago',
+        tone: 'official',
+      },
     ],
     timeline: [
+      {
+        time: '06:00 AM',
+        headline: 'Orbital Beacon Acquisition',
+        detail:
+          'LEO satellite locks optical acquisition beacon with Mount Säntis observatory ground station.',
+      },
       {
         time: '08:00 AM',
         headline: 'Orbital Optical Beacon Locked',
@@ -358,6 +406,12 @@ export const DEMO_FULL_COVERAGE: Record<string, FullCoverageCluster> = {
         headline: 'Consortium Communiqué Published',
         detail:
           'Central banking governors issue joint roadmap for expanding network to 40 nodes by 2027.',
+      },
+      {
+        time: '05:30 PM',
+        headline: 'Regulatory Framework Endorsed',
+        detail:
+          'Financial Stability Board ratifies operational security standards for satellite quantum encryption links.',
       },
     ],
     factCheck: {
