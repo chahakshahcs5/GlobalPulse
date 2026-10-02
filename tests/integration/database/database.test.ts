@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DatabaseService } from '@ai-news/database';
+import { DatabaseService, prismaManager } from '@ai-news/database';
 import { seedDatabase } from '../../../libs/database/prisma/seed';
 
 describe('Production Database Core Integration Tests', () => {
@@ -38,7 +38,10 @@ describe('Production Database Core Integration Tests', () => {
 
     it('fails startup instead of silently falling back to memory when DATABASE_ENGINE=prisma', async () => {
       const origEngine = process.env.DATABASE_ENGINE;
+      const origUrl = process.env.DATABASE_URL;
+      await prismaManager.disconnect();
       process.env.DATABASE_ENGINE = 'prisma';
+      delete process.env.DATABASE_URL;
       try {
         await expect(db.initialize()).rejects.toThrow(
           /(?:DATABASE_ENGINE is configured as "prisma"|Failed to connect to database in prisma)/i
@@ -48,6 +51,11 @@ describe('Production Database Core Integration Tests', () => {
           process.env.DATABASE_ENGINE = origEngine;
         } else {
           delete process.env.DATABASE_ENGINE;
+        }
+        if (origUrl !== undefined) {
+          process.env.DATABASE_URL = origUrl;
+        } else {
+          delete process.env.DATABASE_URL;
         }
       }
     });

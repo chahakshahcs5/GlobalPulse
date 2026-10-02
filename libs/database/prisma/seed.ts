@@ -470,6 +470,44 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
               format: 'markdown',
             },
           },
+          {
+            id: 'blk_chart_gdp',
+            blockType: 'chart',
+            sortOrder: 2,
+            data: {
+              chartType: 'bar',
+              title: 'Combined Economic Output ($ Trillion PPP)',
+              xAxis: { key: 'year', label: 'Fiscal Year', type: 'category' },
+              yAxis: { label: 'Trillion USD' },
+              series: [{ name: 'Combined Output', key: 'gdp', color: '#3b82f6' }],
+              values: [
+                { year: '2022', gdp: 29.5 },
+                { year: '2024', gdp: 35.2 },
+                { year: '2026 Proj', gdp: 41.8 },
+              ],
+              sourceAttribution: 'World Bank & BRICS Secretariat 2026',
+            },
+          },
+          {
+            id: 'blk_timeline',
+            blockType: 'timeline',
+            sortOrder: 3,
+            data: {
+              title: 'Summit Progression',
+              items: [
+                {
+                  date: '08:00 UTC',
+                  headline: 'Draft Protocol Circulated',
+                  body: 'Ministerial delegations finalized technical wording for bilateral clearing systems.',
+                },
+                {
+                  date: '10:00 UTC',
+                  headline: 'Declaration Ratified',
+                  body: 'Heads of state executed signature protocols before the plenary assembly.',
+                },
+              ],
+            },
+          },
         ],
       },
       versions: [
