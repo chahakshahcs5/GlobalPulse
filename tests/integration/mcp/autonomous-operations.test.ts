@@ -229,5 +229,28 @@ describe('Autonomous AI Newsroom Operations via MCP (Integration Tests)', () => 
 
     const updatedRole = parseJson<{ user_id: string; new_role: string }>(roleRes);
     expect(updatedRole.new_role).toBe('editor');
+
+    // Privilege escalation check: AI agent cannot invite an admin
+    const originalRole = activePrincipal.role;
+    activePrincipal.role = 'ai_agent';
+    try {
+      const escalateRes = await client.callTool({
+        name: 'invite_newsroom_user',
+        arguments: {
+          name: 'Rogue Admin Invitee',
+          email: 'rogue@ai.globalpulse.news',
+          role: 'admin',
+        },
+      });
+      const errorResult = escalateRes as {
+        isError?: boolean;
+        content?: Array<{ text?: string }>;
+      };
+      expect(errorResult.isError).toBe(true);
+      const errorContent = errorResult.content?.[0]?.text;
+      expect(errorContent).toMatch(/Forbidden|Only newsroom administrators/i);
+    } finally {
+      activePrincipal.role = originalRole;
+    }
   });
 });

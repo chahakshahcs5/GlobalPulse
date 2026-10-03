@@ -56,7 +56,7 @@ describe('User Accounts, Authentication Flow & Following (F1, F17)', () => {
       const body = JSON.parse(regRes.body);
       expect(body.user.email).toBe(testUser.email.toLowerCase());
       expect(body.user.role).toBe('reader');
-      expect(body.user.passwordHash).toBeDefined();
+      expect(body.user.passwordHash).toBeUndefined();
       expect(body.token).toBeDefined();
 
       // Check cookie

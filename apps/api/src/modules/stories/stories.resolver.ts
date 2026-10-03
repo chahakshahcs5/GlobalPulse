@@ -1,5 +1,5 @@
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { StoryService } from '@ai-news/stories';
 import { SearchService } from '@ai-news/search';
 import { SourceService } from '@ai-news/sources';
@@ -14,7 +14,7 @@ import type {
   SearchStoriesInput,
   ClientType,
 } from '@ai-news/schemas';
-import type { AuthenticatedPrincipal } from '@ai-news/auth';
+import type { AuthenticatedPrincipal, NewsScope } from '@ai-news/auth';
 
 export interface StoriesResolverContext {
   principal?: AuthenticatedPrincipal;
@@ -36,9 +36,25 @@ export class StoriesResolver {
     this.sourceService = new SourceService(db);
   }
 
-  private requirePrincipal(ctx?: StoriesResolverContext): AuthenticatedPrincipal {
+  private requirePrincipal(
+    ctx?: StoriesResolverContext,
+    requiredScope?: NewsScope | NewsScope[]
+  ): AuthenticatedPrincipal {
     if (!ctx?.principal) {
       throw new UnauthorizedException('Authentication required for GraphQL mutations.');
+    }
+    if (requiredScope) {
+      const scopesToCheck = Array.isArray(requiredScope) ? requiredScope : [requiredScope];
+      const hasAnyScope =
+        ctx.principal.role === 'admin' ||
+        ctx.principal.scopes.includes('news:admin') ||
+        scopesToCheck.some((s) => ctx.principal!.scopes.includes(s));
+
+      if (!hasAnyScope) {
+        throw new ForbiddenException(
+          `Insufficient privileges. Required one of: [${scopesToCheck.join(', ')}], but principal has: [${ctx.principal.scopes.join(', ')}]`
+        );
+      }
     }
     return ctx.principal;
   }
@@ -77,7 +93,7 @@ export class StoriesResolver {
     @Args('input') input: CreateStoryInput,
     @Context() ctx?: StoriesResolverContext
   ): Promise<Story> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:write');
     return await this.storyService.createStory(input, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -92,7 +108,7 @@ export class StoriesResolver {
     @Args('input') input: UpdateStoryInput,
     @Context() ctx?: StoriesResolverContext
   ): Promise<Story> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:write');
     return await this.storyService.updateStory(id, input, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -106,7 +122,7 @@ export class StoriesResolver {
     @Args('input') input: CreateStoryVersionInput & { storyId: string },
     @Context() ctx?: StoriesResolverContext
   ): Promise<StoryVersion> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:write');
     return await this.storyService.createStoryVersion(input.storyId, input, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -120,7 +136,7 @@ export class StoriesResolver {
     @Args('id') id: string,
     @Context() ctx?: StoriesResolverContext
   ): Promise<Story> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:publish');
     return await this.storyService.publishStory(id, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -134,7 +150,7 @@ export class StoriesResolver {
     @Args('id') id: string,
     @Context() ctx?: StoriesResolverContext
   ): Promise<Story> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:publish');
     return await this.storyService.unpublishStory(id, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -149,7 +165,7 @@ export class StoriesResolver {
     @Args('block') block: unknown,
     @Context() ctx?: StoriesResolverContext
   ): Promise<StoryBlock> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, 'news:write');
     return await this.storyService.addBlock(storyId, block, {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -164,7 +180,7 @@ export class StoriesResolver {
     @Args('sourceId') sourceId: string,
     @Context() ctx?: StoriesResolverContext
   ): Promise<Story> {
-    const principal = this.requirePrincipal(ctx);
+    const principal = this.requirePrincipal(ctx, ['news:sources', 'news:write']);
     await this.sourceService.attachSourceToStory(storyId, sourceId, principal.organizationId);
     return await this.storyService.getStory(storyId, principal.organizationId);
   }

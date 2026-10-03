@@ -167,6 +167,39 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       expect(json.data?.createStory).toBeFalsy();
     });
 
+    it('rejects createStory mutation when user lacks news:write scope', async () => {
+      const readerToken = AuthService.generateToken({
+        id: 'usr_reader_only',
+        organizationId: 'org_default',
+        role: 'reader',
+        clientType: 'human_web',
+        scopes: ['news:read'],
+      });
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/graphql',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${readerToken}`,
+        },
+        payload: {
+          query: `
+            mutation {
+              createStory(input: { title: "Forbidden Story", summary: "Should fail", articleType: technology }) {
+                id
+              }
+            }
+          `,
+        },
+      });
+
+      const json = JSON.parse(res.body);
+      expect(json.errors).toBeDefined();
+      expect(json.errors[0].message).toMatch(/Insufficient privileges|news:write/i);
+      expect(json.data?.createStory).toBeFalsy();
+    });
+
     it('executes createStory mutation when authenticated', async () => {
       const mutation = `
         mutation CreateStory($input: CreateStoryInput!) {

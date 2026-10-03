@@ -17,7 +17,8 @@ import type {
   CreateEntityInput,
   ClientType,
 } from '@ai-news/schemas';
-import type { AuthenticatedPrincipal } from '@ai-news/auth';
+import type { AuthenticatedPrincipal, NewsScope } from '@ai-news/auth';
+import { ForbiddenError } from '@ai-news/shared';
 
 export interface GraphQLContext {
   organizationId?: string;
@@ -30,7 +31,10 @@ export interface GraphQLContext {
   };
 }
 
-function requireAuth(ctx?: GraphQLContext): {
+function requireAuth(
+  ctx?: GraphQLContext,
+  requiredScope?: NewsScope | NewsScope[]
+): {
   organizationId: string;
   userId: string;
   clientType: ClientType;
@@ -38,6 +42,21 @@ function requireAuth(ctx?: GraphQLContext): {
   if (!ctx?.principal && !ctx?.userId) {
     throw new Error('UNAUTHENTICATED: Authentication required for GraphQL mutations.');
   }
+
+  if (requiredScope && ctx?.principal) {
+    const scopesToCheck = Array.isArray(requiredScope) ? requiredScope : [requiredScope];
+    const hasAnyScope =
+      ctx.principal.role === 'admin' ||
+      ctx.principal.scopes.includes('news:admin') ||
+      scopesToCheck.some((s) => ctx.principal!.scopes.includes(s));
+
+    if (!hasAnyScope) {
+      throw new ForbiddenError(
+        `Insufficient privileges. Required one of: [${scopesToCheck.join(', ')}], but principal has: [${ctx.principal.scopes.join(', ')}]`
+      );
+    }
+  }
+
   return {
     organizationId: ctx.organizationId || ctx.principal?.organizationId || 'org_default',
     userId: ctx.userId || ctx.principal?.id || 'usr_authenticated',
@@ -112,7 +131,7 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateStoryInput },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
 
         const story = await storyService.createStory(input, {
           organizationId: auth.organizationId,
@@ -136,7 +155,7 @@ export function createResolvers(database: DatabaseService = db) {
         { id, input }: { id: string; input: UpdateStoryInput },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
 
         const story = await storyService.updateStory(id, input, {
           organizationId: auth.organizationId,
@@ -168,7 +187,7 @@ export function createResolvers(database: DatabaseService = db) {
         },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
         const clientType = input.clientType || auth.clientType;
 
         const version = await storyService.createStoryVersion(input.storyId, input, {
@@ -190,7 +209,7 @@ export function createResolvers(database: DatabaseService = db) {
       },
 
       publishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:publish');
 
         const story = await storyService.publishStory(id, {
           organizationId: auth.organizationId,
@@ -210,7 +229,7 @@ export function createResolvers(database: DatabaseService = db) {
       },
 
       unpublishStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:publish');
 
         const story = await storyService.unpublishStory(id, {
           organizationId: auth.organizationId,
@@ -234,7 +253,7 @@ export function createResolvers(database: DatabaseService = db) {
         { storyId, block }: { storyId: string; block: Block },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
 
         const addedBlock = await storyService.addBlock(storyId, block, {
           organizationId: auth.organizationId,
@@ -259,7 +278,7 @@ export function createResolvers(database: DatabaseService = db) {
         { storyId, sourceId }: { storyId: string; sourceId: string },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, ['news:sources', 'news:write']);
         await sourceService.attachSourceToStory(storyId, sourceId, auth.organizationId);
         return await storyService.getStory(storyId, auth.organizationId);
       },
@@ -278,7 +297,7 @@ export function createResolvers(database: DatabaseService = db) {
         },
         ctx?: GraphQLContext
       ) => {
-        requireAuth(ctx);
+        requireAuth(ctx, ['news:media', 'news:write']);
         const media = {
           id: generateId('med'),
           type: input.mediaType,
@@ -296,7 +315,7 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateTopicInput },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, ['news:topics', 'news:write']);
         return await topicService.createTopic(input, auth.organizationId);
       },
 
@@ -305,7 +324,7 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateEventInput },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
         return await eventService.createEvent(input, auth.organizationId);
       },
 
@@ -314,7 +333,7 @@ export function createResolvers(database: DatabaseService = db) {
         { input }: { input: CreateEntityInput },
         ctx?: GraphQLContext
       ) => {
-        const auth = requireAuth(ctx);
+        const auth = requireAuth(ctx, 'news:write');
         return await entityService.createEntity(input, auth.organizationId);
       },
     },

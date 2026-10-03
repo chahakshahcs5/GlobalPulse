@@ -30,11 +30,11 @@ export const DiagramBlockView: React.FC<{
         mermaid.initialize({
           startOnLoad: false,
           theme: theme === 'dark' ? 'dark' : 'default',
-          securityLevel: 'loose',
+          securityLevel: 'strict',
           fontFamily: 'system-ui, -apple-system, sans-serif',
           flowchart: {
             useMaxWidth: true,
-            htmlLabels: true,
+            htmlLabels: false,
             curve: 'basis',
           },
         });

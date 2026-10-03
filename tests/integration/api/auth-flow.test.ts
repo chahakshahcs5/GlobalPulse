@@ -36,8 +36,7 @@ describe('End-to-End Authentication & Cookie Session Flow', () => {
     const body = JSON.parse(res.body);
     expect(body.user).toBeDefined();
     expect(body.user.email).toBe(testUser.email.toLowerCase());
-    expect(body.user.passwordHash).toBeDefined();
-    expect(body.user.passwordHash).not.toBe(testUser.password); // ensure hashed, not plaintext
+    expect(body.user.passwordHash).toBeUndefined(); // ensure password hash is never leaked
     expect(body.token).toBeDefined();
 
     registeredToken = body.token;

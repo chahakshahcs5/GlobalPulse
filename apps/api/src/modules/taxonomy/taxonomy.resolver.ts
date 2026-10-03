@@ -1,5 +1,5 @@
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { TopicService, type CreateTopicInput } from '@ai-news/topics';
 import { EventService } from '@ai-news/events';
 import { EntityService } from '@ai-news/entities';
@@ -7,7 +7,7 @@ import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
 import { generateId } from '@ai-news/shared';
 import type { CreateEventInput, CreateEntityInput } from '@ai-news/schemas';
-import type { AuthenticatedPrincipal } from '@ai-news/auth';
+import type { AuthenticatedPrincipal, NewsScope } from '@ai-news/auth';
 
 export interface CreateMediaInput {
   mediaType: string;
@@ -35,6 +35,29 @@ export class TaxonomyResolver {
     this.eventService = new EventService(db);
     this.entityService = new EntityService(db);
     this.sourceService = new SourceService(db);
+  }
+
+  private requirePrincipal(
+    ctx?: ResolverContext,
+    requiredScope?: NewsScope | NewsScope[]
+  ): AuthenticatedPrincipal {
+    if (!ctx?.principal) {
+      throw new UnauthorizedException('Authentication required for GraphQL mutations.');
+    }
+    if (requiredScope) {
+      const scopesToCheck = Array.isArray(requiredScope) ? requiredScope : [requiredScope];
+      const hasAnyScope =
+        ctx.principal.role === 'admin' ||
+        ctx.principal.scopes.includes('news:admin') ||
+        scopesToCheck.some((s) => ctx.principal!.scopes.includes(s));
+
+      if (!hasAnyScope) {
+        throw new ForbiddenException(
+          `Insufficient privileges. Required one of: [${scopesToCheck.join(', ')}], but principal has: [${ctx.principal.scopes.join(', ')}]`
+        );
+      }
+    }
+    return ctx.principal;
   }
 
   @Query('getTopic')
@@ -66,36 +89,28 @@ export class TaxonomyResolver {
 
   @Mutation('createTopic')
   async createTopic(@Args('input') input: CreateTopicInput, @Context() ctx?: ResolverContext) {
-    if (!ctx?.principal) {
-      throw new UnauthorizedException('Authentication required for GraphQL mutations.');
-    }
-    const orgId = ctx.principal.organizationId || 'org_default';
+    const principal = this.requirePrincipal(ctx, ['news:topics', 'news:write']);
+    const orgId = principal.organizationId || 'org_default';
     return await this.topicService.createTopic(input, orgId);
   }
 
   @Mutation('createEvent')
   async createEvent(@Args('input') input: CreateEventInput, @Context() ctx?: ResolverContext) {
-    if (!ctx?.principal) {
-      throw new UnauthorizedException('Authentication required for GraphQL mutations.');
-    }
-    const orgId = ctx.principal.organizationId || 'org_default';
+    const principal = this.requirePrincipal(ctx, 'news:write');
+    const orgId = principal.organizationId || 'org_default';
     return await this.eventService.createEvent(input, orgId);
   }
 
   @Mutation('createEntity')
   async createEntity(@Args('input') input: CreateEntityInput, @Context() ctx?: ResolverContext) {
-    if (!ctx?.principal) {
-      throw new UnauthorizedException('Authentication required for GraphQL mutations.');
-    }
-    const orgId = ctx.principal.organizationId || 'org_default';
+    const principal = this.requirePrincipal(ctx, 'news:write');
+    const orgId = principal.organizationId || 'org_default';
     return await this.entityService.createEntity(input, orgId);
   }
 
   @Mutation('createMedia')
   async createMedia(@Args('input') input: CreateMediaInput, @Context() ctx?: ResolverContext) {
-    if (!ctx?.principal) {
-      throw new UnauthorizedException('Authentication required for GraphQL mutations.');
-    }
+    this.requirePrincipal(ctx, ['news:media', 'news:write']);
     return {
       id: generateId('med'),
       type: input.mediaType,

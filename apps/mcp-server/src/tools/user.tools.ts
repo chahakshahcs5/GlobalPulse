@@ -87,6 +87,21 @@ export function registerUserTools(
         const principal = getPrincipal();
         AuthService.requireRole(principal, 'admin', 'editor', 'ai_agent');
 
+        // Privilege escalation safeguards:
+        // 1. Only admins can invite another admin
+        if (args.role === 'admin' && principal.role !== 'admin') {
+          throw new Error(
+            'Forbidden: Only newsroom administrators can invite or grant admin role.'
+          );
+        }
+
+        // 2. AI agents cannot invite admins or editors (privilege escalation prevention)
+        if (principal.role === 'ai_agent' && (args.role === 'admin' || args.role === 'editor')) {
+          throw new Error(
+            'Forbidden: AI agents are not permitted to invite or grant administrative or editorial roles.'
+          );
+        }
+
         const ctx: StoryContext = {
           organizationId: principal.organizationId,
           authorId: principal.id,

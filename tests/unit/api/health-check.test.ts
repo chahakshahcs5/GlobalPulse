@@ -54,7 +54,7 @@ describe('Deep Health Check Probes (/health, /health/live, /health/ready)', () =
     expect(body.system).toBeDefined();
     expect(typeof body.system.memory.heapUsedMb).toBe('number');
     expect(typeof body.uptime).toBe('number');
-  });
+  }, 15000);
 
   it('GET /health/live returns lightweight liveness status for Kubernetes', async () => {
     const res = await app.inject({

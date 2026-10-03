@@ -120,5 +120,20 @@ describe('Production Caching Layer & HTTP Cache Headers', () => {
       expect(cacheControl).toContain('no-cache');
       expect(cacheControl).toContain('no-store');
     });
+
+    it('partitions cache with private, no-store and Vary: Authorization for authenticated requests', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/stories',
+        headers: {
+          authorization: 'Bearer dev-editor',
+        },
+      });
+
+      const cacheControl = res.headers['cache-control'];
+      expect(cacheControl).toContain('private');
+      expect(cacheControl).toContain('no-store');
+      expect(res.headers['vary']).toContain('Authorization');
+    });
   });
 });

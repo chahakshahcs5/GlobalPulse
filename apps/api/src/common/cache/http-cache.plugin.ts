@@ -42,8 +42,20 @@ export const httpCachePlugin: FastifyPluginAsync = async (fastify) => {
         return payload;
       }
 
+      // Partition caching for authenticated/tenant requests to prevent cross-tenant CDN cache leaks
+      const hasAuth =
+        Boolean(request.headers.authorization) ||
+        (typeof request.headers.cookie === 'string' && request.headers.cookie.includes('gp_token'));
+
+      if (hasAuth) {
+        reply.header('Vary', 'Authorization, Cookie, Accept-Encoding');
+        reply.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        return payload;
+      }
+
       // Public GET endpoints
       if (isPublicCacheable(url, method)) {
+        reply.header('Vary', 'Accept-Encoding');
         reply.header(
           'Cache-Control',
           'public, max-age=60, s-maxage=300, stale-while-revalidate=60'

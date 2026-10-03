@@ -142,9 +142,18 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     registerPrompts(targetServer);
   }
 
-  const sessions = new Map<string, StreamableHTTPServerTransport>();
+  interface McpSessionRecord {
+    transport: StreamableHTTPServerTransport;
+    principalId: string;
+    organizationId: string;
+  }
 
-  function createSessionTransport(sessionId: string): StreamableHTTPServerTransport {
+  const sessions = new Map<string, McpSessionRecord>();
+
+  function createSessionTransport(
+    sessionId: string,
+    principal: AuthenticatedPrincipal
+  ): StreamableHTTPServerTransport {
     const sessionTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => sessionId,
     });
@@ -154,7 +163,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     });
     initServerInstance(sessionServer);
     sessionServer.connect(sessionTransport);
-    sessions.set(sessionId, sessionTransport);
+    sessions.set(sessionId, {
+      transport: sessionTransport,
+      principalId: principal.id,
+      organizationId: principal.organizationId,
+    });
     sessionTransport.onclose = () => {
       sessions.delete(sessionId);
     };
@@ -162,7 +175,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   }
 
   const defaultSessionId = crypto.randomUUID();
-  const transport = createSessionTransport(defaultSessionId);
+  const transport = createSessionTransport(defaultSessionId, defaultPrincipal);
   const server = new McpServer({
     name: 'ai-news-platform-mcp',
     version: '1.0.0',
@@ -374,10 +387,28 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
 
             let activeTransport: StreamableHTTPServerTransport;
             if (headerSessionId && sessions.has(headerSessionId)) {
-              activeTransport = sessions.get(headerSessionId)!;
+              const sessionRecord = sessions.get(headerSessionId)!;
+              if (
+                sessionRecord.organizationId !== resolvedPrincipal.organizationId ||
+                sessionRecord.principalId !== resolvedPrincipal.id
+              ) {
+                res.writeHead(403, { 'Content-Type': 'application/json' });
+                res.end(
+                  JSON.stringify({
+                    jsonrpc: '2.0',
+                    error: {
+                      code: -32000,
+                      message:
+                        'Forbidden: MCP session ownership mismatch. Session belongs to a different principal or organization.',
+                    },
+                  })
+                );
+                return;
+              }
+              activeTransport = sessionRecord.transport;
             } else {
               const newSessionId = crypto.randomUUID();
-              activeTransport = createSessionTransport(newSessionId);
+              activeTransport = createSessionTransport(newSessionId, resolvedPrincipal);
             }
 
             await activeTransport.handleRequest(req, res, parsed);

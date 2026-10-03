@@ -73,10 +73,10 @@ export class NestAuthGuard implements CanActivate {
         );
       }
 
-      // Guest reader principal for unauthenticated reads
+      // Guest reader principal for unauthenticated reads (server-enforced, never derived from client headers)
       const fallbackPrincipal: AuthenticatedPrincipal = {
-        id: (request.headers['x-actor-id'] as string) || 'usr_guest',
-        organizationId: (request.headers['x-organization-id'] as string) || 'org_default',
+        id: 'usr_guest',
+        organizationId: 'org_default',
         role: 'reader',
         clientType: 'human_web',
         scopes: ['news:read'],

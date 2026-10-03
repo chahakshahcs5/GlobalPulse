@@ -16,11 +16,17 @@ import { generateId, NotFoundError, ConflictError, UnauthorizedError } from '@ai
 import { PasswordHasher, AuthService, ROLE_PERMISSIONS } from '@ai-news/auth';
 import type { StoryContext } from './story.service';
 
+export function sanitizeUser(user: NewsroomUser): NewsroomUser {
+  const { passwordHash: _hash, ...safeUser } = user;
+  return safeUser as NewsroomUser;
+}
+
 export class UserService {
   constructor(private readonly db: DatabaseService) {}
 
   async listUsers(orgId: string = 'org_default'): Promise<NewsroomUser[]> {
-    return this.db.users.list(orgId);
+    const users = await this.db.users.list(orgId);
+    return users.map(sanitizeUser);
   }
 
   async getUser(userId: string, orgId: string = 'org_default'): Promise<NewsroomUser> {
@@ -28,7 +34,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundError('Newsroom user', userId);
     }
-    return user;
+    return sanitizeUser(user);
   }
 
   /**
@@ -75,7 +81,7 @@ export class UserService {
       scopes: ROLE_PERMISSIONS[created.role],
     });
 
-    return { user: created, token };
+    return { user: sanitizeUser(created), token };
   }
 
   /**
@@ -107,7 +113,7 @@ export class UserService {
       scopes: ROLE_PERMISSIONS[user.role],
     });
 
-    return { user, token };
+    return { user: sanitizeUser(user), token };
   }
 
   /**
@@ -143,7 +149,8 @@ export class UserService {
     };
     user.updatedAt = new Date().toISOString();
 
-    return this.db.users.update(user);
+    const updated = await this.db.users.update(user);
+    return sanitizeUser(updated);
   }
 
   /**
@@ -234,7 +241,7 @@ export class UserService {
       return updated;
     });
 
-    return saved;
+    return sanitizeUser(saved);
   }
 
   async inviteUser(input: InviteUserInput, ctx: StoryContext): Promise<NewsroomUser> {
@@ -277,6 +284,6 @@ export class UserService {
       return created;
     });
 
-    return saved;
+    return sanitizeUser(saved);
   }
 }

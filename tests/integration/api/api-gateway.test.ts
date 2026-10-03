@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildServer } from '../../../apps/api/src/server';
+import { AuthService } from '@ai-news/auth';
 
 describe('Modular Production API Gateway Integration Tests', () => {
   let app: FastifyInstance;
@@ -26,6 +27,17 @@ describe('Modular Production API Gateway Integration Tests', () => {
       expect(body.status).toBe('healthy');
       expect(body.services.database).toBeDefined();
       expect(body.system.memory).toBeDefined();
+    });
+
+    it('sets defense-in-depth security headers on HTTP responses', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/health',
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(res.headers['x-frame-options']).toBe('DENY');
+      expect(res.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
     });
 
     it('responds with liveness probe on GET /health/live', async () => {
@@ -324,6 +336,48 @@ describe('Modular Production API Gateway Integration Tests', () => {
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body);
       expect(body.connectedClients).toBeDefined();
+    });
+
+    it('rejects unauthenticated subscription to restricted channel on GET /api/realtime/stream', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/realtime/stream?channels=editorial',
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('rejects reader subscription to editorial channel on GET /api/realtime/stream', async () => {
+      const readerToken = AuthService.generateToken({
+        id: 'usr_reader_sse',
+        organizationId: 'org_default',
+        role: 'reader',
+        clientType: 'human_web',
+        scopes: ['news:read'],
+      });
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/realtime/stream?channels=editorial',
+        headers: { authorization: `Bearer ${readerToken}` },
+      });
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('rejects subscription to foreign tenant channel on GET /api/realtime/stream', async () => {
+      const tenantToken = AuthService.generateToken({
+        id: 'usr_tenant_sse',
+        organizationId: 'org_acme',
+        role: 'editor',
+        clientType: 'human_web',
+        scopes: ['news:read', 'news:write'],
+      });
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/realtime/stream?channels=org_globex',
+        headers: { authorization: `Bearer ${tenantToken}` },
+      });
+      expect(res.statusCode).toBe(403);
     });
 
     it('queries immutable audit logs for enterprise compliance with admin token', async () => {

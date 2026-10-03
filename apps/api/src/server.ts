@@ -75,6 +75,16 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
   const trustProxy = process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production';
   const fastify = Fastify({ logger: options.logger ?? false, trustProxy });
 
+  fastify.addHook('onRequest', async (_req, reply) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    reply.header('X-DNS-Prefetch-Control', 'off');
+    if (process.env.NODE_ENV === 'production') {
+      reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+  });
+
   fastify.register(cors, getCorsOptions());
   fastify.register(rateLimit, getRateLimitOptions());
   fastify.register(httpCachePlugin);
@@ -110,6 +120,19 @@ export async function createNestApp(): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
     logger: false,
   });
+
+  const fastifyInstance = app.getHttpAdapter().getInstance() as FastifyInstance;
+  if (fastifyInstance && typeof fastifyInstance.addHook === 'function') {
+    fastifyInstance.addHook('onRequest', async (_req, reply) => {
+      reply.header('X-Content-Type-Options', 'nosniff');
+      reply.header('X-Frame-Options', 'DENY');
+      reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+      reply.header('X-DNS-Prefetch-Control', 'off');
+      if (process.env.NODE_ENV === 'production') {
+        reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+      }
+    });
+  }
 
   await app.register(cors, getCorsOptions() as unknown as Record<string, unknown>);
   await app.register(rateLimit, getRateLimitOptions());
