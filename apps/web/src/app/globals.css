@@ -46,29 +46,43 @@
   font-family: Georgia, Cambria, 'Times New Roman', Times, serif;
 }
 
-/* Reader Font Size Scaling */
-.reader-size-sm,
-.reader-size-sm p,
-.reader-size-sm li,
-.reader-size-sm blockquote {
+/* Reader Font Size Scaling (Scoped to narrative text, protecting diagrams & SVG graphics) */
+.reader-size-sm p:not(svg p):not(figure p):not([data-diagram-container] p),
+.reader-size-sm li:not(svg li):not(figure li):not([data-diagram-container] li),
+.reader-size-sm
+  blockquote:not(svg blockquote):not(figure blockquote):not([data-diagram-container] blockquote) {
   font-size: 0.925rem !important;
   line-height: 1.65 !important;
 }
 
-.reader-size-md,
-.reader-size-md p,
-.reader-size-md li,
-.reader-size-md blockquote {
+.reader-size-md p:not(svg p):not(figure p):not([data-diagram-container] p),
+.reader-size-md li:not(svg li):not(figure li):not([data-diagram-container] li),
+.reader-size-md
+  blockquote:not(svg blockquote):not(figure blockquote):not([data-diagram-container] blockquote) {
   font-size: 1.125rem !important;
   line-height: 1.8 !important;
 }
 
-.reader-size-lg,
-.reader-size-lg p,
-.reader-size-lg li,
-.reader-size-lg blockquote {
+.reader-size-lg p:not(svg p):not(figure p):not([data-diagram-container] p),
+.reader-size-lg li:not(svg li):not(figure li):not([data-diagram-container] li),
+.reader-size-lg
+  blockquote:not(svg blockquote):not(figure blockquote):not([data-diagram-container] blockquote) {
   font-size: 1.35rem !important;
   line-height: 1.95 !important;
+}
+
+/* Universal Mermaid & Graphic Text Normalization */
+[data-diagram-container] svg foreignObject p,
+[data-diagram-container] svg foreignObject span,
+[data-diagram-container] svg foreignObject div,
+[data-diagram-container] svg .nodeLabel,
+[data-diagram-container] svg .nodeLabel p,
+[data-diagram-container] svg .label,
+[data-diagram-container] svg .label p {
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .reader-size-sm h1 {

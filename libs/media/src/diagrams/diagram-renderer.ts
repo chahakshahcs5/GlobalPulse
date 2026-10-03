@@ -3,11 +3,84 @@ import { escapeXml } from '@ai-news/shared';
 
 export class DiagramRenderer {
   /**
+   * Sanitizes and normalizes a Mermaid definition string, stripping markdown fences,
+   * leading comments, frontmatter, and excess whitespace.
+   */
+  static cleanMermaidDefinition(raw: string): string {
+    if (!raw) return '';
+    let cleaned = raw.trim();
+
+    // Strip markdown code fences (```mermaid ... ``` or ``` ... ```)
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned
+        .replace(/^```[a-zA-Z0-9_-]*\r?\n?/, '')
+        .replace(/\r?\n?```$/, '')
+        .trim();
+    }
+
+    // Strip frontmatter (--- ... ---)
+    if (cleaned.startsWith('---')) {
+      const match = cleaned.match(/^---[\s\S]*?---\s*/);
+      if (match) {
+        cleaned = cleaned.slice(match[0].length).trim();
+      }
+    }
+
+    return cleaned;
+  }
+
+  /**
+   * Detects the specific Mermaid diagram type from grammar keywords.
+   */
+  static detectDiagramType(definition: string): string {
+    const cleaned = this.cleanMermaidDefinition(definition);
+    const lines = cleaned
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !l.startsWith('%%'));
+
+    if (lines.length === 0) return 'Mermaid Graph';
+    const first = lines[0];
+
+    if (first.startsWith('graph') || first.startsWith('flowchart')) return 'Flowchart';
+    if (first.startsWith('sequenceDiagram')) return 'Sequence Diagram';
+    if (first.startsWith('classDiagram')) return 'Class Diagram';
+    if (first.startsWith('stateDiagram')) return 'State Machine';
+    if (first.startsWith('erDiagram')) return 'Entity Relationship';
+    if (first.startsWith('journey')) return 'User Journey';
+    if (first.startsWith('gantt')) return 'Gantt Timeline';
+    if (first.startsWith('pie')) return 'Pie Breakdown';
+    if (first.startsWith('quadrantChart')) return 'Quadrant Matrix';
+    if (first.startsWith('gitGraph')) return 'Git Branch Graph';
+    if (first.startsWith('mindmap')) return 'Concept Mindmap';
+    if (first.startsWith('timeline')) return 'Chronological Timeline';
+    if (first.startsWith('c4') || first.startsWith('C4')) return 'C4 Architecture';
+    if (first.startsWith('architecture')) return 'System Architecture';
+    if (first.startsWith('sankey')) return 'Sankey Flow';
+    if (first.startsWith('kanban')) return 'Kanban Board';
+    if (first.startsWith('zenuml')) return 'ZenUML Sequence';
+    if (first.startsWith('packet')) return 'Packet Structure';
+    if (first.startsWith('block')) return 'Block Architecture';
+
+    return 'Mermaid Graph';
+  }
+
+  /**
    * Validates whether a text string contains valid Mermaid diagram grammar.
    */
   static validateMermaidDefinition(definition: string): boolean {
-    const trimmed = definition.trim();
-    if (!trimmed) return false;
+    const cleaned = this.cleanMermaidDefinition(definition);
+    if (!cleaned) return false;
+
+    // Filter out leading comments (lines starting with %%)
+    const lines = cleaned
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !l.startsWith('%%'));
+
+    if (lines.length === 0) return false;
+    const first = lines[0];
+
     const validPrefixes = [
       'graph',
       'flowchart',
@@ -15,14 +88,28 @@ export class DiagramRenderer {
       'classDiagram',
       'stateDiagram',
       'erDiagram',
+      'journey',
       'gantt',
       'pie',
       'gitGraph',
       'timeline',
       'mindmap',
       'quadrantChart',
+      'requirementDiagram',
+      'c4',
+      'C4Context',
+      'C4Container',
+      'C4Component',
+      'C4Dynamic',
+      'C4Deployment',
+      'zenuml',
+      'sankey',
+      'block',
+      'packet',
+      'kanban',
+      'architecture',
     ];
-    return validPrefixes.some((prefix) => trimmed.startsWith(prefix));
+    return validPrefixes.some((prefix) => first.startsWith(prefix));
   }
 
   /**
@@ -42,14 +129,14 @@ export class DiagramRenderer {
     const nodeBorder = isDark ? '#3b82f6' : '#2563eb';
 
     // Safely resolve definition or synthesize from legacy elements/connections
-    let rawDefinition = diagramData?.definition || '';
+    let rawDefinition = this.cleanMermaidDefinition(diagramData?.definition || '');
     const rawAny = diagramData as unknown as Record<string, unknown> | undefined;
 
     if (!rawDefinition && rawAny) {
       if (typeof rawAny.mermaid === 'string') {
-        rawDefinition = rawAny.mermaid;
+        rawDefinition = this.cleanMermaidDefinition(rawAny.mermaid);
       } else if (typeof rawAny.code === 'string') {
-        rawDefinition = rawAny.code;
+        rawDefinition = this.cleanMermaidDefinition(rawAny.code);
       } else if (Array.isArray(rawAny.elements)) {
         const elems = rawAny.elements as Array<{ id: string; label?: string }>;
         const conns = (rawAny.connections || []) as Array<{
@@ -79,7 +166,8 @@ export class DiagramRenderer {
         'flowchart LR\n  A[System Ingestion] --> B[Processing Engine]\n  B --> C[Verified Output]';
     }
 
-    const format = (diagramData?.format || 'mermaid').toUpperCase();
+    const detectedType = this.detectDiagramType(rawDefinition);
+    const format = (diagramData?.format || detectedType).toUpperCase();
     const lines = rawDefinition.split('\n').filter((l) => l.trim().length > 0);
 
     return `
@@ -88,8 +176,8 @@ export class DiagramRenderer {
         <g transform="translate(30, 60)">
           <rect width="${width - 60}" height="${height - 100}" rx="8" fill="${nodeBg}" stroke="${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}" />
           <!-- Header Badge -->
-          <rect x="20" y="20" width="100" height="24" rx="6" fill="${nodeBorder}" />
-          <text x="70" y="36" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="system-ui, sans-serif">${format}</text>
+          <rect x="20" y="20" width="130" height="24" rx="6" fill="${nodeBorder}" />
+          <text x="85" y="36" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="system-ui, sans-serif">${escapeXml(format)}</text>
           
           <!-- Code snippet representation -->
           <text x="24" y="80" font-size="13" font-family="ui-monospace, monospace" fill="${isDark ? '#38bdf8' : '#0284c7'}">${escapeXml(lines[0] || 'graph TD')}</text>
