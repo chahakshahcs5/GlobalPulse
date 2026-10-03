@@ -1,23 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-  X,
-  FileText,
-  Image as ImageIcon,
-  BarChart2,
-  Clock,
-  Quote,
-  Video,
-  Send,
-  Calendar,
-  Trash2,
-  Table as TableIcon,
-  AlertCircle,
-  TrendingUp,
-  Eye,
-  Star,
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, FileText, Trash2, Eye } from 'lucide-react';
 import type { StoryBlock, ArticleType } from '@ai-news/schemas';
 import {
   saveUserStory,
@@ -29,6 +13,10 @@ import { StoryRenderer } from '../../../../components/StoryRenderer';
 import type { MediaBlockDraft, StoryEditorDrawerProps } from './types';
 import { createDefaultMediaBlock, assembleStoryBlocks } from './block-factories';
 import { BlockFieldEditor } from './BlockFieldEditor';
+import { StoryMetadataSection } from './StoryMetadataSection';
+import { StoryTakeawaysSection } from './StoryTakeawaysSection';
+import { StoryBlockToolbar } from './StoryBlockToolbar';
+import { StoryPublishActions } from './StoryPublishActions';
 
 export function StoryEditorDrawer({
   isOpen,
@@ -253,20 +241,12 @@ export function StoryEditorDrawer({
 
   if (!isOpen) return null;
 
-  const addImageBlock = () => setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('image')]);
-  const addChartBlock = () => setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('chart')]);
-  const addQuoteBlock = () => setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('quote')]);
-  const addTimelineBlock = () =>
-    setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('timeline')]);
-  const addVideoBlock = () => setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('video')]);
-  const addTableBlock = () => setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('table')]);
-  const addCalloutBlock = () =>
-    setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('callout')]);
-  const addStatisticBlock = () =>
-    setMediaBlocks((prev) => [...prev, createDefaultMediaBlock('statistic')]);
+  const handleAddBlock = (type: MediaBlockDraft['type']) => {
+    setMediaBlocks((prev: MediaBlockDraft[]) => [...prev, createDefaultMediaBlock(type)]);
+  };
 
   const removeMediaBlock = (id: string) => {
-    setMediaBlocks((prev) => prev.filter((b) => b.id !== id));
+    setMediaBlocks((prev: MediaBlockDraft[]) => prev.filter((b: MediaBlockDraft) => b.id !== id));
   };
 
   const updateMediaBlockData = (
@@ -274,8 +254,10 @@ export function StoryEditorDrawer({
     field: string,
     value: string | number | readonly string[] | undefined
   ) => {
-    setMediaBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, data: { ...b.data, [field]: value } } : b))
+    setMediaBlocks((prev: MediaBlockDraft[]) =>
+      prev.map((b: MediaBlockDraft) =>
+        b.id === id ? { ...b, data: { ...b.data, [field]: value } } : b
+      )
     );
   };
 
@@ -469,222 +451,39 @@ export function StoryEditorDrawer({
         ) : (
           /* Compose & Blocks Editing Mode */
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as ArticleType)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-medium focus:outline-none focus:border-blue-500"
-                >
-                  <option value="technology">Technology & Silicon</option>
-                  <option value="business">Business & Economy</option>
-                  <option value="world">World Affairs</option>
-                  <option value="science">Science & Energy</option>
-                  <option value="sports">Sports</option>
-                  <option value="health">Health & Medicine</option>
-                </select>
-              </div>
+            <StoryMetadataSection
+              category={category}
+              setCategory={setCategory}
+              isSubscriberOnly={isSubscriberOnly}
+              setIsSubscriberOnly={setIsSubscriberOnly}
+              title={title}
+              setTitle={setTitle}
+              summary={summary}
+              setSummary={setSummary}
+              authorName={authorName}
+              setAuthorName={setAuthorName}
+              heroImageUrl={heroImageUrl}
+              setHeroImageUrl={setHeroImageUrl}
+            />
 
-              {/* Subscriber Exclusive Access Toggle */}
-              <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">
-                      Subscriber Only Story
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Restrict full article access and investigative dossier to GlobalPulse Digital
-                      subscribers.
-                    </div>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isSubscriberOnly}
-                    onChange={(e) => setIsSubscriberOnly(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                  Author Byline
-                </label>
-                <input
-                  type="text"
-                  value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  placeholder="e.g. Vikram Malhotra, Senior Tech Reporter"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-medium focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Headline / Title *
-              </label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Quantum Computing Startup Achieves 10,000 Logical Qubit Error Suppression"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm font-bold focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Executive Summary / Subtitle *
-              </label>
-              <textarea
-                required
-                rows={2}
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                placeholder="Provide a concise 1-2 sentence executive overview of the story."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs leading-relaxed focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Cover Photo URL
-              </label>
-              <input
-                type="url"
-                value={heroImageUrl}
-                onChange={(e) => setHeroImageUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-medium focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Lead Paragraph (Dispatch Body)
-              </label>
-              <textarea
-                rows={4}
-                value={leadParagraph}
-                onChange={(e) => setLeadParagraph(e.target.value)}
-                placeholder="Write the comprehensive opening dispatch and verified facts..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs leading-relaxed focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            {/* Key Takeaways */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
-                Key Takeaways / Bullet Highlights
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={bullet1}
-                  onChange={(e) => setBullet1(e.target.value)}
-                  placeholder="• Primary breakthrough or core finding"
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs"
-                />
-                <input
-                  type="text"
-                  value={bullet2}
-                  onChange={(e) => setBullet2(e.target.value)}
-                  placeholder="• Market or geopolitical impact"
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs"
-                />
-                <input
-                  type="text"
-                  value={bullet3}
-                  onChange={(e) => setBullet3(e.target.value)}
-                  placeholder="• Next steps and upcoming timeline"
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-xs"
-                />
-              </div>
-            </div>
+            <StoryTakeawaysSection
+              leadParagraph={leadParagraph}
+              setLeadParagraph={setLeadParagraph}
+              bullet1={bullet1}
+              setBullet1={setBullet1}
+              bullet2={bullet2}
+              setBullet2={setBullet2}
+              bullet3={bullet3}
+              setBullet3={setBullet3}
+            />
 
             {/* Rich Media Block Inserter */}
             <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                    Rich Media & Interactive Block Engine
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Add supporting data charts, pull quotes, photo credits, timeline milestones,
-                    comparison tables, or callouts.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={addImageBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> + Image
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addChartBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <BarChart2 className="w-3.5 h-3.5 text-emerald-500" /> + Chart
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addQuoteBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <Quote className="w-3.5 h-3.5 text-purple-500" /> + Quote
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addTimelineBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <Clock className="w-3.5 h-3.5 text-amber-500" /> + Timeline
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addTableBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <TableIcon className="w-3.5 h-3.5 text-cyan-500" /> + Table
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addCalloutBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> + Callout
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addStatisticBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> + Stat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addVideoBlock}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <Video className="w-3.5 h-3.5 text-rose-500" /> + Video
-                  </button>
-                </div>
-              </div>
+              <StoryBlockToolbar onAddBlock={handleAddBlock} />
 
               {mediaBlocks.length > 0 && (
                 <div className="space-y-3 pt-2">
-                  {mediaBlocks.map((block, idx) => (
+                  {mediaBlocks.map((block: MediaBlockDraft, idx: number) => (
                     <div
                       key={block.id}
                       className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xs space-y-3"
@@ -711,66 +510,13 @@ export function StoryEditorDrawer({
           </div>
         )}
 
-        {/* Publishing Target / Embargo Time */}
-        {submitMode === 'SCHEDULE' && (
-          <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/30 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-purple-700 dark:text-purple-300">
-              <Calendar className="w-4 h-4" />
-              <span>Embargo Publishing Schedule</span>
-            </div>
-            <input
-              type="datetime-local"
-              required
-              value={scheduledAtInput}
-              onChange={(e) => setScheduledAtInput(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-xs font-medium focus:outline-none"
-            />
-            <p className="text-[11px] text-purple-600 dark:text-purple-400">
-              The automated background scheduler will automatically flip this story to PUBLISHED and
-              broadcast it over SSE the moment this timestamp arrives.
-            </p>
-          </div>
-        )}
-
-        {/* Form Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <span className="text-xs text-slate-400">
-            Supports human journalism & autonomous external AI agents via MCP.
-          </span>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="submit"
-              onClick={() => setSubmitMode('DRAFT')}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
-            >
-              {editingStory ? 'Save Changes as Draft' : 'Save as Draft'}
-            </button>
-            <button
-              type="submit"
-              onClick={() => setSubmitMode('REVIEW')}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>{editingStory ? 'Save & Submit for Review' : 'Submit for Review'}</span>
-            </button>
-            <button
-              type="submit"
-              onClick={() => setSubmitMode('SCHEDULE')}
-              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Schedule Release</span>
-            </button>
-            <button
-              type="submit"
-              onClick={() => setSubmitMode('PUBLISH')}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition cursor-pointer"
-            >
-              {editingStory ? 'Save & Publish Revision' : 'Publish Immediately'}
-            </button>
-          </div>
-        </div>
+        <StoryPublishActions
+          submitMode={submitMode}
+          setSubmitMode={setSubmitMode}
+          scheduledAtInput={scheduledAtInput}
+          setScheduledAtInput={setScheduledAtInput}
+          editingStory={editingStory}
+        />
       </form>
     </div>
   );

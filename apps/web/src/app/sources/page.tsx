@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { listPublishers, listSources, listFollowing } from '../../lib/api-client';
-import { DEMO_PUBLISHERS, DEMO_SOURCES } from '../../lib/demo-data';
+import { listPublishers, listSources, listFollowing, listCategories } from '../../lib/api-client';
 import { PublisherCard } from '../../components/PublisherCard';
 import { formatDeterministicDate } from '../../lib/date-utils';
 import {
@@ -14,27 +13,21 @@ import {
   SlidersHorizontal,
   Building2,
 } from 'lucide-react';
-import type { Publisher, Source } from '@ai-news/schemas';
-
-const CATEGORIES = [
-  { id: 'all', label: 'All Publications' },
-  { id: 'general', label: 'National & General' },
-  { id: 'world', label: 'Global Wires' },
-  { id: 'business', label: 'Business & Markets' },
-  { id: 'technology', label: 'Technology & AI' },
-  { id: 'science', label: 'Science & Research' },
-];
+import type { Publisher, Source, Category } from '@ai-news/schemas';
 
 export default function SourcesPage() {
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; label: string }>>([
+    { id: 'all', label: 'All Publications' },
+  ]);
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showRawArticles, setShowRawArticles] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load publishers, sources, and following state
+  // Load publishers, sources, categories, and following state
   useEffect(() => {
     let isMounted = true;
 
@@ -50,17 +43,22 @@ export default function SourcesPage() {
       listPublishers().catch(() => []),
       listSources().catch(() => []),
       listFollowing('source').catch(() => []),
-    ]).then(([pubData, srcData, followData]) => {
+      listCategories().catch(() => []),
+    ]).then(([pubData, srcData, followData, catData]) => {
       if (!isMounted) return;
 
-      const loadedPubs =
-        Array.isArray(pubData) && pubData.length > 0 ? pubData : Object.values(DEMO_PUBLISHERS);
-
-      const loadedSources =
-        Array.isArray(srcData) && srcData.length > 0 ? srcData : Object.values(DEMO_SOURCES);
+      const loadedPubs = Array.isArray(pubData) ? pubData : [];
+      const loadedSources = Array.isArray(srcData) ? srcData : [];
 
       setPublishers(loadedPubs);
       setSources(loadedSources);
+
+      if (Array.isArray(catData) && catData.length > 0) {
+        setCategories([
+          { id: 'all', label: 'All Publications' },
+          ...catData.map((c: Category) => ({ id: c.slug, label: c.name })),
+        ]);
+      }
 
       if (Array.isArray(followData) && followData.length > 0) {
         setFollowedIds((prev) => {
@@ -189,7 +187,7 @@ export default function SourcesPage() {
 
         {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}

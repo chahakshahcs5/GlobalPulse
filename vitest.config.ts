@@ -47,6 +47,7 @@ export default defineConfig({
       ),
       'react-dom': path.resolve(__dirname, 'apps/web/node_modules/react-dom'),
       react: path.resolve(__dirname, 'apps/web/node_modules/react'),
+      'lucide-react': path.resolve(__dirname, 'apps/web/node_modules/lucide-react'),
       zod: path.resolve(__dirname, 'libs/schemas/node_modules/zod'),
       rxjs: path.resolve(__dirname, 'apps/api/node_modules/rxjs'),
       fastify: path.resolve(__dirname, 'apps/api/node_modules/fastify'),

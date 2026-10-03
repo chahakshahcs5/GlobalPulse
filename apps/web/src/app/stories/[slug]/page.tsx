@@ -13,15 +13,10 @@ import {
   ShieldCheck,
   Volume2,
   VolumeX,
-  Sparkles,
-  Copy,
   X,
   Zap,
   Play,
   Pause,
-  Layers,
-  FileText,
-  CheckCircle2,
   ExternalLink,
   Star,
   Lock,
@@ -37,7 +32,14 @@ import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 import { PaywallBarrier } from '../../../components/PaywallBarrier';
 import { AskArticleDrawer } from '../../../components/AskArticleDrawer';
 import { StoryDetailSkeleton } from '../../../components/StorySkeletons';
-import { formatDeterministicDate, formatDeterministicDateTime } from '../../../lib/date-utils';
+import { formatDeterministicDateTime } from '../../../lib/date-utils';
+import {
+  StoryAudioBar,
+  StoryDepthSelector,
+  StoryInvestigativeReport,
+  StoryRelatedCoverage,
+  StoryShareModal,
+} from './components';
 
 export default function StoryPage() {
   const params = useParams();
@@ -627,36 +629,12 @@ export default function StoryPage() {
           </div>
         </div>
 
-        {/* F20: Audio Narration Player Widget Bar */}
-        {isSpeaking && (
-          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex flex-wrap items-center justify-between gap-3 text-xs animate-in fade-in slide-in-from-top-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-              <span className="font-bold text-blue-700 dark:text-blue-300">
-                Audio Briefing Playing:
-              </span>
-              <span className="text-slate-600 dark:text-slate-300">
-                Neural Newsroom Anchor (English)
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-[11px] font-medium mr-1">Speed:</span>
-              {[0.75, 1.0, 1.25, 1.5].map((rate) => (
-                <button
-                  key={rate}
-                  onClick={() => changeAudioSpeed(rate)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
-                    audioRate === rate
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                  }`}
-                >
-                  {rate}x
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Audio Narration Player Bar */}
+        <StoryAudioBar
+          isSpeaking={isSpeaking}
+          audioRate={audioRate}
+          changeAudioSpeed={changeAudioSpeed}
+        />
       </header>
 
       {/* Hero Visual Asset */}
@@ -667,99 +645,19 @@ export default function StoryPage() {
       )}
 
       {/* Reading Depth Selector & Grounded AI Assistant Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-500 dark:text-slate-400">Reading Depth:</span>
-          <div className="flex items-center bg-slate-200 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-300 dark:border-slate-700/60 font-medium">
-            <button
-              onClick={() => handleReadingDepthChange('quick')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                readingDepth === 'quick'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              ⚡ Quick (1m)
-            </button>
-            <button
-              onClick={() => handleReadingDepthChange('balanced')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                readingDepth === 'balanced'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Standard (3m)
-            </button>
-            <button
-              onClick={() => handleReadingDepthChange('deep_dive')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                readingDepth === 'deep_dive'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              🔬 Deep Dive
-            </button>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            if (isLocked) {
-              const el = document.getElementById('paywall-barrier');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-              return;
-            }
-            setIsAskDrawerOpen(true);
-          }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-xs shadow-indigo-600/20 cursor-pointer"
-        >
-          {isLocked ? (
-            <Lock className="w-3.5 h-3.5 text-amber-300" />
-          ) : (
-            <Sparkles className="w-3.5 h-3.5" />
-          )}
-          <span>{isLocked ? 'Ask AI (Subscribers)' : 'Ask Article AI'}</span>
-        </button>
-      </div>
-
-      {/* Mode Indicator Banners */}
-      {readingDepth === 'quick' && (
-        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 font-medium">
-            <span className="text-base">⚡</span>
-            <span>
-              <strong>Quick Executive Briefing:</strong> Condensed to opening lead, executive
-              takeaway, and key data points (~1 min read).
-            </span>
-          </div>
-          <button
-            onClick={() => handleReadingDepthChange('balanced')}
-            className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer shrink-0 ml-3"
-          >
-            Expand to Full Story
-          </button>
-        </div>
-      )}
-
-      {readingDepth === 'deep_dive' && (
-        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-800 dark:text-indigo-300 text-xs animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 font-medium">
-            <span className="text-base">🔬</span>
-            <span>
-              <strong>Investigative Deep Dive Edition:</strong> Unabridged technical reporting,
-              document registries, and investigative deep-dive brief enabled.
-            </span>
-          </div>
-          <button
-            onClick={() => handleReadingDepthChange('balanced')}
-            className="underline font-semibold hover:text-indigo-950 dark:hover:text-indigo-100 cursor-pointer shrink-0 ml-3"
-          >
-            Switch to Standard
-          </button>
-        </div>
-      )}
+      <StoryDepthSelector
+        readingDepth={readingDepth}
+        onDepthChange={handleReadingDepthChange}
+        isLocked={isLocked}
+        onOpenAskDrawer={() => {
+          if (isLocked) {
+            const el = document.getElementById('paywall-barrier');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+          setIsAskDrawerOpen(true);
+        }}
+      />
 
       {/* Article Content with Dynamic Font Scaling & Metered Paywall (F30) */}
       <div
@@ -809,183 +707,13 @@ export default function StoryPage() {
               depth={readingDepth}
             />
 
-            {/* F10 Deep Dive Investigative Background Report */}
-            {readingDepth === 'deep_dive' &&
-              (() => {
-                // Dynamic primary source computation
-                const sourceCount = story.sourceIds?.length || 0;
-                const sourceText =
-                  sourceCount > 0
-                    ? `Direct source provenance cross-verified across ${sourceCount} primary institutional filing${sourceCount > 1 ? 's' : ''} and peer-reviewed documentation.`
-                    : `Editorial provenance authenticated via ${story.createdByClient === 'human_web' ? 'GlobalPulse Staff Newsroom' : story.createdByClient || 'Newsroom Wire'} with cryptographic audit logging.`;
-
-                // Dynamic consensus rating
-                const isVerified = story.status === 'PUBLISHED';
-                const confidencePercent =
-                  sourceCount >= 3
-                    ? 99.4
-                    : sourceCount === 2
-                      ? 98.2
-                      : sourceCount === 1
-                        ? 96.8
-                        : 94.5;
-                const consensusText =
-                  story.articleType === 'science' || story.articleType === 'technology'
-                    ? 'Scientific consensus cross-referenced against peer-reviewed preprints, patent registries, and laboratory disclosures.'
-                    : story.articleType === 'business' || story.articleType === 'markets'
-                      ? 'Financial statements verified against regulatory filings, audited disclosures, and exchange telemetry.'
-                      : 'Story facts corroborated against independent news sources, public registers, and certified wire feeds.';
-
-                // Dynamic beats & topics resolution
-                const formatTaxonomyName = (rawId: string) => {
-                  return rawId
-                    .replace(/^(top_|ent_|src_|pub_)/, '')
-                    .split('_')
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                };
-
-                const derivedTags = [
-                  ...(story.topicIds || []).map(formatTaxonomyName),
-                  ...(story.entityIds || []).slice(0, 3).map(formatTaxonomyName),
-                ];
-                const displayTags =
-                  derivedTags.length > 0
-                    ? derivedTags.slice(0, 5)
-                    : [
-                        story.articleType
-                          ? story.articleType
-                              .split('_')
-                              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                              .join(' ')
-                          : 'Global Intelligence',
-                        'Fact Checked',
-                        'Primary Record',
-                      ];
-
-                return (
-                  <section className="my-8 rounded-3xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-b from-indigo-50/50 via-white to-white dark:from-indigo-950/30 dark:via-slate-900/70 dark:to-slate-900/70 p-6 sm:p-7 space-y-6 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start sm:items-center gap-3">
-                        <span className="p-2.5 rounded-xl bg-indigo-600 text-white font-bold shadow-xs shrink-0">
-                          <Layers className="w-5 h-5" />
-                        </span>
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
-                            Investigative Background Report
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            In-depth analysis cross-referenced across primary sources, verified
-                            documents, and topic intelligence.
-                          </p>
-                        </div>
-                      </div>
-                      <span className="shrink-0 self-start sm:self-center px-3 py-1 rounded-full font-bold text-xs font-mono uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap shadow-2xs">
-                        Full Investigative Report
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Card 1: Primary Source Record */}
-                      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4">
-                        <div className="space-y-2.5">
-                          <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                              <FileText className="w-4 h-4" />
-                            </div>
-                            <span>Primary Source Record</span>
-                          </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                            {sourceText}
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                            <span>Record Hash</span>
-                            <span className="text-slate-700 dark:text-slate-300 font-bold">
-                              {story.id ? story.id.slice(0, 14) : '8f4b29c9a01'}...
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setIsSourcesModalOpen(true)}
-                            className="w-full py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs"
-                          >
-                            <span>
-                              {sourceCount > 0
-                                ? `View ${sourceCount} Primary Record${sourceCount > 1 ? 's' : ''}`
-                                : 'View Citation Dossier'}
-                            </span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card 2: Consensus Verification */}
-                      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4">
-                        <div className="space-y-2.5">
-                          <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="w-4 h-4" />
-                            </div>
-                            <span>Consensus Verification</span>
-                          </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                            {consensusText}
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-slate-400">Confidence Rating</span>
-                            <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                              {confidencePercent}% {isVerified ? 'Verified' : 'Developing'}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                              style={{ width: `${confidencePercent}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card 3: Entity & Topic Context */}
-                      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4">
-                        <div className="space-y-2.5">
-                          <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                            <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-                              <Layers className="w-4 h-4" />
-                            </div>
-                            <span>Entity & Topic Context</span>
-                          </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                            Cross-referenced entities tracked across public records, institutional
-                            filings, and global policy monitors.
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                          <div className="text-[11px] font-mono text-slate-400">
-                            <span>Associated Beats & Topics</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {displayTags.map((tagName, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono font-medium border border-slate-200/80 dark:border-slate-700/60"
-                              >
-                                #{tagName}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                );
-              })()}
+            {/* Investigative Deep Dive Background Report */}
+            {readingDepth === 'deep_dive' && (
+              <StoryInvestigativeReport
+                story={story}
+                onViewSources={() => setIsSourcesModalOpen(true)}
+              />
+            )}
           </>
         )}
       </div>
@@ -1020,37 +748,8 @@ export default function StoryPage() {
         </div>
       </section>
 
-      {/* F9: Related Stories & Multi-Perspective Coverage */}
-      {relatedStories.length > 0 && (
-        <section className="pt-8 mt-10 border-t border-slate-200 dark:border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span>Related Coverage & Further Reading</span>
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {relatedStories.map((rel) => (
-              <Link
-                key={rel.id}
-                href={`/stories/${rel.slug}`}
-                className="group p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:shadow-md transition space-y-2 block"
-              >
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="font-bold text-blue-600 uppercase">
-                    {rel.articleType.replace('_', ' ')}
-                  </span>
-                  <span suppressHydrationWarning>{formatDeterministicDate(rel.publishedAt)}</span>
-                </div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 line-clamp-2">
-                  {rel.title}
-                </h4>
-                <p className="text-xs text-slate-500 line-clamp-2">{rel.summary}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Related Stories & Multi-Perspective Coverage */}
+      <StoryRelatedCoverage relatedStories={relatedStories} />
 
       {/* Reader Engagement: Reactions & Threaded Discussion (F18, F19) */}
       <StoryEngagement storyId={story.id} storySlug={story.slug} storyTitle={story.title} />
@@ -1068,83 +767,15 @@ export default function StoryPage() {
         story={story}
       />
 
-      {/* F8: Social Share Modal */}
-      {isShareModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="max-w-sm w-full bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-                <Share2 className="w-4 h-4 text-blue-600" /> Share Dispatch
-              </h3>
-              <button
-                onClick={() => setIsShareModalOpen(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{story.title}</p>
-
-            <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                  story.title
-                )}&url=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
-              >
-                <span>X / Twitter</span>
-              </a>
-              <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  currentUrl
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
-              >
-                <span>LinkedIn</span>
-              </a>
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                  currentUrl
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
-              >
-                <span>Facebook</span>
-              </a>
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  story.title + ' ' + currentUrl
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
-              >
-                <span>WhatsApp</span>
-              </a>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={copyStoryLink}
-                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-emerald-300" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-                <span>{copied ? 'Link Copied to Clipboard!' : 'Copy Permanent Link'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Social Share Modal */}
+      <StoryShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        storyTitle={story.title}
+        currentUrl={currentUrl}
+        copied={copied}
+        onCopyUrl={copyStoryLink}
+      />
 
       {/* Floating AI Audio Briefing Player Widget */}
       {isAudioActive && (

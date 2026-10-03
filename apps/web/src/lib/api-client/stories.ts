@@ -20,25 +20,21 @@ export interface ListStoriesParams {
 }
 
 export async function listStories(params?: ListStoriesParams): Promise<Story[]> {
-  try {
-    const searchParams = new URLSearchParams();
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.articleType) searchParams.set('articleType', params.articleType);
-    if (params?.topicId) searchParams.set('topicId', params.topicId);
-    if (params?.entityId) searchParams.set('entityId', params.entityId);
-    if (params?.query) searchParams.set('query', params.query);
-    if (params?.limit) searchParams.set('limit', String(Math.min(params.limit, 500)));
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.set('status', params.status);
+  if (params?.articleType) searchParams.set('articleType', params.articleType);
+  if (params?.topicId) searchParams.set('topicId', params.topicId);
+  if (params?.entityId) searchParams.set('entityId', params.entityId);
+  if (params?.query) searchParams.set('query', params.query);
+  if (params?.limit) searchParams.set('limit', String(Math.min(params.limit, 500)));
 
-    const qs = searchParams.toString();
-    const response = await request<{ data: Story[]; total: number }>(
-      `/api/stories${qs ? `?${qs}` : ''}`
-    );
+  const qs = searchParams.toString();
+  const response = await request<{ data: Story[]; total: number } | Story[]>(
+    `/api/stories${qs ? `?${qs}` : ''}`
+  );
 
-    // The API may return { data: [...] } or an array directly depending on wrapper
-    return Array.isArray(response) ? response : (response.data ?? []);
-  } catch {
-    return [];
-  }
+  // The API may return { data: [...] } or an array directly depending on wrapper
+  return Array.isArray(response) ? response : (response.data ?? []);
 }
 
 export async function getStory(id: string): Promise<Story> {

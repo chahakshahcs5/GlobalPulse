@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getPublisherProfile, followTarget, unfollowTarget } from '../../../lib/api-client';
-import { DEMO_PUBLISHERS, DEMO_SOURCES, DEMO_STORIES } from '../../../lib/demo-data';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import {
   CheckCircle2,
@@ -18,7 +17,7 @@ import {
   ShieldCheck,
   Building2,
 } from 'lucide-react';
-import type { PublisherProfile, PublisherStoryRef } from '@ai-news/schemas';
+import type { PublisherProfile } from '@ai-news/schemas';
 
 export default function PublisherDetailPage() {
   const params = useParams();
@@ -51,55 +50,15 @@ export default function PublisherDetailPage() {
           setFollowerCount(data.followerCount || 0);
           setIsLoading(false);
         } else {
-          fallbackToDemo();
+          setProfile(null);
+          setIsLoading(false);
         }
       })
       .catch(() => {
         if (!isMounted) return;
-        fallbackToDemo();
+        setProfile(null);
+        setIsLoading(false);
       });
-
-    function fallbackToDemo() {
-      // Find matching demo publisher
-      const demoPub = Object.values(DEMO_PUBLISHERS).find(
-        (p) => p.slug === slug || p.id === slug || p.domain === slug
-      );
-
-      if (demoPub) {
-        // Collect demo sources under this publisher
-        const citedArticles = Object.values(DEMO_SOURCES).filter(
-          (s) =>
-            s.publisherId === demoPub.id ||
-            s.publisher.toLowerCase() === demoPub.name.toLowerCase() ||
-            (s.domain && s.domain === demoPub.domain)
-        );
-
-        const citedIds = new Set(citedArticles.map((a) => a.id));
-        const referencingStories: PublisherStoryRef[] = DEMO_STORIES.filter((story) =>
-          story.sourceIds.some((id) => citedIds.has(id))
-        ).map((s) => ({
-          id: s.id,
-          slug: s.slug,
-          title: s.title,
-          summary: s.summary,
-          publishedAt: s.publishedAt,
-          articleType: s.articleType,
-          heroImageUrl: s.heroImageUrl,
-        }));
-
-        const demoProfile: PublisherProfile = {
-          publisher: demoPub,
-          citedArticles,
-          referencingStories,
-          followerCount: demoPub.followerCount || 1840,
-          isFollowing: false,
-        };
-
-        setProfile(demoProfile);
-        setFollowerCount(demoPub.followerCount || 1840);
-      }
-      setIsLoading(false);
-    }
 
     return () => {
       isMounted = false;

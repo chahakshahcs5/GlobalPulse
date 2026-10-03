@@ -3,9 +3,7 @@ import { notFound } from 'next/navigation';
 import { getEntity, listStories, listEvents } from '../../../lib/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import { ArrowLeft, Calendar, Newspaper } from 'lucide-react';
-import type { Story, Event } from '@ai-news/schemas';
-
-import { DEMO_ENTITIES, DEMO_STORIES, DEMO_EVENTS } from '../../../lib/demo-data';
+import type { Story, Event as NewsEvent, Entity } from '@ai-news/schemas';
 
 interface EntityPageProps {
   params: Promise<{ id: string }>;
@@ -15,10 +13,12 @@ export default async function EntityPage({ params }: EntityPageProps) {
   const { id } = await params;
   const normalizedId = id.trim();
 
-  // Fetch entity from live database/API, falling back to known records if API is offline
-  let entity = await getEntity(normalizedId);
-  if (!entity && DEMO_ENTITIES[normalizedId]) {
-    entity = DEMO_ENTITIES[normalizedId];
+  // Fetch entity from live database/API
+  let entity: Entity | null = null;
+  try {
+    entity = await getEntity(normalizedId);
+  } catch {
+    entity = null;
   }
 
   // If entity is unknown / not found, return authentic 404
@@ -27,9 +27,11 @@ export default async function EntityPage({ params }: EntityPageProps) {
   }
 
   // Find live stories that reference this entity
-  let allStories = await listStories({ limit: 50 });
-  if (allStories.length === 0) {
-    allStories = DEMO_STORIES;
+  let allStories: Story[] = [];
+  try {
+    allStories = await listStories({ limit: 50 });
+  } catch {
+    allStories = [];
   }
 
   const storiesToDisplay = allStories.filter(
@@ -40,12 +42,16 @@ export default async function EntityPage({ params }: EntityPageProps) {
   );
 
   // Find live linked events from the API
-  let allEvents = await listEvents();
-  if (allEvents.length === 0) {
-    allEvents = Object.values(DEMO_EVENTS);
+  let allEvents: NewsEvent[] = [];
+  try {
+    allEvents = await listEvents();
+  } catch {
+    allEvents = [];
   }
 
-  const linkedEvents = allEvents.filter((evt: Event) => (evt.entityIds || []).includes(entity.id));
+  const linkedEvents = allEvents.filter((evt: NewsEvent) =>
+    (evt.entityIds || []).includes(entity.id)
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -120,7 +126,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {linkedEvents.map((evt: Event) => (
+            {linkedEvents.map((evt: NewsEvent) => (
               <Link
                 key={evt.id}
                 href={`/events/${evt.id}`}

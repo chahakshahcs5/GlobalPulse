@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { BASELINE_NAV_TABS, type Category, type NavTab, type Story } from '@ai-news/schemas';
 import * as api from '../api-client';
 import { useAllStories } from './stories-store';
+import { eventBus, emitTaxonomyUpdated } from '../event-bus';
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -205,7 +206,7 @@ export function useTaxonomy() {
               slug,
               code: ac.code,
               description: ac.description || '',
-              icon: CATEGORY_ICON_MAP[slug] || ac.icon || '🏷️',
+              icon: ac.icon || CATEGORY_ICON_MAP[slug] || 'Folder',
               storyCount: dynamicCount,
               isPinned: ac.isPinned,
               subCategories: Array.isArray(ac.subCategories) ? ac.subCategories : [],
@@ -259,11 +260,11 @@ export function useTaxonomy() {
 
   useEffect(() => {
     loadTaxonomy();
-    window.addEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
-    window.addEventListener('globalpulse_stories_updated', loadTaxonomy);
+    const unsubTax = eventBus.subscribe('taxonomy_updated', loadTaxonomy);
+    const unsubStories = eventBus.subscribe('stories_updated', loadTaxonomy);
     return () => {
-      window.removeEventListener('globalpulse_taxonomy_updated', loadTaxonomy);
-      window.removeEventListener('globalpulse_stories_updated', loadTaxonomy);
+      unsubTax();
+      unsubStories();
     };
   }, [loadTaxonomy]);
 
@@ -280,7 +281,7 @@ export function useTaxonomy() {
         name: cat.name.trim(),
         slug,
         description: cat.description || `Comprehensive dispatches and analysis on ${cat.name}.`,
-        icon: cat.icon || '🏷️',
+        icon: cat.icon || 'Folder',
         storyCount: 0,
         isCustom: true,
       };
@@ -289,7 +290,7 @@ export function useTaxonomy() {
         const updated = [newCat, ...prev.filter((c) => c.slug !== slug)];
         try {
           localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
-          window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+          emitTaxonomyUpdated();
         } catch {}
         return updated;
       });
@@ -304,7 +305,7 @@ export function useTaxonomy() {
       const updated = prev.filter((c) => c.id !== id);
       try {
         localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
-        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+        emitTaxonomyUpdated();
       } catch {}
       return updated;
     });
@@ -333,7 +334,7 @@ export function useTaxonomy() {
         const updated = [newTopic, ...prev.filter((t) => t.slug !== slug)];
         try {
           localStorage.setItem(TOPICS_KEY, JSON.stringify(updated));
-          window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+          emitTaxonomyUpdated();
         } catch {}
         return updated;
       });
@@ -357,7 +358,7 @@ export function useTaxonomy() {
       const updated = prev.filter((t) => t.id !== id);
       try {
         localStorage.setItem(TOPICS_KEY, JSON.stringify(updated));
-        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+        emitTaxonomyUpdated();
       } catch {}
       return updated;
     });
@@ -370,7 +371,7 @@ export function useTaxonomy() {
       try {
         await api.addCategoryDesk(categorySlug, cleanDesk);
         await loadTaxonomy();
-        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+        emitTaxonomyUpdated();
       } catch {
         setCategories((prev) => {
           const updated = prev.map((c) =>
@@ -383,7 +384,7 @@ export function useTaxonomy() {
           );
           try {
             localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
-            window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+            emitTaxonomyUpdated();
           } catch {}
           return updated;
         });
@@ -397,7 +398,7 @@ export function useTaxonomy() {
       try {
         await api.removeCategoryDesk(categorySlug, deskName);
         await loadTaxonomy();
-        window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+        emitTaxonomyUpdated();
       } catch {
         setCategories((prev) => {
           const updated = prev.map((c) =>
@@ -412,7 +413,7 @@ export function useTaxonomy() {
           );
           try {
             localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
-            window.dispatchEvent(new Event('globalpulse_taxonomy_updated'));
+            emitTaxonomyUpdated();
           } catch {}
           return updated;
         });

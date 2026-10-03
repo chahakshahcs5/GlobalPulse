@@ -9,10 +9,11 @@ import { mcpJsonResponse } from './tool-helpers';
 export function registerStoryTools(
   server: McpServer,
   db: DatabaseService,
-  getPrincipal: () => AuthenticatedPrincipal
+  getPrincipal: () => AuthenticatedPrincipal,
+  services?: { storyService?: StoryService; personalizationService?: PersonalizationService }
 ) {
-  const storyService = new StoryService(db);
-  const personalizationService = new PersonalizationService(db);
+  const storyService = services?.storyService || new StoryService(db);
+  const personalizationService = services?.personalizationService || new PersonalizationService(db);
 
   server.tool(
     'get_story',

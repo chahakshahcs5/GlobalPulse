@@ -1,11 +1,7 @@
 import type { Story } from '@ai-news/schemas';
 import { offlineStorage, type OfflineStory } from './storage';
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (typeof window !== 'undefined' && window.location?.hostname
-    ? `http://${window.location.hostname}:4000`
-    : 'http://localhost:4000');
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
 export function mapApiStoryToOffline(
   story: Partial<Story> & { id: string; title: string }

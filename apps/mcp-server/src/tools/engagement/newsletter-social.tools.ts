@@ -181,7 +181,10 @@ export function registerNewsletterSocialTools(
         .optional()
         .describe('Base domain URL (default: https://news.globalpulse.com)'),
     },
-    async ({ storyId, baseUrl = 'https://news.globalpulse.com' }) => {
+    async ({
+      storyId,
+      baseUrl = process.env.PUBLIC_SITE_URL || 'https://news.globalpulse.com',
+    }) => {
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');

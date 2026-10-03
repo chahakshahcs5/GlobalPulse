@@ -34,7 +34,6 @@ import {
   Layers,
   Star,
 } from 'lucide-react';
-import { DEMO_PUBLISHERS } from '../lib/demo-data';
 import { formatDeterministicDate, formatDeterministicDateTime } from '../lib/date-utils';
 
 export type FeedMode = 'top' | 'for-you' | 'following' | 'history';
@@ -749,10 +748,7 @@ function GoogleNewsContent() {
                     </span>
                   ) : (
                     followedSources.map((srcSlug) => {
-                      const pub = Object.values(DEMO_PUBLISHERS).find(
-                        (p) => p.slug === srcSlug || p.id === srcSlug
-                      );
-                      const name = pub?.name || srcSlug.replace(/-/g, ' ');
+                      const name = srcSlug.replace(/-/g, ' ');
                       return (
                         <Link
                           key={srcSlug}

@@ -56,6 +56,7 @@
       "react-dom": ["apps/web/node_modules/@types/react-dom"],
       "react-dom/server": ["apps/web/node_modules/@types/react-dom/server"],
       "react-dom/*": ["apps/web/node_modules/@types/react-dom/*"],
+      "lucide-react": ["apps/web/node_modules/lucide-react"],
       "@modelcontextprotocol/sdk": [
         "apps/mcp-server/node_modules/@modelcontextprotocol/sdk/dist/esm/index"
       ],

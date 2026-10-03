@@ -12,8 +12,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { getStoryFullCoverage } from '../lib/api-client';
-import { getOrSynthesizeFullCoverage } from '../lib/news-data';
-import { useAllStories } from '../lib/news-store';
 
 interface FullCoverageModalProps {
   slug: string | null;
@@ -65,7 +63,6 @@ export interface CoverageData {
 export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onClose }) => {
   const [cluster, setCluster] = useState<CoverageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { stories } = useAllStories();
 
   useEffect(() => {
     if (!slug) {
@@ -76,44 +73,26 @@ export const FullCoverageModal: React.FC<FullCoverageModalProps> = ({ slug, onCl
     let isMounted = true;
     setIsLoading(true);
 
-    const story = stories?.find((s) => s.slug === slug || s.id === slug);
-    const fallbackCluster = getOrSynthesizeFullCoverage(slug, story, stories || []);
-
     getStoryFullCoverage(slug)
       .then((data) => {
         if (!isMounted) return;
         if (data && (data.perspectives?.length || data.title)) {
-          // Merge API data with synthesized fallback for completeness
-          const apiData = data as unknown as {
-            perspectives?: CoveragePerspective[];
-            timeline?: CoverageTimelineItem[];
-            factCheck?: CoverageFactCheck;
-            [key: string]: unknown;
-          };
-          setCluster({
-            ...fallbackCluster,
-            ...apiData,
-            perspectives: apiData.perspectives?.length
-              ? apiData.perspectives
-              : fallbackCluster.perspectives,
-            timeline: apiData.timeline?.length ? apiData.timeline : fallbackCluster.timeline,
-            factCheck: apiData.factCheck?.verdict ? apiData.factCheck : fallbackCluster.factCheck,
-          } as unknown as CoverageData);
+          setCluster(data as unknown as CoverageData);
         } else {
-          setCluster(fallbackCluster as unknown as CoverageData);
+          setCluster(null);
         }
         setIsLoading(false);
       })
       .catch(() => {
         if (!isMounted) return;
-        setCluster(fallbackCluster as unknown as CoverageData);
+        setCluster(null);
         setIsLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [slug, stories]);
+  }, [slug]);
 
   if (!slug) return null;
 

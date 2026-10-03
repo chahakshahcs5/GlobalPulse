@@ -29,6 +29,7 @@ import { registerNavigationTools } from './tools/navigation.tools';
 import { registerResources } from './resources/index';
 import { registerPrompts } from './prompts/index';
 import { resolveCorsOrigin, ALLOWED_CORS_HEADERS } from '@ai-news/shared';
+import { createServiceContainer, ServiceContainer } from './container';
 
 /**
  * Sliding-window rate limiter for MCP HTTP requests.
@@ -114,10 +115,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
   };
 
   const getPrincipal = () => mcpPrincipalStore.getStore() || defaultPrincipal;
+  const container = createServiceContainer(database);
 
-  function initServerInstance(targetServer: McpServer) {
-    registerSearchTools(targetServer, database, getPrincipal);
-    registerStoryTools(targetServer, database, getPrincipal);
+  function initServerInstance(targetServer: McpServer, sc: ServiceContainer = container) {
+    registerSearchTools(targetServer, database, getPrincipal, sc);
+    registerStoryTools(targetServer, database, getPrincipal, sc);
     registerBlockTools(targetServer, database, getPrincipal);
     registerMediaTools(targetServer, database, getPrincipal);
     registerSourceTools(targetServer, database, getPrincipal);
@@ -161,7 +163,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       name: 'ai-news-platform-mcp',
       version: '1.0.0',
     });
-    initServerInstance(sessionServer);
+    initServerInstance(sessionServer, container);
     sessionServer.connect(sessionTransport);
     sessions.set(sessionId, {
       transport: sessionTransport,
@@ -180,7 +182,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     name: 'ai-news-platform-mcp',
     version: '1.0.0',
   });
-  initServerInstance(server);
+  initServerInstance(server, container);
 
   // Rate limiter: configurable via env vars (defaults: 200 req/min)
   const mcpRateMax = parseInt(process.env.MCP_RATE_LIMIT_MAX || '200', 10);

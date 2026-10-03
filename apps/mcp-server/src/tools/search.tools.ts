@@ -9,9 +9,10 @@ import { mcpJsonResponse } from './tool-helpers';
 export function registerSearchTools(
   server: McpServer,
   db: DatabaseService,
-  getPrincipal: () => AuthenticatedPrincipal
+  getPrincipal: () => AuthenticatedPrincipal,
+  services?: { searchService?: SearchService }
 ) {
-  const searchService = new SearchService(db);
+  const searchService = services?.searchService || new SearchService(db);
 
   server.tool(
     'search_stories',

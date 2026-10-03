@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { Story } from '@ai-news/schemas';
 
-import { type GoogleNewsCluster, type RelatedSourceArticle } from './news-data';
+import { type GoogleNewsCluster, type RelatedSourceArticle } from './cluster-types';
 import { useAllStories } from './news-store';
 
 /**

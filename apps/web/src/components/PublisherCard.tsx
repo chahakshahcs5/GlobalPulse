@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Publisher } from '@ai-news/schemas';
 import { CheckCircle2, Globe, Users, Plus, Check } from 'lucide-react';
 import { followTarget, unfollowTarget } from '../lib/api-client';
+import { emitSourcesUpdated } from '../lib/event-bus';
 
 interface PublisherCardProps {
   publisher: Publisher;
@@ -36,7 +37,7 @@ export const PublisherCard: React.FC<PublisherCardProps> = ({
         ? Array.from(new Set([...followed, publisher.id, publisher.slug]))
         : followed.filter((id) => id !== publisher.id && id !== publisher.slug);
       localStorage.setItem('globalpulse_followed_sources', JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent('globalpulse_sources_updated'));
+      emitSourcesUpdated();
     } catch {}
 
     // Call backend API

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { listSpecialDesks, listStories } from '../../lib/api-client';
 import { useTaxonomy } from '../../lib/news-store';
 import { CANONICAL_CATEGORIES, type SpecialDesk, type Story } from '@ai-news/schemas';
+import { DynamicIcon } from '../../components/DynamicIcon';
 import {
   ArrowLeft,
   Layers,
@@ -280,8 +281,12 @@ export default function CategoriesDirectoryPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
-                          {cat.icon || '📁'}
+                        <span className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center">
+                          <DynamicIcon
+                            name={cat.icon}
+                            fallback="Folder"
+                            className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                          />
                         </span>
                         {deskCount > 0 && (
                           <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">

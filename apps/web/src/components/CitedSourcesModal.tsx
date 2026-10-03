@@ -13,7 +13,6 @@ import {
   Search,
 } from 'lucide-react';
 import type { Story, Source, StoryBlock } from '@ai-news/schemas';
-import { DEMO_SOURCES } from '../lib/demo-data';
 import { listSources } from '../lib/api-client';
 import { formatLocalDateTime } from '../lib/date-utils';
 
@@ -80,13 +79,15 @@ export const CitedSourcesModal: React.FC<CitedSourcesModalProps> = ({ isOpen, on
       story.blocks.forEach((b: StoryBlock) => {
         if (b.blockType === 'source') {
           const sData = b.data;
-          if (sData && !seenIds.has(sData.url)) {
-            seenIds.add(sData.url);
+          const sourceUrl = sData?.url || '';
+          const key = sourceUrl || b.id;
+          if (sData && !seenIds.has(key)) {
+            seenIds.add(key);
             list.push({
               id: b.id,
               publisher: sData.publisher || 'Wire Service',
               title: sData.title || 'Referenced Field Report',
-              url: sData.url || 'https://reuters.com',
+              url: sourceUrl,
               publishedAt: sData.publishedAt,
               sourceType: 'PRIMARY_REPORT',
             });
@@ -95,8 +96,8 @@ export const CitedSourcesModal: React.FC<CitedSourcesModalProps> = ({ isOpen, on
       });
     }
 
-    // 2. Check story.sourceIds mapped against DEMO_SOURCES and apiSources
-    const allKnownSources: Record<string, Partial<Source>> = { ...DEMO_SOURCES };
+    // 2. Check story.sourceIds mapped against apiSources
+    const allKnownSources: Record<string, Partial<Source>> = {};
     apiSources.forEach((s) => {
       if (s.id) allKnownSources[s.id] = s;
     });
@@ -104,49 +105,24 @@ export const CitedSourcesModal: React.FC<CitedSourcesModalProps> = ({ isOpen, on
     const sourceIds = story.sourceIds || [];
     sourceIds.forEach((srcId) => {
       const found = allKnownSources[srcId];
-      if (found && !seenIds.has(found.url || srcId)) {
-        seenIds.add(found.url || srcId);
-        list.push({
-          id: found.id || srcId,
-          publisher: found.publisher || 'Verified Publisher',
-          domain: found.domain,
-          title: found.title || 'Official Primary Documentation',
-          url: found.url || found.canonicalUrl || 'https://reuters.com',
-          publishedAt: found.publishedAt || story.publishedAt,
-          sourceType: found.sourceType || 'NEWS_ARTICLE',
-          excerpt: found.permissibleExcerpt,
-        });
+      if (found) {
+        const foundUrl = found.url || found.canonicalUrl || '';
+        const key = foundUrl || found.id || srcId;
+        if (!seenIds.has(key)) {
+          seenIds.add(key);
+          list.push({
+            id: found.id || srcId,
+            publisher: found.publisher || 'Verified Publisher',
+            domain: found.domain,
+            title: found.title || 'Official Primary Documentation',
+            url: foundUrl,
+            publishedAt: found.publishedAt || story.publishedAt,
+            sourceType: found.sourceType || 'NEWS_ARTICLE',
+            excerpt: found.permissibleExcerpt,
+          });
+        }
       }
     });
-
-    // 3. Fallback: if no sources could be resolved directly, provide standard multi-wire primary citations
-    if (list.length === 0) {
-      list.push(
-        {
-          id: 'fallback_reuters',
-          publisher: 'Reuters International Wire',
-          domain: 'reuters.com',
-          title: `${story.title} — Multilateral Intelligence Wire`,
-          url: 'https://www.reuters.com',
-          publishedAt: story.publishedAt || story.createdAt,
-          sourceType: 'NEWS_WIRE',
-          excerpt:
-            story.summary ||
-            'Field dispatches corroborate primary reporting from ministerial and bilateral envoys.',
-        },
-        {
-          id: 'fallback_bloomberg',
-          publisher: 'Bloomberg Financial Markets',
-          domain: 'bloomberg.com',
-          title: 'Macroeconomic & Regulatory Telemetry Datafeed',
-          url: 'https://www.bloomberg.com',
-          publishedAt: story.publishedAt || story.createdAt,
-          sourceType: 'FINANCIAL_TELEMETRY',
-          excerpt:
-            'Data verified through international clearing registries, central banks, and sovereign institutional filings.',
-        }
-      );
-    }
 
     return list;
   }, [story, apiSources]);
@@ -296,19 +272,37 @@ export const CitedSourcesModal: React.FC<CitedSourcesModalProps> = ({ isOpen, on
                     <span>Corroborated by Primary Wire Registry</span>
                   </div>
 
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs transition shadow-xs cursor-pointer"
-                  >
-                    <span>Open Primary Source</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  {source.url ? (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs transition shadow-xs cursor-pointer"
+                    >
+                      <span>Open Primary Source</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-400 font-medium">
+                      Source URL unavailable
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })}
+
+          {filteredSources.length === 0 && (
+            <div className="py-12 px-4 text-center space-y-2">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                No verified primary citations recorded
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                No external source documents or primary registries have been linked to this dispatch
+                yet.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

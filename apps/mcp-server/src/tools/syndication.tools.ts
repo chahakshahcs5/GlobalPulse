@@ -6,6 +6,8 @@ import type { ArticleType } from '@ai-news/schemas';
 import { generateNewsArticleJsonLd } from '@ai-news/shared';
 import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
 
+const SITE_PUBLIC_URL = process.env.PUBLIC_SITE_URL || 'https://globalpulse.news';
+
 export function registerSyndicationTools(
   server: McpServer,
   db: DatabaseService,
@@ -38,7 +40,7 @@ export function registerSyndicationTools(
         publicationDate: s.publishedAt || s.createdAt,
         language: 'en',
         keywords: s.topicIds || [],
-        url: `https://globalpulse.news/stories/${s.slug}`,
+        url: `${SITE_PUBLIC_URL}/stories/${s.slug}`,
       }));
 
       return mcpJsonResponse({
@@ -70,9 +72,9 @@ export function registerSyndicationTools(
 
       const structuredData = generateNewsArticleJsonLd({
         story,
-        baseUrl: 'https://globalpulse.news',
+        baseUrl: SITE_PUBLIC_URL,
         publisherName: 'GlobalPulse News',
-        publisherLogoUrl: 'https://globalpulse.news/logo.png',
+        publisherLogoUrl: `${SITE_PUBLIC_URL}/logo.png`,
       });
 
       return mcpJsonResponse({
@@ -107,7 +109,7 @@ export function registerSyndicationTools(
 
       const feedItems = stories.map((s) => ({
         title: s.title,
-        link: `https://globalpulse.news/stories/${s.slug}`,
+        link: `${SITE_PUBLIC_URL}/stories/${s.slug}`,
         description: s.summary,
         pubDate: s.publishedAt || s.createdAt,
         category: s.articleType,

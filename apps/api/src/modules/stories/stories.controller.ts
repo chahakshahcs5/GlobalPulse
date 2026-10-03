@@ -12,6 +12,8 @@ import {
   HttpStatus,
   HttpCode,
   Res,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import {
@@ -46,18 +48,24 @@ import type {
 @Controller('api/stories')
 @UseGuards(NestAuthGuard)
 export class StoriesController {
-  private storyService: StoryService;
-  private schedulingService: SchedulingService;
-  private personalizationService: PersonalizationService;
-  private clusteringService: ClusteringService;
-  private liveblogService: LiveblogService;
+  private readonly storyService: StoryService;
+  private readonly schedulingService: SchedulingService;
+  private readonly personalizationService: PersonalizationService;
+  private readonly clusteringService: ClusteringService;
+  private readonly liveblogService: LiveblogService;
 
-  constructor() {
-    this.storyService = new StoryService(db);
-    this.schedulingService = new SchedulingService(db);
-    this.personalizationService = new PersonalizationService(db);
-    this.clusteringService = new ClusteringService(db);
-    this.liveblogService = new LiveblogService(db);
+  constructor(
+    @Optional() @Inject(StoryService) storyService?: StoryService,
+    @Optional() @Inject(SchedulingService) schedulingService?: SchedulingService,
+    @Optional() @Inject(PersonalizationService) personalizationService?: PersonalizationService,
+    @Optional() @Inject(ClusteringService) clusteringService?: ClusteringService,
+    @Optional() @Inject(LiveblogService) liveblogService?: LiveblogService
+  ) {
+    this.storyService = storyService || new StoryService(db);
+    this.schedulingService = schedulingService || new SchedulingService(db);
+    this.personalizationService = personalizationService || new PersonalizationService(db);
+    this.clusteringService = clusteringService || new ClusteringService(db);
+    this.liveblogService = liveblogService || new LiveblogService(db);
   }
 
   @Get()

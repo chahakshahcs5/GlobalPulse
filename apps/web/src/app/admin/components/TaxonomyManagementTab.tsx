@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Layers, Tag, Plus, Trash2, ExternalLink, FolderPlus, BookOpen, Hash } from 'lucide-react';
 import { useTaxonomy } from '../../../lib/news-store';
+import { DynamicIcon } from '../../../components/DynamicIcon';
 
 interface TaxonomyManagementTabProps {
   onSuccess: (message: string) => void;
@@ -239,13 +240,13 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Icon Emoji
+                Icon (Lucide name or Emoji)
               </label>
               <input
                 type="text"
                 value={catIcon}
                 onChange={(e) => setCatIcon(e.target.value)}
-                placeholder="e.g. 🌐, ⚖️, 🛰️"
+                placeholder="e.g. globe, cpu, shield, or 🌐"
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -408,7 +409,13 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{cat.icon || '📁'}</span>
+                    <span className="p-1 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <DynamicIcon
+                        name={cat.icon}
+                        fallback="Folder"
+                        className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                      />
+                    </span>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
                       {cat.name}
                     </span>

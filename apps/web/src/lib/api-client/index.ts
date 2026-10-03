@@ -9,3 +9,4 @@ export * from './taxonomy';
 export * from './discovery';
 export * from './newsroom';
 export * from './entities-sources';
+export * from './weather';

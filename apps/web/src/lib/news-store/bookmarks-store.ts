@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import * as api from '../api-client';
+import { eventBus, emitBookmarksUpdated } from '../event-bus';
 
 // ---------------------------------------------------------------------------
 // Bookmarks (server-synced with localStorage cache)
@@ -26,7 +27,7 @@ export function toggleBookmark(slugOrId: string): boolean {
     const isBookmarked = current.includes(slugOrId);
     const updated = isBookmarked ? current.filter((s) => s !== slugOrId) : [...current, slugOrId];
     localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event('globalpulse_bookmarks_updated'));
+    emitBookmarksUpdated();
 
     // Optimistically sync to backend in background
     api.toggleServerBookmark(slugOrId).catch(() => {
@@ -50,8 +51,8 @@ export function useBookmarks() {
       setBookmarks(getBookmarks());
     };
 
-    window.addEventListener('globalpulse_bookmarks_updated', handleUpdate);
-    return () => window.removeEventListener('globalpulse_bookmarks_updated', handleUpdate);
+    const unsubscribe = eventBus.subscribe('bookmarks_updated', handleUpdate);
+    return () => unsubscribe();
   }, []);
 
   return bookmarks;

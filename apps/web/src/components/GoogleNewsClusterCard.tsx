@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Bookmark, Share2, Clock, Check, Star } from 'lucide-react';
-import type { GoogleNewsCluster } from '../lib/news-data';
+import type { GoogleNewsCluster } from '../lib/cluster-types';
 import { toggleBookmark, useBookmarks } from '../lib/news-store';
 
 interface GoogleNewsClusterCardProps {

@@ -3,18 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Story } from '@ai-news/schemas';
 import * as api from '../api-client';
+import { eventBus, emitStoriesUpdated } from '../event-bus';
+
 /** Event emitted after a story mutation so other hooks refetch */
 export function notifyStoryMutation() {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('globalpulse_stories_updated'));
-  }
+  emitStoriesUpdated();
 }
 
 export function useAllStories() {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isApiConnected, setIsApiConnected] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const fetchInProgress = useRef(false);
   const hasAttemptedFetch = useRef(false);
 
@@ -26,12 +25,10 @@ export function useAllStories() {
       // API is reachable — use its data (even if empty)
       setStories(apiStories || []);
       setIsApiConnected(true);
-      setIsDemoMode(false);
     } catch {
       // API unreachable — do not substitute mock stories
       setStories([]);
       setIsApiConnected(false);
-      setIsDemoMode(false);
     } finally {
       hasAttemptedFetch.current = true;
       fetchInProgress.current = false;
@@ -42,14 +39,15 @@ export function useAllStories() {
   useEffect(() => {
     fetchStories();
 
-    // Refetch on local mutation events
-    const handleUpdate = () => fetchStories();
-    window.addEventListener('globalpulse_stories_updated', handleUpdate);
+    // Refetch on local mutation events via eventBus
+    const unsubscribeBus = eventBus.subscribe('stories_updated', () => {
+      fetchStories();
+    });
 
     // Subscribe to SSE realtime events for live updates
-    let unsubscribe: (() => void) | null = null;
+    let unsubscribeRealtime: (() => void) | null = null;
     try {
-      unsubscribe = api.subscribeToRealtimeEvents(
+      unsubscribeRealtime = api.subscribeToRealtimeEvents(
         ['all'],
         (event) => {
           if (
@@ -70,12 +68,12 @@ export function useAllStories() {
     }
 
     return () => {
-      window.removeEventListener('globalpulse_stories_updated', handleUpdate);
-      unsubscribe?.();
+      unsubscribeBus();
+      unsubscribeRealtime?.();
     };
   }, [fetchStories]);
 
-  return { stories, isLoading, isApiConnected, isDemoMode };
+  return { stories, isLoading, isApiConnected, isDemoMode: false };
 }
 
 /**
@@ -231,9 +229,8 @@ export function useReviewQueue() {
 
   useEffect(() => {
     fetchQueue();
-    const handleUpdate = () => fetchQueue();
-    window.addEventListener('globalpulse_stories_updated', handleUpdate);
-    return () => window.removeEventListener('globalpulse_stories_updated', handleUpdate);
+    const unsubscribe = eventBus.subscribe('stories_updated', () => fetchQueue());
+    return () => unsubscribe();
   }, [fetchQueue]);
 
   return { queue, isLoading, refetch: fetchQueue };

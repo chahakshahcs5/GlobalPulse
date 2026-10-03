@@ -11,43 +11,16 @@ import {
   Moon,
   Menu,
   X,
-  Star,
-  Sparkles,
-  BookmarkCheck,
-  PenTool,
   Radio,
-  Compass,
   ShieldAlert,
-  Globe,
-  TrendingUp,
-  Cpu,
-  Atom,
-  HeartPulse,
-  Trophy,
-  Film,
+  PenTool,
   type LucideIcon,
 } from 'lucide-react';
 import { useBookmarks, useTaxonomy } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
 import { BookmarksDrawer } from './BookmarksDrawer';
 import { AuthModal, type UserSession } from './AuthModal';
-
-const NAV_ICON_MAP: Record<string, LucideIcon> = {
-  Star,
-  Sparkles,
-  BookmarkCheck,
-  Compass,
-  ShieldAlert,
-  Globe,
-  TrendingUp,
-  Cpu,
-  Atom,
-  HeartPulse,
-  Trophy,
-  Film,
-  Radio,
-  PenTool,
-};
+import { DynamicIcon } from './DynamicIcon';
 
 interface HeaderTabItem {
   id: string;
@@ -60,17 +33,17 @@ interface HeaderTabItem {
 }
 
 const BASE_NAV_ITEMS: HeaderTabItem[] = [
-  { id: 'top', tabId: 'top', name: 'Top Stories', href: '/', icon: Star },
-  { id: 'for-you', tabId: 'for-you', name: 'For You', href: '/?tab=for-you', icon: Sparkles },
+  { id: 'top', tabId: 'top', name: 'Top Stories', href: '/', icon: 'star' },
+  { id: 'for-you', tabId: 'for-you', name: 'For You', href: '/?tab=for-you', icon: 'sparkles' },
   {
     id: 'following',
     tabId: 'following',
     name: 'Following',
     href: '/?tab=following',
-    icon: BookmarkCheck,
+    icon: 'bookmark-check',
   },
-  { id: 'explore', tabId: 'explore', name: 'Explore', href: '/explore', icon: Compass },
-  { id: 'tips', tabId: 'tips', name: 'Tip Line', href: '/tips', icon: ShieldAlert },
+  { id: 'explore', tabId: 'explore', name: 'Explore', href: '/explore', icon: 'compass' },
+  { id: 'tips', tabId: 'tips', name: 'Tip Line', href: '/tips', icon: 'shield-alert' },
 ];
 
 function CategoryNavStrip({ pathname }: { pathname: string }) {
@@ -83,23 +56,17 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
     navTabs && navTabs.length > 0 ? navTabs.map((t) => ({ ...t, id: t.tabId })) : BASE_NAV_ITEMS;
 
   const navItems = [
-    ...baseTabs.map((t) => {
-      const iconName = typeof t.icon === 'string' ? t.icon : '';
-      const ResolvedIcon =
-        NAV_ICON_MAP[iconName] ||
-        (typeof t.icon === 'function' ? (t.icon as LucideIcon) : undefined);
-      return {
-        id: t.tabId || (t as { id?: string }).id,
-        name: t.name,
-        href: t.href,
-        icon: ResolvedIcon,
-      };
-    }),
+    ...baseTabs.map((t) => ({
+      id: t.tabId || (t as { id?: string }).id,
+      name: t.name,
+      href: t.href,
+      icon: t.icon,
+    })),
     ...dynamicCategories.map((c) => ({
       id: c.slug,
       name: c.name,
       href: `/category/${c.slug}`,
-      icon: undefined,
+      icon: c.icon,
     })),
   ];
 
@@ -107,7 +74,6 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
     <nav className="border-t border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 h-11 text-xs sm:text-sm font-medium whitespace-nowrap">
         {navItems.map((cat) => {
-          const Icon = cat.icon;
           const isHome = pathname === '/';
           let isActive = false;
           if (isHome) {
@@ -133,7 +99,9 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              {Icon && <Icon className="w-3.5 h-3.5" />}
+              {cat.icon && (
+                <DynamicIcon name={cat.icon} fallback="Folder" className="w-3.5 h-3.5" />
+              )}
               <span>{cat.name}</span>
             </Link>
           );
@@ -373,40 +341,37 @@ export const GoogleNewsHeader: React.FC = () => {
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-2 animate-in slide-in-from-top-2">
             <div className="flex flex-col space-y-1">
               {[
-                ...baseTabs.map((t) => {
-                  const iconName = typeof t.icon === 'string' ? t.icon : '';
-                  const ResolvedIcon =
-                    NAV_ICON_MAP[iconName] ||
-                    (typeof t.icon === 'function' ? (t.icon as LucideIcon) : undefined);
-                  return {
-                    id: t.tabId || (t as { id?: string }).id,
-                    name: t.name,
-                    href: t.href,
-                    icon: ResolvedIcon,
-                  };
-                }),
+                ...baseTabs.map((t) => ({
+                  id: t.tabId || (t as { id?: string }).id,
+                  name: t.name,
+                  href: t.href,
+                  icon: t.icon,
+                })),
                 ...categories
                   .filter((c) => c.slug !== 'top-stories' && c.slug !== 'top')
                   .map((c) => ({
                     id: c.slug,
                     name: c.name,
                     href: `/category/${c.slug}`,
-                    icon: undefined,
+                    icon: c.icon,
                   })),
-              ].map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <Link
-                    key={cat.href}
-                    href={cat.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  >
-                    {Icon && <Icon className="w-4 h-4 text-blue-600" />}
-                    <span>{cat.name}</span>
-                  </Link>
-                );
-              })}
+              ].map((cat) => (
+                <Link
+                  key={cat.href}
+                  href={cat.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  {cat.icon && (
+                    <DynamicIcon
+                      name={cat.icon}
+                      fallback="Folder"
+                      className="w-4 h-4 text-blue-600"
+                    />
+                  )}
+                  <span>{cat.name}</span>
+                </Link>
+              ))}
             </div>
           </div>
         )}

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { MapPin, Wind, Droplets, RefreshCw } from 'lucide-react';
+import { getWeatherForecast, reverseGeocode } from '../lib/api-client';
+import { emitWeatherLocationUpdated } from '../lib/event-bus';
 
 interface WeatherForecastDay {
   day: string;
@@ -17,17 +19,6 @@ interface LiveWeatherData {
   humidity: number;
   windSpeed: string;
   forecast: WeatherForecastDay[];
-}
-
-function getWeatherInfo(code: number): { condition: string; icon: string } {
-  if (code === 0) return { condition: 'Clear Sky', icon: '☀️' };
-  if (code <= 3) return { condition: 'Partly Cloudy', icon: '⛅' };
-  if (code === 45 || code === 48) return { condition: 'Foggy', icon: '🌫️' };
-  if (code >= 51 && code <= 67) return { condition: 'Rain', icon: '🌧️' };
-  if (code >= 71 && code <= 77) return { condition: 'Snow', icon: '❄️' };
-  if (code >= 80 && code <= 82) return { condition: 'Showers', icon: '🌦️' };
-  if (code >= 95) return { condition: 'Thunderstorm', icon: '⛈️' };
-  return { condition: 'Overcast', icon: '☁️' };
 }
 
 export interface WeatherCityConfig {
@@ -108,20 +99,10 @@ export const WeatherWidget: React.FC = () => {
             source = 'gps';
             resolved = true;
 
-            // Reverse geocode GPS coords to real city name
+            // Reverse geocode GPS coords via backend Weather service
             try {
-              const geoRes = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
-              );
-              if (geoRes.ok) {
-                const geoData = await geoRes.json();
-                const place = geoData.locality || geoData.city || geoData.principalSubdivision;
-                city = place
-                  ? `${place}${geoData.countryCode ? `, ${geoData.countryCode}` : ''}`
-                  : 'Your Location';
-              } else {
-                city = 'Your Location';
-              }
+              const geoData = await reverseGeocode(lat, lon);
+              city = geoData.city || 'Your Location';
             } catch {
               city = 'Your Location';
             }
@@ -160,42 +141,17 @@ export const WeatherWidget: React.FC = () => {
         setLocationSource('preset');
       }
 
-      // 3. Real-time Weather Fetch via Public Open-Meteo API
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`,
-        { headers: { Accept: 'application/json' } }
-      );
-
-      if (!res.ok) throw new Error(`Weather fetch failed: ${res.status}`);
-      const data = await res.json();
-
-      const currentCode = data.current?.weather_code ?? 0;
-      const { condition, icon } = getWeatherInfo(currentCode);
-
-      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const dailyDates: string[] = data.daily?.time || [];
-      const dailyCodes: number[] = data.daily?.weather_code || [];
-      const dailyTemps: number[] = data.daily?.temperature_2m_max || [];
-
-      const forecast: WeatherForecastDay[] = dailyDates.slice(1, 5).map((dStr, idx) => {
-        const dateObj = new Date(dStr);
-        const dayName = daysOfWeek[dateObj.getDay()] || 'Day';
-        const code = dailyCodes[idx + 1] ?? 0;
-        return {
-          day: dayName,
-          icon: getWeatherInfo(code).icon,
-          temp: Math.round(dailyTemps[idx + 1] ?? 20),
-        };
-      });
+      // Real-time Weather Fetch via GlobalPulse Backend Weather Service
+      const data = await getWeatherForecast(lat, lon);
 
       setWeather({
         city,
-        temperature: Math.round(data.current?.temperature_2m ?? 24),
-        condition,
-        icon,
-        humidity: Math.round(data.current?.relative_humidity_2m ?? 50),
-        windSpeed: `${Math.round(data.current?.wind_speed_10m ?? 10)} km/h`,
-        forecast,
+        temperature: data.temperature,
+        condition: data.condition,
+        icon: data.icon,
+        humidity: data.humidity,
+        windSpeed: data.windSpeed,
+        forecast: data.forecast,
       });
     } catch {
       const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -226,9 +182,7 @@ export const WeatherWidget: React.FC = () => {
     setSelectedCityKey(newKey);
     try {
       localStorage.setItem('globalpulse_weather_location', newKey);
-      window.dispatchEvent(
-        new CustomEvent('globalpulse_weather_location_updated', { detail: newKey })
-      );
+      emitWeatherLocationUpdated(newKey);
     } catch {}
   };
 

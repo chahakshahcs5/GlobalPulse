@@ -44,7 +44,7 @@ export function registerJobTools(
         progress: 100,
         result: {
           message: `Job ${jobType} completed successfully.`,
-          outputUrl: `https://storage.platform/jobs/${jobId}/output`,
+          outputUrl: `${process.env.STORAGE_PUBLIC_URL || 'https://storage.platform'}/jobs/${jobId}/output`,
         },
         createdAt: new Date().toISOString(),
       };

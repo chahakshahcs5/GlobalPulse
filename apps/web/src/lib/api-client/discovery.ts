@@ -10,7 +10,6 @@ import type {
   Entity,
   Source,
 } from '@ai-news/schemas';
-import { DEMO_FACT_CHECKS } from '../demo-data';
 import { request } from './core';
 
 export async function searchStories(query: string, limit = 20) {
@@ -57,14 +56,8 @@ export async function checkHealth(): Promise<{ status: string; engine?: string }
 // ---------------------------------------------------------------------------
 
 export async function listFactChecks(): Promise<FactCheckClaim[]> {
-  try {
-    const res = await request<FactCheckClaim[] | { data: FactCheckClaim[] }>('/api/fact-checks');
-    const items = Array.isArray(res) ? res : res?.data || [];
-    if (items.length > 0) return items;
-    return DEMO_FACT_CHECKS;
-  } catch {
-    return DEMO_FACT_CHECKS;
-  }
+  const res = await request<FactCheckClaim[] | { data: FactCheckClaim[] }>('/api/fact-checks');
+  return Array.isArray(res) ? res : res?.data || [];
 }
 
 export async function getStoryFullCoverage(

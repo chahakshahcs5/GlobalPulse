@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import { useTaxonomy } from '../../lib/news-store';
 import { listPublishers } from '../../lib/api-client';
-import { DEMO_PUBLISHERS } from '../../lib/demo-data';
 import type { Publisher } from '@ai-news/schemas';
+import { DynamicIcon } from '../../components/DynamicIcon';
 
 type ExploreTab = 'all' | 'categories' | 'topics' | 'sources';
 
@@ -42,14 +42,14 @@ export default function ExploreHubPage() {
     listPublishers()
       .then((data) => {
         if (!isMounted) return;
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setPublishers(data);
         } else {
-          setPublishers(Object.values(DEMO_PUBLISHERS));
+          setPublishers([]);
         }
       })
       .catch(() => {
-        if (isMounted) setPublishers(Object.values(DEMO_PUBLISHERS));
+        if (isMounted) setPublishers([]);
       });
 
     try {
@@ -287,8 +287,12 @@ export default function ExploreHubPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
-                          {cat.icon || '📁'}
+                        <span className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center">
+                          <DynamicIcon
+                            name={cat.icon}
+                            fallback="Folder"
+                            className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                          />
                         </span>
                         {deskCount > 0 && (
                           <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">

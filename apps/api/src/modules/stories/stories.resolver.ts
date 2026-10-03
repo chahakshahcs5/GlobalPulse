@@ -1,5 +1,11 @@
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+  Inject,
+  Optional,
+} from '@nestjs/common';
 import { StoryService } from '@ai-news/stories';
 import { SearchService } from '@ai-news/search';
 import { SourceService } from '@ai-news/sources';
@@ -26,14 +32,18 @@ export interface StoriesResolverContext {
 @Injectable()
 @Resolver('Story')
 export class StoriesResolver {
-  private storyService: StoryService;
-  private searchService: SearchService;
-  private sourceService: SourceService;
+  private readonly storyService: StoryService;
+  private readonly searchService: SearchService;
+  private readonly sourceService: SourceService;
 
-  constructor() {
-    this.storyService = new StoryService(db);
-    this.searchService = new SearchService(db);
-    this.sourceService = new SourceService(db);
+  constructor(
+    @Optional() @Inject(StoryService) storyService?: StoryService,
+    @Optional() @Inject(SearchService) searchService?: SearchService,
+    @Optional() @Inject(SourceService) sourceService?: SourceService
+  ) {
+    this.storyService = storyService || new StoryService(db);
+    this.searchService = searchService || new SearchService(db);
+    this.sourceService = sourceService || new SourceService(db);
   }
 
   private requirePrincipal(

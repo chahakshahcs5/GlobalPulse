@@ -3,9 +3,7 @@ import { notFound } from 'next/navigation';
 import { getEvent, listStories, getEntity } from '../../../lib/api-client';
 import { MapRenderer } from '@ai-news/media';
 import { formatDeterministicDate } from '../../../lib/date-utils';
-import type { Story, Entity } from '@ai-news/schemas';
-
-import { DEMO_EVENTS, DEMO_STORIES, DEMO_ENTITIES } from '../../../lib/demo-data';
+import type { Story, Entity, Event as NewsEvent } from '@ai-news/schemas';
 
 interface EventPageProps {
   params: Promise<{ id: string }>;
@@ -15,10 +13,12 @@ export default async function EventPage({ params }: EventPageProps) {
   const { id } = await params;
   const normalizedId = id.trim();
 
-  // Fetch event directly from the live API backend, falling back to known records if API is offline
-  let event = await getEvent(normalizedId);
-  if (!event && DEMO_EVENTS[normalizedId]) {
-    event = DEMO_EVENTS[normalizedId];
+  // Fetch event directly from the live API backend
+  let event: NewsEvent | null = null;
+  try {
+    event = await getEvent(normalizedId);
+  } catch {
+    event = null;
   }
 
   // If the event does not exist / unknown, return authentic 404
@@ -27,9 +27,11 @@ export default async function EventPage({ params }: EventPageProps) {
   }
 
   // Find all live stories associated with this event
-  let allStories = await listStories({ limit: 50 });
-  if (allStories.length === 0) {
-    allStories = DEMO_STORIES;
+  let allStories: Story[] = [];
+  try {
+    allStories = await listStories({ limit: 50 });
+  } catch {
+    allStories = [];
   }
 
   const stories = allStories.filter(
@@ -43,10 +45,10 @@ export default async function EventPage({ params }: EventPageProps) {
   const participatingEntities: Entity[] = [];
   for (const entId of (event.entityIds || []).slice(0, 10)) {
     try {
-      const ent = (await getEntity(entId)) || DEMO_ENTITIES[entId];
+      const ent = await getEntity(entId);
       if (ent) participatingEntities.push(ent);
     } catch {
-      if (DEMO_ENTITIES[entId]) participatingEntities.push(DEMO_ENTITIES[entId]);
+      // Non-fatal if specific entity cannot be resolved
     }
   }
 
