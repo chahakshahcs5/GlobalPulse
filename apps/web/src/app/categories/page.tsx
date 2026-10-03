@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Layers,
   Radio,
-  ExternalLink,
   Compass,
   Search,
   Check,
@@ -279,24 +278,26 @@ export default function CategoriesDirectoryPage() {
                   className="rounded-2xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 flex flex-col justify-between space-y-5 hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition"
                 >
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center">
+                    <div className="flex items-center justify-between gap-3">
+                      <Link
+                        href={`/category/${cat.slug}`}
+                        className="flex items-center gap-3 group-hover:text-blue-600 transition min-w-0"
+                      >
+                        <span className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/60 transition">
                           <DynamicIcon
-                            name={cat.icon}
+                            name={cat.icon || cat.slug}
                             fallback="Folder"
                             className="w-5 h-5 text-blue-600 dark:text-blue-400"
                           />
                         </span>
-                        {deskCount > 0 && (
-                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">
-                            {deskCount} {deskCount === 1 ? 'Desk' : 'Desks'}
-                          </span>
-                        )}
-                      </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition leading-tight truncate">
+                          {cat.name}
+                        </h3>
+                      </Link>
+
                       <button
                         onClick={() => toggleFollow(cat.name)}
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
                           isFollowed
                             ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
                             : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
@@ -316,18 +317,9 @@ export default function CategoriesDirectoryPage() {
                       </button>
                     </div>
 
-                    <div>
-                      <Link
-                        href={`/category/${cat.slug}`}
-                        className="text-lg font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition inline-flex items-center gap-1.5"
-                      >
-                        <span>{cat.name}</span>
-                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                      </Link>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        {cat.description}
-                      </p>
-                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
+                      {cat.description}
+                    </p>
 
                     {/* Subcategories / Desks */}
                     {cat.subCategories && cat.subCategories.length > 0 && (

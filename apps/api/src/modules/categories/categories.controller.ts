@@ -134,7 +134,7 @@ export class CategoriesController {
       code: (body.code || slug).toLowerCase(),
       name: body.name,
       description: body.description || '',
-      icon: body.icon || '📁',
+      icon: body.icon || 'Folder',
       sortOrder: 10,
       storyCount: 0,
       isPinned: false,

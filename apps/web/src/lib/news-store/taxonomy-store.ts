@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BASELINE_NAV_TABS, type Category, type NavTab, type Story } from '@ai-news/schemas';
+import {
+  BASELINE_NAV_TABS,
+  CANONICAL_CATEGORIES,
+  type Category,
+  type NavTab,
+  type Story,
+} from '@ai-news/schemas';
 import * as api from '../api-client';
 import { useAllStories } from './stories-store';
 import { eventBus, emitTaxonomyUpdated } from '../event-bus';
@@ -97,19 +103,33 @@ export interface NewsTopic {
   isCustom?: boolean;
 }
 
-export const DEFAULT_CATEGORIES: NewsCategory[] = [];
+export const DEFAULT_CATEGORIES: NewsCategory[] = CANONICAL_CATEGORIES.map((c) => ({
+  id: c.id || `cat_${c.code || c.slug.replace(/-/g, '_')}`,
+  name: c.name,
+  slug: c.slug,
+  code: c.code,
+  description: c.description || '',
+  icon: c.icon || 'Folder',
+  storyCount: c.storyCount || 0,
+  isPinned: c.isPinned,
+  subCategories: c.subCategories || [],
+}));
+
 export const DEFAULT_TOPICS: NewsTopic[] = [];
 
 export const CATEGORY_ICON_MAP: Record<string, string> = {
-  'top-stories': '⭐',
-  technology: '💻',
-  business: '📈',
-  world: '🌐',
-  science: '🔬',
-  health: '🩺',
-  sports: '🏆',
-  entertainment: '🎬',
-  india: '🇮🇳',
+  'top-stories': 'Star',
+  top_stories: 'Star',
+  topstories: 'Star',
+  technology: 'Cpu',
+  tech: 'Cpu',
+  business: 'TrendingUp',
+  world: 'Globe',
+  science: 'Atom',
+  health: 'HeartPulse',
+  sports: 'Trophy',
+  entertainment: 'Film',
+  india: 'Landmark',
 };
 
 const CATEGORIES_KEY = 'globalpulse_api_categories_v3';
@@ -117,10 +137,10 @@ const TOPICS_KEY = 'globalpulse_api_topics_v3';
 const NAV_TABS_KEY = 'globalpulse_api_nav_tabs_v3';
 
 export function useTaxonomy() {
-  const [categories, setCategories] = useState<NewsCategory[]>([]);
+  const [categories, setCategories] = useState<NewsCategory[]>(DEFAULT_CATEGORIES);
   const [topics, setTopics] = useState<NewsTopic[]>([]);
   const [navTabs, setNavTabs] = useState<NavTab[]>(BASELINE_NAV_TABS);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loadTaxonomy = useCallback(async () => {
     // Clear legacy static keys from storage if present
@@ -194,25 +214,31 @@ export function useTaxonomy() {
         }
       }
 
-      // Map categories purely from live API
-      const finalCats: NewsCategory[] = Array.isArray(apiCats)
-        ? apiCats.map((ac) => {
-            const slug = (ac.slug || ac.code || ac.name || '').toLowerCase();
-            const dynamicCount =
-              categoryCounts[slug] ?? categoryCounts[ac.code] ?? ac.storyCount ?? 0;
-            return {
-              id: (ac as { id?: string }).id || `cat_${slug}`,
-              name: ac.name,
-              slug,
-              code: ac.code,
-              description: ac.description || '',
-              icon: ac.icon || CATEGORY_ICON_MAP[slug] || 'Folder',
-              storyCount: dynamicCount,
-              isPinned: ac.isPinned,
-              subCategories: Array.isArray(ac.subCategories) ? ac.subCategories : [],
-            };
-          })
-        : [];
+      // Map categories from live API or fall back to default
+      const finalCats: NewsCategory[] =
+        Array.isArray(apiCats) && apiCats.length > 0
+          ? apiCats.map((ac) => {
+              const slug = (ac.slug || ac.code || ac.name || '').toLowerCase();
+              const dynamicCount =
+                categoryCounts[slug] ?? categoryCounts[ac.code] ?? ac.storyCount ?? 0;
+              return {
+                id: (ac as { id?: string }).id || `cat_${slug}`,
+                name: ac.name,
+                slug,
+                code: ac.code,
+                description: ac.description || '',
+                icon:
+                  ac.icon ||
+                  CATEGORY_ICON_MAP[slug] ||
+                  CATEGORY_ICON_MAP[ac.code || ''] ||
+                  CATEGORY_ICON_MAP[slug.replace(/-/g, '_')] ||
+                  'Folder',
+                storyCount: dynamicCount,
+                isPinned: ac.isPinned,
+                subCategories: Array.isArray(ac.subCategories) ? ac.subCategories : [],
+              };
+            })
+          : DEFAULT_CATEGORIES;
 
       // Map topics purely from live API
       const finalTops: NewsTopic[] = Array.isArray(apiTops)

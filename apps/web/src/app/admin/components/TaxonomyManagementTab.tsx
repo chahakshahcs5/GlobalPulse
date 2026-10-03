@@ -30,7 +30,7 @@ export function TaxonomyManagementTab({ onSuccess }: TaxonomyManagementTabProps)
   const [catName, setCatName] = useState('');
   const [catSlug, setCatSlug] = useState('');
   const [catDescription, setCatDescription] = useState('');
-  const [catIcon, setCatIcon] = useState('📁');
+  const [catIcon, setCatIcon] = useState('Folder');
   const [isCreatingCat, setIsCreatingCat] = useState(false);
 
   // Topic form state

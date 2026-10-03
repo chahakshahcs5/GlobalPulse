@@ -287,6 +287,8 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     const existing = await db.categories.findBySlug(cat.slug);
     if (!existing) {
       await db.categories.create(cat);
+    } else {
+      await db.categories.update({ ...existing, ...cat });
     }
   }
 

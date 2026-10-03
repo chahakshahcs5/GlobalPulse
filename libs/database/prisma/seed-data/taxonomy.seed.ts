@@ -1,4 +1,10 @@
-import type { Topic, Entity } from '@ai-news/schemas';
+import type { Topic, Entity, Category } from '@ai-news/schemas';
+import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
+
+export const baselineCategories: Category[] = CANONICAL_CATEGORIES.map((c) => ({
+  ...c,
+  id: c.id || `cat_${c.code || c.slug.replace(/-/g, '_')}`,
+}));
 
 export const baselineTopics: Topic[] = [
   {

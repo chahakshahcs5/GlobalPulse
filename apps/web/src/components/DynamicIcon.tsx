@@ -13,6 +13,8 @@ export interface DynamicIconProps extends Omit<LucideProps, 'ref' | 'name'> {
  */
 const ICON_ALIASES: Record<string, string> = {
   'top-stories': 'Star',
+  top_stories: 'Star',
+  topstories: 'Star',
   top: 'Star',
   breaking: 'Zap',
   technology: 'Cpu',
@@ -27,7 +29,7 @@ const ICON_ALIASES: Record<string, string> = {
   entertainment: 'Film',
   culture: 'Film',
   politics: 'Landmark',
-  india: 'Globe',
+  india: 'Landmark',
   us: 'Globe',
   general: 'Newspaper',
   weather: 'CloudSun',
@@ -69,8 +71,8 @@ export function DynamicIcon({
   className = 'w-4 h-4',
   ...props
 }: DynamicIconProps) {
-  // If a LucideIcon component was passed directly as function
-  if (typeof name === 'function') {
+  // If a LucideIcon component was passed directly as function or forwardRef object
+  if (name && (typeof name === 'function' || typeof name === 'object')) {
     const Component = name as LucideIcon;
     return <Component className={className} {...props} />;
   }
@@ -102,7 +104,7 @@ export function DynamicIcon({
     ((LucideIcons as Record<string, unknown>)[`${pascalName}Icon`] as LucideIcon) ||
     ((LucideIcons as Record<string, unknown>)[trimmed] as LucideIcon);
 
-  if (IconComponent && typeof IconComponent === 'function') {
+  if (IconComponent && (typeof IconComponent === 'function' || typeof IconComponent === 'object')) {
     return <IconComponent className={className} {...props} />;
   }
 
