@@ -1,28 +1,4 @@
-import type { WeatherData, TrendingTopic, FactCheckItem, GoogleNewsCluster } from './types';
-
-export const LOCAL_WEATHER: WeatherData = {
-  city: 'New Delhi',
-  temperature: 28,
-  condition: 'Partly Cloudy',
-  icon: '🌤️',
-  humidity: 62,
-  windSpeed: '12 km/h',
-  forecast: [
-    { day: 'Sun', temp: 28, icon: '🌤️' },
-    { day: 'Mon', temp: 30, icon: '☀️' },
-    { day: 'Tue', temp: 29, icon: '⛅' },
-    { day: 'Wed', temp: 27, icon: '🌧️' },
-  ],
-};
-
-export const TRENDING_TOPICS: TrendingTopic[] = [
-  { id: 't1', tag: 'BRICS 2026 Summit', query: 'brics', volume: '125K searches' },
-  { id: 't2', tag: '2nm Semiconductor Alliance', query: 'semiconductor', volume: '94K searches' },
-  { id: 't3', tag: 'Nuclear Fusion Milestone', query: 'fusion', volume: '82K searches' },
-  { id: 't4', tag: 'Federal Reserve Policy', query: 'fed', volume: '67K searches' },
-  { id: 't5', tag: 'Sodium-Ion Battery EV', query: 'battery', volume: '54K searches' },
-  { id: 't6', tag: 'Quantum Satellite Network', query: 'quantum', volume: '43K searches' },
-];
+import type { FactCheckItem, GoogleNewsCluster } from './types';
 
 export const FACT_CHECKS: FactCheckItem[] = [
   {

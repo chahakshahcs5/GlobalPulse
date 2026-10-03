@@ -1,4 +1,5 @@
 import type { WhatChangedBlock } from '@ai-news/schemas';
+import { escapeXml } from '@ai-news/shared';
 
 export class VisualDiffRenderer {
   /**
@@ -98,13 +99,4 @@ export class VisualDiffRenderer {
       </div>
     `;
   }
-}
-
-function escapeXml(unsafe?: string): string {
-  if (!unsafe) return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

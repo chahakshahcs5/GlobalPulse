@@ -38,7 +38,8 @@ export class S3StorageService {
       process.env.B2_ENDPOINT ||
       process.env.MINIO_ENDPOINT ||
       'http://localhost:9000';
-    const region = config.region || process.env.S3_REGION || process.env.B2_REGION || 'us-east-1';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const region = config.region || process.env.S3_REGION || process.env.B2_REGION || 'us-east-005';
     this.bucket = config.bucket || process.env.S3_BUCKET || process.env.B2_BUCKET || 'news-media';
     const accessKeyId =
       config.accessKeyId ||
@@ -46,14 +47,14 @@ export class S3StorageService {
       process.env.B2_APPLICATION_KEY_ID ||
       process.env.B2_ACCESS_KEY ||
       process.env.MINIO_ROOT_USER ||
-      'minioadmin';
+      (isProduction ? '' : 'minioadmin');
     const secretAccessKey =
       config.secretAccessKey ||
       process.env.S3_SECRET_KEY ||
       process.env.B2_APPLICATION_KEY ||
       process.env.B2_SECRET_KEY ||
       process.env.MINIO_ROOT_PASSWORD ||
-      'minioadminpassword';
+      (isProduction ? '' : 'minioadminpassword');
 
     const isB2 = endpoint.includes('backblazeb2.com');
 

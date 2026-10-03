@@ -63,12 +63,13 @@ const AGENTS: AgentIntegration[] = [
 ];
 
 export default function IntegrationsPage() {
+  const mcpEndpointUrl = process.env.NEXT_PUBLIC_MCP_URL || 'http://localhost:4001/mcp';
   const [copiedToken, setCopiedToken] = useState(false);
   const [testingPing, setTestingPing] = useState(false);
   const [pingResult, setPingResult] = useState<string | null>(null);
 
   const handleCopyEndpoint = () => {
-    navigator.clipboard.writeText('http://localhost:3000/mcp');
+    navigator.clipboard.writeText(mcpEndpointUrl);
     setCopiedToken(true);
     setTimeout(() => setCopiedToken(false), 2000);
   };
@@ -236,7 +237,7 @@ export default function IntegrationsPage() {
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <span className="text-slate-400">Stream Transport URL</span>
               <div className="flex items-center gap-2">
-                <span className="text-blue-400 font-bold">http://localhost:3000/mcp</span>
+                <span className="text-blue-400 font-bold">{mcpEndpointUrl}</span>
                 <button
                   onClick={handleCopyEndpoint}
                   className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition"

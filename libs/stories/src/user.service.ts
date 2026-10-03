@@ -88,12 +88,14 @@ export class UserService {
       throw new UnauthorizedError('Invalid email or password.');
     }
 
-    // Verify password if user has passwordHash set
-    if (user.passwordHash) {
-      const isValid = PasswordHasher.verify(validated.password, user.passwordHash);
-      if (!isValid) {
-        throw new UnauthorizedError('Invalid email or password.');
-      }
+    // Reject login if user has no passwordHash set (e.g. passwordless/OAuth-only account)
+    if (!user.passwordHash) {
+      throw new UnauthorizedError('Invalid email or password.');
+    }
+
+    const isValid = PasswordHasher.verify(validated.password, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedError('Invalid email or password.');
     }
 
     const token = AuthService.generateToken({

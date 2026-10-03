@@ -126,6 +126,18 @@ export class OAuthService {
       },
     ];
 
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+      if (!process.env.OAUTH_ADMIN_CLIENT_SECRET) {
+        throw new Error('OAUTH_ADMIN_CLIENT_SECRET must be explicitly set in production mode.');
+      }
+      if (!process.env.OAUTH_GEMINI_CLIENT_SECRET || !process.env.OAUTH_CHATGPT_CLIENT_SECRET) {
+        throw new Error(
+          'OAuth client secrets for AI agents must be explicitly set in production mode.'
+        );
+      }
+    }
+
     for (const client of defaultClients) {
       this.clients.set(client.clientId, client);
     }

@@ -206,11 +206,10 @@ export class ClusteringService {
         .toLowerCase()
         .split(/\s+/)
         .filter((w) => w.length > 4);
-      const matchedClaim =
-        allClaims.find((c) => {
-          const claimText = (c.claim + ' ' + (c.summary || '')).toLowerCase();
-          return leadWords.some((w) => claimText.includes(w));
-        }) || allClaims[0];
+      const matchedClaim = allClaims.find((c) => {
+        const claimText = (c.claim + ' ' + (c.summary || '')).toLowerCase();
+        return leadWords.some((w) => claimText.includes(w));
+      });
 
       if (matchedClaim) {
         factCheckData = {

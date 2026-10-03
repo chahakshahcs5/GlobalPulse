@@ -3,6 +3,8 @@
  * Compliant with Open Graph Protocol (ogp.me) and Twitter Cards specification.
  */
 
+import { escapeHtml } from './escape';
+
 export interface OpenGraphMeta {
   title: string;
   description: string;
@@ -146,13 +148,4 @@ export function generateSocialShareLinks(url: string, title: string, text?: stri
     telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
     email: `mailto:?subject=${encodedTitle}&body=${encodedText}%0A%0A${encodedUrl}`,
   };
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

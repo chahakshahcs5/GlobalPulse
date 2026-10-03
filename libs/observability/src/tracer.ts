@@ -50,6 +50,9 @@ export class SimpleTracer {
           this.activeSpans.splice(idx, 1);
         }
         this.completedSpans.push(span);
+        if (this.completedSpans.length > 2000) {
+          this.completedSpans.shift();
+        }
       },
     };
 

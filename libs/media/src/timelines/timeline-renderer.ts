@@ -1,4 +1,5 @@
 import type { TimelineBlock } from '@ai-news/schemas';
+import { escapeXml } from '@ai-news/shared';
 
 export interface FormattedTimelineItem {
   id: string;
@@ -199,13 +200,4 @@ export class TimelineRenderer {
       `;
     }
   }
-}
-
-function escapeXml(unsafe?: string): string {
-  if (!unsafe) return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

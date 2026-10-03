@@ -174,44 +174,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
 
-            {/* Quick Role Fillers */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Prefill Role Credentials:
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => quickLoginAs('admin')}
-                  className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100 text-left transition cursor-pointer"
-                >
-                  <div className="text-[11px] font-extrabold text-rose-700 dark:text-rose-300">
-                    Admin
-                  </div>
-                  <div className="text-[9px] text-slate-500">Full CMS</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLoginAs('editor')}
-                  className="p-2.5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 text-left transition cursor-pointer"
-                >
-                  <div className="text-[11px] font-extrabold text-blue-700 dark:text-blue-300">
-                    Editor
-                  </div>
-                  <div className="text-[9px] text-slate-500">Editorial</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLoginAs('reader')}
-                  className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-left transition cursor-pointer"
-                >
-                  <div className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
-                    Reporter
-                  </div>
-                  <div className="text-[9px] text-slate-500">Journalist</div>
-                </button>
+            {/* Quick Role Fillers (Development Environment Only) */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Prefill Role Credentials:
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => quickLoginAs('admin')}
+                    className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-rose-700 dark:text-rose-300">
+                      Admin
+                    </div>
+                    <div className="text-[9px] text-slate-500">Full CMS</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickLoginAs('editor')}
+                    className="p-2.5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-blue-700 dark:text-blue-300">
+                      Editor
+                    </div>
+                    <div className="text-[9px] text-slate-500">Editorial</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickLoginAs('reader')}
+                    className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                      Reporter
+                    </div>
+                    <div className="text-[9px] text-slate-500">Journalist</div>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="relative flex py-1 items-center">
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>

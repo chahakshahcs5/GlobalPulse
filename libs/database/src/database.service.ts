@@ -182,10 +182,15 @@ export class DatabaseService {
       return false;
     }
 
-    const isExplicitPrisma = process.env.DATABASE_ENGINE === 'prisma';
     const isProduction = process.env.NODE_ENV === 'production';
-    const requiresPrisma =
-      isExplicitPrisma || (isProduction && process.env.DATABASE_ENGINE !== 'memory');
+    const isTest = process.env.NODE_ENV === 'test';
+
+    if (isTest && (!this.options || this.options.engine !== 'prisma')) {
+      this.isPrismaActive = false;
+      return false;
+    }
+
+    const requiresPrisma = isProduction && process.env.DATABASE_ENGINE !== 'memory';
 
     try {
       const client = await prismaManager.getClient();

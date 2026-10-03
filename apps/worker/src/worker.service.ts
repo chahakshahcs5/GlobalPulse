@@ -32,6 +32,7 @@ export interface SearchIndexingResult {
   versionNumber: number;
   indexedTokens: number;
   embeddingDimensions: number;
+  embedding?: number[];
   indexedAt: string;
 }
 
@@ -135,14 +136,17 @@ export class WorkerService {
 
         updateProgress(70);
         const embedding = generateSemanticEmbedding(tokens, 1536);
-        void embedding;
+        logger.info(
+          `Generated ${embedding.length}-dimensional semantic vector for story [${storyId}] version ${versionNumber}`
+        );
 
         updateProgress(100);
         return {
           storyId,
           versionNumber,
           indexedTokens: tokens.length,
-          embeddingDimensions: 1536,
+          embeddingDimensions: embedding.length,
+          embedding: embedding,
           indexedAt: new Date().toISOString(),
         };
       }

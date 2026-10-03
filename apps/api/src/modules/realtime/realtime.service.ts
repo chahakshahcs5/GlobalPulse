@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { Subject, Observable, filter, map } from 'rxjs';
+import { Subject, Observable, filter, map, finalize } from 'rxjs';
 import Redis from 'ioredis';
 import { createLogger } from '@ai-news/observability';
 
@@ -50,7 +50,8 @@ export class RealtimeService implements OnModuleDestroy {
 
         Promise.all([this.redisPub.connect(), this.redisSub.connect()])
           .then(() => {
-            logger.info(`Connected to Redis Pub/Sub for distributed SSE at [${redisUrl}]`);
+            const maskedUrl = redisUrl.replace(/:[^:@]*@/, ':****@');
+            logger.info(`Connected to Redis Pub/Sub for distributed SSE at [${maskedUrl}]`);
             this.redisSub?.psubscribe('globalpulse:sse:*', (err) => {
               if (err) logger.debug(`Redis psubscribe error: ${err.message}`);
             });
@@ -103,7 +104,10 @@ export class RealtimeService implements OnModuleDestroy {
         type: msg.eventName,
         data: msg.data as object,
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      }))
+      })),
+      finalize(() => {
+        this.decrementSubscriberCount();
+      })
     );
   }
 

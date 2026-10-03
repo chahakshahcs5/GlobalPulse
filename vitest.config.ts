@@ -10,6 +10,8 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     env: {
+      NODE_ENV: 'test',
+      DATABASE_ENGINE: 'memory',
       // Dev tokens for test suites (format: role:clientType)
       DEV_TOKEN_ADMIN: 'admin:internal_service',
       DEV_TOKEN_EDITOR: 'editor:human_web',

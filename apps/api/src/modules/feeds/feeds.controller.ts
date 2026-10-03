@@ -2,20 +2,11 @@ import { Controller, Get, Param, Res, NotFoundException } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { db } from '@ai-news/database';
 import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
-import { generateNewsArticleJsonLd } from '@ai-news/shared';
-
-function escapeXml(unsafe: string): string {
-  return (unsafe || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+import { generateNewsArticleJsonLd, escapeXml } from '@ai-news/shared';
 
 @Controller()
 export class FeedsController {
-  private baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  private baseUrl = process.env.BASE_URL || process.env.API_BASE_URL || 'http://localhost:4000';
 
   /**
    * RSS 2.0 Feed with media enclosures and Google News compat

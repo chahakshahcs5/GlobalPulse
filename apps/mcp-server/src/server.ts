@@ -326,11 +326,47 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
         }
       }
 
+      const MAX_MCP_BODY_SIZE = 2 * 1024 * 1024; // 2 MB
+      const contentLengthHeader = req.headers['content-length'];
+      const declaredLength = contentLengthHeader
+        ? parseInt(contentLengthHeader as string, 10)
+        : null;
+      if (declaredLength !== null && declaredLength > MAX_MCP_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: { code: -32600, message: 'Payload Too Large: body exceeds 2MB limit.' },
+          })
+        );
+        req.destroy();
+        return;
+      }
+
       let bodyStr = '';
+      let receivedBytes = 0;
+      let isAborted = false;
+
       req.on('data', (chunk) => {
+        if (isAborted) return;
+        receivedBytes += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
+        if (receivedBytes > MAX_MCP_BODY_SIZE) {
+          isAborted = true;
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              error: { code: -32600, message: 'Payload Too Large: body exceeds 2MB limit.' },
+            })
+          );
+          req.destroy();
+          return;
+        }
         bodyStr += chunk;
       });
+
       req.on('end', async () => {
+        if (isAborted) return;
         await mcpPrincipalStore.run(resolvedPrincipal, async () => {
           try {
             const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;

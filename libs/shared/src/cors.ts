@@ -3,13 +3,25 @@
  * Shared across API Gateway, MCP Server, and Microservices
  */
 
-export const DEFAULT_ALLOWED_ORIGINS = [
+export const PRODUCTION_ALLOWED_ORIGINS = [
   'https://globalpulse.news',
   'https://www.globalpulse.news',
   'https://admin.globalpulse.news',
-  'http://localhost:3000',
-  'http://localhost:3002',
 ];
+
+export const DEVELOPMENT_ALLOWED_ORIGINS = [
+  ...PRODUCTION_ALLOWED_ORIGINS,
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:4000',
+  'http://localhost:4001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3002',
+];
+
+export const DEFAULT_ALLOWED_ORIGINS =
+  process.env.NODE_ENV === 'production' ? PRODUCTION_ALLOWED_ORIGINS : DEVELOPMENT_ALLOWED_ORIGINS;
 
 export const ALLOWED_CORS_HEADERS = [
   'Content-Type',
@@ -30,9 +42,9 @@ export function getAllowedOrigins(): string[] {
       .filter(Boolean);
   }
   if (process.env.NODE_ENV === 'production') {
-    return DEFAULT_ALLOWED_ORIGINS;
+    return PRODUCTION_ALLOWED_ORIGINS;
   }
-  return ['*'];
+  return DEVELOPMENT_ALLOWED_ORIGINS;
 }
 
 export function isOriginAllowed(origin: string | undefined): boolean {

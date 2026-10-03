@@ -23,8 +23,17 @@ export function validateBlocks(rawBlocks: unknown[]): StoryBlock[] {
 }
 
 export function sanitizeText(text: string): string {
-  // Strip dangerous script tags while preserving markdown
-  return text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  if (!text) return '';
+  return (
+    text
+      // Strip dangerous tags: <script>, <iframe>, <object>, <embed>, <base>, <meta>, <style>, <link>
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<\/?(?:iframe|object|embed|base|meta|style|link)\b[^>]*>/gi, '')
+      // Strip inline event handler attributes like onerror=, onload=, onclick=
+      .replace(/\bon[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
+      // Strip javascript: pseudo-protocols
+      .replace(/(?:href|src)\s*=\s*['"]?\s*javascript:[^'"]*['"]?/gi, '')
+  );
 }
 
 export function sanitizeBlock(block: StoryBlock): StoryBlock {

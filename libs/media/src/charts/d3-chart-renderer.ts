@@ -1,4 +1,5 @@
 import type { ChartBlock } from '@ai-news/schemas';
+import { escapeXml } from '@ai-news/shared';
 
 export interface RenderChartOptions {
   width?: number;
@@ -745,16 +746,6 @@ export class D3ChartRenderer {
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
   }
-}
-
-function escapeXml(unsafe?: string): string {
-  if (!unsafe) return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
 
 function getNiceTicks(

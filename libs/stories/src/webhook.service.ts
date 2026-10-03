@@ -5,7 +5,9 @@ import type {
   RegisterWebhookInput,
   WebhookEvent,
 } from '@ai-news/schemas';
+import { ValidationError } from '@ai-news/shared';
 import { randomUUID, randomBytes, createHmac } from 'crypto';
+import { isIP } from 'net';
 
 export type WebhookHttpClient = (
   url: string,
@@ -17,6 +19,58 @@ export type WebhookHttpClient = (
   }
 ) => Promise<{ status: number; ok: boolean }>;
 
+function isPrivateOrLoopbackIp(ip: string): boolean {
+  if (ip === '::1' || ip === '127.0.0.1' || ip === '0.0.0.0' || ip === '::') {
+    return true;
+  }
+  if (ip.startsWith('::ffff:')) {
+    const ipv4 = ip.replace('::ffff:', '');
+    return isPrivateOrLoopbackIp(ipv4);
+  }
+  const parts = ip.split('.').map(Number);
+  if (parts.length === 4 && parts.every((p) => !isNaN(p) && p >= 0 && p <= 255)) {
+    // 127.0.0.0/8 (Loopback)
+    if (parts[0] === 127) return true;
+    // 10.0.0.0/8 (Private RFC 1918)
+    if (parts[0] === 10) return true;
+    // 172.16.0.0/12 (Private RFC 1918)
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    // 192.168.0.0/16 (Private RFC 1918)
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    // 169.254.0.0/16 (Link-local / Cloud metadata)
+    if (parts[0] === 169 && parts[1] === 254) return true;
+    // 0.0.0.0/8
+    if (parts[0] === 0) return true;
+  }
+  const lowerIp = ip.toLowerCase();
+  if (lowerIp.startsWith('fe80:') || lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) {
+    return true;
+  }
+  return false;
+}
+
+export function validateWebhookUrl(rawUrl: string): { valid: boolean; reason?: string } {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { valid: false, reason: 'Invalid protocol. Webhooks only support HTTP and HTTPS.' };
+    }
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === 'localhost') {
+      return { valid: false, reason: 'Disallowed destination: localhost is forbidden.' };
+    }
+    if (isIP(hostname) && isPrivateOrLoopbackIp(hostname)) {
+      return {
+        valid: false,
+        reason: 'Disallowed destination: private and loopback IP addresses are forbidden.',
+      };
+    }
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: 'Invalid webhook URL format.' };
+  }
+}
+
 async function defaultWebhookHttpClient(
   url: string,
   options: {
@@ -26,8 +80,16 @@ async function defaultWebhookHttpClient(
     signal?: AbortSignal;
   }
 ): Promise<{ status: number; ok: boolean }> {
-  // Gracefully simulate 200 OK for dummy example.com domains in testing
-  if (url.includes('example.com')) {
+  const urlCheck = validateWebhookUrl(url);
+  if (!urlCheck.valid) {
+    throw new ValidationError(urlCheck.reason || 'Invalid webhook destination URL.');
+  }
+
+  // Gracefully simulate success for dummy example domains strictly in test environment
+  if (
+    process.env.NODE_ENV === 'test' &&
+    (url.includes('example.com') || url.includes('example.org'))
+  ) {
     return { status: 200, ok: true };
   }
 
@@ -58,6 +120,10 @@ export class WebhookService {
    * Register a new webhook endpoint for event subscriptions.
    */
   async registerWebhook(orgId: string, input: RegisterWebhookInput): Promise<WebhookSubscription> {
+    const urlValidation = validateWebhookUrl(input.url);
+    if (!urlValidation.valid) {
+      throw new ValidationError(urlValidation.reason || 'Invalid webhook destination URL.');
+    }
     const now = new Date().toISOString();
     const secret = input.secret || randomBytes(24).toString('hex');
 

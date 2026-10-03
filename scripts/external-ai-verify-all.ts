@@ -10,8 +10,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { AuthService } from '@ai-news/auth';
 
-const MCP_URL = 'https://curly-space-potato-v5pgg4vgxrxcxxwx-3001.app.github.dev/mcp';
-const API_URL = 'https://curly-space-potato-v5pgg4vgxrxcxxwx-3000.app.github.dev';
+const MCP_URL = process.env.MCP_URL || 'http://localhost:4001/mcp';
+const API_URL = process.env.API_URL || 'http://localhost:4000';
 
 interface StepResult {
   step: string;

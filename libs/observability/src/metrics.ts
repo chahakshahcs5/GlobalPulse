@@ -65,6 +65,9 @@ export class MetricsRegistry {
     const subMap = this.histograms.get(name)!;
     const list = subMap.get(labelKey) || [];
     list.push(value);
+    if (list.length > 1000) {
+      list.shift();
+    }
     subMap.set(labelKey, list);
   }
 

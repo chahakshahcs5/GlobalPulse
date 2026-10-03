@@ -1,4 +1,5 @@
 import type { MapBlock } from '@ai-news/schemas';
+import { escapeXml } from '@ai-news/shared';
 
 export interface MapLibreConfig {
   container: string;
@@ -299,13 +300,4 @@ function parseCoordinates(input: unknown): [number, number] | null {
     if (!isNaN(lng) && !isNaN(lat)) return [lng, lat];
   }
   return null;
-}
-
-function escapeXml(unsafe?: string): string {
-  if (!unsafe) return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

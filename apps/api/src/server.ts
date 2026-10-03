@@ -54,14 +54,10 @@ export function getRateLimitOptions() {
     keyGenerator: (req: FastifyRequest) => {
       const auth = req.headers.authorization;
       if (auth && typeof auth === 'string') return auth;
-      const forwarded = req.headers['x-forwarded-for'];
-      if (forwarded) {
-        return Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
-      }
       return req.ip || '127.0.0.1';
     },
     errorResponseBuilder: (req: FastifyRequest, context: { max: number; after: string }) => ({
-      type: 'https://news.platform/errors/rate-limit-exceeded',
+      type: 'https://globalpulse.news/errors/rate-limit-exceeded',
       title: 'Too Many Requests',
       status: 429,
       detail: `Rate limit of ${context.max} requests exceeded. Retry after ${context.after}`,
@@ -76,7 +72,8 @@ export function getRateLimitOptions() {
  * Preserves 100% compatibility with test harnesses and Fastify injection.
  */
 export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
-  const fastify = Fastify({ logger: options.logger ?? false });
+  const trustProxy = process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production';
+  const fastify = Fastify({ logger: options.logger ?? false, trustProxy });
 
   fastify.register(cors, getCorsOptions());
   fastify.register(rateLimit, getRateLimitOptions());
