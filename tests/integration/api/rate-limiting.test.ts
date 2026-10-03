@@ -5,10 +5,12 @@ import { buildServer } from '../../../apps/api/src/server';
 describe('API Rate Limiting & Throttling Integration Tests', () => {
   let app: FastifyInstance;
   const originalMax = process.env.RATE_LIMIT_MAX;
+  const originalEngine = process.env.DATABASE_ENGINE;
 
   beforeAll(async () => {
     // Set a strict rate limit for testing threshold breaches
     process.env.RATE_LIMIT_MAX = '5';
+    process.env.DATABASE_ENGINE = 'memory';
     app = buildServer();
     await app.ready();
   });
@@ -18,6 +20,11 @@ describe('API Rate Limiting & Throttling Integration Tests', () => {
       process.env.RATE_LIMIT_MAX = originalMax;
     } else {
       delete process.env.RATE_LIMIT_MAX;
+    }
+    if (originalEngine !== undefined) {
+      process.env.DATABASE_ENGINE = originalEngine;
+    } else {
+      delete process.env.DATABASE_ENGINE;
     }
     await app.close();
   });

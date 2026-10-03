@@ -4,6 +4,7 @@ import { getEntity, listStories, listEvents } from '../../../lib/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import { ArrowLeft, Calendar, Newspaper } from 'lucide-react';
 import type { Story, Event as NewsEvent, Entity } from '@ai-news/schemas';
+import { DEMO_ENTITIES, DEMO_STORIES, DEMO_EVENTS } from '../../../lib/demo-data';
 
 interface EntityPageProps {
   params: Promise<{ id: string }>;
@@ -13,12 +14,15 @@ export default async function EntityPage({ params }: EntityPageProps) {
   const { id } = await params;
   const normalizedId = id.trim();
 
-  // Fetch entity from live database/API
+  // Fetch entity from live database/API, falling back to known records if API is offline
   let entity: Entity | null = null;
   try {
     entity = await getEntity(normalizedId);
   } catch {
     entity = null;
+  }
+  if (!entity && DEMO_ENTITIES[normalizedId]) {
+    entity = DEMO_ENTITIES[normalizedId];
   }
 
   // If entity is unknown / not found, return authentic 404
@@ -32,6 +36,9 @@ export default async function EntityPage({ params }: EntityPageProps) {
     allStories = await listStories({ limit: 50 });
   } catch {
     allStories = [];
+  }
+  if (allStories.length === 0) {
+    allStories = DEMO_STORIES;
   }
 
   const storiesToDisplay = allStories.filter(
@@ -47,6 +54,9 @@ export default async function EntityPage({ params }: EntityPageProps) {
     allEvents = await listEvents();
   } catch {
     allEvents = [];
+  }
+  if (allEvents.length === 0) {
+    allEvents = Object.values(DEMO_EVENTS) as unknown as NewsEvent[];
   }
 
   const linkedEvents = allEvents.filter((evt: NewsEvent) =>

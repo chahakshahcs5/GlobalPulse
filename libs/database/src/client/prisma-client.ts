@@ -26,6 +26,10 @@ export class PrismaClientManager {
       return this.client;
     }
 
+    if (process.env.DATABASE_ENGINE === 'memory') {
+      return null;
+    }
+
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
       logger.debug('No DATABASE_URL configured; running in headless memory mode.');

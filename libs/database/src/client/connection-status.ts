@@ -12,6 +12,16 @@ export async function checkDatabaseHealth(): Promise<DatabaseHealthStatus> {
   const hasUrl = Boolean(process.env.DATABASE_URL);
   const start = Date.now();
 
+  if (process.env.DATABASE_ENGINE === 'memory') {
+    return {
+      status: 'memory_fallback',
+      engine: 'in_memory',
+      latencyMs: 0,
+      databaseUrlConfigured: hasUrl,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   try {
     const client = await prismaManager.getClient();
     if (client) {
