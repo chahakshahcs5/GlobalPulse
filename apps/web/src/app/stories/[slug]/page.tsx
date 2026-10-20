@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   ChevronRight,
   ShieldCheck,
+  ShieldQuestion,
   Volume2,
   VolumeX,
   X,
@@ -109,6 +110,39 @@ export default function StoryPage() {
   // Cached or remotely resolved story
   const cachedStory = allStories.find((s) => s.slug === slug || s.id === slug);
   const story = cachedStory || remoteStory;
+
+  // Story following: following an evolving story keeps following its cluster.
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowBusy, setIsFollowBusy] = useState(false);
+
+  useEffect(() => {
+    if (!story?.id) return;
+    let cancelled = false;
+    void api
+      .isFollowingTarget('story', story.id)
+      .then((following) => {
+        if (!cancelled) setIsFollowing(following);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [story?.id]);
+
+  const handleFollowToggle = async () => {
+    if (!story?.id || isFollowBusy) return;
+    setIsFollowBusy(true);
+    try {
+      const next = isFollowing
+        ? !(await api.unfollowTarget('story', story.id))
+        : await api.followTarget('story', story.id);
+      setIsFollowing(next);
+    } catch {
+      // Keep the current state when the follow request fails.
+    } finally {
+      setIsFollowBusy(false);
+    }
+  };
 
   const READ_LIMIT = 5;
   const isSubscriberOnly = Boolean(story?.isSubscriberOnly);
@@ -490,6 +524,31 @@ export default function StoryPage() {
                 <span className="absolute bottom-0 right-0 w-2 h-2 rounded-[1px] border border-blue-600 bg-blue-600"></span>
               </div>
               <span>Full Coverage of this story</span>
+            </button>
+
+            {/* Story intelligence dashboard: claims, evidence, timeline, data, sources, perspectives, entities */}
+            <Link
+              href={`/stories/${story.slug}/intelligence`}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-200 dark:border-indigo-800/80 transition"
+              title="Open the story intelligence dashboard"
+            >
+              <ShieldQuestion className="w-3 h-3" />
+              <span>Story intelligence</span>
+            </Link>
+
+            {/* Follow the evolving story (follows the cluster too) */}
+            <button
+              onClick={handleFollowToggle}
+              disabled={isFollowBusy}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition disabled:opacity-60 ${
+                isFollowing
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80'
+                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+              }`}
+              title="Follow this story. New articles in the same cluster are followed automatically."
+            >
+              {isFollowing ? <Check className="w-3 h-3" /> : <Star className="w-3 h-3" />}
+              <span>{isFollowing ? 'Following' : 'Follow'}</span>
             </button>
           </div>
         </div>

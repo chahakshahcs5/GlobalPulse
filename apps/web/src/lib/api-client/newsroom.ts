@@ -28,6 +28,14 @@ export async function listNotifications(limit = 20): Promise<EditorialNotificati
   return request<EditorialNotification[]>(`/api/notifications?limit=${limit}`);
 }
 
+/**
+ * Reader-scoped notifications: developments on the stories and clusters the
+ * signed-in reader follows.
+ */
+export async function listMyNotifications(limit = 20): Promise<EditorialNotification[]> {
+  return request<EditorialNotification[]>(`/api/notifications/mine?limit=${limit}`);
+}
+
 export async function broadcastBreakingNews(
   storyId: string,
   headline: string,

@@ -7,5 +7,8 @@ export * from './TimelineBlockView';
 export * from './DocumentViewerBlockView';
 export * from './InteractiveBlockViews';
 export * from './MediaBlockViews';
+export * from './MediaExpansionViews';
+export * from './IntelligenceBlockViews';
+export * from './DataBlockViews';
 export * from './EntitySourceBlockViews';
 export * from './BlockItem';

@@ -21,6 +21,30 @@ import {
   EntityBlockView,
   RelatedStoriesBlockView,
 } from './EntitySourceBlockViews';
+import {
+  EvidenceBlockView,
+  PerspectiveBlockView,
+  InterviewBlockView,
+  LiveDataBlockView,
+  FactCheckBlockView,
+} from './IntelligenceBlockViews';
+import {
+  DataExplorerBlockView,
+  RankingBlockView,
+  CalculatorBlockView,
+  FinancialBlockView,
+  ElectionBlockView,
+  DisasterBlockView,
+  ScienceBlockView,
+} from './DataBlockViews';
+import {
+  AnnotatedImageBlockView,
+  VideoGalleryBlockView,
+  PodcastBlockView,
+  WaveformBlockView,
+  TranscriptBlockView,
+  DatasetBlockView,
+} from './MediaExpansionViews';
 
 export const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }> = ({
   block,
@@ -334,6 +358,78 @@ export const BlockItem: React.FC<{ block: StoryBlock; theme: 'dark' | 'light' }>
           )}
         </div>
       );
+    }
+
+    case 'annotated_image': {
+      return <AnnotatedImageBlockView data={block.data} />;
+    }
+
+    case 'video_gallery': {
+      return <VideoGalleryBlockView data={block.data} />;
+    }
+
+    case 'podcast': {
+      return <PodcastBlockView data={block.data} />;
+    }
+
+    case 'waveform': {
+      return <WaveformBlockView data={block.data} />;
+    }
+
+    case 'transcript': {
+      return <TranscriptBlockView data={block.data} />;
+    }
+
+    case 'dataset': {
+      return <DatasetBlockView data={block.data} />;
+    }
+
+    case 'data_explorer': {
+      return <DataExplorerBlockView data={block.data} />;
+    }
+
+    case 'ranking': {
+      return <RankingBlockView data={block.data} />;
+    }
+
+    case 'calculator': {
+      return <CalculatorBlockView data={block.data} />;
+    }
+
+    case 'financial': {
+      return <FinancialBlockView data={block.data} />;
+    }
+
+    case 'election': {
+      return <ElectionBlockView data={block.data} />;
+    }
+
+    case 'disaster': {
+      return <DisasterBlockView data={block.data} />;
+    }
+
+    case 'science': {
+      return <ScienceBlockView data={block.data} />;
+    }
+
+    case 'evidence': {
+      return <EvidenceBlockView data={block.data} />;
+    }
+
+    case 'perspective': {
+      return <PerspectiveBlockView data={block.data} />;
+    }
+
+    case 'interview': {
+      return <InterviewBlockView data={block.data} />;
+    }
+
+    case 'live_data': {
+      return <LiveDataBlockView data={block.data} />;
+    }
+
+    case 'fact_check': {
+      return <FactCheckBlockView data={block.data} />;
     }
 
     default:

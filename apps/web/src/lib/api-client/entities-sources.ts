@@ -1,7 +1,15 @@
 /**
  * API Client — Auth, Sources, Publishers, Following, Events & Entities
  */
-import type { Source, Publisher, PublisherProfile, Event, Entity, Topic } from '@ai-news/schemas';
+import type {
+  Source,
+  Publisher,
+  PublisherProfile,
+  Event,
+  Entity,
+  Topic,
+  FollowTargetType,
+} from '@ai-news/schemas';
 import { request, setAuthToken } from './core';
 
 // export for external use if needed
@@ -91,7 +99,7 @@ export async function getPublisherProfile(slug: string): Promise<PublisherProfil
 }
 
 export async function followTarget(
-  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetType: FollowTargetType,
   targetId: string
 ): Promise<boolean> {
   try {
@@ -106,7 +114,7 @@ export async function followTarget(
 }
 
 export async function unfollowTarget(
-  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetType: FollowTargetType,
   targetId: string
 ): Promise<boolean> {
   try {
@@ -120,7 +128,7 @@ export async function unfollowTarget(
 }
 
 export async function isFollowingTarget(
-  targetType: 'topic' | 'entity' | 'author' | 'source',
+  targetType: FollowTargetType,
   targetId: string
 ): Promise<boolean> {
   try {
@@ -134,13 +142,36 @@ export async function isFollowingTarget(
 }
 
 export async function listFollowing(
-  targetType?: 'topic' | 'entity' | 'author' | 'source'
+  targetType?: FollowTargetType
 ): Promise<Array<{ targetType: string; targetId: string }>> {
   try {
     const qs = targetType ? `?targetType=${targetType}` : '';
     const res = await request<Array<{ targetType: string; targetId: string }>>(
       `/api/users/following${qs}`
     );
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * The reader's follows resolved into displayable entries: label, detail, and a
+ * link path.
+ */
+export async function listFollowingResolved(): Promise<
+  Array<{ targetType: string; targetId: string; label: string; detail?: string; href?: string }>
+> {
+  try {
+    const res = await request<
+      Array<{
+        targetType: string;
+        targetId: string;
+        label: string;
+        detail?: string;
+        href?: string;
+      }>
+    >('/api/users/following/resolved');
     return Array.isArray(res) ? res : [];
   } catch {
     return [];

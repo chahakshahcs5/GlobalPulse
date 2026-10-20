@@ -26,6 +26,19 @@ export function useNewsroomMetrics() {
     avgReadingTimeMinutes: 3.5,
     activeJournalists: 1,
     activeAiAgents: 2,
+    storyVelocityPerDay: 0,
+    sourceDiversity: 0,
+    updateFrequency: 0,
+    avgDraftToPublishHours: 0,
+    avgReviewTimeHours: 0,
+    correctionCount: 0,
+    retractionCount: 0,
+    correctionRate: 0,
+    claimCount: 0,
+    evidenceCount: 0,
+    evidenceCoverage: 0,
+    timelineEventCount: 0,
+    entityActivity: 0,
     generatedAt: new Date().toISOString(),
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -181,6 +194,43 @@ export function useScheduledStories() {
   };
 
   return { scheduled, isLoading, scheduleStory, sweep, refetch: fetchScheduled };
+}
+
+/**
+ * React hook for the reader's own notifications: developments on the stories
+ * and clusters they follow.
+ *
+ * The notifications are pushed on the reader's personal realtime channel
+ * (`user_<id>`), so a new development appears without a refresh.
+ */
+export function useMyNotifications(limit = 20) {
+  const [notifications, setNotifications] = useState<EditorialNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const list = await api.listMyNotifications(limit);
+      if (Array.isArray(list)) {
+        setNotifications(list);
+      }
+    } catch {
+      // Fallback: an unauthenticated reader simply has none.
+    } finally {
+      setIsLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const unsub = api.subscribeToRealtimeEvents(['all'], (event) => {
+      if (event.type === 'story_update') {
+        fetchNotifications();
+      }
+    });
+    return () => unsub();
+  }, [fetchNotifications]);
+
+  return { notifications, isLoading, refresh: fetchNotifications };
 }
 
 /**
