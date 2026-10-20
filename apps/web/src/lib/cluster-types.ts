@@ -14,7 +14,15 @@ export interface GoogleNewsCluster {
   title: string;
   summary: string;
   category:
-    'India' | 'World' | 'Business' | 'Technology' | 'Science' | 'Health' | 'Sports' | string;
+    | 'India'
+    | 'World'
+    | 'Business'
+    | 'Technology'
+    | 'Science'
+    | 'Health'
+    | 'Sports'
+    | 'Entertainment'
+    | string;
   leadStory: {
     slug: string;
     headline: string;

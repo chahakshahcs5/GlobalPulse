@@ -132,6 +132,9 @@ export default function CategoryPage() {
 
   // Match category clusters strictly
   const categoryClusters = useMemo(() => {
+    if (slug.toLowerCase() === 'top-stories' || slug.toLowerCase() === 'top_stories') {
+      return allClusters;
+    }
     return allClusters.filter((c) => c.category.toLowerCase() === slug.toLowerCase());
   }, [allClusters, slug]);
 
@@ -196,7 +199,12 @@ export default function CategoryPage() {
 
       {/* Subcategory Filter Chips */}
       {subCategories.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs">
+        <div
+          onWheel={(e) => {
+            if (e.deltaY) e.currentTarget.scrollLeft += e.deltaY;
+          }}
+          className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth touch-pan-x text-xs"
+        >
           <span className="text-slate-400 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1 shrink-0">
             <Filter className="w-3 h-3 text-blue-500" /> Desks (Sub-sections):
           </span>

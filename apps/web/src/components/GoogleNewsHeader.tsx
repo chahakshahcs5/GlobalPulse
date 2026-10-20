@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -14,6 +14,8 @@ import {
   Radio,
   ShieldAlert,
   PenTool,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useBookmarks, useTaxonomy } from '../lib/news-store';
@@ -50,6 +52,9 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
   const currentTab = searchParams?.get('tab') || 'top';
   const { categories, navTabs } = useTaxonomy();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const dynamicCategories = categories.filter((c) => c.slug !== 'top-stories' && c.slug !== 'top');
   const baseTabs: HeaderTabItem[] =
@@ -70,9 +75,95 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
     })),
   ];
 
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (!el) return;
+
+    window.addEventListener('resize', checkScroll);
+
+    // Native non-passive wheel translation so mouse wheel horizontally scrolls the tabs
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0 && el.scrollWidth > el.clientWidth) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+        checkScroll();
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+      el.removeEventListener('wheel', onWheel);
+    };
+  }, [checkScroll, navItems.length]);
+
+  // Auto-scroll active item into view whenever route or tab changes
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const timer = setTimeout(() => {
+      const activeEl = scrollRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+      checkScroll();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [pathname, currentTab, checkScroll]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollAmount = direction === 'left' ? -260 : 260;
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    setTimeout(checkScroll, 300);
+  };
+
   return (
-    <nav className="border-t border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-none">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 h-11 text-xs sm:text-sm font-medium whitespace-nowrap">
+    <nav className="relative border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs select-none">
+      {/* Left Chevron Scroll Button & Gradient Mask */}
+      {canScrollLeft && (
+        <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pr-8 pl-1 sm:pl-3 bg-gradient-to-r from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pointer-events-none transition-opacity duration-200">
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            aria-label="Scroll left"
+            className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Right Chevron Scroll Button & Gradient Mask */}
+      {canScrollRight && (
+        <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center pl-8 pr-1 sm:pr-3 bg-gradient-to-l from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pointer-events-none transition-opacity duration-200">
+          <button
+            type="button"
+            onClick={() => scroll('right')}
+            aria-label="Scroll right"
+            className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Scrollable Tabs Track */}
+      <div
+        ref={scrollRef}
+        onScroll={checkScroll}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 h-11 text-xs sm:text-sm font-medium whitespace-nowrap overflow-x-auto scrollbar-none scroll-smooth touch-pan-x"
+      >
         {navItems.map((cat) => {
           const isHome = pathname === '/';
           let isActive = false;
@@ -93,7 +184,8 @@ function CategoryNavStrip({ pathname }: { pathname: string }) {
             <Link
               key={cat.href}
               href={cat.href}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition ${
+              data-active={isActive ? 'true' : 'false'}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition shrink-0 ${
                 isActive
                   ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
