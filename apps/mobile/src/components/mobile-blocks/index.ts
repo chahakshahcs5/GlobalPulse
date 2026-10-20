@@ -3,4 +3,7 @@ export * from './MobileTextBlocks';
 export * from './MobileMediaBlocks';
 export * from './MobileDataBlocks';
 export * from './MobileEntityBlocks';
+export * from './MobileIntelligenceBlocks';
+export * from './MobileVisualBlocks';
+export * from './MobileContextBlocks';
 export * from './MobileBlockItem';

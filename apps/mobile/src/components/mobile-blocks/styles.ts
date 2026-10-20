@@ -481,4 +481,89 @@ export const styles = StyleSheet.create({
     color: '#cbd5e1',
     minWidth: 90,
   },
+  // --- Intelligence, data and media expansion blocks -------------------------
+  intelCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    borderColor: '#1e293b',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
+  },
+  intelSectionLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#818cf8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  intelTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#f8fafc',
+  },
+  intelText: {
+    fontSize: 13,
+    color: '#cbd5e1',
+    lineHeight: 19,
+  },
+  intelMeta: {
+    fontSize: 10,
+    color: '#64748b',
+    fontFamily: 'monospace',
+  },
+  intelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  intelRowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  intelDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginVertical: 4,
+  },
+  intelPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+  },
+  intelPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#a5b4fc',
+    letterSpacing: 0.5,
+  },
+  intelPillPositive: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  intelPillPositiveText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#34d399',
+  },
+  intelPillNegative: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+  },
+  intelPillNegativeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#f87171',
+  },
+  intelListItem: {
+    gap: 2,
+    paddingVertical: 4,
+  },
 });
