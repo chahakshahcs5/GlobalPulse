@@ -62,9 +62,10 @@ export class PrismaEventRepository implements IEventRepository {
   }
 
   async findBySlug(slug: string, orgId: string): Promise<Event | null> {
-    const row = await this.eventClient.findFirst({
-      where: { id: slug, organizationId: orgId },
-    });
+    // Match on the dedicated slug column (mirrors the in-memory engine).
+    // Querying `where: { id: slug }` never matched real slugs.
+    const where: Record<string, unknown> = { slug, organizationId: orgId };
+    const row = await this.eventClient.findFirst({ where });
     return row ? this.mapToDomain(row) : null;
   }
 
@@ -73,6 +74,7 @@ export class PrismaEventRepository implements IEventRepository {
       data: {
         id: event.id,
         organizationId: event.organizationId,
+        slug: event.slug || '',
         title: event.title,
         summary: event.summary,
         status: event.status,
@@ -90,6 +92,7 @@ export class PrismaEventRepository implements IEventRepository {
     const updated = await this.eventClient.update({
       where: { id: event.id },
       data: {
+        slug: event.slug || '',
         title: event.title,
         summary: event.summary,
         status: event.status,

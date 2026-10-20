@@ -60,9 +60,16 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     const col = this.collections.get(collectionId);
     if (!col) return null;
     if (!col.storyIds.includes(storyId)) {
-      col.storyIds.push(storyId);
-      col.updatedAt = new Date().toISOString();
-      this.collections.set(collectionId, col);
+      // Copy-on-write: never mutate the stored record in place, otherwise an
+      // in-flight transaction snapshot shares the array and rollback misses
+      // the change.
+      const updated: StoryCollection = {
+        ...col,
+        storyIds: [...col.storyIds, storyId],
+        updatedAt: new Date().toISOString(),
+      };
+      this.collections.set(collectionId, updated);
+      return { ...updated };
     }
     return { ...col };
   }
@@ -70,10 +77,14 @@ export class MemoryCollectionRepository implements ICollectionRepository {
   async removeStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
     const col = this.collections.get(collectionId);
     if (!col) return null;
-    col.storyIds = col.storyIds.filter((id) => id !== storyId);
-    col.updatedAt = new Date().toISOString();
-    this.collections.set(collectionId, col);
-    return { ...col };
+    const filtered = col.storyIds.filter((id) => id !== storyId);
+    const updated: StoryCollection = {
+      ...col,
+      storyIds: filtered,
+      updatedAt: new Date().toISOString(),
+    };
+    this.collections.set(collectionId, updated);
+    return { ...updated };
   }
 
   async delete(id: string): Promise<boolean> {
@@ -81,11 +92,20 @@ export class MemoryCollectionRepository implements ICollectionRepository {
   }
 
   snapshot(): Map<string, StoryCollection> {
-    return new Map(this.collections);
+    // Copy records (and their arrays) so transaction rollback cannot leak
+    // in-place mutations that happened after the snapshot was taken.
+    return new Map(
+      Array.from(this.collections.entries()).map(([k, v]) => [
+        k,
+        { ...v, storyIds: [...v.storyIds] },
+      ])
+    );
   }
 
   restore(snapshot: Map<string, StoryCollection>): void {
-    this.collections = new Map(snapshot);
+    this.collections = new Map(
+      Array.from(snapshot.entries()).map(([k, v]) => [k, { ...v, storyIds: [...v.storyIds] }])
+    );
   }
 
   clear(): void {

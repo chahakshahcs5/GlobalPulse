@@ -15,11 +15,10 @@ interface PrismaSubscriptionRow {
 interface PrismaDigestRow {
   id: string;
   frequency: 'daily' | 'weekly';
-  date: string;
   category?: string | null;
-  headline: string;
-  curatedStoryIds: string[] | string;
-  stories: unknown;
+  storyIds: string[];
+  contentSummary?: string | null;
+  metadata?: unknown;
   generatedAt: Date | string;
 }
 
@@ -258,6 +257,38 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
     }
   }
 
+  /**
+   * Maps a NewsletterDigest row back to the domain shape. The schema stores
+   * date/headline/curatedStoryIds inside `contentSummary`/`storyIds`/`metadata`
+   * columns — reading `row.date`/`row.headline`/... directly used to return
+   * undefined values on the Prisma engine.
+   */
+  private mapDigestRow(row: {
+    id: string;
+    frequency: string;
+    category?: string | null;
+    storyIds: string[];
+    contentSummary?: string | null;
+    metadata?: unknown;
+    generatedAt: Date | string;
+  }): NewsletterDigest {
+    const metadata = (row.metadata ?? {}) as {
+      date?: string;
+      stories?: NewsletterDigest['stories'];
+    };
+    return {
+      id: row.id,
+      frequency: row.frequency as 'daily' | 'weekly',
+      date: metadata.date ?? '',
+      category: row.category || undefined,
+      headline: row.contentSummary ?? '',
+      curatedStoryIds: Array.isArray(row.storyIds) ? row.storyIds : [],
+      stories: Array.isArray(metadata.stories) ? metadata.stories : [],
+      generatedAt:
+        row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
+    };
+  }
+
   async getDigest(id: string): Promise<NewsletterDigest | null> {
     if (!this.digestClient) {
       return this.fallbackMemory.getDigest(id);
@@ -265,17 +296,7 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
     try {
       const row = await this.digestClient.findUnique({ where: { id } });
       if (!row) return null;
-      return {
-        id: row.id,
-        frequency: row.frequency as 'daily' | 'weekly',
-        date: row.date,
-        category: row.category || undefined,
-        headline: row.headline,
-        curatedStoryIds: row.curatedStoryIds as string[],
-        stories: row.stories as NewsletterDigest['stories'],
-        generatedAt:
-          row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
-      };
+      return this.mapDigestRow(row);
     } catch {
       return this.fallbackMemory.getDigest(id);
     }
@@ -298,17 +319,7 @@ export class PrismaNewsletterRepository implements INewsletterRepository {
         orderBy: { generatedAt: 'desc' },
       });
       if (!row) return null;
-      return {
-        id: row.id,
-        frequency: row.frequency as 'daily' | 'weekly',
-        date: row.date,
-        category: row.category || undefined,
-        headline: row.headline,
-        curatedStoryIds: row.curatedStoryIds as string[],
-        stories: row.stories as NewsletterDigest['stories'],
-        generatedAt:
-          row.generatedAt instanceof Date ? row.generatedAt.toISOString() : String(row.generatedAt),
-      };
+      return this.mapDigestRow(row);
     } catch {
       return this.fallbackMemory.getLatestDigest(frequency, category);
     }

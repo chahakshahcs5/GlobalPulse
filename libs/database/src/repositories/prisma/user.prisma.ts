@@ -189,7 +189,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<FollowRecord> {
     const now = new Date().toISOString();
@@ -231,15 +231,15 @@ export class PrismaUserRepository implements IUserRepository {
 
   async unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
     if (this.followClient) {
       try {
-        await this.followClient.deleteMany({
+        const res = await this.followClient.deleteMany({
           where: { userId, targetType, targetId },
         });
-        return true;
+        return res.count > 0;
       } catch {
         // Fallback to memory
       }
@@ -251,7 +251,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async listFollowing(
     userId: string,
-    targetType?: 'topic' | 'entity' | 'author'
+    targetType?: 'topic' | 'entity' | 'author' | 'source'
   ): Promise<FollowRecord[]> {
     if (this.followClient) {
       try {
@@ -263,7 +263,7 @@ export class PrismaUserRepository implements IUserRepository {
         });
         return rows.map((r) => ({
           userId: r.userId,
-          targetType: r.targetType as 'topic' | 'entity' | 'author',
+          targetType: r.targetType as FollowRecord['targetType'],
           targetId: r.targetId,
           createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
         }));
@@ -285,7 +285,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
     if (this.followClient) {

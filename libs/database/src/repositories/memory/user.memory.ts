@@ -132,7 +132,7 @@ export class MemoryUserRepository implements IUserRepository {
 
   async followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<FollowRecord> {
     const key = `${userId}:${targetType}:${targetId}`;
@@ -148,7 +148,7 @@ export class MemoryUserRepository implements IUserRepository {
 
   async unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
     const key = `${userId}:${targetType}:${targetId}`;
@@ -157,7 +157,7 @@ export class MemoryUserRepository implements IUserRepository {
 
   async listFollowing(
     userId: string,
-    targetType?: 'topic' | 'entity' | 'author'
+    targetType?: 'topic' | 'entity' | 'author' | 'source'
   ): Promise<FollowRecord[]> {
     const list: FollowRecord[] = [];
     for (const record of this.follows.values()) {
@@ -172,7 +172,7 @@ export class MemoryUserRepository implements IUserRepository {
 
   async isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author',
+    targetType: 'topic' | 'entity' | 'author' | 'source',
     targetId: string
   ): Promise<boolean> {
     const key = `${userId}:${targetType}:${targetId}`;

@@ -41,6 +41,7 @@ export class PrismaClusterRepository implements IClusterRepository {
           orderBy?: Record<string, unknown>;
         }) => Promise<PrismaClusterRow[]>;
         delete: (args: { where: Record<string, unknown> }) => Promise<unknown>;
+        deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
       }
     | undefined {
     return (this.prisma as Record<string, unknown>).storyCluster as typeof this.clusterClient;
@@ -199,8 +200,11 @@ export class PrismaClusterRepository implements IClusterRepository {
       return this.fallbackMemory.delete(id, orgId);
     }
     try {
-      await this.clusterClient.delete({ where: { id } });
-      return true;
+      // Tenant guard: the memory engine refuses to delete another org's
+      // cluster, the Prisma path must do the same via a scoped deleteMany.
+      const where: Record<string, unknown> = orgId ? { id, organizationId: orgId } : { id };
+      const result = await this.clusterClient.deleteMany({ where });
+      return result.count > 0;
     } catch {
       return this.fallbackMemory.delete(id, orgId);
     }

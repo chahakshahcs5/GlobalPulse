@@ -204,6 +204,23 @@ export class PrismaCollectionRepository implements ICollectionRepository {
     }
   }
 
+  private mapCollectionRow(row: PrismaCollectionRow): StoryCollection {
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description || undefined,
+      curatorId: row.curatorId,
+      curatorName: row.curatorName || undefined,
+      isPublic: row.isPublic,
+      storyIds: row.storyIds as string[],
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      updatedAt:
+        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+    };
+  }
+
   async addStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
     if (!this.collectionClient) {
       return this.fallbackMemory.addStory(collectionId, storyId);
@@ -211,18 +228,35 @@ export class PrismaCollectionRepository implements ICollectionRepository {
     try {
       const col = await this.findById(collectionId);
       if (!col) return null;
-      if (!col.storyIds.includes(storyId)) {
-        col.storyIds.push(storyId);
-        await this.collectionClient.update({
+      try {
+        const row = await this.collectionClient.update({
           where: { id: collectionId },
+          // Push into the array server-side: a read-modify-write of the whole
+          // storyIds array loses entries when two clients add concurrently.
           data: {
-            storyIds: col.storyIds,
+            storyIds: { push: storyId } as unknown as string[],
             updatedAt: new Date(),
           },
         });
-        col.updatedAt = new Date().toISOString();
+        return this.mapCollectionRow(row);
+      } catch {
+        // Some Prisma versions reject scalar-list push in this position —
+        // fall back to the read-modify-write path.
+        const fresh = await this.findById(collectionId);
+        if (!fresh) return null;
+        if (!fresh.storyIds.includes(storyId)) {
+          fresh.storyIds.push(storyId);
+          await this.collectionClient.update({
+            where: { id: collectionId },
+            data: {
+              storyIds: fresh.storyIds,
+              updatedAt: new Date(),
+            },
+          });
+          fresh.updatedAt = new Date().toISOString();
+        }
+        return fresh;
       }
-      return col;
     } catch {
       return this.fallbackMemory.addStory(collectionId, storyId);
     }
@@ -235,11 +269,16 @@ export class PrismaCollectionRepository implements ICollectionRepository {
     try {
       const col = await this.findById(collectionId);
       if (!col) return null;
-      col.storyIds = col.storyIds.filter((id) => id !== storyId);
+      if (!col.storyIds.includes(storyId)) {
+        // Nothing to remove — don't churn updatedAt on no-op calls.
+        return col;
+      }
       await this.collectionClient.update({
         where: { id: collectionId },
         data: {
-          storyIds: col.storyIds,
+          // Write the filtered list atomically (array removal of a scalar list
+          // requires the full replacement value in Prisma).
+          storyIds: col.storyIds.filter((id) => id !== storyId),
           updatedAt: new Date(),
         },
       });

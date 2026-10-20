@@ -162,7 +162,13 @@ export class MemoryStoryRepository implements IStoryRepository {
     const lastItem = pageSlice[pageSlice.length - 1];
     const nextCursor =
       hasMore && lastItem
-        ? encodeCursor({ updatedAt: lastItem.updatedAt, id: lastItem.id })
+        ? // Encode the exact sort key (publishedAt || updatedAt) used by the
+          // comparator, not raw updatedAt — otherwise the fallback position
+          // scan compares against a different date than the pages are ordered by.
+          encodeCursor({
+            updatedAt: lastItem.publishedAt || lastItem.updatedAt,
+            id: lastItem.id,
+          })
         : undefined;
 
     const items = pageSlice.map((s) => ({
@@ -223,21 +229,23 @@ export class MemoryStoryRepository implements IStoryRepository {
   async linkTopic(storyId: string, topicId: string): Promise<void> {
     const story = this.stories.get(storyId);
     if (story && !story.topicIds.includes(topicId)) {
-      story.topicIds.push(topicId);
+      // Copy-on-write so in-flight transaction snapshots (which shallow-copy
+      // records) are never corrupted by in-place array mutation.
+      this.stories.set(storyId, { ...story, topicIds: [...story.topicIds, topicId] });
     }
   }
 
   async linkEntity(storyId: string, entityId: string): Promise<void> {
     const story = this.stories.get(storyId);
     if (story && !story.entityIds.includes(entityId)) {
-      story.entityIds.push(entityId);
+      this.stories.set(storyId, { ...story, entityIds: [...story.entityIds, entityId] });
     }
   }
 
   async linkSource(storyId: string, sourceId: string): Promise<void> {
     const story = this.stories.get(storyId);
     if (story && !story.sourceIds.includes(sourceId)) {
-      story.sourceIds.push(sourceId);
+      this.stories.set(storyId, { ...story, sourceIds: [...story.sourceIds, sourceId] });
     }
   }
 

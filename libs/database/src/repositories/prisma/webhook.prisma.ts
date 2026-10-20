@@ -136,11 +136,106 @@ export class PrismaWebhookRepository implements IWebhookRepository {
     }
   }
 
+  private get dispatchLogClient():
+    | {
+        create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+        findMany: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<Array<Record<string, unknown>>>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>).webhookDispatchLog as
+      | {
+          create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          findMany: (args: {
+            where: Record<string, unknown>;
+          }) => Promise<Array<Record<string, unknown>>>;
+        }
+      | undefined;
+  }
+
   async logDispatch(log: WebhookDispatchLog): Promise<WebhookDispatchLog> {
-    return this.fallbackMemory.logDispatch(log);
+    const client = this.dispatchLogClient;
+    if (!client) {
+      return this.fallbackMemory.logDispatch(log);
+    }
+    try {
+      const created = (await client.create({
+        data: {
+          id: log.id,
+          subscriptionId: log.subscriptionId,
+          event: log.event,
+          targetUrl: '',
+          payload: log.payload ?? {},
+          statusCode: log.statusCode ?? 0,
+          success: log.success,
+          durationMs: 0,
+          attempt: 1,
+          errorMessage: log.error ?? null,
+          dispatchedAt: new Date(log.timestamp),
+        },
+      })) as {
+        id: string;
+        subscriptionId: string;
+        event: string;
+        payload: unknown;
+        statusCode: number;
+        success: boolean;
+        errorMessage: string | null;
+        dispatchedAt: Date | string;
+      };
+      return {
+        id: created.id,
+        subscriptionId: created.subscriptionId,
+        event: created.event as WebhookDispatchLog['event'],
+        payload: (created.payload ?? {}) as WebhookDispatchLog['payload'],
+        statusCode: created.statusCode,
+        success: created.success,
+        error: created.errorMessage || undefined,
+        timestamp:
+          created.dispatchedAt instanceof Date
+            ? created.dispatchedAt.toISOString()
+            : String(created.dispatchedAt),
+      };
+    } catch {
+      return this.fallbackMemory.logDispatch(log);
+    }
   }
 
   async listDispatchLogs(subscriptionId: string): Promise<WebhookDispatchLog[]> {
-    return this.fallbackMemory.listDispatchLogs(subscriptionId);
+    const client = this.dispatchLogClient;
+    if (!client) {
+      return this.fallbackMemory.listDispatchLogs(subscriptionId);
+    }
+    try {
+      const rows = await client.findMany({
+        where: { subscriptionId },
+      });
+      return rows.map((row) => {
+        const r = row as {
+          id: string;
+          subscriptionId: string;
+          event: string;
+          payload: unknown;
+          statusCode: number;
+          success: boolean;
+          errorMessage: string | null;
+          dispatchedAt: Date | string;
+        };
+        return {
+          id: r.id,
+          subscriptionId: r.subscriptionId,
+          event: r.event as WebhookDispatchLog['event'],
+          payload: (r.payload ?? {}) as WebhookDispatchLog['payload'],
+          statusCode: r.statusCode,
+          success: r.success,
+          error: r.errorMessage || undefined,
+          timestamp:
+            r.dispatchedAt instanceof Date ? r.dispatchedAt.toISOString() : String(r.dispatchedAt),
+        };
+      });
+    } catch {
+      return this.fallbackMemory.listDispatchLogs(subscriptionId);
+    }
   }
 }

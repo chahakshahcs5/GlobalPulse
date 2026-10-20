@@ -141,6 +141,7 @@ model User {
 model Event {
   id             String       @id @default(uuid())
   organizationId String
+  slug           String       @default("")
   title          String
   summary        String
   status         String       @default("ACTIVE")
@@ -156,6 +157,7 @@ model Event {
   stories        Story[]
 
   @@index([organizationId, status])
+  @@index([organizationId, slug])
   @@map("events")
 }
 
@@ -562,6 +564,7 @@ model WebhookDispatchLog {
   subscriptionId String
   event          String
   targetUrl      String
+  payload        Json     @default("{}")
   statusCode     Int
   success        Boolean
   durationMs     Int
