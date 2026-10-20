@@ -26,6 +26,7 @@ export interface UploadResult {
 }
 
 export class S3StorageService {
+  private static readonly MAX_MEMORY_FALLBACK_ENTRIES = 200;
   private client: S3Client | null = null;
   private bucket: string;
   private publicUrl: string;
@@ -132,10 +133,26 @@ export class S3StorageService {
           etag: res.ETag,
         };
       } catch {
-        // Fallback to internal storage if remote S3 daemon is unreachable in dev/test
+        // Fallback to internal storage only when remote S3 daemon is unreachable in dev/test.
       }
     }
 
+    // Memory fallback is a dev/test convenience; in production the in-memory
+    // fallback silently loses data (URLs point at a CDN we never wrote to),
+    // so surface the failure instead.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        `S3 upload failed for "${normalizedKey}": remote storage unreachable and memory fallback is disabled in production.`
+      );
+    }
+
+    // Bound the dev/test fallback so it cannot grow without limit.
+    if (this.memoryFallback.size >= S3StorageService.MAX_MEMORY_FALLBACK_ENTRIES) {
+      const oldest = this.memoryFallback.keys().next().value;
+      if (oldest !== undefined) {
+        this.memoryFallback.delete(oldest);
+      }
+    }
     this.memoryFallback.set(normalizedKey, { body: buffer, contentType });
     return {
       key: normalizedKey,
