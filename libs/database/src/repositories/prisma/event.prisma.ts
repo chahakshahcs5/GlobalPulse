@@ -1,4 +1,4 @@
-import type { Event } from '@ai-news/schemas';
+import type { Event, EventMapFilter } from '@ai-news/schemas';
 import type { IEventRepository } from '../../interfaces/event.repository';
 
 interface PrismaEventRow {
@@ -8,6 +8,8 @@ interface PrismaEventRow {
   title: string;
   summary: string;
   status: string;
+  category?: string | null;
+  severity?: string | null;
   occurredAt: Date;
   location?: string | null;
   coordinates: number[];
@@ -15,6 +17,7 @@ interface PrismaEventRow {
   entityIds: string[];
   storyIds?: string[];
   sourceIds?: string[];
+  metadata?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,11 +81,14 @@ export class PrismaEventRepository implements IEventRepository {
         title: event.title,
         summary: event.summary,
         status: event.status,
+        category: event.category,
+        severity: event.severity,
         occurredAt: new Date(event.occurredAt),
         location: event.location,
         coordinates: event.coordinates || [],
         topicIds: event.topicIds || [],
         entityIds: event.entityIds || [],
+        metadata: event.metadata,
       },
     });
     return this.mapToDomain(created);
@@ -96,11 +102,14 @@ export class PrismaEventRepository implements IEventRepository {
         title: event.title,
         summary: event.summary,
         status: event.status,
+        category: event.category,
+        severity: event.severity,
         occurredAt: new Date(event.occurredAt),
         location: event.location,
         coordinates: event.coordinates || [],
         topicIds: event.topicIds || [],
         entityIds: event.entityIds || [],
+        metadata: event.metadata,
       },
     });
     return this.mapToDomain(updated);
@@ -113,6 +122,50 @@ export class PrismaEventRepository implements IEventRepository {
       orderBy: { updatedAt: 'desc' },
     });
     return rows.map((r) => this.mapToDomain(r));
+  }
+
+  async listForMap(orgId: string, filter: EventMapFilter): Promise<Event[]> {
+    const where: Record<string, unknown> = { organizationId: orgId };
+
+    if (filter.locatedOnly) {
+      // Prisma cannot express "array has exactly two non-null entries" portably,
+      // so the located filter is applied after the query.
+      where.NOT = { coordinates: { equals: [] } };
+    }
+    if (filter.categories.length > 0) {
+      where.category = { in: filter.categories };
+    }
+    if (filter.severities.length > 0) {
+      where.severity = { in: filter.severities };
+    }
+    if (filter.statuses.length > 0) {
+      where.status = { in: filter.statuses };
+    }
+    if (filter.fromDate || filter.toDate) {
+      const occurredAt: Record<string, unknown> = {};
+      if (filter.fromDate) occurredAt.gte = new Date(filter.fromDate);
+      if (filter.toDate) occurredAt.lte = new Date(filter.toDate);
+      where.occurredAt = occurredAt;
+    }
+
+    const rows = await this.eventClient.findMany({
+      where,
+      take: filter.limit * 2,
+      orderBy: { occurredAt: 'desc' },
+    });
+
+    return rows
+      .map((r) => this.mapToDomain(r))
+      .filter((event) => {
+        if (filter.locatedOnly && !event.coordinates) return false;
+        if (filter.bbox && event.coordinates) {
+          const [lng, lat] = event.coordinates;
+          const [west, south, east, north] = filter.bbox;
+          if (lng < west || lng > east || lat < south || lat > north) return false;
+        }
+        return true;
+      })
+      .slice(0, filter.limit);
   }
 
   async search(query: string, orgId: string): Promise<Event[]> {
@@ -136,6 +189,8 @@ export class PrismaEventRepository implements IEventRepository {
       title: row.title,
       summary: row.summary,
       status: row.status as Event['status'],
+      category: row.category ?? undefined,
+      severity: (row.severity as Event['severity']) ?? undefined,
       occurredAt: row.occurredAt.toISOString(),
       location: row.location || undefined,
       coordinates:
@@ -146,6 +201,7 @@ export class PrismaEventRepository implements IEventRepository {
       entityIds: row.entityIds || [],
       storyIds: row.storyIds || [],
       sourceIds: row.sourceIds || [],
+      metadata: (row.metadata as Record<string, unknown> | null) ?? undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

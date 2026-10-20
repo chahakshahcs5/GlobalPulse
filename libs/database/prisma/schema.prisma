@@ -145,11 +145,14 @@ model Event {
   title          String
   summary        String
   status         String       @default("ACTIVE")
+  category       String?      @default("general")
+  severity       String?      @default("MODERATE")
   occurredAt     DateTime     @default(now())
   location       String?
   coordinates    Float[]
   topicIds       String[]     @default([])
   entityIds      String[]     @default([])
+  metadata       Json?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -158,6 +161,8 @@ model Event {
 
   @@index([organizationId, status])
   @@index([organizationId, slug])
+  @@index([organizationId, category])
+  @@index([organizationId, severity])
   @@map("events")
 }
 
@@ -289,6 +294,11 @@ model Publisher {
   websiteUrl       String?
   biasRating       String?
   credibilityScore Float?
+  ownership        String?
+  methodology      String?
+  correctionPolicyUrl String?
+  foundedYear      Int?
+  metadata         Json?
   isVerified       Boolean  @default(true)
   followerCount    Int      @default(0)
   createdAt        DateTime @default(now())
@@ -671,5 +681,232 @@ model NavTab {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@map("nav_tabs")
+}
+
+// ---------------------------------------------------------------------------
+// Story intelligence: claims, evidence, timelines, perspectives.
+// These rows intentionally carry organizationId so tenant isolation is enforced
+// in every repository query, independently of the parent story row.
+// ---------------------------------------------------------------------------
+
+model StoryClaim {
+  id                    String    @id @default(uuid())
+  organizationId        String
+  storyId               String
+  text                  String
+  status                String    @default("UNVERIFIED")
+  confidence            Float?
+  confidenceMethodology String?
+  methodology           String?
+  reviewerId            String?
+  reviewedAt            DateTime?
+  reviewNotes           String?
+  sourceIds             String[]  @default([])
+  citationIds           String[]  @default([])
+  createdBy             String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([organizationId, storyId])
+  @@index([organizationId, status])
+  @@map("story_claims")
+}
+
+model Evidence {
+  id             String    @id @default(uuid())
+  organizationId String
+  storyId        String
+  claimId        String?
+  sourceId       String?
+  citationId     String?
+  type           String    @default("OTHER")
+  title          String
+  description    String?
+  url            String?
+  excerpt        String?
+  stance         String    @default("CONTEXT")
+  strength       Float?
+  methodology    String?
+  retrievedAt    DateTime?
+  publishedAt    DateTime?
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId, storyId])
+  @@index([organizationId, claimId])
+  @@map("evidence")
+}
+
+model StoryTimelineEvent {
+  id             String    @id @default(uuid())
+  organizationId String
+  storyId        String
+  title          String
+  description    String
+  eventType      String    @default("DEVELOPMENT")
+  occurredAt     DateTime
+  location       String?
+  coordinates    Float[]
+  entityIds      String[]  @default([])
+  sourceIds      String[]  @default([])
+  citationIds    String[]  @default([])
+  mediaUrl       String?
+  authorId       String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId, storyId, occurredAt])
+  @@map("story_timeline_events")
+}
+
+model EditorialPerspective {
+  id             String    @id @default(uuid())
+  organizationId String
+  storyId        String
+  label          String
+  summary        String
+  stance         String    @default("UNKNOWN")
+  sourceIds      String[]  @default([])
+  citationIds    String[]  @default([])
+  quoteExcerpt   String?
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId, storyId])
+  @@map("editorial_perspectives")
+}
+
+// ---------------------------------------------------------------------------
+// Knowledge graph, alerts, ingestion, source intelligence.
+// ---------------------------------------------------------------------------
+
+model KnowledgeEdge {
+  id             String   @id @default(uuid())
+  organizationId String
+  fromType       String
+  fromId         String
+  relation       String
+  toType         String
+  toId           String
+  weight         Float    @default(1)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, fromType, fromId, relation, toType, toId])
+  @@index([organizationId, fromType, fromId])
+  @@index([organizationId, toType, toId])
+  @@index([organizationId, relation])
+  @@map("knowledge_edges")
+}
+
+model AlertRule {
+  id              String    @id @default(uuid())
+  organizationId  String
+  /// Owner of a personal rule. NULL means the rule is organization-wide.
+  userId          String?
+  scope           String    @default("organization")
+  name            String
+  description     String?
+  enabled         Boolean   @default(true)
+  conditions      Json
+  channels        String[]  @default(["in_app"])
+  schedule        Json?
+  cooldownMinutes Int       @default(15)
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastTriggeredAt DateTime?
+
+  @@index([organizationId, enabled])
+  @@index([organizationId, userId])
+  @@map("alert_rules")
+}
+
+model AlertTrigger {
+  id                String   @id @default(uuid())
+  organizationId    String
+  ruleId            String
+  resourceType      String
+  resourceId        String
+  severity          String
+  message           String
+  matchedConditions String[] @default([])
+  deliveredChannels String[] @default([])
+  createdAt         DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([ruleId, createdAt])
+  @@map("alert_triggers")
+}
+
+model IngestionFeed {
+  id                   String    @id @default(uuid())
+  organizationId       String
+  name                 String
+  url                  String
+  type                 String    @default("rss")
+  active               Boolean   @default(true)
+  defaultTopicIds      String[]  @default([])
+  defaultEntityIds     String[]  @default([])
+  defaultSourceType    String    @default("NEWS_ARTICLE")
+  fetchIntervalMinutes Int       @default(15)
+  lastFetchedAt        DateTime?
+  lastStatus           String?
+  etag                 String?
+  lastModified         String?
+  createdBy            String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([organizationId, url])
+  @@index([organizationId, active])
+  @@map("ingestion_feeds")
+}
+
+model IngestionItem {
+  id             String    @id @default(uuid())
+  organizationId String
+  feedId         String
+  externalId     String?
+  url            String
+  title          String
+  summary        String?
+  contentText    String?
+  author         String?
+  publishedAt    DateTime?
+  retrievedAt    DateTime  @default(now())
+  dedupeHash     String
+  status         String    @default("NEW")
+  signals        Json
+  claimTexts     String[]  @default([])
+  raw            Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([organizationId, dedupeHash])
+  @@index([organizationId, feedId])
+  @@index([organizationId, status])
+  @@map("ingestion_items")
+}
+
+model SourceCorrection {
+  id             String   @id @default(uuid())
+  organizationId String
+  publisherId    String?
+  sourceId       String?
+  storyId        String?
+  type           String
+  description    String
+  issuedAt       DateTime @default(now())
+  url            String?
+  recordedBy     String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, publisherId])
+  @@index([organizationId, sourceId])
+  @@index([organizationId, storyId])
+  @@map("source_corrections")
 }
 

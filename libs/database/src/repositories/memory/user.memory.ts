@@ -1,4 +1,4 @@
-import type { NewsroomUser } from '@ai-news/schemas';
+import type { NewsroomUser, FollowTargetType } from '@ai-news/schemas';
 import type { IUserRepository, FollowRecord } from '../../interfaces/user.repository';
 
 export class MemoryUserRepository implements IUserRepository {
@@ -132,7 +132,7 @@ export class MemoryUserRepository implements IUserRepository {
 
   async followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<FollowRecord> {
     const key = `${userId}:${targetType}:${targetId}`;
@@ -148,17 +148,14 @@ export class MemoryUserRepository implements IUserRepository {
 
   async unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<boolean> {
     const key = `${userId}:${targetType}:${targetId}`;
     return this.follows.delete(key);
   }
 
-  async listFollowing(
-    userId: string,
-    targetType?: 'topic' | 'entity' | 'author' | 'source'
-  ): Promise<FollowRecord[]> {
+  async listFollowing(userId: string, targetType?: FollowTargetType): Promise<FollowRecord[]> {
     const list: FollowRecord[] = [];
     for (const record of this.follows.values()) {
       if (record.userId === userId) {
@@ -170,9 +167,19 @@ export class MemoryUserRepository implements IUserRepository {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async listFollowers(targetType: FollowTargetType, targetId: string): Promise<FollowRecord[]> {
+    const list: FollowRecord[] = [];
+    for (const record of this.follows.values()) {
+      if (record.targetType === targetType && record.targetId === targetId) {
+        list.push({ ...record });
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<boolean> {
     const key = `${userId}:${targetType}:${targetId}`;

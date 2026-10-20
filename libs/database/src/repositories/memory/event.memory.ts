@@ -1,4 +1,4 @@
-import type { Event } from '@ai-news/schemas';
+import type { Event, EventMapFilter } from '@ai-news/schemas';
 import type { IEventRepository } from '../../interfaces/event.repository';
 
 export class MemoryEventRepository implements IEventRepository {
@@ -40,6 +40,37 @@ export class MemoryEventRepository implements IEventRepository {
     return Array.from(this.events.values())
       .filter((e) => e.organizationId === orgId)
       .slice(0, limit);
+  }
+
+  async listForMap(orgId: string, filter: EventMapFilter): Promise<Event[]> {
+    const from = filter.fromDate ? new Date(filter.fromDate).getTime() : undefined;
+    const to = filter.toDate ? new Date(filter.toDate).getTime() : undefined;
+
+    return Array.from(this.events.values())
+      .filter((event) => {
+        if (event.organizationId !== orgId) return false;
+        if (filter.locatedOnly && !event.coordinates) return false;
+        if (filter.categories.length > 0) {
+          if (!event.category || !filter.categories.includes(event.category)) return false;
+        }
+        if (filter.severities.length > 0) {
+          if (!event.severity || !filter.severities.includes(event.severity)) return false;
+        }
+        if (filter.statuses.length > 0 && !filter.statuses.includes(event.status)) return false;
+        if (from !== undefined || to !== undefined) {
+          const occurred = new Date(event.occurredAt).getTime();
+          if (from !== undefined && occurred < from) return false;
+          if (to !== undefined && occurred > to) return false;
+        }
+        if (filter.bbox && event.coordinates) {
+          const [lng, lat] = event.coordinates;
+          const [west, south, east, north] = filter.bbox;
+          if (lng < west || lng > east || lat < south || lat > north) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+      .slice(0, filter.limit);
   }
 
   async search(query: string, orgId: string): Promise<Event[]> {

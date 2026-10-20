@@ -18,3 +18,8 @@ export * from './provenance.repository';
 export * from './fact-check.repository';
 export * from './category.repository';
 export * from './nav-tab.repository';
+export * from './intelligence.repository';
+export * from './alert.repository';
+export * from './knowledge-graph.repository';
+export * from './ingestion.repository';
+export * from './source-correction.repository';

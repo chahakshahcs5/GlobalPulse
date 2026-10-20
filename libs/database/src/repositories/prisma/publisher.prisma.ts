@@ -15,6 +15,11 @@ interface PrismaPublisherRow {
   websiteUrl?: string | null;
   biasRating?: string | null;
   credibilityScore?: number | null;
+  ownership?: string | null;
+  methodology?: string | null;
+  correctionPolicyUrl?: string | null;
+  foundedYear?: number | null;
+  metadata?: unknown;
   isVerified: boolean;
   followerCount: number;
   createdAt: Date;
@@ -98,6 +103,11 @@ export class PrismaPublisherRepository implements IPublisherRepository {
         websiteUrl: publisher.websiteUrl,
         biasRating: publisher.biasRating,
         credibilityScore: publisher.credibilityScore,
+        ownership: publisher.ownership,
+        methodology: publisher.methodology,
+        correctionPolicyUrl: publisher.correctionPolicyUrl,
+        foundedYear: publisher.foundedYear,
+        metadata: publisher.metadata,
         isVerified: publisher.isVerified ?? true,
         followerCount: publisher.followerCount || 0,
         createdAt: new Date(publisher.createdAt),
@@ -122,6 +132,11 @@ export class PrismaPublisherRepository implements IPublisherRepository {
         websiteUrl: publisher.websiteUrl,
         biasRating: publisher.biasRating,
         credibilityScore: publisher.credibilityScore,
+        ownership: publisher.ownership,
+        methodology: publisher.methodology,
+        correctionPolicyUrl: publisher.correctionPolicyUrl,
+        foundedYear: publisher.foundedYear,
+        metadata: publisher.metadata,
         isVerified: publisher.isVerified,
         followerCount: publisher.followerCount,
         updatedAt: new Date(publisher.updatedAt),
@@ -174,6 +189,11 @@ export class PrismaPublisherRepository implements IPublisherRepository {
       websiteUrl: row.websiteUrl ?? undefined,
       biasRating: row.biasRating ?? undefined,
       credibilityScore: row.credibilityScore ?? undefined,
+      ownership: row.ownership ?? undefined,
+      methodology: row.methodology ?? undefined,
+      correctionPolicyUrl: row.correctionPolicyUrl ?? undefined,
+      foundedYear: row.foundedYear ?? undefined,
+      metadata: (row.metadata as Record<string, unknown> | null) ?? undefined,
       isVerified: row.isVerified,
       followerCount: row.followerCount,
       createdAt:

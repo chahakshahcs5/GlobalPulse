@@ -4,6 +4,7 @@ import type {
   UserStatus,
   ClientType,
   UserPreferences,
+  FollowTargetType,
 } from '@ai-news/schemas';
 import type { IUserRepository, FollowRecord } from '../../interfaces/user.repository';
 
@@ -189,7 +190,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<FollowRecord> {
     const now = new Date().toISOString();
@@ -231,7 +232,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async unfollowTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<boolean> {
     if (this.followClient) {
@@ -249,10 +250,7 @@ export class PrismaUserRepository implements IUserRepository {
     return this.follows.delete(key);
   }
 
-  async listFollowing(
-    userId: string,
-    targetType?: 'topic' | 'entity' | 'author' | 'source'
-  ): Promise<FollowRecord[]> {
+  async listFollowing(userId: string, targetType?: FollowTargetType): Promise<FollowRecord[]> {
     if (this.followClient) {
       try {
         const where: Record<string, unknown> = { userId };
@@ -283,9 +281,36 @@ export class PrismaUserRepository implements IUserRepository {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async listFollowers(targetType: FollowTargetType, targetId: string): Promise<FollowRecord[]> {
+    if (this.followClient) {
+      try {
+        const rows = await this.followClient.findMany({
+          where: { targetType, targetId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return rows.map((r) => ({
+          userId: r.userId,
+          targetType: r.targetType as FollowRecord['targetType'],
+          targetId: r.targetId,
+          createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+        }));
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
+    const list: FollowRecord[] = [];
+    for (const record of this.follows.values()) {
+      if (record.targetType === targetType && record.targetId === targetId) {
+        list.push({ ...record });
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async isFollowing(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<boolean> {
     if (this.followClient) {

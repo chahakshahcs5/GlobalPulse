@@ -18,3 +18,8 @@ export * from './provenance.prisma';
 export * from './fact-check.prisma';
 export * from './category.prisma';
 export * from './nav-tab.prisma';
+export * from './intelligence.prisma';
+export * from './alert.prisma';
+export * from './knowledge-graph.prisma';
+export * from './ingestion.prisma';
+export * from './source-correction.prisma';

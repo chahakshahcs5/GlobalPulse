@@ -19,6 +19,16 @@ export class MemoryNotificationRepository implements INotificationRepository {
     return all.slice(0, limit).map((n) => ({ ...n }));
   }
 
+  async listForUser(userId: string, orgId?: string, limit = 50): Promise<EditorialNotification[]> {
+    let all = Array.from(this.notifications.values());
+    if (orgId) {
+      all = all.filter((n) => n.organizationId === orgId);
+    }
+    all = all.filter((n) => n.authorId === userId);
+    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return all.slice(0, limit).map((n) => ({ ...n }));
+  }
+
   async findById(id: string): Promise<EditorialNotification | null> {
     const notif = this.notifications.get(id);
     return notif ? { ...notif } : null;

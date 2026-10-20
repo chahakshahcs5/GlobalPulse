@@ -89,6 +89,17 @@ export class PrismaNotificationRepository implements INotificationRepository {
     return rows.map((r) => this.mapToNotification(r));
   }
 
+  async listForUser(userId: string, orgId?: string, limit = 50): Promise<EditorialNotification[]> {
+    const where: Record<string, unknown> = { authorId: userId };
+    if (orgId) where.organizationId = orgId;
+    const rows = await this.notificationClient.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => this.mapToNotification(r));
+  }
+
   async findById(id: string): Promise<EditorialNotification | null> {
     const row = await this.notificationClient.findUnique({
       where: { id },

@@ -18,3 +18,8 @@ export * from './provenance.memory';
 export * from './fact-check.memory';
 export * from './category.memory';
 export * from './nav-tab.memory';
+export * from './intelligence.memory';
+export * from './alert.memory';
+export * from './knowledge-graph.memory';
+export * from './ingestion.memory';
+export * from './source-correction.memory';

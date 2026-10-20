@@ -19,6 +19,11 @@ import type {
   IFactCheckRepository,
   ICategoryRepository,
   INavTabRepository,
+  IStoryIntelligenceRepository,
+  IAlertRepository,
+  IKnowledgeGraphRepository,
+  IIngestionRepository,
+  ISourceCorrectionRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -41,6 +46,11 @@ import {
   MemoryFactCheckRepository,
   MemoryCategoryRepository,
   MemoryNavTabRepository,
+  MemoryStoryIntelligenceRepository,
+  MemoryAlertRepository,
+  MemoryKnowledgeGraphRepository,
+  MemoryIngestionRepository,
+  MemorySourceCorrectionRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -63,6 +73,11 @@ import {
   PrismaFactCheckRepository,
   PrismaCategoryRepository,
   PrismaNavTabRepository,
+  PrismaStoryIntelligenceRepository,
+  PrismaAlertRepository,
+  PrismaKnowledgeGraphRepository,
+  PrismaIngestionRepository,
+  PrismaSourceCorrectionRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -95,6 +110,11 @@ export class DatabaseService {
   public factChecks: IFactCheckRepository;
   public categories: ICategoryRepository;
   public navTabs: INavTabRepository;
+  public storyIntelligence: IStoryIntelligenceRepository;
+  public alerts: IAlertRepository;
+  public knowledgeGraph: IKnowledgeGraphRepository;
+  public ingestion: IIngestionRepository;
+  public sourceCorrections: ISourceCorrectionRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -116,6 +136,11 @@ export class DatabaseService {
   private memoryFactChecks = new MemoryFactCheckRepository();
   private memoryCategories = new MemoryCategoryRepository();
   private memoryNavTabs = new MemoryNavTabRepository();
+  private memoryStoryIntelligence = new MemoryStoryIntelligenceRepository();
+  private memoryAlerts = new MemoryAlertRepository();
+  private memoryKnowledgeGraph = new MemoryKnowledgeGraphRepository();
+  private memoryIngestion = new MemoryIngestionRepository();
+  private memorySourceCorrections = new MemorySourceCorrectionRepository();
 
   private isPrismaActive = false;
 
@@ -170,6 +195,11 @@ export class DatabaseService {
     this.factChecks = this.memoryFactChecks;
     this.categories = this.memoryCategories;
     this.navTabs = this.memoryNavTabs;
+    this.storyIntelligence = this.memoryStoryIntelligence;
+    this.alerts = this.memoryAlerts;
+    this.knowledgeGraph = this.memoryKnowledgeGraph;
+    this.ingestion = this.memoryIngestion;
+    this.sourceCorrections = this.memorySourceCorrections;
   }
 
   /**
@@ -219,8 +249,13 @@ export class DatabaseService {
         this.factChecks = new PrismaFactCheckRepository(getPrisma);
         this.categories = new PrismaCategoryRepository(getPrisma);
         this.navTabs = new PrismaNavTabRepository(getPrisma);
+        this.storyIntelligence = new PrismaStoryIntelligenceRepository(getPrisma);
+        this.alerts = new PrismaAlertRepository(getPrisma);
+        this.knowledgeGraph = new PrismaKnowledgeGraphRepository(getPrisma);
+        this.ingestion = new PrismaIngestionRepository(getPrisma);
+        this.sourceCorrections = new PrismaSourceCorrectionRepository(getPrisma);
         this.isPrismaActive = true;
-        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 16 domains).');
+        logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 25 domains).');
         return true;
       }
 
@@ -262,7 +297,7 @@ export class DatabaseService {
     // Serialize in-memory transactions via mutex to prevent partial reads
     await this.acquireTransactionLock();
 
-    // High-fidelity in-memory atomic transaction with automatic rollback across all 16 domains
+    // High-fidelity in-memory atomic transaction with automatic rollback across all domains
     const storySnap = this.memoryStories.snapshot();
     const eventSnap = this.memoryEvents.snapshot();
     const topicSnap = this.memoryTopics.snapshot();
@@ -283,6 +318,11 @@ export class DatabaseService {
     const factCheckSnap = this.memoryFactChecks.snapshot();
     const categorySnap = this.memoryCategories.snapshot();
     const navTabSnap = this.memoryNavTabs.snapshot();
+    const intelligenceSnap = this.memoryStoryIntelligence.snapshot();
+    const alertSnap = this.memoryAlerts.snapshot();
+    const graphSnap = this.memoryKnowledgeGraph.snapshot();
+    const ingestionSnap = this.memoryIngestion.snapshot();
+    const correctionSnap = this.memorySourceCorrections.snapshot();
 
     try {
       const result = await work(null);
@@ -308,6 +348,11 @@ export class DatabaseService {
       this.memoryFactChecks.restore(factCheckSnap);
       this.memoryCategories.restore(categorySnap);
       this.memoryNavTabs.restore(navTabSnap);
+      this.memoryStoryIntelligence.restore(intelligenceSnap);
+      this.memoryAlerts.restore(alertSnap);
+      this.memoryKnowledgeGraph.restore(graphSnap);
+      this.memoryIngestion.restore(ingestionSnap);
+      this.memorySourceCorrections.restore(correctionSnap);
       throw err;
     } finally {
       this.releaseTransactionLock();
@@ -347,6 +392,11 @@ export class DatabaseService {
     this.memoryFactChecks.clear();
     this.memoryCategories.clear();
     this.memoryNavTabs.clear();
+    this.memoryStoryIntelligence.clear();
+    this.memoryAlerts.clear();
+    this.memoryKnowledgeGraph.clear();
+    this.memoryIngestion.clear();
+    this.memorySourceCorrections.clear();
   }
 }
 

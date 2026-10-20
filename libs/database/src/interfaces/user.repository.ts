@@ -1,8 +1,8 @@
-import type { NewsroomUser } from '@ai-news/schemas';
+import type { NewsroomUser, FollowTargetType } from '@ai-news/schemas';
 
 export interface FollowRecord {
   userId: string;
-  targetType: 'topic' | 'entity' | 'author' | 'source';
+  targetType: FollowTargetType;
   targetId: string;
   createdAt: string;
 }
@@ -18,21 +18,12 @@ export interface IUserRepository {
   // Following interests (F17)
   followTarget(
     userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
+    targetType: FollowTargetType,
     targetId: string
   ): Promise<FollowRecord>;
-  unfollowTarget(
-    userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
-    targetId: string
-  ): Promise<boolean>;
-  listFollowing(
-    userId: string,
-    targetType?: 'topic' | 'entity' | 'author' | 'source'
-  ): Promise<FollowRecord[]>;
-  isFollowing(
-    userId: string,
-    targetType: 'topic' | 'entity' | 'author' | 'source',
-    targetId: string
-  ): Promise<boolean>;
+  unfollowTarget(userId: string, targetType: FollowTargetType, targetId: string): Promise<boolean>;
+  listFollowing(userId: string, targetType?: FollowTargetType): Promise<FollowRecord[]>;
+  /** Reverse lookup: everyone following a given target. */
+  listFollowers(targetType: FollowTargetType, targetId: string): Promise<FollowRecord[]>;
+  isFollowing(userId: string, targetType: FollowTargetType, targetId: string): Promise<boolean>;
 }
