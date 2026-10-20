@@ -9,6 +9,26 @@ export interface RenderChartOptions {
 
 const DEFAULT_PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
+/**
+ * Validates a caller-provided color before interpolating it into SVG markup.
+ * Free-form strings would break out of fill="..."/stroke="..." attributes and
+ * inject arbitrary SVG/HTML (executed because these SVGs are mounted via
+ * dangerouslySetInnerHTML). Accepts hex colors, rgb()/rgba()/hsl() forms and
+ * plain CSS color keywords; everything else falls back.
+ */
+function safeColor(color: unknown, fallback: string): string {
+  if (typeof color !== 'string') return fallback;
+  const value = color.trim();
+  if (!value || value.length > 128) return fallback;
+  const hex = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+  const fnFormat = /^(?:rgba?|hsla?)\(\s*[\d.%\s,/]+\)$/i;
+  const keyword = /^[a-z]+$/i;
+  if (hex.test(value) || fnFormat.test(value) || keyword.test(value)) {
+    return value;
+  }
+  return fallback;
+}
+
 export class D3ChartRenderer {
   /**
    * Programmatically renders a structured ChartBlock data specification into an accessible, responsive SVG string.
@@ -56,7 +76,7 @@ export class D3ChartRenderer {
     const xCategories = chartData.values.map((v) => String(v[xKey] ?? ''));
     const series = chartData.series.map((s, idx) => ({
       ...s,
-      color: s.color || DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length],
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
     }));
 
     // Find numeric Y bounds
@@ -462,7 +482,7 @@ export class D3ChartRenderer {
     const xKey = chartData.xAxis.key;
     const bins = chartData.values.map((v) => String(v[xKey] ?? ''));
     const seriesKey = chartData.series[0]?.key || 'count';
-    const barColor = chartData.series[0]?.color || '#3b82f6';
+    const barColor = safeColor(chartData.series[0]?.color, '#3b82f6');
 
     const counts = chartData.values.map((v) => Number(v[seriesKey] ?? 0));
     const maxCount = Math.max(...counts, 1) * 1.15;
@@ -619,8 +639,8 @@ export class D3ChartRenderer {
     const categories = chartData.values.map((v) => String(v[xKey] ?? ''));
     const seriesA = chartData.series[0] || { name: 'Subject A', key: 'a', color: '#3b82f6' };
     const seriesB = chartData.series[1] || { name: 'Subject B', key: 'b', color: '#ec4899' };
-    const colorA = seriesA.color || '#3b82f6';
-    const colorB = seriesB.color || '#ec4899';
+    const colorA = safeColor(seriesA.color, '#3b82f6');
+    const colorB = safeColor(seriesB.color, '#ec4899');
 
     let maxVal = 0;
     chartData.values.forEach((v) => {

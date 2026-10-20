@@ -112,7 +112,15 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
         z.object({
           name: z.string().min(1),
           key: z.string().min(1),
-          color: z.string().optional(),
+          // Must be a plain CSS color (hex / rgb(a) / hsl(a) / keyword).
+          // Free-form strings are interpolated into SVG fill/stroke attributes;
+          // anything else could break out of the attribute and inject markup.
+          color: z
+            .string()
+            .regex(
+              /^(#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgba?|hsla?)\(\s*[\d.%\s,/]+\)|[a-z]+)$/i
+            )
+            .optional(),
         })
       )
       .min(1),
