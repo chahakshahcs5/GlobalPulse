@@ -43,6 +43,7 @@ interface PrismaStoryRow {
   topicIds: string[];
   entityIds: string[];
   sourceIds: string[];
+  categories?: string[];
 }
 
 interface PrismaVersionRow {
@@ -191,6 +192,7 @@ export class PrismaStoryRepository implements IStoryRepository {
         topicIds: story.topicIds || [],
         entityIds: story.entityIds || [],
         sourceIds: story.sourceIds || [],
+        categories: story.categories || [],
         currentVersionNumber: story.currentVersionNumber || 1,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
@@ -219,6 +221,7 @@ export class PrismaStoryRepository implements IStoryRepository {
         topicIds: story.topicIds || [],
         entityIds: story.entityIds || [],
         sourceIds: story.sourceIds || [],
+        categories: story.categories || [],
         currentVersionNumber: story.currentVersionNumber,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
@@ -601,6 +604,7 @@ export class PrismaStoryRepository implements IStoryRepository {
       topicIds: row.topicIds,
       entityIds: row.entityIds,
       sourceIds: row.sourceIds,
+      categories: row.categories || [],
       blocks: row.blocks
         ? (row.blocks.map((b) => ({
             id: b.id,

@@ -34,6 +34,12 @@ export const ArticleTypeSchema = z.enum([
   'fact_check',
   'opinion',
   'investigation',
+  // Category codes that are also valid article types. The category pages route on
+  // stories.articleType, so a story can only be filed under one of these.
+  'india',
+  'health',
+  'world',
+  'entertainment',
 ]);
 export type ArticleType = z.infer<typeof ArticleTypeSchema>;
 

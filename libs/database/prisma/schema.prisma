@@ -41,6 +41,12 @@ enum ArticleType {
   fact_check
   opinion
   investigation
+  // Category codes that are also valid article types. The category pages route
+  // on stories.articleType, so a story can only be filed under one of these.
+  india
+  health
+  world
+  entertainment
 }
 
 enum ClientType {
@@ -167,6 +173,7 @@ model Story {
   topicIds             String[]      @default([])
   entityIds            String[]      @default([])
   sourceIds            String[]      @default([])
+  categories           String[]      @default([])
   heroImageUrl         String?
   createdVia           CreatedVia    @default(mcp)
   createdByClient      ClientType    @default(gemini)
