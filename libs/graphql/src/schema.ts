@@ -5,6 +5,7 @@ export const typeDefs = `#graphql
   enum StoryStatus {
     DRAFT
     IN_REVIEW
+    SCHEDULED
     PUBLISHED
     ARCHIVED
   }
@@ -29,6 +30,14 @@ export const typeDefs = `#graphql
     local
     weekly_digest
     topic_briefing
+    liveblog
+    fact_check
+    opinion
+    investigation
+    india
+    health
+    world
+    entertainment
   }
 
   enum ClientType {
