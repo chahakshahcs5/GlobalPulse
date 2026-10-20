@@ -18,6 +18,7 @@ import {
   AssignUserRoleInputSchema,
   InviteUserInputSchema,
   FollowTargetInputSchema,
+  type FollowTargetType,
 } from '@ai-news/schemas';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 
@@ -91,7 +92,7 @@ export class UsersController {
   @Delete('follow/:targetType/:targetId')
   @HttpCode(HttpStatus.OK)
   async unfollowTarget(
-    @Param('targetType') targetType: 'topic' | 'entity' | 'author' | 'source',
+    @Param('targetType') targetType: FollowTargetType,
     @Param('targetId') targetId: string,
     @Principal() principal: AuthenticatedPrincipal
   ) {
@@ -102,16 +103,26 @@ export class UsersController {
 
   @Get('following')
   async listFollowing(
-    @Query('targetType') targetType: 'topic' | 'entity' | 'author' | 'source' | undefined,
+    @Query('targetType') targetType: FollowTargetType | undefined,
     @Principal() principal: AuthenticatedPrincipal
   ) {
     AuthService.requireScope(principal, 'news:read');
     return this.userService.listFollowing(principal.id, targetType);
   }
 
+  /**
+   * The reader's follows resolved into displayable entries (label, detail, and
+   * a link path), so the UI never has to resolve identifiers itself.
+   */
+  @Get('following/resolved')
+  async listFollowingResolved(@Principal() principal: AuthenticatedPrincipal) {
+    AuthService.requireScope(principal, 'news:read');
+    return this.userService.listFollowingResolved(principal.id, principal.organizationId);
+  }
+
   @Get('following/:targetType/:targetId')
   async isFollowing(
-    @Param('targetType') targetType: 'topic' | 'entity' | 'author' | 'source',
+    @Param('targetType') targetType: FollowTargetType,
     @Param('targetId') targetId: string,
     @Principal() principal: AuthenticatedPrincipal
   ) {

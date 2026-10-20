@@ -6,6 +6,7 @@ import {
   setStoryBroadcaster,
   setEngagementBroadcaster,
   setNotificationBroadcaster,
+  setRealtimeBroadcaster,
   setSchedulingBroadcaster,
   SchedulingService,
 } from '@ai-news/stories';
@@ -42,6 +43,10 @@ async function bootstrap() {
     realtime.broadcast(channel, eventName, data);
   });
   setNotificationBroadcaster((channel, eventName, data) => {
+    realtime.broadcast(channel, eventName, data);
+  });
+  // The delivery transports (alert + reader push) publish on the same broker.
+  setRealtimeBroadcaster((channel, eventName, data) => {
     realtime.broadcast(channel, eventName, data);
   });
   setSchedulingBroadcaster((channel, eventName, data) => {

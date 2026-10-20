@@ -31,6 +31,21 @@ export class NotificationsController {
     return this.notificationService.listNotifications(orgId, parsedLimit);
   }
 
+  /**
+   * Reader-scoped notifications: the updates addressed to the signed-in
+   * reader (story developments on the stories and clusters they follow).
+   */
+  @Get('mine')
+  async listMyNotifications(
+    @Query('limit') limit?: string,
+    @Principal() principal?: AuthenticatedPrincipal
+  ) {
+    const orgId = principal?.organizationId || 'org_default';
+    const parsedLimit = limit ? Math.min(200, Math.max(1, parseInt(limit, 10) || 50)) : 50;
+    if (!principal?.id) return [];
+    return this.notificationService.listForUser(principal.id, orgId, parsedLimit);
+  }
+
   @Post('breaking')
   @HttpCode(HttpStatus.OK)
   async broadcastBreakingNews(

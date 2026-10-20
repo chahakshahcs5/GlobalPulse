@@ -79,6 +79,15 @@ export class RealtimeChannelGuard implements CanActivate {
         }
       }
 
+      // Check personal reader channel (user_*). Only the reader themselves may
+      // subscribe to their own channel; admins may subscribe to any.
+      if (lower.startsWith('user_')) {
+        const targetUser = lower.slice('user_'.length);
+        if (principal.role !== 'admin' && targetUser !== principal.id.toLowerCase()) {
+          throw new ForbiddenException(`Access denied to personal channel: "${ch}"`);
+        }
+      }
+
       // Check editorial/internal channels
       if (RESTRICTED_CHANNELS.has(lower)) {
         const canAccessEditorial =
