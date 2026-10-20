@@ -5,6 +5,7 @@ import { NestAuthGuard, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('api/analytics')
+@UseGuards(NestAuthGuard)
 export class AnalyticsController {
   private analyticsService = new AnalyticsService(db);
 
@@ -28,7 +29,6 @@ export class AnalyticsController {
   }
 
   @Get('newsroom')
-  @UseGuards(NestAuthGuard)
   async getNewsroomMetrics(@Principal() principal: AuthenticatedPrincipal) {
     return this.analyticsService.getNewsroomMetrics(principal.organizationId);
   }

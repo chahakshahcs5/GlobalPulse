@@ -17,6 +17,7 @@ import { BroadcastBreakingNewsInputSchema, SendEditorialAlertInputSchema } from 
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('api/notifications')
+@UseGuards(NestAuthGuard)
 export class NotificationsController {
   private notificationService = new NotificationService(db);
 
@@ -31,7 +32,6 @@ export class NotificationsController {
   }
 
   @Post('breaking')
-  @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
   async broadcastBreakingNews(
     @Body() body: unknown,
@@ -57,7 +57,6 @@ export class NotificationsController {
   }
 
   @Post('editorial')
-  @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
   async sendEditorialAlert(@Body() body: unknown, @Principal() principal: AuthenticatedPrincipal) {
     AuthService.requireScope(principal, 'news:write');

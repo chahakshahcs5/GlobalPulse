@@ -21,9 +21,9 @@ export class AuditController {
   @Get([':id', 'logs/:id'])
   @Roles('admin')
   @RequireScope('news:admin')
-  async getAuditLogById(@Param('id') id: string) {
+  async getAuditLogById(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
     const log = await db.audit.findById(id);
-    if (!log) {
+    if (!log || log.organizationId !== principal.organizationId) {
       throw new NotFoundException(`Audit log ${id} not found`);
     }
     return ApiResponse.success(log);

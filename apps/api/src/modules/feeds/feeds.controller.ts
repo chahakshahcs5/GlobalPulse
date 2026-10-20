@@ -315,14 +315,24 @@ export class FeedsController {
     @Param('identifier') identifier: string,
     @Res() reply: FastifyReply
   ) {
-    let story = await db.stories.findById(identifier);
-    if (!story) {
-      story = await db.stories.findBySlug(identifier, 'org_default');
+    // This is a public SEO endpoint (served to search engines), so restrict it to
+    // published stories — drafts and scheduled content must never leak here.
+    const isPublished = (s: { status?: string } | null): boolean => s?.status === 'PUBLISHED';
+
+    let found = await db.stories.findById(identifier);
+    if (!isPublished(found)) {
+      found = null;
+      const bySlug = await db.stories.findBySlug(identifier, 'org_default');
+      if (isPublished(bySlug)) {
+        found = bySlug;
+      }
     }
 
-    if (!story) {
+    if (!found) {
       throw new NotFoundException(`Story "${identifier}" not found`);
     }
+
+    const story = found;
 
     const structuredData = generateNewsArticleJsonLd({
       story,

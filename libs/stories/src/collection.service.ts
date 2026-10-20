@@ -6,6 +6,18 @@ import type {
   Story,
 } from '@ai-news/schemas';
 
+export type CollectionActor = { id: string; role: string };
+
+/**
+ * Only the collection's curator (or an admin/editor) may modify or delete it.
+ */
+export function isCollectionCurator(
+  collection: Pick<StoryCollection, 'curatorId'>,
+  actor: CollectionActor
+): boolean {
+  return collection.curatorId === actor.id || actor.role === 'admin' || actor.role === 'editor';
+}
+
 export class CollectionService {
   constructor(private readonly db: DatabaseService) {}
 
@@ -23,12 +35,23 @@ export class CollectionService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
+    // Resolve a human-readable curator name (callers often only have the user id).
+    let resolvedName = curatorName;
+    if (!resolvedName || resolvedName === curatorId) {
+      try {
+        const user = await this.db.users.findById(curatorId);
+        resolvedName = user?.name || curatorId;
+      } catch {
+        resolvedName = resolvedName || curatorId;
+      }
+    }
+
     return this.db.collections.create({
       name: input.name,
       slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
       description: input.description,
       curatorId,
-      curatorName,
+      curatorName: resolvedName,
       isPublic: input.isPublic !== undefined ? input.isPublic : true,
       storyIds: input.storyIds || [],
     });
@@ -83,6 +106,13 @@ export class CollectionService {
    */
   async listPublicCollections(limit: number = 20, offset: number = 0): Promise<StoryCollection[]> {
     return this.db.collections.listPublic(limit, offset);
+  }
+
+  /**
+   * Get a bare collection (no story population) — used for permission checks.
+   */
+  async getCollection(id: string): Promise<StoryCollection | null> {
+    return this.db.collections.findById(id);
   }
 
   /**

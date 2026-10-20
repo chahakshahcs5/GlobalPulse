@@ -10,8 +10,9 @@ import {
   HttpStatus,
   HttpCode,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { CollectionService } from '@ai-news/stories';
+import { CollectionService, isCollectionCurator } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
@@ -64,14 +65,31 @@ export class CollectionsController {
     return collection;
   }
 
+  private async assertCurator(
+    collectionId: string,
+    principal: AuthenticatedPrincipal
+  ): Promise<void> {
+    const collection = await this.collectionService.getCollection(collectionId);
+    if (!collection) {
+      throw new NotFoundException(`Collection with id "${collectionId}" was not found.`);
+    }
+    if (!isCollectionCurator(collection, principal)) {
+      throw new ForbiddenException(
+        'Only the collection curator (or an admin/editor) can modify a collection.'
+      );
+    }
+  }
+
   @Post(':id/stories')
   @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
   async addStory(
     @Param('id') collectionId: string,
-    @Body() body: unknown
+    @Body() body: unknown,
+    @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection> {
     const input = AddStoryToCollectionInputSchema.parse(body);
+    await this.assertCurator(collectionId, principal);
     return await this.collectionService.addStory(collectionId, input.storyId);
   }
 
@@ -80,15 +98,21 @@ export class CollectionsController {
   @HttpCode(HttpStatus.OK)
   async removeStory(
     @Param('id') collectionId: string,
-    @Param('storyId') storyId: string
+    @Param('storyId') storyId: string,
+    @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection> {
+    await this.assertCurator(collectionId, principal);
     return await this.collectionService.removeStory(collectionId, storyId);
   }
 
   @Delete(':id')
   @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async deleteCollection(@Param('id') id: string): Promise<{ success: boolean }> {
+  async deleteCollection(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<{ success: boolean }> {
+    await this.assertCurator(id, principal);
     const success = await this.collectionService.deleteCollection(id);
     return { success };
   }

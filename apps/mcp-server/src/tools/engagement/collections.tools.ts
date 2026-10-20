@@ -1,8 +1,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CollectionService } from '@ai-news/stories';
+import { isCollectionCurator } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { mcpJsonResponse, mcpErrorResponse } from '../tool-helpers';
+
+function assertCollectionCurator(
+  collection: { curatorId: string },
+  principal: AuthenticatedPrincipal
+): void {
+  if (!isCollectionCurator(collection, principal)) {
+    throw new Error('Forbidden: only the collection curator (or an admin/editor) can modify it.');
+  }
+}
 
 export function registerCollectionTools(
   server: McpServer,
@@ -56,6 +66,12 @@ export function registerCollectionTools(
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
+
+        const collection = await collectionService.getCollection(collectionId);
+        if (!collection) {
+          return mcpErrorResponse(`Collection "${collectionId}" not found`);
+        }
+        assertCollectionCurator(collection, principal);
 
         const updated = await collectionService.addStory(collectionId, storyId);
         return mcpJsonResponse({
@@ -148,6 +164,12 @@ export function registerCollectionTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
 
+        const collection = await collectionService.getCollection(collectionId);
+        if (!collection) {
+          return mcpErrorResponse(`Collection "${collectionId}" not found`);
+        }
+        assertCollectionCurator(collection, principal);
+
         const updated = await collectionService.removeStory(collectionId, storyId);
         return mcpJsonResponse({
           message: `Story ${storyId} removed from collection ${collectionId}.`,
@@ -170,6 +192,12 @@ export function registerCollectionTools(
       try {
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
+
+        const collection = await collectionService.getCollection(collectionId);
+        if (!collection) {
+          return mcpErrorResponse(`Collection "${collectionId}" not found`);
+        }
+        assertCollectionCurator(collection, principal);
 
         const success = await collectionService.deleteCollection(collectionId);
         return mcpJsonResponse({
