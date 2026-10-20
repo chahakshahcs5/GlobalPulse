@@ -102,10 +102,21 @@ flowchart TD
 
 ### 2. Human Editorial CMS & Newsroom Workflow
 
-- **Structured 22-Block Engine**: Content is authored as composable, typed JSON blocks—including Lead Paragraphs, Pull Quotes, 13 D3 Charts, MapLibre Maps, Milestone Timelines, Comparison Tables, Callouts, and KPI Metric Statistics.
+- **Structured 46-Block Engine**: Content is authored as composable, typed JSON blocks—including Lead Paragraphs, Pull Quotes, 19 D3 chart types, MapLibre Maps, Milestone Timelines, Comparison Tables, Callouts, KPI Metric Statistics, and media blocks for video galleries, podcasts, waveforms, transcripts, and published datasets.
 - **Compose & Live Article Preview**: Switch between form editing and a real-time dark/light preview rendered by the production `StoryRenderer`.
 - **Revision Snapshots & WhatChanged Diffs**: Committing revisions creates immutable version snapshots with changelog diffs displayed automatically to readers.
 - **Editorial Review Queue & Scheduled Embargo**: Multi-role review gates (Draft → Submit for Review → Approve/Publish) and automated embargo scheduling.
+
+### 2.1 AI-Operable Story Intelligence
+
+- **First-Class Claims & Evidence**: Every assertion is stored as an atomic, verifiable claim. Moving a claim to `SUPPORTED`, `PARTIALLY_SUPPORTED`, or `CONTRADICTED` requires an attached source or evidence item, and any confidence value must carry an explicit methodology. The rule is enforced in the domain layer, so REST, GraphQL, MCP, and workers behave identically.
+- **Timelines & Attributed Perspectives**: Dated developments (official statements, legal actions, elections, disasters…) and stakeholder positions with stance, quote excerpts, and citations — all tenant-scoped and auditable.
+- **Generic Knowledge Graph**: Typed edges between any nodes (story ↔ entity ↔ source ↔ claim ↔ event ↔ topic ↔ publisher) with bounded traversal and idempotent story indexing.
+- **Deterministic Alerts**: Plain-data rules (entities, topics, keywords, regions, severity, magnitude) with matched-condition audit trails, per-rule cooldowns, and in-app delivery. No LLM judgment involved.
+- **SSRF-Safe Ingestion**: RSS/Atom/JSON feed polling with URL validation, timeouts, response-size caps, content hashing for deduplication, story clustering, and idempotent promotion to sources and draft stories.
+- **Source Trust Ledger**: Publisher transparency (ownership, methodology, correction policy), citation and coverage metrics, and a first-class correction / retraction / clarification ledger.
+- **Provider-Neutral by Design**: No LLM is required. These are structured primitives that external AI agents and human journalists operate.
+- Full reference: [`docs/intelligence-platform.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/intelligence-platform.md).
 
 ### 3. External AI Operability via Model Context Protocol (MCP)
 
@@ -263,6 +274,7 @@ All system aspects are thoroughly documented under [`docs/`](file:///c:/Users/ch
 | [**Database Architecture**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/database.md)                    | Dual-engine design: PostgreSQL with Prisma ORM, migrations, and high-speed in-memory engine  |
 | [**Content Model**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/content-model.md)                       | Structured block architecture, canonical schemas, and all 22 supported block types           |
 | [**Story Model & Versioning**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/story-model.md)              | Story lifecycle, revision snapshots, `WhatChanged` diffing, and audit trails                 |
+| [**Intelligence Platform**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/intelligence-platform.md)       | Claims & evidence, timelines, perspectives, knowledge graph, alerts, ingestion, source trust |
 | [**Multimedia & Visual Engines**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/media-model.md)           | Programmatic D3 charts (13 types), MapLibre geospatial maps, and timelines                   |
 | [**Search & Deduplication**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/search.md)                     | Full-text indexing, tokenization, Jaccard similarity, and vector embeddings                  |
 | [**Publishing & Idempotency**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/publishing.md)               | Atomic status transitions, idempotency key guarantees, and real-time SSE                     |

@@ -166,3 +166,33 @@ Enqueues a text-to-speech audio briefing generation job for a story.
 
 - **Scope Required**: `news:write`
 - **Parameters**: `storyId` (string), `voice` (optional string, e.g. `news_anchor_f`, `diplomatic_briefing_m`)
+
+---
+
+## 7. Intelligence Platform Tools (Claims, Graph, Alerts, Ingestion, Source Trust)
+
+The remote MCP server also registers **40 intelligence tools** covering first-class claims and
+evidence, story timelines, editorial perspectives, the knowledge graph, deterministic alert rules,
+feed ingestion, publisher transparency, and the block catalog.
+
+- **Scope Required**: `news:read` for reads, `news:write` for writes; destructive tools
+  (`delete_*`) additionally require the `admin` or `editor` role.
+- **Tenant safety**: every call is scoped to the calling principal's organization; cross-tenant
+  identifiers resolve as "not found".
+
+| Group              | Tools                                                                                                                                                                                      |
+| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Story intelligence | `get_story_intelligence`, `get_story_what_changed`                                                                                                                                         |
+| Claims & evidence  | `list_story_claims`, `create_story_claim`, `update_claim_status`, `delete_story_claim`, `list_story_evidence`, `add_claim_evidence`, `delete_evidence`                                     |
+| Timeline           | `get_story_timeline`, `add_timeline_event`, `update_timeline_event`, `delete_timeline_event`                                                                                               |
+| Perspectives       | `list_editorial_perspectives`, `add_editorial_perspective`, `delete_editorial_perspective`                                                                                                 |
+| Knowledge graph    | `add_knowledge_edge`, `delete_knowledge_edge`, `query_knowledge_graph`, `get_graph_neighborhood`                                                                                           |
+| Alerts             | `create_alert_rule`, `list_alert_rules`, `update_alert_rule`, `delete_alert_rule`, `evaluate_alerts`, `list_alert_triggers`                                                                |
+| Ingestion          | `create_ingestion_feed`, `list_ingestion_feeds`, `update_ingestion_feed`, `delete_ingestion_feed`, `ingest_feed`, `list_ingestion_items`, `promote_ingestion_item`, `detect_breaking_news` |
+| Source trust       | `get_publisher_intelligence`, `list_source_corrections`, `record_source_correction`, `delete_source_correction`                                                                            |
+| Block catalog      | `get_block_catalog`, `get_block_schema`                                                                                                                                                    |
+| Media expansion    | `add_video_gallery_block`, `add_podcast_block`, `add_waveform_block`, `add_transcript_block`, `add_dataset_block`                                                                          |
+
+Tool descriptions are prefixed with `[READ-ONLY]`, `[WRITE]`, or `[DESTRUCTIVE]` so agents can
+plan their calls. Full reference:
+[`docs/intelligence-platform.md`](file:///c:/Users/chaha/Projects/ai-news-generator/docs/intelligence-platform.md).
