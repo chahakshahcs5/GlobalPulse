@@ -66,9 +66,13 @@ export class OfflineStorageService {
   }
 
   public saveStory(story: OfflineStory): void {
+    const existing = this.cache.get(story.id);
     this.cache.set(story.id, {
       ...story,
-      savedAt: new Date().toISOString(),
+      // Preserve the original save timestamp on refresh: savedAt captures when
+      // the story was first saved/cached, so book-mark ordering and "saved"
+      // feeds must not jump every time the list is re-fetched from the API.
+      savedAt: existing?.savedAt || story.savedAt || new Date().toISOString(),
     });
     this.persistToStorage();
   }

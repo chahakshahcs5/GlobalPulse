@@ -11,7 +11,7 @@ export function mapApiStoryToOffline(
     slug: story.slug || story.id,
     title: story.title,
     summary: story.summary || '',
-    articleType: story.articleType || 'breaking',
+    articleType: story.articleType || 'breaking_news',
     heroImageUrl: story.heroImageUrl,
     currentVersionNumber: story.currentVersionNumber || 1,
     blocks: story.blocks || [],
@@ -38,8 +38,10 @@ export class MobileApiService {
       limit: String(limit),
       status: 'PUBLISHED',
     });
-    if (options.category) queryParams.set('category', options.category);
-    if (options.topic) queryParams.set('topic', options.topic);
+    // The stories filter understands articleType/topicId zod schemas — the raw
+    // category/topic params the client used to send were silently stripped.
+    if (options.category) queryParams.set('articleType', options.category);
+    if (options.topic) queryParams.set('topicId', options.topic);
 
     try {
       const controller = new AbortController();
@@ -91,13 +93,19 @@ export class MobileApiService {
     if (!query.trim()) return [];
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(query)}`, {
-        headers: { Accept: 'application/json' },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/search/stories?query=${encodeURIComponent(query)}&limit=20`,
+        {
+          headers: { Accept: 'application/json' },
+        }
+      );
       if (res.ok) {
         const json = await res.json();
         const results = Array.isArray(json) ? json : json.data || json.items || [];
-        return results.map(mapApiStoryToOffline);
+        // Search results are references (storyId), not full story objects
+        return results.map((item: { storyId: string } & Record<string, unknown>) =>
+          mapApiStoryToOffline({ ...(item as object), id: item.storyId } as never)
+        );
       }
     } catch {
       // Fallback: search local offline storage
