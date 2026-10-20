@@ -30,7 +30,16 @@ export const StoryPresenceSchema = z.object({
 });
 export type StoryPresence = z.infer<typeof StoryPresenceSchema>;
 
-export const KanbanBoardSchema = z.object({
+export const KanbanBoardSchema: z.ZodObject<{
+  columns: z.ZodObject<{
+    DRAFT: z.ZodArray<typeof StorySchema>;
+    IN_REVIEW: z.ZodArray<typeof StorySchema>;
+    SCHEDULED: z.ZodArray<typeof StorySchema>;
+    PUBLISHED: z.ZodArray<typeof StorySchema>;
+    ARCHIVED: z.ZodArray<typeof StorySchema>;
+  }>;
+  totalCount: z.ZodNumber;
+}> = z.object({
   columns: z.object({
     DRAFT: z.array(StorySchema),
     IN_REVIEW: z.array(StorySchema),
@@ -42,7 +51,10 @@ export const KanbanBoardSchema = z.object({
 });
 export type KanbanBoard = z.infer<typeof KanbanBoardSchema>;
 
-export const CalendarScheduleSchema = z.object({
+export const CalendarScheduleSchema: z.ZodObject<{
+  scheduledStories: z.ZodArray<typeof StorySchema>;
+  publishedStories: z.ZodArray<typeof StorySchema>;
+}> = z.object({
   scheduledStories: z.array(StorySchema),
   publishedStories: z.array(StorySchema),
 });
