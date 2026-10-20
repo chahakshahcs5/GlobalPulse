@@ -332,7 +332,7 @@ export class SourceService {
   }
 
   async listCitationsForSource(sourceId: string, orgId?: string): Promise<Citation[]> {
-    return this.db.sources.getCitationsForStory(sourceId, orgId);
+    return this.db.sources.getCitationsForSource(sourceId, orgId);
   }
 
   async listClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]> {

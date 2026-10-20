@@ -93,7 +93,7 @@ export class SourcesController {
 
   @Get(':id/citations')
   @RequireScope('news:read')
-  async listCitations(@Param('id') id: string) {
-    return await this.sourceService.listCitationsForSource(id);
+  async listCitations(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
+    return await this.sourceService.listCitationsForSource(id, principal.organizationId);
   }
 }

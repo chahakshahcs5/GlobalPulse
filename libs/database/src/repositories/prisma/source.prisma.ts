@@ -225,6 +225,26 @@ export class PrismaSourceRepository implements ISourceRepository {
     }));
   }
 
+  async getCitationsForSource(sourceId: string, orgId?: string): Promise<Citation[]> {
+    const where: Record<string, unknown> = { sourceId };
+    if (orgId) {
+      where.organizationId = orgId;
+    }
+    const rows = await this.citationClient.findMany({
+      where,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      organizationId: r.organizationId,
+      storyId: r.storyId,
+      blockId: r.blockId || undefined,
+      sourceId: r.sourceId,
+      claimText: r.claimText,
+      confidenceScore: r.confidenceScore ?? undefined,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
   async createClaim(claim: Claim): Promise<Claim> {
     const created = await this.claimClient.create({
       data: {

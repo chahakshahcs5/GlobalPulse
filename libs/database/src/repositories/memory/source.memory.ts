@@ -72,6 +72,12 @@ export class MemorySourceRepository implements ISourceRepository {
     );
   }
 
+  async getCitationsForSource(sourceId: string, orgId?: string): Promise<Citation[]> {
+    return Array.from(this.citations.values()).filter(
+      (c) => c.sourceId === sourceId && (!orgId || c.organizationId === orgId)
+    );
+  }
+
   async createClaim(claim: Claim): Promise<Claim> {
     this.claims.set(claim.id, { ...claim });
     return { ...claim };

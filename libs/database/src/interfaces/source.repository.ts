@@ -12,6 +12,7 @@ export interface ISourceRepository {
   // Citations & Claims
   createCitation(citation: Citation): Promise<Citation>;
   getCitationsForStory(storyId: string, orgId?: string): Promise<Citation[]>;
+  getCitationsForSource(sourceId: string, orgId?: string): Promise<Citation[]>;
   createClaim(claim: Claim): Promise<Claim>;
   getClaimsForSource(sourceId: string, orgId?: string): Promise<Claim[]>;
 }
