@@ -137,15 +137,15 @@ export function registerUserTools(
   // 4. follow_interest (F17)
   server.tool(
     'follow_interest',
-    'Follow a news topic, cited entity, source publication, or journalist/author to personalize news delivery.',
+    'Follow a news topic, cited entity, source publication, journalist/author, story, story cluster, or event to personalize news delivery. Following a story keeps following its cluster.',
     {
       target_type: z
-        .enum(['topic', 'entity', 'author', 'source'])
+        .enum(['topic', 'entity', 'author', 'source', 'story', 'cluster', 'event'])
         .describe('Type of interest to follow'),
       target_id: z
         .string()
         .min(1)
-        .describe('The unique ID or slug of the topic/entity/author/source'),
+        .describe('The unique ID or slug of the topic/entity/author/source/story/cluster/event'),
     },
     async (args) => {
       try {
@@ -170,10 +170,10 @@ export function registerUserTools(
   // 5. unfollow_interest (F17)
   server.tool(
     'unfollow_interest',
-    'Unfollow a previously followed topic, entity, author, or source publication.',
+    'Unfollow a previously followed topic, entity, author, source publication, story, cluster, or event.',
     {
       target_type: z
-        .enum(['topic', 'entity', 'author', 'source'])
+        .enum(['topic', 'entity', 'author', 'source', 'story', 'cluster', 'event'])
         .describe('Type of interest to unfollow'),
       target_id: z.string().min(1).describe('The unique ID or slug'),
     },

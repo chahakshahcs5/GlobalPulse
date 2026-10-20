@@ -6,6 +6,7 @@ import type { AuthenticatedPrincipal } from '@ai-news/auth';
 import { createAddBlockHelper } from './block-tool-helpers';
 import { registerTextEditorialTools } from './text-editorial.tools';
 import { registerMediaBlockTools } from './media-blocks.tools';
+import { registerMediaExpansionTools } from './media-expansion.tools';
 import { registerDataStorytellingTools } from './data-storytelling.tools';
 import { registerInteractiveDocumentTools } from './interactive-document.tools';
 import { registerBlockLifecycleTools } from './lifecycle.tools';
@@ -13,6 +14,7 @@ import { registerBlockLifecycleTools } from './lifecycle.tools';
 export * from './block-tool-helpers';
 export * from './text-editorial.tools';
 export * from './media-blocks.tools';
+export * from './media-expansion.tools';
 export * from './data-storytelling.tools';
 export * from './interactive-document.tools';
 export * from './lifecycle.tools';
@@ -27,6 +29,7 @@ export function registerBlockTools(
 
   registerTextEditorialTools(server, helperAdd);
   registerMediaBlockTools(server, helperAdd);
+  registerMediaExpansionTools(server, helperAdd);
   registerDataStorytellingTools(server, helperAdd);
   registerInteractiveDocumentTools(server, storyService, getPrincipal, helperAdd);
   registerBlockLifecycleTools(server, storyService, getPrincipal);
