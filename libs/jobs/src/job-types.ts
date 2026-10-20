@@ -4,6 +4,10 @@ export type JobType =
   | 'audio.generate_briefing'
   | 'export.generate_pdf'
   | 'cache.purge'
+  | 'ingestion.fetch_feed'
+  | 'ingestion.fetch_all'
+  | 'alerts.evaluate'
+  | 'intelligence.index_story'
   | (string & {});
 
 export type JobStatus = 'queued' | 'active' | 'completed' | 'failed';
@@ -37,6 +41,26 @@ export interface PdfExportPayload {
   versionNumber: number;
   layout: 'a4' | 'letter';
   includeVisuals: boolean;
+}
+
+export interface IngestionFetchPayload {
+  /** Fetch a single feed; when omitted every active feed of the organization is polled. */
+  feedId?: string;
+  organizationId: string;
+  actorId?: string;
+}
+
+export interface AlertEvaluationPayload {
+  resourceType: 'EVENT' | 'STORY' | 'INGESTION_ITEM';
+  resourceId: string;
+  organizationId: string;
+  actorId?: string;
+}
+
+export interface StoryGraphIndexPayload {
+  storyId: string;
+  organizationId: string;
+  actorId?: string;
 }
 
 export interface JobRecord<T = unknown> {

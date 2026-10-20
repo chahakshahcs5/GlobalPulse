@@ -4,9 +4,14 @@ import {
   SearchIndexingPayload,
   AudioBriefingPayload,
   PdfExportPayload,
+  IngestionFetchPayload,
+  AlertEvaluationPayload,
+  StoryGraphIndexPayload,
 } from '@ai-news/jobs';
 import { s3Storage } from '@ai-news/media';
 import { logger } from '@ai-news/observability';
+import { db as defaultDatabase, type DatabaseService } from '@ai-news/database';
+import { AlertService, IngestionService, KnowledgeGraphService } from '@ai-news/stories';
 import {
   generateValidPng,
   generateValidMp3,
@@ -53,11 +58,39 @@ export interface PdfExportResult {
   exportedAt: string;
 }
 
+export interface IngestionFetchResult {
+  organizationId: string;
+  feedsPolled: number;
+  fetched: number;
+  created: number;
+  duplicates: number;
+  clustered: number;
+  fetchedAt: string;
+}
+
+export interface AlertEvaluationResult {
+  organizationId: string;
+  resourceType: 'EVENT' | 'STORY' | 'INGESTION_ITEM';
+  resourceId: string;
+  evaluatedRules: number;
+  triggers: number;
+  evaluatedAt: string;
+}
+
+export interface StoryGraphIndexResult {
+  storyId: string;
+  organizationId: string;
+  edgesCreated: number;
+  indexedAt: string;
+}
+
 export class WorkerService {
   private queue: QueueManager;
+  private readonly database: DatabaseService;
 
-  constructor(queue: QueueManager) {
+  constructor(queue: QueueManager, database: DatabaseService = defaultDatabase) {
     this.queue = queue;
+    this.database = database;
     this.registerAllHandlers();
   }
 
@@ -219,6 +252,125 @@ export class WorkerService {
           // regardless of layout, so report the real page count.
           pageCount: 1,
           exportedAt: new Date().toISOString(),
+        };
+      }
+    );
+
+    // 5. Ingestion Polling (SSRF-filtered feed fetch, dedupe, story matching)
+    this.queue.registerHandler<IngestionFetchPayload, IngestionFetchResult>(
+      'ingestion.fetch_feed',
+      async (job, updateProgress) => {
+        const { feedId, organizationId, actorId } = job.payload;
+        const ingestionService = new IngestionService(this.database);
+        const ctx = {
+          organizationId,
+          actorId: actorId || 'system_worker',
+          clientType: 'internal_service' as const,
+        };
+
+        updateProgress(10);
+
+        if (feedId) {
+          const result = await ingestionService.ingestFeed(feedId, ctx);
+          updateProgress(100);
+          logger.info(
+            `Ingestion feed [${feedId}] fetched [${result.fetched}] items ([${result.created}] new) for org [${organizationId}]`
+          );
+          return {
+            organizationId,
+            feedsPolled: 1,
+            fetched: result.fetched,
+            created: result.created,
+            duplicates: result.duplicates,
+            clustered: result.clustered,
+            fetchedAt: result.fetchedAt,
+          };
+        }
+
+        const results = await ingestionService.ingestAll(ctx);
+        updateProgress(100);
+        const totals = results.reduce(
+          (acc, result) => ({
+            fetched: acc.fetched + result.fetched,
+            created: acc.created + result.created,
+            duplicates: acc.duplicates + result.duplicates,
+            clustered: acc.clustered + result.clustered,
+          }),
+          { fetched: 0, created: 0, duplicates: 0, clustered: 0 }
+        );
+        logger.info(
+          `Ingestion polled [${results.length}] feeds for org [${organizationId}]: [${totals.created}] new items`
+        );
+        return {
+          organizationId,
+          feedsPolled: results.length,
+          ...totals,
+          fetchedAt: new Date().toISOString(),
+        };
+      }
+    );
+
+    // 6. Alert Evaluation (deterministic rule matching with cooldown)
+    this.queue.registerHandler<AlertEvaluationPayload, AlertEvaluationResult>(
+      'alerts.evaluate',
+      async (job, updateProgress) => {
+        const { resourceType, resourceId, organizationId, actorId } = job.payload;
+        const alertService = new AlertService(this.database);
+        const ctx = {
+          organizationId,
+          actorId: actorId || 'system_worker',
+          clientType: 'internal_service' as const,
+        };
+
+        updateProgress(40);
+        const result = await alertService.evaluate(resourceType, resourceId, ctx);
+        updateProgress(100);
+
+        logger.info(
+          `Evaluated [${result.evaluatedRules}] alert rules for ${resourceType} [${resourceId}] in org [${organizationId}]: [${result.triggers.length}] triggered`
+        );
+        return {
+          organizationId,
+          resourceType,
+          resourceId,
+          evaluatedRules: result.evaluatedRules,
+          triggers: result.triggers.length,
+          evaluatedAt: new Date().toISOString(),
+        };
+      }
+    );
+
+    // 7. Knowledge Graph Indexing (materialize story relationships as edges)
+    this.queue.registerHandler<StoryGraphIndexPayload, StoryGraphIndexResult>(
+      'intelligence.index_story',
+      async (job, updateProgress) => {
+        const { storyId, organizationId, actorId } = job.payload;
+        const graphService = new KnowledgeGraphService(this.database);
+        const story = await this.database.stories.findById(storyId, organizationId);
+        if (!story) {
+          logger.warn(`Cannot index story [${storyId}] for org [${organizationId}]: not found`);
+          return {
+            storyId,
+            organizationId,
+            edgesCreated: 0,
+            indexedAt: new Date().toISOString(),
+          };
+        }
+
+        updateProgress(50);
+        const edges = await graphService.indexStory(story, {
+          organizationId,
+          actorId: actorId || 'system_worker',
+          clientType: 'internal_service',
+        });
+        updateProgress(100);
+
+        logger.info(`Indexed story [${storyId}] into knowledge graph with [${edges.length}] edges`);
+        return {
+          storyId,
+          organizationId,
+          edgesCreated: edges.length,
+          indexedAt: new Date().toISOString(),
         };
       }
     );
