@@ -42,6 +42,12 @@ export class TopicsController {
     return await this.topicService.getTopic(id, principal.organizationId);
   }
 
+  @Get(':id/dossier')
+  @RequireScope('news:read')
+  async getTopicDossier(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
+    return await this.topicService.getTopicDossier(id, principal.organizationId);
+  }
+
   @Post()
   @RequireScope('news:write')
   async createTopic(
