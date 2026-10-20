@@ -52,12 +52,12 @@ export function getRateLimitOptions() {
     timeWindow,
     allowList,
     keyGenerator: (req: FastifyRequest) => {
+      // Key buckets on the authenticated principal when present, otherwise on
+      // the connection-derived IP. req.ip already reflects the Fastify
+      // trustProxy configuration; reading the raw x-forwarded-for header here
+      // would let any client rotate its own buckets and bypass the limit.
       const auth = req.headers.authorization;
       if (auth && typeof auth === 'string') return auth;
-      const forwarded = req.headers['x-forwarded-for'];
-      if (forwarded) {
-        return Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
-      }
       return req.ip || '127.0.0.1';
     },
     errorResponseBuilder: (req: FastifyRequest, context: { max: number; after: string }) => ({
@@ -77,8 +77,12 @@ export function getRateLimitOptions() {
  */
 export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
   const isTest = process.env.NODE_ENV === 'test';
-  const trustProxy =
-    process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production' || isTest;
+  // Opt in/out of trusting proxy headers explicitly; production defaults to
+  // true (inverse proxies) so req.ip maps back to the real client, while an
+  // explicit TRUST_PROXY=false hardens deployments without a trusted proxy.
+  const trustProxy = process.env.TRUST_PROXY
+    ? process.env.TRUST_PROXY !== 'false'
+    : process.env.NODE_ENV === 'production' || isTest;
   const fastify = Fastify({ logger: options.logger ?? false, trustProxy });
 
   fastify.addHook('onRequest', async (_req, reply) => {

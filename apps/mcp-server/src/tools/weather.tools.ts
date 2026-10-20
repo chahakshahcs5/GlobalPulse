@@ -345,13 +345,26 @@ export function registerWeatherTools(
         }
       }
 
-      const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`
-      );
-      const weatherData = (await weatherRes.json()) as {
+      let weatherData: {
         current?: { temperature_2m?: number; weather_code?: number };
         daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[] };
-      };
+      } | null = null;
+      try {
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max&timezone=auto`
+        );
+        if (weatherRes.ok) {
+          weatherData = (await weatherRes.json()) as {
+            current?: { temperature_2m?: number; weather_code?: number };
+            daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[] };
+          };
+        }
+      } catch {
+        // Upstream network failures fall through to safe defaults below.
+      }
+      if (!weatherData) {
+        weatherData = { current: {}, daily: {} };
+      }
 
       const tempC = Math.round(weatherData.current?.temperature_2m ?? 20);
       return mcpJsonResponse({

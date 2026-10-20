@@ -26,6 +26,13 @@ export class RealtimeService implements OnModuleDestroy {
   private redisPub: Redis | null = null;
   private redisSub: Redis | null = null;
   private activeSubscriptionsCount = 0;
+  /**
+   * Payloads broadcast locally over this process's Subject, waiting for the
+   * Redis echo they also trigger. When the echo arrives we must NOT re-feed
+   * the Subject, otherwise every connected SSE client receives the event
+   * twice in Redis mode.
+   */
+  private pendingLocalBroadcasts = new Map<string, number>();
 
   constructor() {
     RealtimeService.instance = this;
@@ -59,12 +66,19 @@ export class RealtimeService implements OnModuleDestroy {
               try {
                 const parsedChannel = channel.replace('globalpulse:sse:', '');
                 const { eventName, data, timestamp } = JSON.parse(message);
-                this.messageSubject.next({
+                const payload: BroadcastPayload = {
                   channel: parsedChannel,
                   eventName,
                   data,
                   timestamp: timestamp || new Date().toISOString(),
-                });
+                };
+                // Skip the echo of a broadcast we already delivered locally.
+                const echoKey = RealtimeService.buildEchoKey(payload);
+                if (echoKey && this.pendingLocalBroadcasts.has(echoKey)) {
+                  this.pendingLocalBroadcasts.delete(echoKey);
+                  return;
+                }
+                this.messageSubject.next(payload);
               } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : 'Unknown error';
                 logger.debug(`Failed to parse distributed SSE message: ${msg}`);
@@ -75,14 +89,37 @@ export class RealtimeService implements OnModuleDestroy {
             logger.info(
               `Redis SSE connection deferred (${err.message}). Operating in standalone local mode.`
             );
-            this.redisPub = null;
-            this.redisSub = null;
+            this.teardownFailedRedisClients();
           });
       } catch {
-        this.redisPub = null;
-        this.redisSub = null;
+        this.teardownFailedRedisClients();
       }
     }
+  }
+
+  private static buildEchoKey(payload: BroadcastPayload): string | undefined {
+    try {
+      return JSON.stringify(payload);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Close any half-open Redis sockets before dropping the references. */
+  private teardownFailedRedisClients(): void {
+    for (const client of [this.redisPub, this.redisSub]) {
+      if (client) {
+        try {
+          void client.quit();
+        } catch {
+          // Socket may already be broken; ignore.
+        }
+        client.disconnect();
+      }
+    }
+    this.redisPub = null;
+    this.redisSub = null;
+    this.pendingLocalBroadcasts.clear();
   }
 
   public static getInstance(): RealtimeService {
@@ -122,11 +159,29 @@ export class RealtimeService implements OnModuleDestroy {
     this.messageSubject.next(payload);
 
     if (this.redisPub && this.redisPub.status === 'ready') {
+      const echoKey = RealtimeService.buildEchoKey(payload);
+      if (echoKey) {
+        this.prunePendingBroadcasts();
+        // Keep only a small window; each entry lives until its echo arrives
+        // (or a few seconds, whichever is shorter).
+        this.pendingLocalBroadcasts.set(echoKey, Date.now());
+      }
       try {
         this.redisPub.publish(`globalpulse:sse:${channel}`, JSON.stringify(payload));
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Unknown publish error';
+        if (echoKey) this.pendingLocalBroadcasts.delete(echoKey);
         logger.debug(`Redis publish error: ${msg}`);
+      }
+    }
+  }
+
+  /** Drop stale pending-echo markers so the map cannot grow unbounded. */
+  private prunePendingBroadcasts(): void {
+    const now = Date.now();
+    for (const [key, ts] of this.pendingLocalBroadcasts) {
+      if (now - ts > 10_000) {
+        this.pendingLocalBroadcasts.delete(key);
       }
     }
   }

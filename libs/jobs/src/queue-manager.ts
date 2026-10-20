@@ -96,15 +96,33 @@ export class QueueManager {
     logger.info(`Enqueued background job [${id}] of type [${type}]`);
 
     if (this.autoProcess) {
-      // Non-blocking trigger of processor
-      setImmediate(() => {
-        this.processNext().catch((err) => {
-          logger.error(`Error in background queue processor: ${err.message}`, err);
-        });
-      });
+      // Non-blocking trigger of processor (honors requested delay in memory mode)
+      this.scheduleProcessing(options.delayMs);
     }
 
     return record;
+  }
+
+  /**
+   * Schedules a non-blocking processor tick. Re-invoking processNext() is what
+   * keeps the queue alive (new enqueues AND retries both funnel through here),
+   * otherwise retried jobs would be stranded in 'queued' forever.
+   */
+  private scheduleProcessing(delayMs?: number): void {
+    const delay = delayMs && delayMs > 0 ? Math.min(delayMs, 60_000) : 0;
+    const trigger = () => {
+      this.processNext().catch((err: unknown) => {
+        logger.error(
+          `Error in background queue processor: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err : new Error(String(err))
+        );
+      });
+    };
+    if (delay > 0) {
+      setTimeout(trigger, delay);
+    } else {
+      setImmediate(trigger);
+    }
   }
 
   public getJob(id: string): JobRecord | undefined {
@@ -157,10 +175,13 @@ export class QueueManager {
       return job;
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      let retryDelayMs: number | undefined;
       if (job.attempts < job.maxAttempts) {
         job.status = 'queued';
+        // Exponential backoff so repeated fast failures do not hot-loop
+        retryDelayMs = Math.min(2 ** job.attempts * 250, 5_000);
         logger.warn(
-          `Job [${id}] failed (attempt ${job.attempts}/${job.maxAttempts}): ${errorMsg}. Retrying...`
+          `Job [${id}] failed (attempt ${job.attempts}/${job.maxAttempts}): ${errorMsg}. Retrying in ${retryDelayMs}ms...`
         );
       } else {
         job.status = 'failed';
@@ -176,6 +197,10 @@ export class QueueManager {
         try {
           await this.redis.set(`globalpulse:jobs:${id}`, JSON.stringify(job));
         } catch {}
+      }
+      // Re-trigger the processor so re-queued jobs are actually retried
+      if (job.status === 'queued' && this.autoProcess) {
+        this.scheduleProcessing(retryDelayMs);
       }
       return job;
     }

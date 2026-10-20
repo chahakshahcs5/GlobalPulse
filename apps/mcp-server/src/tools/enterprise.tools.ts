@@ -7,6 +7,7 @@ import {
   WebhookEventEnum,
   SUPPORTED_REGIONAL_EDITIONS,
   RegionalEditionCodeSchema,
+  type RegionalEditionCode,
 } from '@ai-news/schemas';
 import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
 
@@ -292,14 +293,30 @@ export function registerEnterpriseTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const allStories = await db.stories.list(
-          { status: 'PUBLISHED', limit },
+        // Stories do not carry a per-story region assignment in the data model
+        // (no column/table exists for it). The only derivable regional hint is
+        // the india category code, so exclude that silently-global behavior and
+        // annotate instead of pretending every edition is served.
+        const REGION_CATEGORY_HINTS: Partial<Record<RegionalEditionCode, string>> = {
+          in: 'india',
+        };
+
+        const pool = await db.stories.list(
+          { status: 'PUBLISHED', limit: Math.min(limit * 3, 150) },
           principal.organizationId
         );
+        const categoryHint = REGION_CATEGORY_HINTS[region];
+        const matched = categoryHint ? pool.filter((s) => s.articleType === categoryHint) : pool;
+        const stories = matched.slice(0, limit);
+
         return mcpJsonResponse({
           region,
-          count: allStories.length,
-          stories: allStories,
+          regionalAssignment: categoryHint ? `category:${region}` : 'not-modeled',
+          note: categoryHint
+            ? undefined
+            : 'Per-story regional assignment is not modeled yet; this edition currently mirrors the global feed.',
+          count: stories.length,
+          stories,
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

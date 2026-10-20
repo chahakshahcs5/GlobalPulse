@@ -10,7 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { QueueManager } from '@ai-news/jobs';
+import { defaultQueue } from '@ai-news/jobs';
 import { s3Storage } from '@ai-news/media';
 import { generateId } from '@ai-news/shared';
 import { ApiResponse } from '../../common/response/api-response';
@@ -37,7 +37,10 @@ export interface MediaAsset {
   variants: Array<{ suffix: string; width: number; height: number; url: string }>;
 }
 
-const queue = new QueueManager(true);
+// Share the process-wide queue so registered worker handlers (or, in Redis
+// mode, the worker service) can consume media jobs. A detached QueueManager
+// instance would enqueue jobs that nothing ever processes.
+const queue = defaultQueue;
 const mediaRegistry = new Map<string, MediaAsset>();
 
 @Controller('api/media')

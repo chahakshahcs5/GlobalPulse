@@ -28,23 +28,28 @@ export class ApiResponse {
     items: T[],
     total: number,
     limit = 50,
-    cursor?: string,
-    offset?: number
+    nextCursor?: string,
+    offset?: number,
+    hasMore?: boolean
   ): ApiResponseEnvelope<T[]> {
+    // Callers that already computed an accurate hasMore/nextCursor (e.g. cursor-
+    // paginated repositories) can pass `hasMore` explicitly. The fallback only
+    // applies to simple array slices (review queues etc.).
+    const computedHasMore =
+      hasMore ??
+      (offset !== undefined
+        ? offset + items.length < total
+        : items.length === limit && items.length < total);
     return {
       success: true,
       data: items,
       meta: {
         total,
         limit,
-        cursor,
-        nextCursor: cursor,
+        cursor: nextCursor,
+        nextCursor,
         offset,
-        hasMore: cursor
-          ? true
-          : offset !== undefined
-            ? offset + items.length < total
-            : items.length === limit,
+        hasMore: computedHasMore,
       },
       timestamp: new Date().toISOString(),
     };

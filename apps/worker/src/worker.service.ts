@@ -88,7 +88,7 @@ export class WorkerService {
             step++;
             const variantKey = `variants/${mediaId}/${dim.suffix}.${format}`;
             const imageBuffer = generateValidPng(dim.width, dim.height, [37, 99, 235]);
-            await s3Storage.upload(
+            const stored = await s3Storage.upload(
               variantKey,
               imageBuffer,
               (format as string) === 'png'
@@ -101,7 +101,9 @@ export class WorkerService {
               format,
               width: dim.width,
               height: dim.height,
-              url: `${sourceUrl}_${dim.suffix}.${format}`,
+              // Use the URL of the object actually uploaded, not a mangled copy
+              // of the source URL (which never resolves).
+              url: stored.url,
               sizeBytes: imageBuffer.length,
             });
             updateProgress(Math.floor(20 + (step / totalSteps) * 75));
@@ -213,7 +215,9 @@ export class WorkerService {
           storyId,
           versionNumber,
           pdfUrl,
-          pageCount: (layout as string) === 'broadsheet' ? 3 : 1,
+          // generateValidPdf produces a single-page document (/Count 1)
+          // regardless of layout, so report the real page count.
+          pageCount: 1,
           exportedAt: new Date().toISOString(),
         };
       }

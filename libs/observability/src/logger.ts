@@ -27,6 +27,9 @@ export class StructuredLogger {
   private minLevel: LogLevel;
   private logs: StructuredLogEntry[] = [];
 
+  /** Ring-buffer cap so the in-memory log cannot grow unbounded. */
+  private static readonly MAX_IN_MEMORY_LOGS = 1000;
+
   private static levelOrder: Record<LogLevel, number> = {
     trace: 0,
     debug: 1,
@@ -87,6 +90,10 @@ export class StructuredLogger {
 
   private emit(entry: StructuredLogEntry): void {
     this.logs.push(entry);
+    if (this.logs.length > StructuredLogger.MAX_IN_MEMORY_LOGS) {
+      // Drop the oldest entries to keep the buffer bounded
+      this.logs.splice(0, this.logs.length - StructuredLogger.MAX_IN_MEMORY_LOGS);
+    }
     const jsonStr = JSON.stringify(entry);
 
     switch (entry.level) {

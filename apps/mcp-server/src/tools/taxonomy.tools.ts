@@ -95,8 +95,8 @@ export function registerTaxonomyTools(
 
       const story = await db.stories.findById(storyId, principal.organizationId);
       if (!story) throw new Error(`Story ${storyId} not found`);
-      if (!story.topicIds.includes(topicId)) {
-        story.topicIds.push(topicId);
+      if (!(story.topicIds ?? []).includes(topicId)) {
+        story.topicIds = [...(story.topicIds ?? []), topicId];
         await db.stories.update(story);
       }
 
@@ -263,8 +263,8 @@ export function registerTaxonomyTools(
 
       const story = await db.stories.findById(storyId, principal.organizationId);
       if (!story) throw new Error(`Story ${storyId} not found`);
-      if (!story.entityIds.includes(entityId)) {
-        story.entityIds.push(entityId);
+      if (!(story.entityIds ?? []).includes(entityId)) {
+        story.entityIds = [...(story.entityIds ?? []), entityId];
         await db.stories.update(story);
       }
 
@@ -281,7 +281,10 @@ export function registerTaxonomyTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const allStories = await db.stories.list({ status: 'PUBLISHED', limit: 500 });
+      const allStories = await db.stories.list(
+        { status: 'PUBLISHED', limit: 500 },
+        principal.organizationId
+      );
       const countsByCat = new Map<string, number>();
 
       for (const s of allStories) {

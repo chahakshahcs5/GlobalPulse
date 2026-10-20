@@ -33,6 +33,33 @@ export class WeatherService {
   private weatherCache = new Map<string, CacheEntry<WeatherData>>();
   private geocodeCache = new Map<string, CacheEntry<GeocodeData>>();
 
+  private static readonly MAX_CACHE_ENTRIES = 500;
+
+  /**
+   * Bounds a TTL cache: arbitrary keys (e.g. lat/lon pairs) would otherwise
+   * accumulate forever in long-running processes. Evicts expired entries first
+   * and falls back to dropping the oldest-inserted entries.
+   */
+  private boundedSet<T>(
+    cache: Map<string, CacheEntry<T>>,
+    key: string,
+    entry: CacheEntry<T>
+  ): void {
+    const now = Date.now();
+    for (const [entryKey, cached] of cache) {
+      if (cached.expiresAt <= now) {
+        cache.delete(entryKey);
+      }
+    }
+    if (!cache.has(key) && cache.size >= WeatherService.MAX_CACHE_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        cache.delete(oldestKey);
+      }
+    }
+    cache.set(key, entry);
+  }
+
   private getWeatherInfo(code: number): { condition: string; icon: string } {
     if (code === 0) return { condition: 'Clear Sky', icon: '☀️' };
     if (code <= 3) return { condition: 'Partly Cloudy', icon: '⛅' };
@@ -91,8 +118,8 @@ export class WeatherService {
         forecast,
       };
 
-      // 15-minute TTL cache
-      this.weatherCache.set(key, { data: weather, expiresAt: now + 15 * 60 * 1000 });
+      // 15-minute TTL cache (bounded)
+      this.boundedSet(this.weatherCache, key, { data: weather, expiresAt: now + 15 * 60 * 1000 });
       return weather;
     } catch (err) {
       this.logger.warn(`Failed to fetch live weather for [${lat}, ${lon}]: ${err}`);
@@ -140,8 +167,11 @@ export class WeatherService {
           country: geoData.countryName,
           countryCode: geoData.countryCode,
         };
-        // 24-hour TTL cache
-        this.geocodeCache.set(key, { data: result, expiresAt: now + 24 * 60 * 60 * 1000 });
+        // 24-hour TTL cache (bounded)
+        this.boundedSet(this.geocodeCache, key, {
+          data: result,
+          expiresAt: now + 24 * 60 * 60 * 1000,
+        });
         return result;
       }
     } catch (err) {

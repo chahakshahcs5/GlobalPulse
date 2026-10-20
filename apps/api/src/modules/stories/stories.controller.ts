@@ -79,7 +79,8 @@ export class StoriesController {
       paginated.total,
       paginated.limit,
       paginated.nextCursor,
-      paginated.offset
+      paginated.offset,
+      paginated.hasMore
     );
   }
 
@@ -153,7 +154,9 @@ export class StoriesController {
       result.items,
       result.totalCount ?? result.items.length,
       result.limit,
-      result.nextCursor
+      result.nextCursor,
+      undefined,
+      result.hasMore
     );
   }
 

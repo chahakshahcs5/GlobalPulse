@@ -23,6 +23,7 @@ import {
   computeStoryReadingMetrics,
 } from '@ai-news/shared';
 import { WhatChangedDiffService } from './what-changed';
+import { WebhookService } from './webhook.service';
 
 /**
  * Optional SSE broadcaster — injected when running with the API server.
@@ -54,7 +55,37 @@ export interface StoryContext {
 }
 
 export class StoryService {
+  private webhookService?: WebhookService;
+
   constructor(private readonly db: DatabaseService) {}
+
+  /**
+   * Fire-and-forget webhook fan-out for published stories.
+   * Never blocks or fails the publish path itself.
+   */
+  private notifyWebhooksOfPublish(story: Story): void {
+    try {
+      if (!this.webhookService) {
+        this.webhookService = new WebhookService(this.db);
+      }
+      void this.webhookService
+        .dispatch(
+          'story.published',
+          {
+            storyId: story.id,
+            title: story.title,
+            slug: story.slug,
+            publishedAt: story.publishedAt ?? null,
+          },
+          story.organizationId
+        )
+        .catch(() => {
+          // Dispatch failures are logged inside the webhook service
+        });
+    } catch {
+      // Webhook fan-out must never break the publish path
+    }
+  }
 
   async createStory(input: CreateStoryInput, ctx: StoryContext): Promise<Story> {
     const validated = CreateStoryInputSchema.parse(input);
@@ -333,13 +364,30 @@ export class StoryService {
     const currentBlocks = await this.db.stories.getBlocks(storyId);
     const blockMap = new Map(currentBlocks.map((b) => [b.id, b]));
 
+    // Clients may send a partial ordering (e.g. the block list as they know
+    // it). Replacing the stored list wholesale would silently delete every
+    // omitted block, so merge: ordered known blocks first, then any blocks
+    // missing from the payload in their original order.
     const reordered: StoryBlock[] = [];
-    blockIdsInOrder.forEach((id, idx) => {
+    const seen = new Set<string>();
+    blockIdsInOrder.forEach((id) => {
       const block = blockMap.get(id);
-      if (block) {
-        block.sortOrder = idx;
+      if (block && !seen.has(id)) {
+        seen.add(id);
         reordered.push(block);
       }
+    });
+
+    currentBlocks.forEach((block) => {
+      if (!seen.has(block.id)) {
+        seen.add(block.id);
+        reordered.push(block);
+      }
+    });
+
+    // Contiguous final sort order
+    reordered.forEach((b, idx) => {
+      b.sortOrder = idx;
     });
 
     await this.db.stories.saveBlocks(storyId, reordered);
@@ -369,7 +417,9 @@ export class StoryService {
     const previousBlocks = await this.db.stories.getBlocks(storyId);
     let newBlocks: StoryBlock[] = previousBlocks;
     if (validated.blocks) {
-      newBlocks = validateBlocks(validated.blocks);
+      // Version blocks must pass the same sanitize pipeline as createStory
+      // (XSS protection applies to every revision, not just v1).
+      newBlocks = validateBlocks(validated.blocks).map(sanitizeBlock);
       await this.db.stories.saveBlocks(storyId, newBlocks);
     }
 
@@ -516,6 +566,7 @@ export class StoryService {
       slug: saved.slug,
       publishedAt: saved.publishedAt,
     });
+    this.notifyWebhooksOfPublish(saved);
 
     return saved;
   }
@@ -621,6 +672,7 @@ export class StoryService {
         slug: saved.slug,
         publishedAt: saved.publishedAt,
       });
+      this.notifyWebhooksOfPublish(saved);
       return saved;
     } else {
       story.status = 'DRAFT';

@@ -142,7 +142,8 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       };
       expect(res.totalVariants).toBe(4); // 2 formats * 2 dimensions
       expect(res.variants[0].format).toBe('webp');
-      expect(res.variants[0].url).toContain('keynote.jpg_1080p.webp');
+      // Variants are stored under <bucket>/variants/<mediaId>/<suffix>.<format>
+      expect(res.variants[0].url).toContain('/variants/med_summit_keynote/1080p.webp');
     });
 
     it('executes search.index_story and generates mock embedding tokens', async () => {
@@ -195,7 +196,8 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       expect(res.pdfUrl).toBe(
         'https://cdn.globalpulse.news/archive/sty_archive_77_v3_broadsheet.pdf'
       );
-      expect(res.pageCount).toBe(3);
+      // Archival PDFs are single-page serialized artifacts.
+      expect(res.pageCount).toBe(1);
     });
   });
 });

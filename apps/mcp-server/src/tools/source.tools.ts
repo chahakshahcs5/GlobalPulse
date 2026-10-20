@@ -156,8 +156,9 @@ export function registerSourceTools(
       }
       const targetId = pub ? pub.id : sourceIdOrSlug;
 
+      const already = await db.users.isFollowing(principal.id, 'source', targetId);
       const record = await db.users.followTarget(principal.id, 'source', targetId);
-      if (pub) {
+      if (pub && !already) {
         pub.followerCount = (pub.followerCount || 0) + 1;
         await db.publishers.update(pub);
       }
@@ -418,8 +419,9 @@ export function registerSourceTools(
       }
       const targetId = pub ? pub.id : publisherIdOrSlug;
 
+      const already = await db.users.isFollowing(principal.id, 'source', targetId);
       const record = await db.users.followTarget(principal.id, 'source', targetId);
-      if (pub) {
+      if (pub && !already) {
         pub.followerCount = (pub.followerCount || 0) + 1;
         await db.publishers.update(pub);
       }

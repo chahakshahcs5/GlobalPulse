@@ -2,6 +2,7 @@ import type { DatabaseService } from '@ai-news/database';
 import type { Story } from '@ai-news/schemas';
 import { NotFoundError, ValidationError, generateId } from '@ai-news/shared';
 import type { StoryContext } from './story.service';
+import { WebhookService } from './webhook.service';
 
 export type SchedulingBroadcaster = (channel: string, eventName: string, data: unknown) => void;
 let _broadcaster: SchedulingBroadcaster | null = null;
@@ -21,6 +22,8 @@ function broadcast(eventName: string, data: unknown): void {
 }
 
 export class SchedulingService {
+  private webhookService?: WebhookService;
+
   constructor(private readonly db: DatabaseService) {}
 
   /**
@@ -134,6 +137,29 @@ export class SchedulingService {
           slug: res.slug,
           publishedAt: res.publishedAt,
         });
+
+        // Fire-and-forget webhook fan-out (never fails the sweep)
+        try {
+          if (!this.webhookService) {
+            this.webhookService = new WebhookService(this.db);
+          }
+          void this.webhookService
+            .dispatch(
+              'story.published',
+              {
+                storyId: res.id,
+                title: res.title,
+                slug: res.slug,
+                publishedAt: res.publishedAt ?? null,
+              },
+              orgId
+            )
+            .catch(() => {
+              // Dispatch failures are logged inside the webhook service
+            });
+        } catch {
+          // Ignored
+        }
       }
     }
 

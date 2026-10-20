@@ -96,7 +96,8 @@ describe('Multi-Agent End-to-End Publishing Pipeline (E2E Tests)', () => {
       const mediaResult = processed?.result as
         { totalVariants?: number; variants?: Array<{ url: string }> } | undefined;
       expect(mediaResult?.totalVariants).toBe(4);
-      expect(mediaResult?.variants?.[0]?.url).toContain('summit.jpg_thumb.webp');
+      // Variants are stored under <bucket>/variants/<mediaId>/<suffix>.<format>
+      expect(mediaResult?.variants?.[0]?.url).toContain('/variants/med_001/thumb.webp');
     });
 
     it('processes search indexing job and extracts keywords', async () => {

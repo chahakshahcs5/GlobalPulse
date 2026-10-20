@@ -63,7 +63,10 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
             ? resObj.message
             : exception.message;
     } else if (exception instanceof Error) {
-      detail = exception.message;
+      // Never leak internal exception messages (driver errors, file paths, etc.)
+      // to clients. The real cause is logged server-side with its stack.
+      detail = 'An unexpected error occurred processing your request.';
+      logger.error(`Unhandled exception on ${request.url}: ${exception.message}`, exception);
     }
 
     const typeSlug = code

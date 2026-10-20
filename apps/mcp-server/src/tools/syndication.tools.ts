@@ -23,7 +23,10 @@ export function registerSyndicationTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const stories = await db.stories.list({ status: 'PUBLISHED', limit });
+      const stories = await db.stories.list(
+        { status: 'PUBLISHED', limit },
+        principal.organizationId
+      );
       const fortyEightHoursAgo = Date.now() - 48 * 60 * 60 * 1000;
 
       const recentStories = stories.filter((s) => {
@@ -61,9 +64,12 @@ export function registerSyndicationTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      let story = await db.stories.findById(storyId);
+      // Resolve strictly inside the caller's organization: the fallback to a
+      // hardcoded org and the org-less findById used to leak other tenants'
+      // stories (including drafts).
+      let story = await db.stories.findById(storyId, principal.organizationId);
       if (!story) {
-        story = await db.stories.findBySlug(storyId, 'org_default');
+        story = await db.stories.findBySlug(storyId, principal.organizationId);
       }
 
       if (!story) {
@@ -100,12 +106,15 @@ export function registerSyndicationTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const stories = await db.stories.list({
-        status: 'PUBLISHED',
-        articleType: category as ArticleType | undefined,
-        topicId,
-        limit,
-      });
+      const stories = await db.stories.list(
+        {
+          status: 'PUBLISHED',
+          articleType: category as ArticleType | undefined,
+          topicId,
+          limit,
+        },
+        principal.organizationId
+      );
 
       const feedItems = stories.map((s) => ({
         title: s.title,

@@ -148,9 +148,28 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     transport: StreamableHTTPServerTransport;
     principalId: string;
     organizationId: string;
+    lastActivity: number;
   }
 
   const sessions = new Map<string, McpSessionRecord>();
+  const SESSION_IDLE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  const MAX_SESSIONS = 1000;
+
+  // Sessions whose transports are never closed by clients would otherwise
+  // accumulate indefinitely (each holds a full McpServer + tool registry).
+  function sweepIdleSessions(): void {
+    const now = Date.now();
+    for (const [sessionId, record] of sessions) {
+      if (now - record.lastActivity > SESSION_IDLE_TTL_MS) {
+        try {
+          void record.transport.close();
+        } catch {
+          // Transport may already be dead; ignore.
+        }
+        sessions.delete(sessionId);
+      }
+    }
+  }
 
   function createSessionTransport(
     sessionId: string,
@@ -165,10 +184,20 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     });
     initServerInstance(sessionServer, container);
     sessionServer.connect(sessionTransport);
+
+    // Enforce a hard session cap before admitting a new session.
+    if (sessions.size >= MAX_SESSIONS) {
+      sweepIdleSessions();
+      if (sessions.size >= MAX_SESSIONS) {
+        throw new Error('Too many active MCP sessions');
+      }
+    }
+
     sessions.set(sessionId, {
       transport: sessionTransport,
       principalId: principal.id,
       organizationId: principal.organizationId,
+      lastActivity: Date.now(),
     });
     sessionTransport.onclose = () => {
       sessions.delete(sessionId);
@@ -183,6 +212,11 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
     version: '1.0.0',
   });
   initServerInstance(server, container);
+
+  // Periodically evict idle sessions (transports are only removed via onclose,
+  // which many clients never trigger).
+  const sessionSweeper = setInterval(() => sweepIdleSessions(), 5 * 60 * 1000);
+  sessionSweeper.unref?.();
 
   // Rate limiter: configurable via env vars (defaults: 200 req/min)
   const mcpRateMax = parseInt(process.env.MCP_RATE_LIMIT_MAX || '200', 10);
@@ -208,12 +242,10 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       return;
     }
 
-    // Rate limiting — keyed by auth token or IP
-    const rateLimitKey =
-      req.headers.authorization ||
-      req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() ||
-      req.socket.remoteAddress ||
-      '127.0.0.1';
+    // Rate limiting — keyed by auth token or socket IP. The raw
+    // x-forwarded-for header is client-controlled and must not mint fresh
+    // buckets for attackers (see trustProxy handling in the API gateway).
+    const rateLimitKey = req.headers.authorization || req.socket.remoteAddress || '127.0.0.1';
     const rateResult = rateLimiter.check(rateLimitKey);
     res.setHeader('X-RateLimit-Limit', String(mcpRateMax));
     res.setHeader('X-RateLimit-Remaining', String(rateResult.remaining));
@@ -358,7 +390,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
         return;
       }
 
-      let bodyStr = '';
+      const bodyChunks: Buffer[] = [];
       let receivedBytes = 0;
       let isAborted = false;
 
@@ -377,11 +409,15 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
           req.destroy();
           return;
         }
-        bodyStr += chunk;
+        // Accumulate raw bytes: string-concatenating chunks would corrupt any
+        // multi-byte UTF-8 sequence split across a chunk boundary.
+        bodyChunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
       });
 
       req.on('end', async () => {
         if (isAborted) return;
+        const bodyStr = Buffer.concat(bodyChunks).toString('utf8');
+        bodyChunks.length = 0;
         await mcpPrincipalStore.run(resolvedPrincipal, async () => {
           try {
             const parsed = bodyStr ? JSON.parse(bodyStr) : undefined;
@@ -407,6 +443,7 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
                 );
                 return;
               }
+              sessionRecord.lastActivity = Date.now();
               activeTransport = sessionRecord.transport;
             } else {
               const newSessionId = crypto.randomUUID();
