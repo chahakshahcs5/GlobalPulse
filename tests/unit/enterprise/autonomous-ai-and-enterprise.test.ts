@@ -176,7 +176,7 @@ describe('Autonomous AI & Enterprise Newsroom Ecosystem (F18, F19, F20, F21, F5)
         url: '/api/mcp/webhooks',
         headers: { authorization: `Bearer ${adminToken}` },
         payload: {
-          url: 'https://webhook.site/test-hook',
+          url: 'https://hooks.example.com/test-hook',
           events: ['story.published', 'story.needs_review'],
         },
       });

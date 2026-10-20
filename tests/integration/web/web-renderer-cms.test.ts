@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import {
   DEMO_STORIES,
   DEMO_SOURCES,
@@ -10,6 +10,20 @@ import { D3ChartRenderer, MapRenderer, TimelineRenderer, VisualDiffRenderer } fr
 import { StoryBlockSchema, EntitySchema, EventSchema, type StoryBlock } from '@ai-news/schemas';
 
 describe('Web Application, StoryRenderer & Large Display Mode Integration Tests', () => {
+  beforeAll(() => {
+    // Server-rendered page tests must be deterministic: force all api-client
+    // fetches to fail so pages fall back to the bundled demo data, regardless
+    // of whether a dev API server happens to be running on this machine.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Network disabled for deterministic page render tests')))
+    );
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('Demo Data & Story Schema Integrity', () => {
     it('contains realistic stories with valid structured blocks', () => {
       expect(DEMO_STORIES.length).toBeGreaterThanOrEqual(3);
@@ -307,7 +321,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('ent_india');
       expect(html).toContain('Known Aliases');
       expect(html).toContain('Covered Dispatches');
-      expect(html).toContain('BRICS 2026 Summit');
+      expect(html).toContain('BRICS 2026 Leaders Summit in New Delhi');
     });
 
     it('renders Event Tracker Page with live status, geo map, and participating entities', async () => {
