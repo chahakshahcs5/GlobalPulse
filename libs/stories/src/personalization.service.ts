@@ -6,6 +6,7 @@ import type {
   DepthPreference,
 } from '@ai-news/schemas';
 import { type PaginatedResult, encodeCursor, decodeCursor, generateId } from '@ai-news/shared';
+import { resolveFollowedStoryScope } from './user.service';
 
 export interface PersonalizedFeedOptions {
   userId?: string;
@@ -71,6 +72,7 @@ export class PersonalizationService {
     const followedAuthors = new Set<string>();
     const preferredCategories = new Set<string>();
     const readStoryIds = new Map<string, boolean>(); // storyId -> completed
+    let followedStoryScope = { direct: new Set<string>(), expanded: new Set<string>() };
 
     if (options.userId) {
       try {
@@ -98,6 +100,11 @@ export class PersonalizationService {
       }
     }
 
+    try {
+      followedStoryScope = await resolveFollowedStoryScope(this.db, options.userId ?? '', orgId);
+    } catch {
+      // Ignore follow resolution failures.
+    }
     // 3. Compute relevance scores
     const now = Date.now();
 
@@ -145,6 +152,16 @@ export class PersonalizationService {
       if (story.authorId && followedAuthors.has(story.authorId)) {
         score += 35;
         reasons.push('Followed journalist');
+      }
+
+      // Followed story (and, by cluster continuity, new articles in the same
+      // cluster of a story the reader already follows).
+      if (followedStoryScope.direct.has(story.id)) {
+        score += 45;
+        reasons.push('Following this story');
+      } else if (followedStoryScope.expanded.has(story.id)) {
+        score += 30;
+        reasons.push('New update in a story you follow');
       }
 
       // Preferred categories
@@ -226,6 +243,7 @@ export class PersonalizationService {
 
     let depthPreference: DepthPreference = 'balanced';
     let serendipityWeight = 30;
+    let followedStoryScope = { direct: new Set<string>(), expanded: new Set<string>() };
 
     if (options.userId) {
       try {
@@ -259,6 +277,12 @@ export class PersonalizationService {
       } catch {
         // Fallback gracefully on profile fetch failure
       }
+    }
+
+    try {
+      followedStoryScope = await resolveFollowedStoryScope(this.db, options.userId ?? '', orgId);
+    } catch {
+      // Ignore follow resolution failures.
     }
 
     const now = Date.now();
@@ -323,6 +347,27 @@ export class PersonalizationService {
           target: story.authorId,
           contribution: 35,
           explanation: `Reported by author ${story.authorId} you follow`,
+        });
+      }
+
+      // Followed story and cluster continuity
+      if (followedStoryScope.direct.has(story.id)) {
+        score += 45;
+        reasons.push('Following this story');
+        signals.push({
+          type: 'followed_story',
+          target: story.id,
+          contribution: 45,
+          explanation: 'You follow this evolving story',
+        });
+      } else if (followedStoryScope.expanded.has(story.id)) {
+        score += 30;
+        reasons.push('New update in a story you follow');
+        signals.push({
+          type: 'cluster_continuity',
+          target: story.id,
+          contribution: 30,
+          explanation: 'New article in the cluster of a story you follow',
         });
       }
 

@@ -1,6 +1,27 @@
 import type { DatabaseService } from '@ai-news/database';
-import type { StoryAnalytics, TrendingStory, NewsroomMetrics } from '@ai-news/schemas';
+import type { StoryAnalytics, TrendingStory, NewsroomMetrics, Story } from '@ai-news/schemas';
 import { NotFoundError } from '@ai-news/shared';
+
+/**
+ * The content, editorial, and story-intelligence metrics computed for the
+ * newsroom dashboard (§43). Every value is explainable — no opaque score.
+ */
+type EditorialMetrics = Pick<
+  NewsroomMetrics,
+  | 'storyVelocityPerDay'
+  | 'sourceDiversity'
+  | 'updateFrequency'
+  | 'avgDraftToPublishHours'
+  | 'avgReviewTimeHours'
+  | 'correctionCount'
+  | 'retractionCount'
+  | 'correctionRate'
+  | 'claimCount'
+  | 'evidenceCount'
+  | 'evidenceCoverage'
+  | 'timelineEventCount'
+  | 'entityActivity'
+>;
 
 export class AnalyticsService {
   constructor(private readonly db: DatabaseService) {}
@@ -170,6 +191,8 @@ export class AnalyticsService {
       // safe fallback if users table is empty
     }
 
+    const editorial = await this.computeEditorialMetrics(published, orgId);
+
     return {
       totalStories: allStories.length,
       publishedStories: published.length,
@@ -184,7 +207,203 @@ export class AnalyticsService {
       avgReadingTimeMinutes,
       activeJournalists,
       activeAiAgents,
+      ...editorial.metrics,
       generatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Average hours a story spent between being submitted for review and being
+   * approved, derived from the audit trail.
+   */
+  private async computeReviewTime(orgId: string): Promise<{ avgReviewTimeHours: number }> {
+    let reviewTimeTotal = 0;
+    let reviewTimeSamples = 0;
+    try {
+      const entries = await this.db.audit.query(orgId, { limit: 1000 });
+      // The audit trail is newest-first, so the two events are collected
+      // separately and paired afterwards.
+      const submittedAt = new Map<string, number>();
+      const approvedAt = new Map<string, number>();
+      for (const entry of entries) {
+        if (!entry.resourceId) continue;
+        const at = new Date(entry.timestamp).getTime();
+        if (entry.action.endsWith('submit_for_review')) {
+          const existing = submittedAt.get(entry.resourceId);
+          if (existing === undefined || at < existing) submittedAt.set(entry.resourceId, at);
+        }
+        if (entry.action.endsWith('approve_story')) {
+          const existing = approvedAt.get(entry.resourceId);
+          if (existing === undefined || at > existing) approvedAt.set(entry.resourceId, at);
+        }
+      }
+      for (const [storyId, approved] of approvedAt) {
+        const started = submittedAt.get(storyId);
+        if (started === undefined) continue;
+        const hours = (approved - started) / 3_600_000;
+        if (hours < 0) continue;
+        reviewTimeTotal += hours;
+        reviewTimeSamples += 1;
+      }
+    } catch {
+      // The audit trail is optional for metrics.
+    }
+
+    return {
+      avgReviewTimeHours:
+        reviewTimeSamples > 0 ? Math.round((reviewTimeTotal / reviewTimeSamples) * 10) / 10 : 0,
+    };
+  }
+
+  /**
+   * Corrections and retractions recorded against the newsroom, and the
+   * correction rate per published story.
+   */
+  private async computeCorrectionMetrics(
+    orgId: string,
+    publishedCount: number
+  ): Promise<{
+    correctionCount: number;
+    retractionCount: number;
+    correctionRate: number;
+  }> {
+    let correctionCount = 0;
+    let retractionCount = 0;
+    try {
+      const corrections = await this.db.sourceCorrections.list(orgId, { limit: 1000 });
+      correctionCount = corrections.filter((c) => c.type === 'CORRECTION').length;
+      retractionCount = corrections.filter((c) => c.type === 'RETRACTION').length;
+    } catch {
+      // Corrections are optional for metrics.
+    }
+
+    return {
+      correctionCount,
+      retractionCount,
+      correctionRate:
+        publishedCount > 0 ? Math.round((correctionCount / publishedCount) * 1000) / 1000 : 0,
+    };
+  }
+
+  /**
+   * Content, editorial, and story-intelligence metrics (§43).
+   *
+   * Everything is derived from data the platform already stores: story
+   * versions, the audit trail, corrections, claims, evidence, and timelines.
+   * No opaque score is produced — every number is explainable.
+   */
+  private async computeEditorialMetrics(
+    published: Story[],
+    orgId: string
+  ): Promise<{ metrics: EditorialMetrics }> {
+    const empty = {
+      storyVelocityPerDay: 0,
+      sourceDiversity: 0,
+      updateFrequency: 0,
+      avgDraftToPublishHours: 0,
+      avgReviewTimeHours: 0,
+      correctionCount: 0,
+      retractionCount: 0,
+      correctionRate: 0,
+      claimCount: 0,
+      evidenceCount: 0,
+      evidenceCoverage: 0,
+      timelineEventCount: 0,
+      entityActivity: 0,
+    };
+
+    // Newsroom-level metrics are computed even when nothing is published:
+    // review time and corrections describe the desk, not the publish queue.
+    const reviewTime = await this.computeReviewTime(orgId);
+    const corrections = await this.computeCorrectionMetrics(orgId, published.length);
+
+    if (published.length === 0) {
+      return { metrics: { ...empty, ...reviewTime, ...corrections } };
+    }
+
+    // --- Story velocity (published stories per day over the last 7 days) ------
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentPublished = published.filter(
+      (story) => story.publishedAt && new Date(story.publishedAt).getTime() >= sevenDaysAgo
+    ).length;
+    const storyVelocityPerDay = Math.round((recentPublished / 7) * 100) / 100;
+
+    // --- Source diversity and update frequency ------------------------------
+    let sourceTotal = 0;
+    let versionTotal = 0;
+    let entityTotal = 0;
+    for (const story of published) {
+      sourceTotal += new Set(story.sourceIds ?? []).size;
+      entityTotal += new Set(story.entityIds ?? []).size;
+      try {
+        const versions = await this.db.stories.getVersions(story.id);
+        versionTotal += Math.max(0, versions.length - 1);
+      } catch {
+        // A missing version history must not break the metrics.
+      }
+    }
+    const sourceDiversity = Math.round((sourceTotal / published.length) * 100) / 100;
+    const updateFrequency = Math.round((versionTotal / published.length) * 100) / 100;
+    const entityActivity = Math.round((entityTotal / published.length) * 100) / 100;
+
+    // --- Draft to publish time ----------------------------------------------
+    let draftToPublishTotal = 0;
+    let draftToPublishSamples = 0;
+    for (const story of published) {
+      if (!story.publishedAt || !story.createdAt) continue;
+      const hours =
+        (new Date(story.publishedAt).getTime() - new Date(story.createdAt).getTime()) / 3_600_000;
+      if (hours < 0) continue;
+      draftToPublishTotal += hours;
+      draftToPublishSamples += 1;
+    }
+    const avgDraftToPublishHours =
+      draftToPublishSamples > 0
+        ? Math.round((draftToPublishTotal / draftToPublishSamples) * 10) / 10
+        : 0;
+
+    // --- Story intelligence coverage ----------------------------------------
+    let claimCount = 0;
+    let evidenceCount = 0;
+    let claimsWithEvidence = 0;
+    let timelineEventCount = 0;
+    for (const story of published) {
+      try {
+        const claims = await this.db.storyIntelligence.listClaims(orgId, story.id);
+        claimCount += claims.length;
+        const evidence = await this.db.storyIntelligence.listEvidence(orgId, story.id);
+        evidenceCount += evidence.length;
+        const evidenceByClaim = new Map<string, number>();
+        for (const item of evidence) {
+          if (!item.claimId) continue;
+          evidenceByClaim.set(item.claimId, (evidenceByClaim.get(item.claimId) ?? 0) + 1);
+        }
+        for (const claim of claims) {
+          if ((evidenceByClaim.get(claim.id) ?? 0) > 0) claimsWithEvidence += 1;
+        }
+        const timeline = await this.db.storyIntelligence.listTimeline(orgId, story.id);
+        timelineEventCount += timeline.length;
+      } catch {
+        // Intelligence data is optional for metrics.
+      }
+    }
+    const evidenceCoverage =
+      claimCount > 0 ? Math.round((claimsWithEvidence / claimCount) * 1000) / 1000 : 0;
+
+    return {
+      metrics: {
+        storyVelocityPerDay,
+        sourceDiversity,
+        updateFrequency,
+        avgDraftToPublishHours,
+        ...reviewTime,
+        ...corrections,
+        claimCount,
+        evidenceCount,
+        evidenceCoverage,
+        timelineEventCount,
+        entityActivity,
+      },
     };
   }
 }
