@@ -5,6 +5,8 @@ export const WebhookEventEnum = z.enum([
   'story.updated',
   'story.needs_review',
   'breaking_news.alert',
+  'alert.triggered',
+  'story.update',
   'cluster.created',
 ]);
 export type WebhookEvent = z.infer<typeof WebhookEventEnum>;

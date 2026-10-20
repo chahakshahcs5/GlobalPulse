@@ -42,6 +42,31 @@ export const NewsroomMetricsSchema = z.object({
   avgReadingTimeMinutes: z.number().optional().default(0),
   activeJournalists: z.number().optional().default(0),
   activeAiAgents: z.number().optional().default(0),
+  // --- Content metrics (§43) ------------------------------------------------
+  /** Published stories per day over the measurement window. */
+  storyVelocityPerDay: z.number().optional().default(0),
+  /** Average number of distinct sources cited per published story. */
+  sourceDiversity: z.number().optional().default(0),
+  /** Average number of story versions (updates) per published story. */
+  updateFrequency: z.number().optional().default(0),
+  // --- Editorial metrics (§43) ---------------------------------------------
+  /** Average hours from first draft to publication. */
+  avgDraftToPublishHours: z.number().optional().default(0),
+  /** Average hours a story spent in editorial review. */
+  avgReviewTimeHours: z.number().optional().default(0),
+  /** Corrections and retractions recorded against published stories. */
+  correctionCount: z.number().optional().default(0),
+  retractionCount: z.number().optional().default(0),
+  /** Corrections per published story. */
+  correctionRate: z.number().optional().default(0),
+  // --- Story intelligence metrics (§43) ------------------------------------
+  claimCount: z.number().optional().default(0),
+  evidenceCount: z.number().optional().default(0),
+  /** Share of claims that carry at least one evidence item (0-1). */
+  evidenceCoverage: z.number().optional().default(0),
+  timelineEventCount: z.number().optional().default(0),
+  /** Average number of distinct entities per published story. */
+  entityActivity: z.number().optional().default(0),
   generatedAt: z.string(),
 });
 export type NewsroomMetrics = z.infer<typeof NewsroomMetricsSchema>;

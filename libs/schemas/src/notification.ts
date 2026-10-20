@@ -6,6 +6,7 @@ export const NotificationTypeSchema = z.enum([
   'fact_check_flag',
   'review_requested',
   'story_published',
+  'story_update',
   'system',
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;

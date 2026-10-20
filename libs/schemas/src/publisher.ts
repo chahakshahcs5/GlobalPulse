@@ -27,6 +27,11 @@ export const PublisherSchema = z.object({
   websiteUrl: z.string().url().optional(),
   biasRating: z.string().optional(),
   credibilityScore: z.number().min(0).max(100).optional(),
+  ownership: z.string().max(300).optional(),
+  methodology: z.string().max(4000).optional(),
+  correctionPolicyUrl: z.string().url().optional(),
+  foundedYear: z.number().int().min(1500).max(3000).optional(),
+  metadata: z.record(z.unknown()).optional(),
   isVerified: z.boolean().default(true),
   followerCount: z.number().int().nonnegative().default(0),
   createdAt: z.string(),
@@ -46,6 +51,10 @@ export const CreatePublisherInputSchema = z.object({
   websiteUrl: z.string().url().optional(),
   biasRating: z.string().max(100).optional(),
   credibilityScore: z.number().min(0).max(100).optional(),
+  ownership: z.string().max(300).optional(),
+  methodology: z.string().max(4000).optional(),
+  correctionPolicyUrl: z.string().url().optional(),
+  foundedYear: z.number().int().min(1500).max(3000).optional(),
   isVerified: z.boolean().default(true),
 });
 export type CreatePublisherInput = z.input<typeof CreatePublisherInputSchema>;

@@ -23,6 +23,8 @@ export const AttributionSignalTypeSchema = z.enum([
   'category_affinity',
   'entity_interest',
   'followed_author',
+  'followed_story',
+  'cluster_continuity',
   'serendipity_discovery',
   'breaking_urgency',
   'reading_depth',
@@ -105,7 +107,22 @@ export const UpdatePreferencesInputSchema = z.object({
 });
 export type UpdatePreferencesInput = z.infer<typeof UpdatePreferencesInputSchema>;
 
-export const FollowTargetTypeSchema = z.enum(['topic', 'entity', 'author', 'source']);
+/**
+ * Followable targets.
+ *
+ * `story` and `cluster` extend the original topic/entity/author/source set:
+ * following a story keeps following the story's cluster, so a reader stays on
+ * an evolving story even when a new article is published into that cluster.
+ */
+export const FollowTargetTypeSchema = z.enum([
+  'topic',
+  'entity',
+  'author',
+  'source',
+  'story',
+  'cluster',
+  'event',
+]);
 export type FollowTargetType = z.infer<typeof FollowTargetTypeSchema>;
 
 export const FollowTargetInputSchema = z.object({
