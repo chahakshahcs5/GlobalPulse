@@ -268,7 +268,9 @@ function extractRelatedSources(story: Story, otherStories: Story[]): RelatedSour
  * Dynamically converts published stories into GoogleNewsCluster objects
  */
 export function buildClustersFromStories(stories: Story[]): GoogleNewsCluster[] {
-  const publishedStories = stories.filter((s) => s.status === 'PUBLISHED' || s.status === 'DRAFT');
+  // Only published stories belong on the homepage feed — drafts are
+  // unreviewed work-in-progress and were leaking into clusters before.
+  const publishedStories = stories.filter((s) => s.status === 'PUBLISHED');
   const dynamicClusters: GoogleNewsCluster[] = [];
 
   for (const story of publishedStories) {

@@ -33,6 +33,7 @@ import { PaywallBarrier } from '../../../components/PaywallBarrier';
 import { AskArticleDrawer } from '../../../components/AskArticleDrawer';
 import { StoryDetailSkeleton } from '../../../components/StorySkeletons';
 import { formatDeterministicDateTime } from '../../../lib/date-utils';
+import { serializeJsonLd } from '../../../lib/json-ld';
 import {
   StoryAudioBar,
   StoryDepthSelector,
@@ -428,7 +429,7 @@ export default function StoryPage() {
       {/* Schema.org NewsArticle JSON-LD for Google News & Search Engines */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
 
       {/* Navigation Breadcrumb */}

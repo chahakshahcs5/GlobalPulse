@@ -206,7 +206,9 @@ export function useEditorialNotifications(limit = 20) {
   useEffect(() => {
     fetchNotifications();
     const unsub = api.subscribeToRealtimeEvents(['all'], (event) => {
-      if (event.type === 'notification.breaking' || event.type === 'editorial.alert') {
+      // Server broadcasts these exact event names (NotificationService):
+      // 'breaking_news' on the 'all' channel and 'editorial_alert' on 'newsroom'.
+      if (event.type === 'breaking_news' || event.type === 'editorial_alert') {
         fetchNotifications();
       }
     });

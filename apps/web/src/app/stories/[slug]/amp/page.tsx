@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, Clock, ShieldCheck, Zap } from 'lucide-react';
 import { useAllStories } from '../../../../lib/news-store';
 import { formatDeterministicDate } from '../../../../lib/date-utils';
+import { serializeJsonLd } from '../../../../lib/json-ld';
 import type { StoryBlock } from '@ai-news/schemas';
 
 export default function AmpStoryPage() {
@@ -50,7 +51,7 @@ export default function AmpStoryPage() {
       {/* Schema.org NewsArticle JSON-LD for Google AMP Validation */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
 
       {/* AMP Top Bar */}
