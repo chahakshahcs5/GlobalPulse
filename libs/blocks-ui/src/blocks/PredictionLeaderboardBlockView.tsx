@@ -13,11 +13,12 @@ import { PredictionScorer, CalibrationRenderer } from '@ai-news/media';
  */
 export const PredictionLeaderboardBlockView: React.FC<{
   data: PredictionLeaderboardBlock['data'];
-}> = ({ data }) => {
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
   const scores = React.useMemo(() => PredictionScorer.scoreForecasters(data), [data]);
   const calibrationSvg = React.useMemo(
-    () => CalibrationRenderer.renderToSvg(data, { theme: 'light', width: 520, height: 360 }),
-    [data]
+    () => CalibrationRenderer.renderToSvg(data, { theme, width: 520, height: 360 }),
+    [data, theme]
   );
 
   const resolvedCount = data.predictions.filter(

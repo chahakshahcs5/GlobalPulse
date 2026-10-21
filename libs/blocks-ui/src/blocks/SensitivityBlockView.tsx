@@ -11,12 +11,22 @@ import { SensitivityRenderer } from '@ai-news/media';
  * numbers behind it are also rendered as a table, because a reader should be
  * able to read the actual values, not only judge bar lengths.
  */
-export const SensitivityBlockView: React.FC<{ data: SensitivityBlock['data'] }> = ({ data }) => {
+export const SensitivityBlockView: React.FC<{
+  data: SensitivityBlock['data'];
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
   const swings = React.useMemo(() => SensitivityRenderer.computeSwings(data), [data]);
   const notices = React.useMemo(() => SensitivityRenderer.getNotices(data), [data]);
   const svg = React.useMemo(
-    () => SensitivityRenderer.renderToSvg(data, { theme: 'light', width: 800, height: 460 }),
-    [data]
+    () =>
+      SensitivityRenderer.renderToSvg(data, {
+        theme,
+        width: 800,
+        height: 460,
+        // The heading below already says this, so the chart does not repeat it.
+        showTitle: false,
+      }),
+    [data, theme]
   );
 
   const format = (value: number) => {

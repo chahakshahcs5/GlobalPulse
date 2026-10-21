@@ -70,6 +70,32 @@ export function formatLocalTime(dateInput: string | number | Date | null | undef
 }
 
 /**
+ * Formats a deadline using UTC.
+ *
+ * A deadline is not a moment that belongs to the reader's timezone — it is a
+ * moment on the clock. Two readers on opposite sides of the world must see
+ * the same closing date, so this deliberately does not shift the day.
+ *
+ * Output example: "Sep 30, 2026"
+ */
+export function formatUtcDate(dateInput: string | number | Date | null | undefined): string {
+  if (!dateInput) return '';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+
+  try {
+    return d.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+  }
+}
+
+/**
  * Backward compatibility alias: formats date using user's local timezone.
  */
 export function formatDeterministicDate(

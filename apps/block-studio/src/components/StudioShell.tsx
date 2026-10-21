@@ -31,17 +31,16 @@ export type InspectorTab = 'form' | 'json';
 export type ChromeTheme = 'light' | 'dark';
 
 /**
- * The widths the preview can be shown at.
+ * The widths the studio's own panels are opened at.
  *
- * The canvas column is narrower than a laptop screen, so a viewport wider
- * than the column scrolls rather than silently collapsing to the column's
- * width — otherwise "tablet" and "laptop" would look identical.
+ * They are capped as a share of the window, so that on a narrow screen the
+ * panels give way instead of squeezing the canvas into nothing — and so that
+ * the inspector can never be pushed off the edge of the window, where it
+ * could not be reached.
  */
-const VIEWPORT_WIDTH: Record<StudioViewport, string> = {
-  mobile: '390px',
-  tablet: '768px',
-  desktop: '100%',
-};
+const SIDEBAR_WIDTH = 300;
+const INSPECTOR_WIDTH = 420;
+const COLLAPSED_WIDTH = 44;
 
 const THEME_STORAGE_KEY = 'block_studio_theme';
 const PREVIEW_THEME_STORAGE_KEY = 'block_studio_preview_theme';
@@ -440,9 +439,14 @@ export function StudioShell() {
          * A collapsed pane keeps a narrow strip, so the button that brings
          * it back is always on screen — a pane collapsed to nothing would
          * take its own way back with it.
+         *
+         * An open pane is capped as a share of the window. Without the cap,
+         * the two panels together take more room than a narrow window has,
+         * the canvas is squeezed to nothing, and the inspector is pushed off
+         * the edge where it cannot be reached at all.
          */
-        gridTemplateColumns: `${sidebarOpen ? '300px' : '44px'} minmax(0,1fr) ${
-          inspectorOpen ? '420px' : '44px'
+        gridTemplateColumns: `${sidebarOpen ? `min(${SIDEBAR_WIDTH}px, 30vw)` : `${COLLAPSED_WIDTH}px`} minmax(0,1fr) ${
+          inspectorOpen ? `min(${INSPECTOR_WIDTH}px, 34vw)` : `${COLLAPSED_WIDTH}px`
         }`,
       }}
     >
@@ -471,7 +475,6 @@ export function StudioShell() {
         previewBlock={previewBlock}
         theme={theme}
         viewport={viewport}
-        viewportWidth={VIEWPORT_WIDTH[viewport]}
         isValid={validation.ok}
         darkClass={chromeDarkClass}
         onThemeChange={changePreviewTheme}

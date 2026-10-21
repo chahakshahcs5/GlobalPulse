@@ -14,6 +14,7 @@ import {
   type StudioPayload,
 } from '../lib/newsroom-api';
 import type { StoryContext } from './story-context';
+import { useFocusTrap } from './useFocusTrap';
 
 export type SaveMode = 'version' | 'block' | 'add';
 
@@ -55,6 +56,8 @@ export function SaveToStoryDialog({
   const [summary, setSummary] = React.useState('');
   const [state, setState] = React.useState<'idle' | 'saving' | 'error'>('idle');
   const [error, setError] = React.useState<string | null>(null);
+  /** Keeps the keyboard inside the dialog and gives the focus back after. */
+  const dialogRef = useFocusTrap<HTMLDivElement>(true);
 
   // Escape closes the dialog.
   React.useEffect(() => {
@@ -178,6 +181,7 @@ export function SaveToStoryDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Import into the story"
@@ -251,7 +255,7 @@ export function SaveToStoryDialog({
                 placeholder="e.g. Corrected the overstatement figure"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:placeholder:text-slate-500"
               />
-              <p className="mt-1 text-[10px] text-slate-500">
+              <p className="mt-1 text-[11px] text-slate-500">
                 Recorded in the audit log and shown in the version history.
               </p>
             </div>

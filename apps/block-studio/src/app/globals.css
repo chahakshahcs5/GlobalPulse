@@ -42,6 +42,7 @@
     --text-secondary: #475569;
     --border-color: #e2e8f0;
     --scroll-thumb: #cbd5e1;
+    --focus-ring: #2563eb;
     color-scheme: light;
   }
 
@@ -65,6 +66,7 @@
     --text-secondary: #94a3b8;
     --border-color: #1e293b;
     --scroll-thumb: #334155;
+    --focus-ring: #60a5fa;
     color-scheme: dark;
   }
 
@@ -76,6 +78,62 @@
       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+  }
+
+  /*
+   * The preview is drawn in its own frame, and the frame draws its own card.
+   * A background painted by the page would show through the rounded corners
+   * of that card as a rectangle of a slightly different colour.
+   */
+  html:has(.preview-frame),
+  body:has(.preview-frame) {
+    background: transparent;
+  }
+
+  /*
+   * A visible focus ring, for everything.
+   *
+   * The studio had no focus style of its own, so every control fell back to
+   * the browser's default ring — the browser's blue rather than the studio's,
+   * and nothing at all in Safari on macOS unless the reader has switched on
+   * full keyboard access. One rule gives every control the same ring, in the
+   * studio's own accent.
+   *
+   * The ring is drawn with a shadow rather than an outline, because the
+   * browser paints its own focus ring over the outline of a focused
+   * element and the accent colour would be lost. A forced-colour scheme
+   * drops the shadow, so there the ring is drawn with an outline instead.
+   *
+   * Text fields keep their own indicator: they change their border colour on
+   * focus, and `outline-none` on the field suppresses the ring there so the
+   * two do not stack up.
+   */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--focus-ring);
+  }
+
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
+  }
+
+  /*
+   * Movement is decoration, so it goes when the reader has asked for less of
+   * it. The pulsing dot on the executive briefing is the one that never
+   * stops, so it matters most.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

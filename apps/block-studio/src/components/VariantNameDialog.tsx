@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from './useFocusTrap';
 
 /**
  * Name a saved variant.
@@ -19,6 +20,8 @@ export function VariantNameDialog({
 }) {
   const [label, setLabel] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  /** Keeps the keyboard inside the dialog and gives the focus back after. */
+  const dialogRef = useFocusTrap<HTMLDivElement>(true);
 
   React.useEffect(() => {
     inputRef.current?.focus();
@@ -44,6 +47,7 @@ export function VariantNameDialog({
       onClick={onCancel}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Save as a variant"
