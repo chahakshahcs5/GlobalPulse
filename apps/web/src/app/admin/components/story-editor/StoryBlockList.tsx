@@ -1,17 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import {
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  ExternalLink,
-  Plus,
-  Search,
-  Trash2,
-} from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, ChevronUp, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
-import { listStudioCategories } from '@ai-news/block-studio';
+import { BlockTypePicker } from './BlockTypePicker';
 import { BlockSchemaEditor } from './BlockSchemaEditor';
 import type { BlockChange } from './types';
 
@@ -67,7 +59,6 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
    */
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [query, setQuery] = useState('');
 
   const toggle = (id: string) =>
     setExpanded((previous) => ({ ...previous, [id]: !(previous[id] ?? id === blocks[0]?.id) }));
@@ -103,51 +94,10 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
     );
   };
 
-  const categories = useMemo(() => listStudioCategories(), []);
-
-  const visibleCategories = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (needle.length === 0) return categories;
-    return categories
-      .map((group) => ({
-        ...group,
-        blocks: group.blocks.filter(
-          (block) =>
-            block.type.toLowerCase().includes(needle) ||
-            block.description.toLowerCase().includes(needle) ||
-            group.label.toLowerCase().includes(needle)
-        ),
-      }))
-      .filter((group) => group.blocks.length > 0);
-  }, [categories, query]);
-
-  const addBlock = (type: string) => {
-    const group = categories.find((candidate) =>
-      candidate.blocks.some((block) => block.type === type)
-    );
-    const definition = group?.blocks.find((block) => block.type === type);
-    const sample = definition?.variants.find(
-      (variant) => variant.id === definition.defaultVariantId
-    );
-
-    const id = `blk_${type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-
-    /*
-     * The platform's block type is a strict union of every type it knows,
-     * which is right for a stored block and awkward for one whose type is
-     * chosen at runtime. The cast is the same one the Block Studio makes.
-     */
-    const block = {
-      id,
-      blockType: type,
-      sortOrder: blocks.length,
-      data: (sample?.data ?? {}) as StoryBlock['data'],
-    } as unknown as StoryBlock;
-
-    onChange([...blocks, block], { kind: 'added', block });
-    setExpanded((previous) => ({ ...previous, [id]: true }));
+  const addBlock = (block: StoryBlock) => {
+    onChange([...blocks, { ...block, sortOrder: blocks.length }], { kind: 'added', block });
+    setExpanded((previous) => ({ ...previous, [block.id]: true }));
     setPickerOpen(false);
-    setQuery('');
   };
 
   return (
@@ -164,7 +114,7 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
         </div>
         <button
           type="button"
-          onClick={() => setPickerOpen((current) => !current)}
+          onClick={() => setPickerOpen(true)}
           className="flex cursor-pointer items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-blue-700"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -172,49 +122,7 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
         </button>
       </div>
 
-      {pickerOpen && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/40">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search the block catalog…"
-              aria-label="Search block types"
-              className="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2 text-[12px] text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:placeholder:text-slate-500"
-            />
-          </div>
-
-          <div className="mt-2.5 max-h-64 space-y-2 overflow-y-auto pr-1">
-            {visibleCategories.map((group) => (
-              <div key={group.category}>
-                <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {group.label}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {group.blocks.map((block) => (
-                    <button
-                      key={block.type}
-                      type="button"
-                      onClick={() => addBlock(block.type)}
-                      title={block.description}
-                      className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-blue-500/10 dark:hover:text-blue-200"
-                    >
-                      + {block.type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {visibleCategories.length === 0 && (
-              <p className="px-1 py-3 text-[12px] text-slate-500">
-                No block type matches “{query}”.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      {pickerOpen && <BlockTypePicker onPick={addBlock} onClose={() => setPickerOpen(false)} />}
 
       {blocks.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center dark:border-slate-700">
@@ -225,6 +133,14 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
             A story is made of blocks — a headline, a lead, a chart, a pull quote. Add the first
             one, or build it in the Block Studio and send it here.
           </p>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-blue-700"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Choose a block
+          </button>
         </div>
       )}
 
