@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
+export * from './expression';
+export * from './statistics';
+
 export class DomainError extends Error {
   constructor(
     message: string,
