@@ -17,9 +17,28 @@ export interface ListStoriesParams {
   entityId?: string;
   query?: string;
   limit?: number;
+  /** How many stories to skip — the page to ask for. */
+  offset?: number;
 }
 
-export async function listStories(params?: ListStoriesParams): Promise<Story[]> {
+/**
+ * One page of stories, and what the newsroom knows about the rest.
+ *
+ * The API answers with the page and a description of the whole: how many
+ * stories there are, how many were asked for, and whether there is more.
+ * A caller that only wants the stories can use `listStories`; a caller that
+ * has to tell the reader how many there are needs this.
+ */
+export interface StoryPage {
+  items: Story[];
+  /** How many stories match, in the whole newsroom — not just this page. */
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export async function listStoriesPage(params?: ListStoriesParams): Promise<StoryPage> {
   const searchParams = new URLSearchParams();
   if (params?.status) searchParams.set('status', params.status);
   if (params?.articleType) searchParams.set('articleType', params.articleType);
@@ -27,14 +46,33 @@ export async function listStories(params?: ListStoriesParams): Promise<Story[]> 
   if (params?.entityId) searchParams.set('entityId', params.entityId);
   if (params?.query) searchParams.set('query', params.query);
   if (params?.limit) searchParams.set('limit', String(Math.min(params.limit, 500)));
+  if (params?.offset) searchParams.set('offset', String(params.offset));
 
   const qs = searchParams.toString();
-  const response = await request<{ data: Story[]; total: number } | Story[]>(
-    `/api/stories${qs ? `?${qs}` : ''}`
-  );
+  const response = await request<{
+    data: Story[];
+    meta?: { total?: number; limit?: number; offset?: number; hasMore?: boolean };
+  }>(`/api/stories${qs ? `?${qs}` : ''}`);
 
-  // The API may return { data: [...] } or an array directly depending on wrapper
-  return Array.isArray(response) ? response : (response.data ?? []);
+  const items = Array.isArray(response.data) ? response.data : [];
+  const limit = response.meta?.limit ?? params?.limit ?? items.length;
+
+  return {
+    items,
+    total: response.meta?.total ?? items.length,
+    limit,
+    offset: response.meta?.offset ?? params?.offset ?? 0,
+    hasMore:
+      response.meta?.hasMore ??
+      (response.meta?.total !== undefined
+        ? (response.meta.offset ?? params?.offset ?? 0) + items.length < response.meta.total
+        : false),
+  };
+}
+
+export async function listStories(params?: ListStoriesParams): Promise<Story[]> {
+  const page = await listStoriesPage(params);
+  return page.items;
 }
 
 export async function getStory(id: string): Promise<Story> {

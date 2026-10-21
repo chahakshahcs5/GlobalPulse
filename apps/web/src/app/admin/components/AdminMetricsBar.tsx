@@ -1,24 +1,32 @@
 'use client';
 
-import type { Story } from '@ai-news/schemas';
+import type { NewsroomMetrics } from '@ai-news/schemas';
 
 interface AdminMetricsBarProps {
-  stories: Story[];
+  /**
+   * The newsroom's metrics, as the API counts them.
+   *
+   * These are the counts of the whole newsroom, not of the page of stories
+   * that happens to be on screen. A newsroom with 202 stories and a table
+   * showing the first 50 has 202 stories, and the number in the corner has
+   * to say so.
+   */
+  metrics: NewsroomMetrics;
   onSweepScheduled: () => Promise<void>;
 }
 
-export function AdminMetricsBar({ stories, onSweepScheduled }: AdminMetricsBarProps) {
-  const inReviewCount = stories.filter((s) => s.status === 'IN_REVIEW').length;
-  const publishedCount = stories.filter((s) => s.status === 'PUBLISHED').length;
-  const scheduledCount = stories.filter((s) => s.status === 'SCHEDULED').length;
-  const draftCount = stories.filter((s) => s.status === 'DRAFT').length;
+export function AdminMetricsBar({ metrics, onSweepScheduled }: AdminMetricsBarProps) {
+  const inReviewCount = metrics.reviewQueueCount;
+  const publishedCount = metrics.publishedStories;
+  const scheduledCount = metrics.scheduledStoriesCount;
+  const draftCount = metrics.draftStories;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div className="text-xs text-slate-500">Total Stories</div>
         <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-          {stories.length}
+          {metrics.totalStories}
         </div>
       </div>
 
@@ -42,7 +50,9 @@ export function AdminMetricsBar({ stories, onSweepScheduled }: AdminMetricsBarPr
 
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div className="text-xs text-emerald-600">Published Live</div>
-        <div className="text-2xl font-bold text-emerald-600 mt-1">{publishedCount}</div>
+        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+          {publishedCount}
+        </div>
       </div>
 
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">

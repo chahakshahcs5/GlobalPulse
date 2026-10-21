@@ -30,18 +30,25 @@ import {
 } from './components';
 
 export default function EditorialCMSPage() {
-  const { stories, isApiConnected } = useAllStories();
-  const { metrics } = useNewsroomMetrics();
-  const { trending } = useTrendingStories(10);
-  const { staff } = useNewsroomStaff();
-  const { sweep: sweepScheduled } = useScheduledStories();
-  const { notifications } = useEditorialNotifications(20);
-
   const [activeTab, setActiveTab] = useState<AdminTab>('stories');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
+
+  /*
+   * The list is narrowed by the API rather than in the browser, so a status
+   * the API knows about and the browser has not loaded yet is still counted,
+   * and the counts are the newsroom's rather than the page's.
+   */
+  const { stories, isApiConnected, total, hasMore, isLoadingMore, loadMore } = useAllStories(
+    filterStatus === 'ALL' ? undefined : filterStatus
+  );
+  const { metrics } = useNewsroomMetrics();
+  const { trending } = useTrendingStories(10);
+  const { staff } = useNewsroomStaff();
+  const { sweep: sweepScheduled } = useScheduledStories();
+  const { notifications } = useEditorialNotifications(20);
 
   const triggerSuccess = (message: string) => {
     setSuccessMessage(message);
@@ -77,7 +84,7 @@ export default function EditorialCMSPage() {
       <AdminNavTabs
         activeTab={activeTab}
         onSelectTab={setActiveTab}
-        storiesCount={stories.length}
+        storiesCount={total}
         notificationsCount={notifications.length}
         staffCount={staff.length}
       />
@@ -104,7 +111,7 @@ export default function EditorialCMSPage() {
       {activeTab === 'stories' && (
         <div className="space-y-6">
           <AdminMetricsBar
-            stories={stories}
+            metrics={metrics}
             onSweepScheduled={async () => {
               await sweepScheduled();
               triggerSuccess('Triggered scheduled publishing sweep across all pending embargoes!');
@@ -115,13 +122,19 @@ export default function EditorialCMSPage() {
             <StoryFilterBar
               filterStatus={filterStatus}
               onSelectFilter={setFilterStatus}
-              stories={stories}
+              metrics={metrics}
+              displayedCount={stories.length}
+              displayedTotal={total}
             />
             <StoryTable
               stories={stories}
               filterStatus={filterStatus}
               onSuccess={triggerSuccess}
               onEditStory={handleEditStory}
+              total={total}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore}
             />
           </div>
         </div>

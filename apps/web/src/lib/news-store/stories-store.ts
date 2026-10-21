@@ -10,11 +10,44 @@ export function notifyStoryMutation() {
   emitStoriesUpdated();
 }
 
-export function useAllStories() {
+/** How many stories a page of the newsroom holds. */
+const STORY_PAGE_SIZE = 10;
+
+/**
+ * The newsroom's stories.
+ *
+ * The stories are fetched a page at a time, and the rest are fetched when
+ * the editor asks for them. The counts are the API's counts, so they say
+ * how many stories the newsroom holds rather than how many happen to be
+ * on screen.
+ *
+ * `status` narrows the list to one workflow state. The narrowing is done by
+ * the API rather than in the browser, so a status the API knows about and
+ * the browser has not loaded yet is still counted.
+ */
+export function useAllStories(status?: string) {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isApiConnected, setIsApiConnected] = useState(false);
-  const fetchInProgress = useRef(false);
+  /**
+   * How many stories the newsroom holds.
+   *
+   * This is the API's answer, not the number that happened to be fetched. A
+   * newsroom with 202 stories and a table showing the first 50 is a
+   * newsroom with 202 stories, and the count has to say so.
+   */
+  const [total, setTotal] = useState(0);
+  /** Whether there are more stories to fetch. */
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  /**
+   * The fetch that is on its way, if there is one.
+   *
+   * A promise rather than a flag, so that a caller can wait for it. The
+   * "load more" button used to give up when a refetch was in flight, which
+   * is most of the time — the newsroom's event stream keeps the list fresh.
+   */
+  const fetchInProgress = useRef<Promise<void> | null>(null);
   const hasAttemptedFetch = useRef(false);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attempt = useRef(0);
@@ -39,28 +72,59 @@ export function useAllStories() {
 
   const fetchStoriesRef = useRef<(() => Promise<void>) | null>(null);
 
+  /**
+   * How deep the list has been read.
+   *
+   * A refetch has to keep the depth. The newsroom's stories are read a page
+   * at a time, and a story that arrived over the event stream would
+   * otherwise collapse the list back to its first page — so the editor's
+   * "load more" would quietly undo itself.
+   */
+  const loadedCount = useRef(0);
+
   const fetchStories = useCallback(async () => {
-    if (fetchInProgress.current) return;
-    fetchInProgress.current = true;
+    if (fetchInProgress.current) return fetchInProgress.current;
+
+    const run = (async () => {
+      try {
+        const page = await api.listStoriesPage({
+          limit: Math.max(STORY_PAGE_SIZE, loadedCount.current),
+          ...(status ? { status } : {}),
+        });
+        // API is reachable — use its data (even if empty)
+        setStories(page.items);
+        loadedCount.current = page.items.length;
+        setTotal(page.total);
+        setHasMore(page.hasMore);
+        setIsApiConnected(true);
+        attempt.current = 0;
+      } catch {
+        // API unreachable — do not substitute mock stories
+        setStories([]);
+        setIsApiConnected(false);
+        scheduleRetry();
+      } finally {
+        hasAttemptedFetch.current = true;
+        setIsLoading(false);
+      }
+    })();
+
+    fetchInProgress.current = run;
     try {
-      const apiStories = await api.listStories({ limit: 100 });
-      // API is reachable — use its data (even if empty)
-      setStories(apiStories || []);
-      setIsApiConnected(true);
-      attempt.current = 0;
-    } catch {
-      // API unreachable — do not substitute mock stories
-      setStories([]);
-      setIsApiConnected(false);
-      scheduleRetry();
+      await run;
     } finally {
-      hasAttemptedFetch.current = true;
-      fetchInProgress.current = false;
-      setIsLoading(false);
+      if (fetchInProgress.current === run) fetchInProgress.current = null;
     }
-  }, [scheduleRetry]);
+  }, [scheduleRetry, status]);
 
   fetchStoriesRef.current = fetchStories;
+
+  /*
+   * A new filter is a new list, so the depth starts again at one page.
+   */
+  useEffect(() => {
+    loadedCount.current = 0;
+  }, [status]);
 
   useEffect(() => {
     fetchStories();
@@ -103,16 +167,83 @@ export function useAllStories() {
     };
   }, [fetchStories]);
 
-  return { stories, isLoading, isApiConnected, isDemoMode: false };
+  /**
+   * Fetch the next page.
+   *
+   * The newsroom's stories are fetched a page at a time, and the rest are
+   * fetched when the editor asks for them. The count in the corner is the
+   * API's count from the start, so it says how many there are rather than
+   * how many happen to be on screen.
+   */
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      /*
+       * Wait for a refetch that is already on its way, so the offset is
+       * the list's. Without this the button gave up whenever the newsroom's
+       * event stream happened to be refreshing the list — which is most of
+       * the time.
+       */
+      if (fetchInProgress.current) await fetchInProgress.current;
+
+      const page = await api.listStoriesPage({
+        limit: STORY_PAGE_SIZE,
+        offset: stories.length,
+        ...(status ? { status } : {}),
+      });
+      setStories((previous) => {
+        const seen = new Set(previous.map((story) => story.id));
+        const next = [...previous, ...page.items.filter((story) => !seen.has(story.id))];
+        loadedCount.current = next.length;
+        return next;
+      });
+      setTotal(page.total);
+      setHasMore(page.hasMore);
+      setIsApiConnected(true);
+    } catch {
+      setIsApiConnected(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, status, stories.length]);
+
+  return {
+    stories,
+    isLoading,
+    isApiConnected,
+    isDemoMode: false,
+    total,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+  };
 }
 
 /**
  * Fetches only published stories for the reader-facing feed.
  */
 export function usePublishedStories() {
-  const { stories, isLoading, isApiConnected, isDemoMode } = useAllStories();
-  const published = stories.filter((s) => s.status === 'PUBLISHED');
-  return { stories: published, isLoading, isApiConnected, isDemoMode };
+  const {
+    stories,
+    isLoading,
+    isApiConnected,
+    isDemoMode,
+    total,
+    hasMore,
+    loadMore,
+    isLoadingMore,
+  } = useAllStories('PUBLISHED');
+  return {
+    stories,
+    isLoading,
+    isApiConnected,
+    isDemoMode,
+    total,
+    hasMore,
+    loadMore,
+    isLoadingMore,
+  };
 }
 
 // ---------------------------------------------------------------------------

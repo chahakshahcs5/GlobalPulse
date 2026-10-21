@@ -75,6 +75,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       where: Record<string, unknown>;
       orderBy?: Record<string, unknown>;
     }) => Promise<PrismaCommentRow[]>;
+    count: (args: { where: Record<string, unknown> }) => Promise<number>;
   } {
     return this.prisma.comment as unknown as typeof this.commentClient;
   }
@@ -84,6 +85,7 @@ export class PrismaEngagementRepository implements IEngagementRepository {
     delete: (args: { where: Record<string, unknown> }) => Promise<PrismaReactionRow>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaReactionRow | null>;
     findMany: (args: { where: Record<string, unknown> }) => Promise<PrismaReactionRow[]>;
+    count: (args: { where: Record<string, unknown> }) => Promise<number>;
   } {
     return this.prisma.storyReaction as unknown as typeof this.reactionClient;
   }
@@ -138,6 +140,28 @@ export class PrismaEngagementRepository implements IEngagementRepository {
   async findCommentById(id: string): Promise<Comment | null> {
     const row = await this.commentClient.findUnique({ where: { id } });
     return row ? this.mapComment(row) : null;
+  }
+
+  /**
+   * How many comments the newsroom holds.
+   *
+   * One query, rather than one per story.
+   */
+  async countComments(organizationId?: string): Promise<number> {
+    const where: Record<string, unknown> = {};
+    if (organizationId) where.organizationId = organizationId;
+    return this.commentClient.count({ where });
+  }
+
+  /**
+   * How many reactions the newsroom holds.
+   *
+   * One query, rather than one per story.
+   */
+  async countReactions(organizationId?: string): Promise<number> {
+    const where: Record<string, unknown> = {};
+    if (organizationId) where.organizationId = organizationId;
+    return this.reactionClient.count({ where });
   }
 
   async createComment(comment: Comment): Promise<Comment> {

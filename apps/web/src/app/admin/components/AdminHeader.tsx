@@ -38,13 +38,27 @@ export function AdminHeader({ isApiConnected, isEditorOpen, onToggleEditor }: Ad
         >
           ← View Reader Feed
         </Link>
-        <button
-          onClick={onToggleEditor}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>{isEditorOpen ? 'Close Editor' : '+ Write New Story'}</span>
-        </button>
+        {isEditorOpen ? (
+          <button
+            onClick={onToggleEditor}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Close Editor</span>
+          </button>
+        ) : (
+          /*
+           * Writing a story is not a quick change, so it gets a page of its
+           * own rather than the drawer.
+           */
+          <Link
+            href="/admin/stories/new"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>+ Write New Story</span>
+          </Link>
+        )}
       </div>
     </div>
   );
