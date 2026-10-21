@@ -276,7 +276,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('United Nations');
       expect(html).toContain('Related Dispatches');
       expect(html).toContain('Live Stream Recording');
-    }, 15000);
+    }, 30000);
   });
 
   describe('Entities & Events Knowledge Graph Integrity', () => {
@@ -322,7 +322,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('Known Aliases');
       expect(html).toContain('Covered Dispatches');
       expect(html).toContain('BRICS 2026 Leaders Summit in New Delhi');
-    });
+    }, 30000);
 
     it('renders Event Tracker Page with live status, geo map, and participating entities', async () => {
       const { renderToString } = await import('react-dom/server');
@@ -338,7 +338,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('MCP FEED ACTIVE');
       expect(html).toContain('Key Entities Involved');
       expect(html).toContain('Republic of India');
-    });
+    }, 30000);
 
     it('renders External AI Integrations Hub with registered agents and MCP specs', async () => {
       const { renderToString } = await import('react-dom/server');

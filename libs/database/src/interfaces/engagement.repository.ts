@@ -13,6 +13,14 @@ export interface IEngagementRepository {
     options?: { status?: CommentStatus; organizationId?: string }
   ): Promise<Comment[]>;
   findCommentById(id: string): Promise<Comment | null>;
+  /**
+   * How many comments the newsroom holds.
+   *
+   * Counted by the database rather than by counting each story's comments
+   * one at a time: a newsroom with two hundred stories would otherwise cost
+   * four hundred round trips to say how many comments there are.
+   */
+  countComments(organizationId?: string): Promise<number>;
   createComment(comment: Comment): Promise<Comment>;
   updateComment(comment: Comment): Promise<Comment>;
   deleteComment(id: string): Promise<boolean>;
@@ -25,6 +33,12 @@ export interface IEngagementRepository {
     reactionType: StoryReactionType
   ): Promise<{ active: boolean; summary: StoryReactionsSummary }>;
   getReactions(storyId: string, userId?: string): Promise<StoryReactionsSummary>;
+  /**
+   * How many reactions the newsroom holds.
+   *
+   * Counted by the database, for the same reason the comments are.
+   */
+  countReactions(organizationId?: string): Promise<number>;
 
   // Bookmarks
   toggleBookmark(

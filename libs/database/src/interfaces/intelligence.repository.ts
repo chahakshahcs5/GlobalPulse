@@ -17,6 +17,20 @@ export interface StoryIntelligenceFilter {
  * storyId from another organization.
  */
 export interface IStoryIntelligenceRepository {
+  /**
+   * Every claim, every piece of evidence and every timeline event the
+   * newsroom holds, with the claims that have evidence counted.
+   *
+   * One pass rather than three queries per story: the newsroom's metrics
+   * asked for this story by story, and the numbers took half a minute to
+   * arrive.
+   */
+  summariseCoverage(orgId: string): Promise<{
+    claimCount: number;
+    evidenceCount: number;
+    claimsWithEvidence: number;
+    timelineEventCount: number;
+  }>;
   listClaims(
     orgId: string,
     storyId: string,

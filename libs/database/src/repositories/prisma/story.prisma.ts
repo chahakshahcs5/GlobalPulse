@@ -118,6 +118,7 @@ export class PrismaStoryRepository implements IStoryRepository {
       orderBy?: Record<string, unknown>;
     }) => Promise<PrismaVersionRow[]>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaVersionRow | null>;
+    count: (args: { where: Record<string, unknown> }) => Promise<number>;
   } {
     return this.prisma.storyVersion as {
       create: (args: { data: Record<string, unknown> }) => Promise<PrismaVersionRow>;
@@ -126,6 +127,7 @@ export class PrismaStoryRepository implements IStoryRepository {
         orderBy?: Record<string, unknown>;
       }) => Promise<PrismaVersionRow[]>;
       findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaVersionRow | null>;
+      count: (args: { where: Record<string, unknown> }) => Promise<number>;
     };
   }
 
@@ -330,6 +332,35 @@ export class PrismaStoryRepository implements IStoryRepository {
   async list(filter?: StoryFilter, orgId?: string): Promise<Story[]> {
     const paginated = await this.listPaginated(filter, orgId);
     return paginated.items;
+  }
+
+  /**
+   * How many stories there are, and how many in each state.
+   *
+   * Counted by the database rather than by counting a list, because a list
+   * is a page and the newsroom is not a page.
+   */
+  async countByStatus(orgId?: string): Promise<Record<string, number>> {
+    const where: Record<string, unknown> = {};
+    if (orgId) where.organizationId = orgId;
+
+    const statuses = ['DRAFT', 'PUBLISHED', 'IN_REVIEW', 'SCHEDULED', 'ARCHIVED'];
+
+    const counts: Record<string, number> = {};
+    for (const status of statuses) {
+      counts[status] = await this.storyClient.count({ where: { ...where, status } });
+    }
+    return counts;
+  }
+
+  /**
+   * How many versions these stories have, between them.
+   *
+   * One query for the lot.
+   */
+  async countVersions(storyIds: string[]): Promise<number> {
+    if (storyIds.length === 0) return 0;
+    return this.versionClient.count({ where: { storyId: { in: storyIds } } });
   }
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {

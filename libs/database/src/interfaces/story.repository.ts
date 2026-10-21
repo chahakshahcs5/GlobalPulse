@@ -40,6 +40,21 @@ export interface IStoryRepository {
   delete(id: string, orgId?: string): Promise<boolean>;
   list(filter?: StoryFilter, orgId?: string): Promise<Story[]>;
   listPaginated(filter?: StoryFilter, orgId?: string): Promise<PaginatedStories>;
+  /**
+   * How many stories there are, and how many in each state.
+   *
+   * A list is a page, and a page is not the newsroom. Counting the stories
+   * that were fetched answers a different question from the one an editor
+   * is asking.
+   */
+  countByStatus(orgId?: string): Promise<Record<string, number>>;
+  /**
+   * How many versions these stories have, between them.
+   *
+   * Counted in one query. Counting them story by story cost a round trip
+   * each, and the newsroom's metrics were slow enough to be noticed.
+   */
+  countVersions(storyIds: string[]): Promise<number>;
 
   // Block management
   saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void>;

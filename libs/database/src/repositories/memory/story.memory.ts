@@ -195,6 +195,30 @@ export class MemoryStoryRepository implements IStoryRepository {
     return paginated.items;
   }
 
+  /**
+   * How many stories there are, and how many in each state.
+   *
+   * Counted from the whole newsroom rather than from a page of it.
+   */
+  async countByStatus(orgId?: string): Promise<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    for (const story of this.stories.values()) {
+      if (orgId && story.organizationId !== orgId) continue;
+      counts[story.status] = (counts[story.status] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /** How many versions these stories have, between them. */
+  async countVersions(storyIds: string[]): Promise<number> {
+    const wanted = new Set(storyIds);
+    let count = 0;
+    for (const [storyId, versions] of this.versions) {
+      if (wanted.has(storyId)) count += versions.length;
+    }
+    return count;
+  }
+
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
     this.blocks.set(storyId, [...blocks]);
     const story = this.stories.get(storyId);

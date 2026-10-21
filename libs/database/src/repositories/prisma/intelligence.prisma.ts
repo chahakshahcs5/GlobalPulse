@@ -33,6 +33,40 @@ interface ModelClient {
   delete: (args: { where: Record<string, unknown> }) => Promise<Row>;
 }
 
+/**
+ * Count the coverage, once the newsroom's intelligence has been read.
+ *
+ * A claim is covered when something backs it up.
+ */
+function summarise(
+  claims: StoryClaim[],
+  evidence: Evidence[],
+  timeline: StoryTimelineEvent[]
+): {
+  claimCount: number;
+  evidenceCount: number;
+  claimsWithEvidence: number;
+  timelineEventCount: number;
+} {
+  const evidenceByClaim = new Map<string, number>();
+  for (const item of evidence) {
+    if (!item.claimId) continue;
+    evidenceByClaim.set(item.claimId, (evidenceByClaim.get(item.claimId) ?? 0) + 1);
+  }
+
+  let claimsWithEvidence = 0;
+  for (const claim of claims) {
+    if ((evidenceByClaim.get(claim.id) ?? 0) > 0) claimsWithEvidence += 1;
+  }
+
+  return {
+    claimCount: claims.length,
+    evidenceCount: evidence.length,
+    claimsWithEvidence,
+    timelineEventCount: timeline.length,
+  };
+}
+
 export class PrismaStoryIntelligenceRepository implements IStoryIntelligenceRepository {
   private readonly fallback = new MemoryStoryIntelligenceRepository();
 
@@ -44,6 +78,40 @@ export class PrismaStoryIntelligenceRepository implements IStoryIntelligenceRepo
 
   private client(name: string): ModelClient | undefined {
     return this.prisma[name] as ModelClient | undefined;
+  }
+
+  /**
+   * The newsroom's intelligence coverage, in three queries.
+   *
+   * The claims and the evidence are fetched for the whole newsroom rather
+   * than story by story, so the claims that carry evidence can be counted
+   * here rather than by asking about each story in turn.
+   */
+  async summariseCoverage(orgId: string): Promise<{
+    claimCount: number;
+    evidenceCount: number;
+    claimsWithEvidence: number;
+    timelineEventCount: number;
+  }> {
+    const claimClient = this.client('storyClaim');
+    const evidenceClient = this.client('evidence');
+    const timelineClient = this.client('storyTimelineEvent');
+
+    if (!claimClient || !evidenceClient || !timelineClient) {
+      return this.fallback.summariseCoverage(orgId);
+    }
+
+    const [claimRows, evidenceRows, timelineRows] = await Promise.all([
+      claimClient.findMany({ where: { organizationId: orgId } }),
+      evidenceClient.findMany({ where: { organizationId: orgId } }),
+      timelineClient.findMany({ where: { organizationId: orgId } }),
+    ]);
+
+    const claims = claimRows.map((row) => this.mapClaim(row));
+    const evidence = evidenceRows.map((row) => this.mapEvidence(row));
+    const timeline = timelineRows.map((row) => this.mapTimeline(row));
+
+    return summarise(claims, evidence, timeline);
   }
 
   private mapClaim(row: Row): StoryClaim {

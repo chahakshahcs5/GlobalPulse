@@ -2,7 +2,20 @@
 
 import Link from 'next/link';
 
-import { Eye, Trash2, Clock, Bot, Check, XCircle, Send, Zap, Edit3 } from 'lucide-react';
+import {
+  Eye,
+  Trash2,
+  Clock,
+  Bot,
+  Check,
+  XCircle,
+  Send,
+  Zap,
+  Edit3,
+  PencilLine,
+  ChevronDown,
+  Loader2,
+} from 'lucide-react';
 import type { Story } from '@ai-news/schemas';
 import {
   deleteUserStory,
@@ -18,9 +31,26 @@ interface StoryTableProps {
   filterStatus: FilterStatus;
   onSuccess: (message: string) => void;
   onEditStory?: (story: Story) => void;
+  /** How many stories the newsroom holds for this filter. */
+  total: number;
+  /** Whether there are more stories to fetch. */
+  hasMore: boolean;
+  /** Whether the next page is on its way. */
+  isLoadingMore: boolean;
+  /** Fetches the next page. */
+  onLoadMore: () => void;
 }
 
-export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: StoryTableProps) {
+export function StoryTable({
+  stories,
+  filterStatus,
+  onSuccess,
+  onEditStory,
+  total,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
+}: StoryTableProps) {
   const { sweep: sweepScheduled } = useScheduledStories();
 
   const filteredStories = stories.filter(
@@ -154,13 +184,22 @@ export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: St
                   )}
 
                   {onEditStory && (
-                    <button
-                      onClick={() => onEditStory(story)}
-                      className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold cursor-pointer"
-                      title="Edit story content & blocks"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" /> Edit
-                    </button>
+                    <>
+                      <Link
+                        href={`/admin/stories/${story.id}`}
+                        className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold cursor-pointer"
+                        title="Edit this story on its own page"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" /> Edit
+                      </Link>
+                      <button
+                        onClick={() => onEditStory(story)}
+                        className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold cursor-pointer"
+                        title="Edit story content & blocks in the newsroom"
+                      >
+                        <PencilLine className="w-3.5 h-3.5" /> Quick edit
+                      </button>
+                    </>
                   )}
 
                   <Link
@@ -182,6 +221,34 @@ export function StoryTable({ stories, filterStatus, onSuccess, onEditStory }: St
           })}
         </tbody>
       </table>
+
+      {/*
+        The next page.
+
+        The newsroom holds more stories than one page carries, and the count
+        in the corner says how many there are. This is where the rest of
+        them come from.
+      */}
+      {hasMore && (
+        <div className="flex items-center justify-center gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+          <span className="text-[11px] text-slate-500">
+            Showing {filteredStories.length} of {total}
+          </span>
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-blue-400 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+          >
+            {isLoadingMore ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

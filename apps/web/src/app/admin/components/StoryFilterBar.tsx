@@ -1,23 +1,40 @@
 'use client';
 
-import type { Story } from '@ai-news/schemas';
+import type { NewsroomMetrics } from '@ai-news/schemas';
 
 export type FilterStatus = 'ALL' | 'IN_REVIEW' | 'PUBLISHED' | 'SCHEDULED' | 'DRAFT';
 
 interface StoryFilterBarProps {
   filterStatus: FilterStatus;
   onSelectFilter: (status: FilterStatus) => void;
-  stories: Story[];
+  /**
+   * The newsroom's counts, as the API counts them.
+   *
+   * These are the counts of the whole newsroom. Counting the page on screen
+   * would say "0 drafts" about a newsroom with twelve, because none of the
+   * drafts happened to be on the page that was fetched.
+   */
+  metrics: NewsroomMetrics;
+  /** How many stories are on screen right now. */
+  displayedCount: number;
+  /** How many stories there are, for the filter that is showing. */
+  displayedTotal: number;
 }
 
-export function StoryFilterBar({ filterStatus, onSelectFilter, stories }: StoryFilterBarProps) {
-  const inReviewCount = stories.filter((s) => s.status === 'IN_REVIEW').length;
-  const publishedCount = stories.filter((s) => s.status === 'PUBLISHED').length;
-  const scheduledCount = stories.filter((s) => s.status === 'SCHEDULED').length;
-  const draftCount = stories.filter((s) => s.status === 'DRAFT').length;
+export function StoryFilterBar({
+  filterStatus,
+  onSelectFilter,
+  metrics,
+  displayedCount,
+  displayedTotal,
+}: StoryFilterBarProps) {
+  const inReviewCount = metrics.reviewQueueCount;
+  const publishedCount = metrics.publishedStories;
+  const scheduledCount = metrics.scheduledStoriesCount;
+  const draftCount = metrics.draftStories;
 
   const tabs: { id: FilterStatus; label: string; hasBadge?: boolean }[] = [
-    { id: 'ALL', label: `All (${stories.length})` },
+    { id: 'ALL', label: `All (${metrics.totalStories})` },
     {
       id: 'IN_REVIEW',
       label: `Review Queue (${inReviewCount})`,
@@ -27,10 +44,6 @@ export function StoryFilterBar({ filterStatus, onSelectFilter, stories }: StoryF
     { id: 'SCHEDULED', label: `Scheduled (${scheduledCount})` },
     { id: 'DRAFT', label: `Drafts (${draftCount})` },
   ];
-
-  const displayedCount = stories.filter(
-    (s) => filterStatus === 'ALL' || s.status === filterStatus
-  ).length;
 
   return (
     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -52,7 +65,9 @@ export function StoryFilterBar({ filterStatus, onSelectFilter, stories }: StoryF
           </button>
         ))}
       </div>
-      <span className="text-xs text-slate-500">{displayedCount} stories displayed</span>
+      <span className="text-xs text-slate-500">
+        Showing {displayedCount} of {displayedTotal}
+      </span>
     </div>
   );
 }

@@ -24,6 +24,21 @@ type EditorialMetrics = Pick<
 >;
 
 export class AnalyticsService {
+  /**
+   * The metrics, and when they were computed.
+   *
+   * The newsroom's metrics are a picture of a newsroom, and a picture taken
+   * a moment ago is the same picture. The dashboard asks for them on every
+   * load and on every event, and each time it asked, the numbers were
+   * gathered again from the database — which took long enough to be noticed.
+   *
+   * A short window is enough: the newsroom's state does not change by the
+   * second, and a number that is thirty seconds old is still true.
+   */
+  private metricsCache: { orgId: string; at: number; metrics: NewsroomMetrics } | null = null;
+
+  private static readonly METRICS_TTL_MS = 30_000;
+
   constructor(private readonly db: DatabaseService) {}
 
   /**
@@ -137,17 +152,55 @@ export class AnalyticsService {
    * Aggregates high-level metrics for newsroom executive dashboards.
    */
   async getNewsroomMetrics(orgId: string = 'org_default'): Promise<NewsroomMetrics> {
+    const cached = this.metricsCache;
+    if (
+      cached &&
+      cached.orgId === orgId &&
+      Date.now() - cached.at < AnalyticsService.METRICS_TTL_MS
+    ) {
+      return cached.metrics;
+    }
+
+    const metrics = await this.computeNewsroomMetrics(orgId);
+    this.metricsCache = { orgId, at: Date.now(), metrics };
+    return metrics;
+  }
+
+  private async computeNewsroomMetrics(orgId: string): Promise<NewsroomMetrics> {
+    /*
+     * The counts come from the database, not from a list.
+     *
+     * A list is a page, and a newsroom with two hundred stories is not a
+     * page. Counting the stories that happened to be fetched answered a
+     * different question from the one the number in the corner asks.
+     */
+    const counts = await this.db.stories.countByStatus(orgId);
+    const totalStories = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const publishedCount = counts.PUBLISHED ?? 0;
+    const draftCount = counts.DRAFT ?? 0;
+    const inReviewCount = counts.IN_REVIEW ?? 0;
+    const scheduledCount = counts.SCHEDULED ?? 0;
+
+    // The engagement tally is over the published stories the repository
+    // hands back, which is a page rather than the newsroom. It is a
+    // measure of engagement, not a count of the newsroom.
     const allStories = await this.db.stories.list(undefined, orgId);
     const published = allStories.filter((s) => s.status === 'PUBLISHED');
-    const drafts = allStories.filter((s) => s.status === 'DRAFT');
-    const inReview = allStories.filter((s) => s.status === 'IN_REVIEW');
-    const scheduled = allStories.filter((s) => s.status === 'SCHEDULED');
 
     // Tally engagement across stories
-    let totalComments = 0;
-    let totalReactions = 0;
     let totalWords = 0;
     let totalReads = 0;
+
+    /*
+     * The comments and the reactions are counted by the database.
+     *
+     * Counting them story by story cost two queries per story, and a
+     * newsroom of two hundred stories took half a minute to say how many
+     * comments it had. It is one number, and the database is good at
+     * numbers.
+     */
+    const totalComments = await this.db.engagement.countComments(orgId);
+    const totalReactions = await this.db.engagement.countReactions(orgId);
 
     for (const s of published) {
       const sWithViews = s as { viewCount?: number };
@@ -163,14 +216,6 @@ export class AnalyticsService {
         }
       }
       totalWords += summaryWords + titleWords + blockWords;
-
-      const c = await this.db.engagement.findCommentsByStory(s.id);
-      const r = await this.db.engagement.getReactions(s.id);
-      totalComments += c.length;
-      totalReactions += Object.values(r.counts || {}).reduce(
-        (sum, n) => sum + (typeof n === 'number' ? n : 0),
-        0
-      );
     }
 
     const categories = new Set(allStories.map((s) => s.articleType).filter(Boolean));
@@ -194,11 +239,11 @@ export class AnalyticsService {
     const editorial = await this.computeEditorialMetrics(published, orgId);
 
     return {
-      totalStories: allStories.length,
-      publishedStories: published.length,
-      draftStories: drafts.length,
-      reviewQueueCount: inReview.length,
-      scheduledStoriesCount: scheduled.length,
+      totalStories,
+      publishedStories: publishedCount,
+      draftStories: draftCount,
+      reviewQueueCount: inReviewCount,
+      scheduledStoriesCount: scheduledCount,
       totalComments,
       totalReactions,
       totalBookmarks: 0,
@@ -330,18 +375,18 @@ export class AnalyticsService {
 
     // --- Source diversity and update frequency ------------------------------
     let sourceTotal = 0;
-    let versionTotal = 0;
     let entityTotal = 0;
     for (const story of published) {
       sourceTotal += new Set(story.sourceIds ?? []).size;
       entityTotal += new Set(story.entityIds ?? []).size;
-      try {
-        const versions = await this.db.stories.getVersions(story.id);
-        versionTotal += Math.max(0, versions.length - 1);
-      } catch {
-        // A missing version history must not break the metrics.
-      }
     }
+    /*
+     * The versions are counted in one query. Counting them story by story
+     * cost a round trip each, which is how the newsroom's metrics came to
+     * take half a minute.
+     */
+    const totalVersions = await this.db.stories.countVersions(published.map((s) => s.id));
+    const versionTotal = Math.max(0, totalVersions - published.length);
     const sourceDiversity = Math.round((sourceTotal / published.length) * 100) / 100;
     const updateFrequency = Math.round((versionTotal / published.length) * 100) / 100;
     const entityActivity = Math.round((entityTotal / published.length) * 100) / 100;
@@ -363,30 +408,15 @@ export class AnalyticsService {
         : 0;
 
     // --- Story intelligence coverage ----------------------------------------
-    let claimCount = 0;
-    let evidenceCount = 0;
-    let claimsWithEvidence = 0;
-    let timelineEventCount = 0;
-    for (const story of published) {
-      try {
-        const claims = await this.db.storyIntelligence.listClaims(orgId, story.id);
-        claimCount += claims.length;
-        const evidence = await this.db.storyIntelligence.listEvidence(orgId, story.id);
-        evidenceCount += evidence.length;
-        const evidenceByClaim = new Map<string, number>();
-        for (const item of evidence) {
-          if (!item.claimId) continue;
-          evidenceByClaim.set(item.claimId, (evidenceByClaim.get(item.claimId) ?? 0) + 1);
-        }
-        for (const claim of claims) {
-          if ((evidenceByClaim.get(claim.id) ?? 0) > 0) claimsWithEvidence += 1;
-        }
-        const timeline = await this.db.storyIntelligence.listTimeline(orgId, story.id);
-        timelineEventCount += timeline.length;
-      } catch {
-        // Intelligence data is optional for metrics.
-      }
-    }
+    /*
+     * Counted in one pass over the newsroom's intelligence, rather than
+     * three questions per story.
+     */
+    const coverage = await this.db.storyIntelligence.summariseCoverage(orgId);
+    const claimCount = coverage.claimCount;
+    const evidenceCount = coverage.evidenceCount;
+    const claimsWithEvidence = coverage.claimsWithEvidence;
+    const timelineEventCount = coverage.timelineEventCount;
     const evidenceCoverage =
       claimCount > 0 ? Math.round((claimsWithEvidence / claimCount) * 1000) / 1000 : 0;
 

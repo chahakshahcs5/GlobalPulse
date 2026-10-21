@@ -46,6 +46,44 @@ export class MemoryStoryIntelligenceRepository implements IStoryIntelligenceRepo
   private claims = new Map<string, StoryClaim>();
   private evidence = new Map<string, Evidence>();
   private timeline = new Map<string, StoryTimelineEvent>();
+
+  /**
+   * The newsroom's intelligence coverage, counted in one pass.
+   */
+  async summariseCoverage(orgId: string): Promise<{
+    claimCount: number;
+    evidenceCount: number;
+    claimsWithEvidence: number;
+    timelineEventCount: number;
+  }> {
+    const claims = Array.from(this.claims.values()).filter(
+      (claim) => claim.organizationId === orgId
+    );
+    const evidence = Array.from(this.evidence.values()).filter(
+      (item) => item.organizationId === orgId
+    );
+    const timeline = Array.from(this.timeline.values()).filter(
+      (event) => event.organizationId === orgId
+    );
+
+    const evidenceByClaim = new Map<string, number>();
+    for (const item of evidence) {
+      if (!item.claimId) continue;
+      evidenceByClaim.set(item.claimId, (evidenceByClaim.get(item.claimId) ?? 0) + 1);
+    }
+
+    let claimsWithEvidence = 0;
+    for (const claim of claims) {
+      if ((evidenceByClaim.get(claim.id) ?? 0) > 0) claimsWithEvidence += 1;
+    }
+
+    return {
+      claimCount: claims.length,
+      evidenceCount: evidence.length,
+      claimsWithEvidence,
+      timelineEventCount: timeline.length,
+    };
+  }
   private perspectives = new Map<string, EditorialPerspective>();
 
   // --- Claims ---------------------------------------------------------------

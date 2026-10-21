@@ -44,6 +44,26 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     return comment ? { ...comment } : null;
   }
 
+  /** How many comments the newsroom holds. */
+  async countComments(organizationId?: string): Promise<number> {
+    let count = 0;
+    for (const comment of this.comments.values()) {
+      if (organizationId && comment.organizationId !== organizationId) continue;
+      count += 1;
+    }
+    return count;
+  }
+
+  /** How many reactions the newsroom holds. */
+  async countReactions(organizationId?: string): Promise<number> {
+    let count = 0;
+    for (const reaction of this.reactions.values()) {
+      if (organizationId && reaction.organizationId !== organizationId) continue;
+      count += 1;
+    }
+    return count;
+  }
+
   async createComment(comment: Comment): Promise<Comment> {
     this.comments.set(comment.id, { ...comment });
     return { ...comment };
