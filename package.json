@@ -53,6 +53,7 @@
     "demo:e2e": "tsx scripts/demo-e2e.ts",
     "docs:blocks": "tsx scripts/generate-block-catalog.ts",
     "audit:fields": "tsx scripts/audit-inert-block-fields.ts",
+    "audit:hooks": "tsx scripts/audit-hooks-after-return.ts",
     "db:generate": "pnpm --filter @ai-news/database exec prisma generate --schema=prisma/schema.prisma",
     "prepare": "husky"
   },

@@ -109,12 +109,24 @@ export class RealtimeService implements OnModuleDestroy {
   private teardownFailedRedisClients(): void {
     for (const client of [this.redisPub, this.redisSub]) {
       if (client) {
+        /*
+         * `quit` rejects when the socket is already broken, and the
+         * rejection arrives after the try block has gone. Left unhandled it
+         * takes the whole API down — and the API has no other reason to
+         * die, since it runs perfectly well without Redis.
+         */
         try {
-          void client.quit();
+          void client.quit().catch(() => {
+            // The socket was already gone.
+          });
         } catch {
           // Socket may already be broken; ignore.
         }
-        client.disconnect();
+        try {
+          client.disconnect();
+        } catch {
+          // Already disconnected.
+        }
       }
     }
     this.redisPub = null;

@@ -1,4 +1,8 @@
-import dotenv from 'dotenv';
+// The environment has to be loaded before anything else is imported: a
+// module that reads `process.env` while it is being imported would
+// otherwise see nothing.
+import './env';
+
 import { startServer } from './server';
 import { db } from '@ai-news/database';
 import { createLogger } from '@ai-news/observability';
@@ -12,7 +16,6 @@ import {
 } from '@ai-news/stories';
 import { RealtimeService } from './modules/realtime/realtime.service';
 
-dotenv.config();
 const logger = createLogger('main');
 
 const port = parseInt(process.env.PORT || '4000', 10);
