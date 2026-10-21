@@ -19,6 +19,7 @@ import type { StoryBlock } from '@ai-news/schemas';
 import { BlockItem } from '@ai-news/blocks-ui';
 import type { StudioBlock, StudioVariant } from '@ai-news/block-studio';
 import { VariantNameDialog } from './VariantNameDialog';
+import { SessionBadge } from './SessionBadge';
 import { storyUrl, type StoryContext } from './story-context';
 import type { StudioTheme, StudioViewport } from './StudioShell';
 
@@ -180,7 +181,7 @@ export function PreviewCanvas({
             type="button"
             onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
             title="Toggle the preview theme"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
           >
             {theme === 'dark' ? (
               <Moon className="h-3.5 w-3.5" />
@@ -195,18 +196,18 @@ export function PreviewCanvas({
               type="button"
               onClick={onOpenLoader}
               title="Open a block from a live story"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             >
               <BookOpen className="h-3.5 w-3.5" />
               From a story
             </button>
 
-            {connectedToComposer && (
+            {connectedToComposer && !storyContext && (
               <button
                 type="button"
                 onClick={onSendToComposer}
                 title="Send this block to the story you are writing"
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-blue-700"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-2.5 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-blue-700"
               >
                 <Send className="h-3.5 w-3.5" />
                 Send to story
@@ -218,7 +219,7 @@ export function PreviewCanvas({
                 type="button"
                 onClick={onImportToStory}
                 title={`Import this block into “${storyContext.storyTitle}”`}
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-semibold text-emerald-800 transition-colors hover:border-emerald-400 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-semibold text-emerald-800 transition-colors hover:border-emerald-400 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
               >
                 <FilePlus2 className="h-3.5 w-3.5" />
                 {storyContext.blockId ? 'Save to story' : 'Add to story'}
@@ -231,7 +232,7 @@ export function PreviewCanvas({
               type="button"
               onClick={() => copy('json')}
               title="Copy the block's data payload as JSON"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             >
               {copied === 'json' ? (
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -244,7 +245,7 @@ export function PreviewCanvas({
               type="button"
               onClick={() => copy('block')}
               title="Copy the whole block — id, type, sort order and data — ready to paste into a story"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             >
               {copied === 'block' ? (
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -253,6 +254,13 @@ export function PreviewCanvas({
               )}
               {copied === 'block' ? 'Copied' : 'Copy block'}
             </button>
+
+            {/*
+              The session sits at the end of the toolbar. It is the state
+              of the editor rather than an action on the block, so it reads
+              last — after the things you can do to the block itself.
+            */}
+            <SessionBadge darkClass={darkClass} />
           </div>
         </div>
       </header>
@@ -365,16 +373,21 @@ export function PreviewCanvas({
         />
       )}
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="@container flex-1 overflow-auto p-6">
         {/*
           The preview is sized to the chosen viewport. When that is wider
           than the canvas, the canvas scrolls rather than shrinking the
           preview — otherwise a laptop viewport would be indistinguishable
           from a tablet one.
+
+          A comparison splits into two columns when the canvas has room for
+          them, not when the window does. The window is mostly taken by the
+          catalog and the inspector, so a window-sized breakpoint would
+          almost never fire and the comparison would always stack.
         */}
         <div
           className={`preview-surface mx-auto transition-[max-width] duration-200 ${
-            isComparing ? 'max-w-none grid grid-cols-1 gap-4 xl:grid-cols-2' : ''
+            isComparing ? 'max-w-none grid grid-cols-1 gap-4 @min-[34rem]:grid-cols-2' : ''
           }`}
           style={
             isComparing
@@ -386,6 +399,9 @@ export function PreviewCanvas({
           }
         >
           <div>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {isComparing ? 'Editing' : (variant?.label ?? 'Preview')}
+            </p>
             <div
               className={`min-h-[320px] rounded-xl border border-slate-200 ${
                 theme === 'dark' ? 'dark bg-slate-900' : 'bg-white'
@@ -403,6 +419,9 @@ export function PreviewCanvas({
 
           {isComparing && compareVariant && (
             <div>
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {compareVariant.label}
+              </p>
               <div
                 className={`min-h-[320px] rounded-xl border border-dashed border-slate-300 ${
                   theme === 'dark' ? 'dark bg-slate-900/60' : 'bg-slate-50'
@@ -424,8 +443,7 @@ export function PreviewCanvas({
                 </div>
               </div>
               <p className="mt-3 text-center text-[12px] text-slate-500">
-                {compareVariant.label}
-                {compareVariant.description ? ` — ${compareVariant.description}` : ''}
+                {compareVariant.description ? `— ${compareVariant.description}` : '—'}
               </p>
             </div>
           )}

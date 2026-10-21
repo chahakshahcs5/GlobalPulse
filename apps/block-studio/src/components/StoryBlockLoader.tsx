@@ -3,12 +3,13 @@
 import React from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 import type { Story, StoryBlock } from '@ai-news/schemas';
-import { NewsroomApiError, apiToken, searchStories, setApiToken } from '../lib/newsroom-api';
+import { getCurrentUser, searchStories } from '../lib/newsroom-api';
 
 /** Where a loaded block came from, so it can be saved back. */
 export interface BlockSource {
-  storyId: string;
-  storyTitle: string;
+  /** The story the block belongs to. */
+  story: Story;
+  /** The block that was picked. */
   blockId: string;
 }
 
@@ -41,11 +42,29 @@ export function StoryBlockLoader({
   const [total, setTotal] = React.useState(0);
   const [hasMore, setHasMore] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [token, setToken] = React.useState('');
+  /*
+   * The studio shares the product's session, so a sign-in in the web portal
+   * is a sign-in here. The API is asked who the user is rather than the
+   * browser being searched for a token — the session cookie is `HttpOnly`,
+   * so it is the only honest answer.
+   */
+  const [signedIn, setSignedIn] = React.useState(false);
 
-  // The token is kept in the browser, so it is not baked into the app.
   React.useEffect(() => {
-    setToken(apiToken());
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!cancelled) setSignedIn(Boolean(user));
+      } catch {
+        if (!cancelled) setSignedIn(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Escape closes the modal.
@@ -75,13 +94,7 @@ export function StoryBlockLoader({
        */
     } catch (cause) {
       setState('error');
-      setError(
-        cause instanceof NewsroomApiError
-          ? cause.message
-          : cause instanceof Error
-            ? cause.message
-            : 'The stories could not be loaded.'
-      );
+      setError(cause instanceof Error ? cause.message : 'The stories could not be loaded.');
     } finally {
       setSearching(false);
       setLoadingMore(false);
@@ -105,8 +118,7 @@ export function StoryBlockLoader({
 
   const load_ = (block: StoryBlock, story: Story) => {
     onLoad(block.blockType, block.data as Record<string, unknown>, {
-      storyId: story.id,
-      storyTitle: story.title,
+      story,
       blockId: block.id,
     });
     onClose();
@@ -258,23 +270,19 @@ export function StoryBlockLoader({
           </div>
         )}
 
-        <div className="flex items-center gap-3 border-t border-slate-200 bg-slate-50 px-5 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
-          <label
-            htmlFor="api-token"
-            className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-500"
-          >
-            API token
-          </label>
-          <input
-            id="api-token"
-            type="password"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            onBlur={() => setApiToken(token)}
-            placeholder="Bearer dev-editor — needed to save, and to read a protected API"
-            aria-label="API token"
-            className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:placeholder:text-slate-500"
-          />
+        <div className="flex items-center gap-3 border-t border-slate-200 bg-slate-50 px-5 py-2.5 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/50">
+          {signedIn ? (
+            <span className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Signed in to the newsroom — reading and saving work.
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Not signed in. Stories can be read, but saving needs a session — sign in to the
+              newsroom and it carries over here.
+            </span>
+          )}
         </div>
       </div>
     </div>

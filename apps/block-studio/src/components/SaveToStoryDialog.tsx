@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertTriangle, Check, FilePlus2, Loader2 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
 import {
-  NewsroomApiError,
+  ApiError,
   addStoryBlock,
   commitStoryVersion,
   getStory,
@@ -83,7 +83,7 @@ export function SaveToStoryDialog({
       }
 
       if (mode === 'block') {
-        await updateStoryBlock(context.storyId, block);
+        await updateStoryBlock(context.storyId, block.id, block);
         onDone(`The block was updated in “${context.storyTitle}”.`);
         onClose();
         return;
@@ -113,7 +113,7 @@ export function SaveToStoryDialog({
       onClose();
     } catch (cause) {
       const message =
-        cause instanceof NewsroomApiError
+        cause instanceof ApiError
           ? cause.message
           : cause instanceof Error
             ? cause.message

@@ -14,7 +14,7 @@ import {
 import { BlockSidebar } from './BlockSidebar';
 import { PreviewCanvas } from './PreviewCanvas';
 import { DataInspector } from './DataInspector';
-import { getStory } from '../lib/newsroom-api';
+import { getStory, reorderBlocks } from '../lib/newsroom-api';
 import { StoryBlockLoader, type BlockSource } from './StoryBlockLoader';
 import { SaveToStoryDialog } from './SaveToStoryDialog';
 import type { StoryContext } from './story-context';
@@ -145,6 +145,8 @@ export function StudioShell() {
           storyId: story.id,
           storyTitle: story.title,
           storySlug: story.slug,
+          status: story.status,
+          blocks: story.blocks ?? [],
           blockId,
         });
 
@@ -319,19 +321,79 @@ export function StudioShell() {
       setSelectedType(blockType);
       setData(blockData);
       setBaseline(blockData);
-      // Picking a block from a different story means the studio is working in
-      // that story from now on.
+      // Picking a block from a story means the studio is working in that
+      // story from now on, and the story's own blocks are shown alongside
+      // the catalog.
       setStoryContext((current) =>
-        current && current.storyId === from.storyId
+        current && current.storyId === from.story.id
           ? { ...current, blockId: from.blockId }
           : {
-              storyId: from.storyId,
-              storyTitle: from.storyTitle,
+              storyId: from.story.id,
+              storyTitle: from.story.title,
+              storySlug: from.story.slug,
+              status: from.story.status,
+              blocks: from.story.blocks ?? [],
               blockId: from.blockId,
             }
       );
     },
     []
+  );
+
+  /**
+   * Move to another block in the story the studio is working in.
+   *
+   * The block's own payload is what the editor sees, so the variant is left
+   * alone: the studio is looking at a live block, not at a sample of a type.
+   */
+  const selectStoryBlock = React.useCallback((block: StoryBlock) => {
+    if (!getStudioBlock(block.blockType)) return;
+    const payload = (block.data ?? {}) as Record<string, unknown>;
+    setSelectedType(block.blockType);
+    setData(payload);
+    setBaseline(payload);
+    setStoryContext((current) => (current ? { ...current, blockId: block.id } : current));
+  }, []);
+
+  /**
+   * Move a block up or down in the story.
+   *
+   * The order is the story's, so it is written to the API rather than kept
+   * in the studio. The studio's list follows the platform's.
+   */
+  const moveStoryBlock = React.useCallback(
+    async (blockId: string, delta: number) => {
+      const context = storyContext;
+      if (!context) return;
+
+      const blocks = context.blocks ?? [];
+      const index = blocks.findIndex((block) => block.id === blockId);
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= blocks.length) return;
+
+      const order = blocks.map((block) => block.id);
+      const [moved] = order.splice(index, 1);
+      order.splice(target, 0, moved);
+
+      try {
+        await reorderBlocks(context.storyId, order);
+        setStoryContext({
+          ...context,
+          blocks: order.map((id, position) => {
+            const block = blocks.find((candidate) => candidate.id === id);
+            return block ? { ...block, sortOrder: position } : block;
+          }) as StoryBlock[],
+        });
+      } catch (cause) {
+        setNotice(
+          cause instanceof Error
+            ? `The story could not be reordered: ${cause.message}`
+            : 'The story could not be reordered.'
+        );
+        setTimeout(() => setNotice(null), 6000);
+      }
+    },
+    [storyContext]
   );
 
   const validation = React.useMemo(
@@ -382,6 +444,10 @@ export function StudioShell() {
         chromeTheme={chromeTheme}
         darkClass={chromeDarkClass}
         open={sidebarOpen}
+        storyContext={storyContext}
+        activeBlockId={storyContext?.blockId}
+        onSelectStoryBlock={selectStoryBlock}
+        onMoveStoryBlock={moveStoryBlock}
         onQueryChange={setQuery}
         onSelectType={selectType}
         onToggleChromeTheme={() =>

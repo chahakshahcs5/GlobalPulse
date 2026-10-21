@@ -86,9 +86,26 @@ corrected payload back to the story. **Save to story** offers two ways back:
   version, no audit entry and no diff block. The story's version history
   will not mention the change.
 
-The studio needs a token to write. It is kept in the browser, and the
-**API token** field at the foot of the loader is where it goes. In
-development that is a dev token, `Bearer dev-editor`.
+## The session is the product's, not the studio's
+
+The studio has no token field, no second sign-in and no account of its own.
+It uses the same session as the newsroom portal, because the two are the
+same product.
+
+That session lives in a cookie the API sets, and it is `HttpOnly` — script
+cannot read it, so nothing in the browser can steal it by reading a
+variable. The studio asks the API who it is talking to (`GET /api/auth/me`)
+and shows the answer in the header. Sign in on the portal and the studio is
+already signed in; sign in in the studio and the portal is already signed
+in.
+
+The cookie is scoped to the host and not the port, which is what lets it
+cross between the two apps in development. When they are deployed on sibling
+hosts, set `COOKIE_DOMAIN` to the shared parent domain and the session
+follows the editor between them.
+
+Reading works without a session. Writing does not — the API refuses it, and
+the studio says so rather than failing quietly.
 
 The studio proxies the API through its own origin, so the browser never
 talks to the API directly and no CORS setup is needed. Point it somewhere
@@ -97,7 +114,27 @@ with `apps/block-studio/.env`:
 ```bash
 API_INTERNAL_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_WEB_URL=http://localhost:3002
 ```
+
+## The story the studio is working in
+
+When the studio is opened from the newsroom CMS — or when a block is picked
+from a story — the story itself appears at the top of the catalog, with its
+status and the list of its blocks. Clicking a block in that list opens it
+in the editor, and the arrows beside it move the block up or down in the
+story. The order is the story's, so it is written to the API rather than
+kept in the studio.
+
+A block is not an isolated object; it is a piece of a story. The studio
+shows where the editor is: which story, which of its blocks is open, and
+what else the story contains. **Open the story in the portal** goes back to
+the story itself.
+
+A story that already exists is written to directly: **Add to story** adds
+the block to it, and the API records an audit entry. The hand-back through
+the browser is only for a story that is still being written and has no id
+to write to.
 
 ## Saving a variant
 
@@ -112,6 +149,12 @@ A field you have edited is marked **edited**, so an editor can see at a
 glance what they have touched since the block was loaded. The **Compare**
 menu in the variant bar puts a second variant alongside the current one,
 which is how two treatments of the same block are judged side by side.
+
+The comparison splits into two columns when the canvas has room for them,
+not when the window does. The window is mostly taken by the catalog and the
+inspector, so a window-sized breakpoint would almost never fire and the
+comparison would always stack. Each column is labelled with the variant it
+shows.
 
 ## Every field has to do something
 
@@ -155,6 +198,10 @@ libs/blocks-ui/       The shared renderers. The web app and the studio both
 libs/block-studio/    The engine: the catalog, the variants, the Zod → form
                       converter, the validator — and the editing components
                       themselves, so a host can reuse the form.
+libs/api-client/      The one door to the newsroom API. The web portal, the
+                      Block Studio and anything else that talks to the API go
+                      through it, so they all speak the same dialect and
+                      share the same session.
 apps/block-studio/    The studio UI.
 ```
 
@@ -174,6 +221,27 @@ Now the composer's blocks carry the payload their schema declares, the form
 is generated from that same schema, and the composer's output is checked
 against it before the story is saved. The schema is the single source of
 truth for both.
+
+### The composer edits the story, not a private arrangement of it
+
+The composer used to keep a lead paragraph, three bullets and a list of
+media blocks, and rebuild the story from them on save. Every block it did
+not understand — a heading, a citation, a source, a timeline — was dropped
+in the process. Opening somebody else's story in the CMS showed an almost
+empty article, and saving it destroyed the rest.
+
+The composer now holds the story's blocks, all of them, in the order they
+read. They are shown as a list; each one is edited with the same
+schema-driven form the studio uses; and each one can be moved up or down,
+removed, or opened in the studio. A block of any type the platform supports
+can be added, from the same catalog the studio shows.
+
+A **draft** is written to the API as it is edited. The first block added to
+a story that does not exist yet creates it as a draft, and from then on
+every change — a block added, a block changed, the order changed, a block
+removed — is written straight through. A **published** story is not: its
+blocks wait for the version commit that publishes them, so a live story
+never changes without a record of it.
 
 ### Two details worth knowing if you change this area
 

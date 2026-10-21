@@ -9,37 +9,41 @@ import {
   setAtPath,
   validateBlockData,
 } from '@ai-news/block-studio';
-import type { MediaBlockDraft } from './types';
+import type { StoryBlock } from '@ai-news/schemas';
 
 /**
  * The composer's block editor.
  *
  * It is the same schema-driven form the Block Studio uses, so an editor
- * edits a block the same way in both places, and the form can never offer a
- * field the platform would reject.
+ * edits a block the same way in both places, and the form can never offer
+ * a field the platform would reject.
+ *
+ * It works on a real block — any type the platform supports — rather than
+ * on a handful of special cases. A story is made of blocks, and the
+ * composer edits the blocks the story actually has.
  */
 export function BlockSchemaEditor({
   block,
   baseline,
   onChange,
 }: {
-  block: MediaBlockDraft;
-  /** The payload as it was when the block was added, for marking changes. */
+  block: StoryBlock;
+  /** The payload as it was when the block was loaded, for marking changes. */
   baseline?: Record<string, unknown>;
-  onChange: (data: MediaBlockDraft['data']) => void;
+  onChange: (data: StoryBlock['data']) => void;
 }) {
-  const schema = useMemo(() => schemaForType(block.type), [block.type]);
+  const schema = useMemo(() => schemaForType(block.blockType), [block.blockType]);
   const fields = useMemo(() => (schema ? buildDataFormFields(schema) : null), [schema]);
   const validation = useMemo(
-    () => validateBlockData(block.type, block.data),
-    [block.type, block.data]
+    () => validateBlockData(block.blockType, block.data),
+    [block.blockType, block.data]
   );
   const issues = useMemo(() => issuesByPath(validation.issues), [validation.issues]);
 
   if (!fields) {
     return (
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        No schema is registered for the {block.type} block.
+        No schema is registered for the {block.blockType} block.
       </p>
     );
   }
@@ -62,7 +66,7 @@ export function BlockSchemaEditor({
         data={block.data}
         baseline={baseline}
         onChange={(path, value) =>
-          onChange(setAtPath(block.data, path, value) as MediaBlockDraft['data'])
+          onChange(setAtPath(block.data, path, value) as StoryBlock['data'])
         }
         issues={issues}
       />

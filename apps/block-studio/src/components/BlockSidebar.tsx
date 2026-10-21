@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Moon, PanelLeft, Search, Sun } from 'lucide-react';
 import type { StudioCategoryGroup } from '@ai-news/block-studio';
+import type { StoryBlock } from '@ai-news/schemas';
 import type { ChromeTheme } from './StudioShell';
+import type { StoryContext } from './story-context';
+import { StoryPanel } from './StoryPanel';
 
 interface BlockSidebarProps {
   categories: StudioCategoryGroup[];
@@ -13,6 +16,13 @@ interface BlockSidebarProps {
   /** The class that turns on the chrome's dark utilities. */
   darkClass: string;
   open: boolean;
+  /** The story the studio is working in, when it was opened from one. */
+  storyContext: StoryContext | null;
+  /** The block currently open in the studio. */
+  activeBlockId?: string;
+  onSelectStoryBlock: (block: StoryBlock) => void;
+  /** Moves a block up or down in the story. */
+  onMoveStoryBlock?: (blockId: string, delta: number) => void;
   onQueryChange: (query: string) => void;
   onSelectType: (type: string) => void;
   onToggleChromeTheme: () => void;
@@ -115,6 +125,10 @@ export function BlockSidebar({
   chromeTheme,
   darkClass,
   open,
+  storyContext,
+  activeBlockId,
+  onSelectStoryBlock,
+  onMoveStoryBlock,
   onQueryChange,
   onSelectType,
   onToggleChromeTheme,
@@ -207,6 +221,13 @@ export function BlockSidebar({
           />
         </div>
       </div>
+
+      <StoryPanel
+        context={storyContext}
+        activeBlockId={activeBlockId}
+        onSelectBlock={onSelectStoryBlock}
+        onMoveBlock={onMoveStoryBlock}
+      />
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         {categories.length === 0 && (
