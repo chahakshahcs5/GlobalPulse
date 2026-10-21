@@ -44,6 +44,11 @@ jobs:
       - name: Linter check
         run: pnpm run lint
 
+      - name: Block catalog documentation is up to date
+        run: |
+          pnpm run docs:blocks
+          git diff --exit-code -- docs/content-model.md
+
   test:
     name: Unit & Integration Test Suite
     runs-on: ubuntu-latest

@@ -1,6 +1,6 @@
 # Structured Content Model & Block System
 
-This document outlines the structured block content model, discriminant union architecture, and full catalog of all 46 supported block types in **GlobalPulse**.
+This document outlines the structured block content model, discriminant union architecture, and full catalog of all 55 supported block types in **GlobalPulse**.
 
 ---
 
@@ -16,7 +16,7 @@ Traditional CMS platforms store monolithic HTML or raw Markdown blobs. In contra
 
 ---
 
-## 2. Complete Catalog of 46 Supported Block Types
+## 2. Complete Catalog of 55 Supported Block Types
 
 Every block contains common envelope metadata:
 
@@ -32,69 +32,406 @@ also served live as `GET /api/blocks`, the GraphQL `getBlockCatalog` query, and 
 version, web/mobile/api/mcp capabilities, a minimal example, and a JSON Schema generated from the
 Zod definition — so an external agent can build a valid block without knowing any React internals.
 
-### 2.1 Text blocks (5)
+> **The catalog below is generated.** The numbered lists are produced from the block registry by
+> `pnpm docs:blocks`; do not edit them by hand. The prose between the generated regions is yours
+> to edit. A test fails the build if the document and the registry drift apart, and CI checks it
+> on every push.
 
-1. **`heading`**: Section breaks (`level: 1 | 2 | 3 | 4`, `text`, optional `subtext`).
-2. **`paragraph`**: Editorial copy (`text`, `format: 'markdown' | 'plain'`).
-3. **`summary`**: Executive takeaway bullet points (`headline`, `bulletPoints: string[]`).
-4. **`quote`**: Direct attribution quotes (`quote`, `attribution`, `title`, `sourceUrl`).
-5. **`callout`**: Contextual editorial sidebars (`style: 'info' | 'warning' | 'tip' | 'critical'`, `title`, `text`).
+<!-- BEGIN GENERATED BLOCK CATALOG: text -->
+
+### 2.1 Text & editorial (5)
+
+1. **`heading`**: Section heading (levels 1-4) with optional subtext.
+2. **`paragraph`**: Body paragraph, plain text or Markdown. HTML is stripped at write time.
+3. **`summary`**: Key-takeaway / executive briefing block with bullet points.
+4. **`quote`**: Pull quote with required attribution and optional portrait/source URL.
+5. **`callout`**: Informational, warning, tip, or critical editorial callout.
+
+<!-- END GENERATED BLOCK CATALOG: text -->
+
+<!-- BEGIN GENERATED BLOCK CATALOG: media -->
 
 ### 2.2 Media blocks (12)
 
-6. **`image`**: Photographic assets (`url`, `altText`, `caption`, `credit`, `aspectRatio`).
-7. **`gallery`**: Photo essays and carousels (`layout: 'grid' | 'carousel' | 'masonry'`, `images[]` with per-item `credit`).
-8. **`annotated_image`**: Image with percentage-positioned annotations (`annotations[]` with `xPercent`, `yPercent`, `label`).
-9. **`image_diff`**: Before/after comparison (`beforeUrl`, `afterUrl`, `orientation`, `defaultSplitPercent`).
-10. **`video`**: Streamable video (`url`, `posterUrl`, `durationSeconds`, `chapters[]`, `transcriptSegments[]`).
-11. **`video_gallery`**: Several videos in one block, each with poster art, chapters, and transcript segments.
-12. **`audio`**: Audio briefings and podcasts (`url`, `title`, `narrator`, `cuePoints[]`, `chapters[]`, `speakers[]`, `transcript`).
-13. **`podcast`**: Podcast show with episodes (`episodes[]` with episode/season numbers, artwork, transcripts, chapters, speakers).
-14. **`waveform`**: Audio/video waveform (`mediaUrl`, `peaks[]` normalized amplitude samples, `segments[]` that can reference other blocks).
-15. **`transcript`**: Timestamped transcript with speaker attribution, linked to the media it belongs to.
-16. **`slide_deck`**: Interactive slide presentations (`title`, `slides[]`).
-17. **`embed`**: External media, social posts, and third-party content (`provider`, `url`, `title`).
+6. **`image`**: Single image with required alt text, caption, and credit.
+7. **`gallery`**: Grid, carousel, or masonry image gallery.
+8. **`annotated_image`**: Image with percentage-positioned annotations and per-annotation sources.
+9. **`image_diff`**: Before/after image comparison with draggable split.
+10. **`video`**: Video with transcript segments and chapter markers.
+11. **`audio`**: Audio player with transcript, chapters, speakers, and cue points.
+12. **`slide_deck`**: Embedded slide presentation with source attribution per slide.
+13. **`embed`**: External social/media embed with an allow-listed provider.
+14. **`video_gallery`**: Multiple videos in one block, each with poster art, chapters, and optional transcript segments.
+15. **`podcast`**: Podcast show with episodes: episode numbers, artwork, transcripts, chapters, and speakers.
+16. **`waveform`**: Audio/video waveform with amplitude samples and segments that reference other blocks (cue points).
+17. **`transcript`**: Timestamped transcript with speaker attribution, linked to the audio or video it belongs to.
 
-### 2.3 Data & quantitative blocks (10)
+<!-- END GENERATED BLOCK CATALOG: media -->
 
-18. **`chart`**: Programmatic D3 visualization (`chartType` covering line, area, bar, stacked/grouped bar, pie, donut, scatter, histogram, heatmap, waterfall, comparison, slope, bump, dot plot, lollipop, diverging bar, radar, small multiples, sparkline).
-19. **`table`**: Structured tabular data (`headers`, `rows`, optional `caption`/`footer`).
-20. **`data_explorer`**: Filter/sort/metric-switchable dataset with CSV download (`dimensions[]`, `metrics[]`, `rows[]`, `filters[]`).
-21. **`statistic`**: High-impact KPI metrics (`value`, `label`, `unit`, `trend`, `comparison`, `period`, `context`).
-22. **`ranking`**: Ranked lists with rank movement (`items[]` with `rank`, `previousRank`, `value`, `methodology`).
-23. **`financial`**: Financial metrics with currency, as-of timestamp, change, and historical series.
-24. **`election`**: Results, seats, vote share, turnout, seat change, and historical comparison.
-25. **`disaster`**: Earthquakes, storms, floods, fires (`metrics[]` with timestamps and sources, `affectedAreas[]`, `updates[]`).
-26. **`science`**: Measurements, findings, equations, authors, institutions, and paper links.
-27. **`dataset`**: Published dataset with columns, preview rows, download formats, license, and methodology.
+<!-- BEGIN GENERATED BLOCK CATALOG: data -->
 
-### 2.4 Map, timeline & diagram blocks (4)
+### 2.3 Data & quantitative blocks (14)
 
-28. **`map`**: MapLibre geospatial maps (`mapType: 'points' | 'choropleth' | 'heatmap' | 'route' | 'comparison'`, markers, GeoJSON overlays).
-29. **`timeline`**: Chronological milestone sequences with entities, sources, citations, and media.
-30. **`diagram`**: Declarative Mermaid or SVG diagrams (`format`, `definition`).
-31. **`flow`**: Step-by-step processes with branches, statuses, and citations.
+18. **`chart`**: Programmatic D3 visualization. 21 chart types: line, area, bar, stacked_bar, grouped_bar, scatter, heatmap, histogram, waterfall, donut, pie, kpi, comparison, slope, dot_plot, lollipop, diverging_bar, sparkline, bump, radar and small_multiples. Supports click-to-reveal annotations anchored to specific data points.
+19. **`table`**: Data table with optional sorting, filtering, search, pagination, and CSV download.
+20. **`data_explorer`**: Reusable interactive explorer over an embedded dataset. Supports dimension/metric switching, filters, and data download.
+21. **`statistic`**: KPI / fact card with unit, trend, comparison period, source, and methodology.
+22. **`ranking`**: Ranked list with rank movement, values, and explicit methodology.
+23. **`uncertainty`**: Estimates with confidence intervals. Each point carries a point estimate, its lower and upper bounds, an optional sample size, and an optional source. Also supports a reference line for a consensus or target value.
+24. **`correlation`**: Correlation matrix. The block carries the raw observations; the platform derives the Pearson coefficients, the sample sizes and the significance, so a reader can tell a well-evidenced relationship from one computed from three data points. Significant pairings are marked, and the summary states plainly that a correlation is not causation.
+25. **`sensitivity`**: Sensitivity analysis. A base case plus a range for each input and an expression producing the output; the renderer moves one input at a time to the ends of its range and shows how far the outcome travels, so the reader can see which assumption actually drives the result.
+26. **`prediction_leaderboard`**: Tracked predictions with a forecaster leaderboard. Each prediction carries a probability, and resolved ones carry an outcome; the platform scores forecasters by Brier score and reports whether they are well-calibrated rather than merely lucky.
+27. **`financial`**: Timestamped financial metrics and optional time series.
+28. **`election`**: Election results: seats, vote share, turnout, historical comparison.
+29. **`disaster`**: Earthquake, storm, flood, or fire metrics with timestamps and affected areas.
+30. **`science`**: Findings, measurements, equations, paper metadata, and scientific diagrams.
+31. **`dataset`**: Published dataset with column definitions, a preview table, download formats, license, and methodology.
 
-### 2.5 Interactive blocks (5)
+<!-- END GENERATED BLOCK CATALOG: data -->
 
-32. **`live_ticker`**: Continuously updating market/news ticker with sparklines.
-33. **`live_data`**: Independently refreshing values with provider, refresh interval, and last-updated timestamps.
-34. **`calculator`**: Structured inputs and expressions with units, explanation, and assumptions.
-35. **`poll`**: Reader polls with options, vote counts, and expiry.
-36. **`document_viewer`**: Primary document viewer (`documentUrl`, `pageCount`, `documentType`, `highlights[]`).
+#### Estimates carry their uncertainty
 
-### 2.6 Evidence, source & context blocks (10)
+Every other chart in the platform asserts a point estimate with no error bars, which is the
+single biggest credibility gap in newsroom data graphics. The `uncertainty` block draws
+each estimate as a point marker with a whisker spanning its interval, and the interval,
+the sample size and the methodology stay visible as text — the number is never the only
+thing on screen.
 
-37. **`citation`**: A specific assertion linked to primary sources (`claim`, `sourceIds`, `quoteExcerpt`).
-38. **`evidence`**: Claims with verification status, confidence methodology, and supporting/contradicting material.
-39. **`perspective`**: Documented perspectives anchored to their sources (no forced two-sides frame).
-40. **`fact_check`**: Claim-level fact-check verdict with reviewer and methodology.
-41. **`source`**: Primary source citation card (`sourceId`, `url`, `publisher`, `publishedAt`).
-42. **`entity`**: Named entity card (`entityId`, `name`, `type`, `description`, `avatarUrl`).
-43. **`related_stories`**: Curated dispatches on the same narrative arc (`title`, `storyIds`).
-44. **`what_changed`**: Revision diff between two story versions.
-45. **`comparison`**: Two-option comparison card (`subjectA`, `subjectB`).
-46. **`interview`**: Structured Q&A with speaker, optional media, per-segment timestamps, and sources.
+```jsonc
+{
+  "blockType": "uncertainty",
+  "data": {
+    "title": "Projected electricity demand, 2030",
+    "unit": "TWh",
+    "intervalLabel": "95% credible interval",
+    "points": [{ "label": "IEA", "value": 9400, "low": 8800, "high": 10100, "n": 12000 }],
+    "referenceValue": 9000,
+    "referenceLabel": "2025 level",
+    "methodology": "5th-95th percentile across 12,000 scenario draws.",
+  },
+}
+```
+
+#### Animated maps
+
+The `animated_map` block is a map that moves through time. The reader scrubs through the
+frames with a slider, so the story shows **how a situation spread** rather than only its end
+state — the treatment an outbreak, a disaster, a conflict or an election needs.
+
+Marker size and colour follow the value, on a scale fixed across **every** frame. That detail
+matters: if the scale were recomputed per frame, a marker would balloon just because it was
+the only one on screen, and the reader would read growth that is not there.
+
+```jsonc
+{
+  "blockType": "animated_map",
+  "data": {
+    "title": "How the outbreak spread",
+    "valueLabel": "Confirmed cases",
+    "unit": "cases",
+    "frames": [
+      {
+        "at": "2026-03-01",
+        "label": "1 March",
+        "points": [
+          { "id": "p1", "label": "Northern coast", "lng": 34.5, "lat": 41.2, "value": 12 },
+        ],
+      },
+      {
+        "at": "2026-03-08",
+        "label": "8 March",
+        "points": [
+          { "id": "p1", "label": "Northern coast", "lng": 34.5, "lat": 41.2, "value": 180 },
+        ],
+      },
+    ],
+  },
+}
+```
+
+#### Knowledge graphs
+
+The `knowledge_graph` block draws the entities, sources and events behind a story and how they
+relate. Nodes are **typed** (person, company, organization, source, story, event…) and each type
+gets its own colour, and every edge carries a **named relationship** ("directs", "regulates",
+"reported on") rather than a bare line.
+
+The layout is a deterministic **radial** one: the focus node sits in the centre, its direct
+relationships form the first ring, and theirs the second. That means the picture does not
+shuffle between renders, and two stories' graphs can be compared side by side — both things a
+force-directed layout cannot offer.
+
+An edge that points at a node that is not in the block is skipped rather than drawn to
+nowhere, and the relationships are also listed as text beneath the graph so they stay readable
+when the picture is dense.
+
+```jsonc
+{
+  "blockType": "knowledge_graph",
+  "data": {
+    "title": "Who is connected to whom",
+    "nodes": [
+      { "id": "n1", "label": "Northwind Energy", "type": "company" },
+      { "id": "n2", "label": "Ada Okafor", "type": "person" },
+    ],
+    "edges": [{ "id": "e1", "from": "n2", "to": "n1", "relation": "directs" }],
+    "focusNodeId": "n1",
+  },
+}
+```
+
+#### Knowledge checks
+
+The `quiz` block is a reader-facing knowledge check: each question has options, exactly one
+correct answer, and an explanation that is revealed once the reader has answered — so the block
+teaches rather than only scoring. The correct option stays visible after answering, and the
+reader sees their score at the end.
+
+Unlike a poll, a knowledge check is about the reader rather than the readership, so the answers
+stay in the reader's own browser. (A poll is different: its tally is shared and interesting to
+everyone, so it is counted on the server.)
+
+#### Correlation analysis
+
+The `correlation` block carries the **raw observations**, and the platform derives the
+coefficients, the sample sizes and the significance. That distinction matters: a heatmap of
+hand-written correlation values tells the reader nothing about how thin the evidence is, and a
+coefficient computed from three observations looks exactly like one computed from three
+hundred.
+
+Each cell shows the coefficient **and** the number of observations behind it. Pairings that
+clear the block's significance threshold are ringed, so the marking survives a monochrome print
+and a colour-blind reader, and the summary states plainly that a correlation is not evidence
+of causation.
+
+```jsonc
+{
+  "blockType": "correlation",
+  "data": {
+    "title": "What moves with what?",
+    "variables": [
+      { "key": "gpu_price", "label": "GPU price", "unit": "$" },
+      { "key": "latency", "label": "Latency", "unit": "ms" },
+    ],
+    "observations": [
+      { "gpu_price": 1200, "latency": 88 },
+      { "gpu_price": 2400, "latency": 71 },
+    ],
+    "significanceThreshold": 0.05,
+  },
+}
+```
+
+The coefficient is Pearson's _r_. Significance is a two-tailed _t_-test on _r_ with
+`n - 2` degrees of freedom, evaluated through the regularised incomplete beta function in
+`libs/shared/src/statistics.ts`.
+
+#### Sensitivity analysis
+
+The `sensitivity` block stores a base case, a range for each input, and the expression
+that produces the output. The platform moves one input at a time to the ends of its range
+and measures how far the outcome travels, then draws the result as a tornado chart sorted
+by swing size — the standard way to show which assumption actually drives a result.
+
+```jsonc
+{
+  "blockType": "sensitivity",
+  "data": {
+    "title": "What drives the cost of a 50 MW solar farm?",
+    "outputLabel": "Total capital cost",
+    "outputUnit": "$m",
+    "baseOutput": 40,
+    "expression": "capacity * panel_cost + labour + grid_connection",
+    "inputs": [
+      {
+        "id": "capacity",
+        "label": "Installed capacity",
+        "base": 50,
+        "low": 45,
+        "high": 55,
+        "unit": "MW",
+      },
+    ],
+  },
+}
+```
+
+Two things can quietly mislead here, and the block says so rather than hiding them:
+
+- An input the expression never mentions **cannot** move the outcome. Showing it with a
+  zero swing would tell the reader the assumption does not matter, when the truth is that
+  the model ignores it — so it is excluded and the exclusion is stated.
+- The base reference line is drawn at the model's **computed** base case. If the stated
+  `baseOutput` disagrees with it, the discrepancy is reported.
+
+The expression is evaluated in the same restricted arithmetic sandbox the `calculator`
+block uses: only `+ - * / ( )` and the input identifiers are accepted.
+
+#### Prediction leaderboards
+
+A newsroom that publishes forecasts has to say who was right. The `prediction_leaderboard`
+block tracks predictions with a probability and, once resolved, an outcome. It scores
+forecasters by **Brier score** (lower is better: 0 is perfect, 0.25 is a coin flip, 1 is
+always wrong) and reports **calibration** alongside it, because a forecaster can have a
+good average score and still be badly calibrated.
+
+Only resolved predictions count towards a score — an open prediction says nothing about a
+forecaster's track record yet.
+
+#### Chart annotations
+
+A chart can carry **annotations** — short explanations anchored to a specific data point.
+Each annotation names the `xValue` it points at (and optionally the `seriesKey`), plus a
+`label`, a `body`, and an optional `sourceId`.
+
+```jsonc
+{
+  "blockType": "chart",
+  "data": {
+    "chartType": "line",
+    "annotations": [
+      {
+        "id": "ann_superconduct",
+        "xValue": "4000",
+        "seriesKey": "quantum",
+        "label": "Superconducting regime",
+        "body": "Error rates fall sharply once the model enters the superconducting phase.",
+      },
+    ],
+  },
+}
+```
+
+The renderer draws a numbered marker at the anchored data point; the reader opens it by
+clicking the marker or the numbered button beneath the chart. An annotation that does not
+match any data point is skipped rather than drawn at a wrong position — a mis-anchored
+marker would be worse than no marker at all. On mobile, where charts are rendered as
+values rather than an image, the annotations travel with the values they refer to.
+
+<!-- BEGIN GENERATED BLOCK CATALOG: map -->
+
+### 2.4 Map, timeline & diagram blocks (5)
+
+32. **`animated_map`**: Map that moves through time. The reader scrubs through the frames, so the story shows how a situation spread rather than only its end state. Marker size and colour follow the value, on a scale fixed across every frame so the markers do not jump as the reader scrubs.
+33. **`map`**: Map with point, choropleth, heatmap, route, or comparison layers. Markers and GeoJSON layers are structured data, not screenshots.
+34. **`timeline`**: Chronological milestones; each item can carry entities, sources, and media.
+35. **`diagram`**: Mermaid, declarative SVG, flowchart, or sequence diagram.
+36. **`flow`**: Process / explainer steps with optional branches and citations.
+
+<!-- END GENERATED BLOCK CATALOG: map -->
+
+<!-- BEGIN GENERATED BLOCK CATALOG: interactive -->
+
+### 2.5 Interactive blocks (8)
+
+37. **`quiz`**: Knowledge check. Each question has options, one correct answer, and an explanation revealed once the reader has answered — so the block teaches rather than only scoring. The reader's answers stay in their own browser.
+38. **`what_if`**: Interactive scenario explorer. The reader moves sliders over a range for each input and the outcome recomputes live from the block's own expressions, with an optional breakdown of the outcome into components and a baseline for comparison.
+39. **`live_comments`**: Reader comments inside the article body. The thread is loaded on mount and kept live over the story's realtime channel, so a comment posted while the reader is mid-article appears without a refresh.
+40. **`live_ticker`**: Market and numerical ticker with per-item sparklines. Binds to a live feed key to refresh in place over the realtime channel.
+41. **`live_data`**: Named live datasets with provider, refresh interval, timestamp, license, and methodology. Binds to a live feed key to refresh in place over the realtime channel.
+42. **`calculator`**: Generic calculator with structured inputs, safe formula expressions, outputs, units, assumptions, and sources.
+43. **`poll`**: Reader poll. Votes are counted on the server — one vote per reader, shared live across everyone reading the story.
+44. **`document_viewer`**: Paginated document viewer with sourced highlights.
+
+<!-- END GENERATED BLOCK CATALOG: interactive -->
+
+#### Live blocks are actually live
+
+`live_ticker` and `live_data` store the snapshot they were published with. When the block
+also carries a **`liveKey`**, it is bound to a _live feed_ — a named set of current values
+held by the platform (`live_feeds` table, exposed at `GET /api/live/feeds/:key` and
+published by the MCP `set_live_feed` tool).
+
+A bound block:
+
+1. fetches the current feed when it mounts, so a reader landing mid-story sees fresh numbers;
+2. subscribes to the feed's realtime channel (`live_<key>`) and patches values in place the
+   moment they are published; and
+3. falls back to polling on the block's `refreshIntervalSeconds` if the realtime connection
+   is unavailable.
+
+The feed is persisted rather than held in process memory, so a published story still resolves
+its feed after a deploy, and the API and the MCP server operate on the same feed. Without a
+`liveKey` the block renders its stored snapshot exactly as before.
+
+#### Scenario explorers and live comment threads
+
+Two interactive blocks that need no authoring effort beyond their own data:
+
+- **`what_if`** gives the reader sliders over a range for each input, and the outcome is
+  recomputed live from the block's own expressions. The baseline (the outcome at the default
+  values) is always shown, so the reader can see how far they have pushed the model away from
+  the published case. An optional `breakdown` splits the outcome into named components,
+  drawn as a stacked bar.
+
+  ```jsonc
+  {
+    "blockType": "what_if",
+    "data": {
+      "title": "What would it take to cut household energy bills by a fifth?",
+      "outcomeLabel": "Average household bill",
+      "expression": "base_bill * (1 - insulation_saving) * (1 - solar_saving)",
+      "inputs": [
+        {
+          "id": "base_bill",
+          "label": "Current average bill",
+          "min": 800,
+          "max": 4000,
+          "step": 50,
+          "defaultValue": 1800,
+          "unit": "$",
+        },
+      ],
+      "breakdown": [{ "label": "Solar contribution", "expression": "base_bill * solar_saving" }],
+    },
+  }
+  ```
+
+  The schema refuses an input whose `defaultValue` falls outside its own range — that would
+  render a slider in an impossible position and start the scenario from a value the reader
+  cannot see.
+
+- **`live_comments`** puts the reader discussion inside the article body. The thread is
+  fetched on mount and then kept live over the story's realtime channel, so a comment posted
+  while the reader is mid-article appears without a refresh. Only approved comments are
+  shown, and the block can be restricted to particular author roles.
+
+  Comment events are published on the story's channel (`story_<storyId>`) rather than a
+  global one, so a reader who subscribes to the story gets them without any other traffic.
+  Subscribers of `all` still receive them.
+
+#### Polls are counted on the server
+
+`poll` votes are recorded server-side in the `poll_votes` table, not in the reader's browser:
+
+- A reader has **at most one vote per poll block**. Casting again replaces the previous
+  choice rather than adding a second vote.
+- The tally is the sum of the **baseline counts stored in the block payload** (seed votes, or
+  votes cast through another channel) and the **votes recorded against the story**. The story
+  payload is never rewritten as votes come in, so a published article is not touched by
+  reader traffic.
+- Every vote is broadcast on the story's realtime channel (`story_<storyId>`) as `poll.vote`,
+  so all readers watching the story see the same live consensus tally.
+- `GET /api/stories/:id/blocks/:blockId/poll` returns the tally plus the requesting
+  reader's own choice; `POST` on the same path casts a vote.
+
+<!-- BEGIN GENERATED BLOCK CATALOG: context -->
+
+### 2.6 Evidence, source & context blocks (11)
+
+45. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
+46. **`source`**: Registered source citation card.
+47. **`entity`**: Person, organization, company, country, location, or product card.
+48. **`related_stories`**: Related story references resolved by the frontend.
+49. **`what_changed`**: Structured change summary between two story versions.
+50. **`comparison`**: Two-option comparison card.
+51. **`citation`**: A claim coupled to one or more registered source IDs.
+52. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
+53. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
+54. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.
+55. **`interview`**: Structured Q&A interview with optional audio/video media and per-segment sources.
+
+<!-- END GENERATED BLOCK CATALOG: context -->
 
 ### 2.7 Renderer parity
 
@@ -103,14 +440,47 @@ Every registered block type has a renderer on **both** the web and the mobile su
 registry without a matching renderer, because a missing renderer would silently drop content
 from the published article.
 
+### 2.8 Keeping this document honest
+
+The catalog in section 2 is generated from the registry by `pnpm docs:blocks`
+(`scripts/generate-block-catalog.ts`). Three things keep it from drifting:
+
+- `tests/unit/docs/block-catalog-doc.test.ts` fails the build when the document and the
+  registry disagree, and names the command that fixes it.
+- CI regenerates the catalog and fails if it produces a diff.
+- A registry category that no documented section covers is reported as an error by the
+  generator, so a new category is never silently dropped from the documentation.
+
+Because the registry is the source of truth, the per-block descriptions in the catalog are the
+registry's own `description` fields. Those are worth keeping accurate: they are what an agent
+reads before choosing a block type.
+
 ---
 
 ## 3. Extending the Block Model
 
-Adding a new block type (e.g. `financial_terminal`) requires zero database migrations due to JSONB storage:
+Adding a new block type (e.g. `financial_terminal`) requires no database migration, because
+blocks are stored as JSONB. It does require touching eight places:
+
+1. **`libs/schemas/src/blocks.ts`** — the Zod schema, plus the type in the
+   `StoryBlockSchema` discriminated union.
+2. **`libs/schemas/src/block-registry.ts`** — a `define(...)` entry with a category, a
+   description and an example. The description is what an agent reads before choosing a
+   block type, so it is worth writing carefully.
+3. **Web renderer** — a `case` in `apps/web/src/components/story-blocks/BlockItem.tsx` plus the
+   view component.
+4. **Mobile renderer** — a `case` in
+   `apps/mobile/src/components/mobile-blocks/MobileBlockItem.tsx` plus the view component.
+   The renderer-parity test fails the build if this is missed.
+5. **`libs/content/src/index.ts`** — a `case` in `extractTextContent`, so the block's text
+   reaches the extracted article body (and therefore search and SEO).
+6. **MCP tool** — an `add_<type>_block` tool in `apps/mcp-server/src/tools/blocks/`, so an
+   agent can author the block.
+7. **`docs/content-model.md`** — run `pnpm docs:blocks` to regenerate the catalog.
+8. **Tests** — schema validation, renderer output, and the registry entry.
 
 ```typescript
-// 1. In libs/schemas/src/story.ts
+// 1. In libs/schemas/src/blocks.ts
 export const FinancialTerminalBlockDataSchema = z.object({
   ticker: z.string(),
   currentPrice: z.number(),
@@ -118,8 +488,18 @@ export const FinancialTerminalBlockDataSchema = z.object({
   sparkline: z.array(z.number()),
 });
 
-export const FinancialTerminalBlockSchema = BaseStoryBlockSchema.extend({
+export const FinancialTerminalBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('financial_terminal'),
   data: FinancialTerminalBlockDataSchema,
 });
 ```
+
+Two conventions worth keeping:
+
+- **Optional, not defaulted, for new fields.** A Zod `.default()` makes a field required in
+  the _output_ type, which breaks every existing block that omits it. Use `.optional()` and
+  handle the absent case at the call site.
+- **Never show a number without its provenance.** A block that displays a value should also
+  display its source, methodology and — where the value is an estimate rather than a
+  measurement — its uncertainty. The `uncertainty` and `sensitivity` blocks exist for exactly
+  this reason.

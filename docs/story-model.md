@@ -94,3 +94,61 @@ The platform generates and renders a dedicated `what_changed` block at the top o
 - **`updated`**: Highlighted in blue with `~` indicator.
 - **`corrected`**: Highlighted in amber with `!` correction badge.
 - **`retracted`**: Highlighted in crimson with `×` retraction notice.
+
+---
+
+## 4. Story Summaries in Listing Payloads
+
+A story carries its blocks. A **listing** does not need them.
+
+Collections, the editorial kanban board, the editorial calendar and the full-coverage cluster view
+all hold many stories at once, and each of those payloads used to embed the full story
+schema — and therefore the whole story-block union. The inferred type of the containing
+schema then grew with every block type the platform added, until TypeScript refused to
+serialize it at all.
+
+So those payloads carry a **`StorySummary`** instead: everything needed to identify, label and
+link to a story, and nothing else. The blocks are fetched on demand when a story is opened.
+
+```typescript
+// libs/schemas/src/story.ts
+export const StorySummarySchema = z.object({
+  id,
+  organizationId,
+  slug,
+  title,
+  summary,
+  status,
+  articleType,
+  currentVersionNumber,
+  topicIds,
+  entityIds,
+  sourceIds,
+  categories,
+  heroImageUrl,
+  createdVia,
+  createdByClient,
+  authorId,
+  publishedAt,
+  scheduledPublishAt,
+  wordCount,
+  readingTimeMinutes,
+  createdAt,
+  updatedAt,
+  // no `blocks`, no `idempotencyKey`
+});
+```
+
+The rules that follow from it:
+
+- **A summary payload never embeds `StorySchema`.** `toStorySummary()` and
+  `toStorySummaries()` do the stripping, so the omission is in one place.
+- **The block union stays out of listing types.** The remaining places that legitimately
+  carry blocks — a story, a story version, a content template's default blocks — are the
+  ones that _are_ the content.
+- **A guard test keeps it that way.** `tests/unit/schemas/story-summary.test.ts` parses a
+  full story through every summary payload and asserts the blocks are gone. Re-embedding the
+  full story schema brings them back, and the test fails.
+
+The effect is that adding a block type no longer changes the type of any listing payload, so
+the block catalog can grow without the schemas around it growing with it.

@@ -8,7 +8,7 @@ This document details the programmatic visualization engines implemented in `lib
 
 External AI agents generate charts by returning structured JSON datasets instead of generating raster bitmap images or fragile SVG strings.
 
-The `D3ChartRenderer` renders 13 complete chart types to clean, accessible, zero-dependency SVG strings on the server:
+The `D3ChartRenderer` renders 21 complete chart types to clean, accessible, zero-dependency SVG strings on the server:
 
 ```mermaid
 graph TD
@@ -25,9 +25,16 @@ graph TD
     Renderer --> Waterfall[Waterfall Financial Delta]
     Renderer --> Comparison[Comparison Ratio Bar]
     Renderer --> Slope[Slope Delta Chart]
+    Renderer --> DotPlot[Cleveland Dot Plot]
+    Renderer --> Lollipop[Lollipop Chart]
+    Renderer --> Diverging[Diverging Bar Chart]
+    Renderer --> Sparkline[Sparkline]
+    Renderer --> Bump[Bump / Rank Chart]
+    Renderer --> Radar[Radar Chart]
+    Renderer --> SmallMultiples[Small Multiples]
 ```
 
-### Complete 13 Chart Types Supported:
+### Complete 21 Chart Types Supported:
 
 1. **`line`**: Time-series trends with multi-series line tracks, data points, and value labels.
 2. **`bar`**: Discrete category comparisons with value badges and attribution footnotes.
@@ -42,6 +49,25 @@ graph TD
 11. **`waterfall`**: Sequential positive and negative cash/volume flows with baseline bridge.
 12. **`comparison`**: Side-by-side proportional ratio bars with percentage indicators.
 13. **`slope`**: Paired pre/post slope comparison lines highlighting directional trajectories.
+14. **`dot_plot`**: Cleveland dot plot — categories down the left, one marker per series, no stems.
+15. **`lollipop`**: Same geometry as a dot plot, with a stem from the baseline out to the marker.
+16. **`diverging_bar`**: Negative values extend left of a centred zero line, positive values extend right.
+17. **`sparkline`**: Single-series trend with no axes, ticks or legend; rendered on a compact canvas.
+18. **`bump`**: Rank chart — one track per entity showing how its rank moves over time.
+19. **`radar`**: Several series compared across shared axes, each axis normalised against its peers.
+20. **`small_multiples`**: One mini chart per facet (`facetField`), each panel with its own y-scale.
+21. **`grouped_bar`**: Grouped discrete comparisons sharing a common baseline.
+
+### Chart type coverage is enforced by a test
+
+The `chart` schema accepts a fixed set of `chartType` values. Every one of them must
+have a renderer: `tests/unit/visual-renderers/chart-type-coverage.test.ts` renders each
+type and fails the build if the plot area comes back empty, and if the schema enum and
+the renderer ever drift apart.
+
+This guard exists because seven types (`bump`, `dot_plot`, `lollipop`, `diverging_bar`,
+`radar`, `small_multiples`, `sparkline`) previously validated, published, and then drew
+an empty plot — a silent loss of the story's data.
 
 ---
 

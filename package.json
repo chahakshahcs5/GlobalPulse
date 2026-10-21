@@ -50,6 +50,7 @@
     "docker:build": "docker compose build",
     "docker:status": "docker compose ps",
     "demo:e2e": "tsx scripts/demo-e2e.ts",
+    "docs:blocks": "tsx scripts/generate-block-catalog.ts",
     "prepare": "husky"
   },
   "devDependencies": {
