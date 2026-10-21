@@ -14,6 +14,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  /*
+   * Anything that can be pressed should say so.
+   *
+   * Tailwind's preflight leaves buttons with the default arrow cursor, so a
+   * studio full of controls looked like a form nobody could touch. One rule
+   * here is better than a `cursor-pointer` on every control.
+   */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  a[href],
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
   :root {
     --bg-main: #f8fafc;
     --bg-card: #ffffff;

@@ -9,6 +9,7 @@
  */
 export * from './types';
 export * from './form-schema';
+export * from './handoff';
 export * from './path';
 export * from './registry';
 export * from './samples';

@@ -1,59 +1,90 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, Check, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Check, FilePlus2, Loader2 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
 import {
   NewsroomApiError,
+  addStoryBlock,
   commitStoryVersion,
   getStory,
+  newBlockId,
   updateStoryBlock,
 } from '../lib/newsroom-api';
-import type { BlockSource } from './StoryBlockLoader';
+import type { StoryContext } from './story-context';
 
-export type SaveMode = 'version' | 'block';
+export type SaveMode = 'version' | 'block' | 'add';
 
 /**
- * Save an edited block back to the story it came from.
+ * Import the block the editor has been working on into the story.
  *
  * The platform has no staged-revision concept: there is no "pending
  * revision" that waits for a publish. A version commit *is* the audit record
  * *and* the publish — the story keeps its status and the new content goes
- * live at once. So the two ways back are:
+ * live at once. So there are three ways back, and they are not equivalent:
  *
- *  - **Save as a new version** — the proper path. It snapshots an immutable
- *    version, records an audit entry with the change summary, and prepends a
- *    `what_changed` block so readers can see what moved. This is the default.
+ *  - **Add the block to the story** — for a block the editor built from a
+ *    sample. It is appended at the end and the API records an audit entry.
+ *
+ *  - **Save as a new version** — for a block that is already in the story.
+ *    It snapshots an immutable version, records the change in the audit log
+ *    with the change summary, and prepends a `what_changed` block so
+ *    readers can see what moved.
  *
  *  - **Update the block in place** — surgical and immediate, but it creates
  *    no version, no audit entry and no diff block. The story's version
- *    history will not mention it, and a reader looking at "version 3" will
- *    not see what the reader is seeing now.
+ *    history will not mention it.
  */
 export function SaveToStoryDialog({
-  block,
-  source,
+  context,
+  blockType,
+  data,
   onClose,
   onSaved,
 }: {
-  block: StoryBlock;
-  source: BlockSource;
+  context: StoryContext;
+  blockType: string;
+  data: Record<string, unknown>;
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
-  const [mode, setMode] = React.useState<SaveMode>('version');
+  const isUpdate = Boolean(context.blockId);
+  const [mode, setMode] = React.useState<SaveMode>(isUpdate ? 'version' : 'add');
   const [summary, setSummary] = React.useState('');
   const [state, setState] = React.useState<'idle' | 'saving' | 'error'>('idle');
   const [error, setError] = React.useState<string | null>(null);
+
+  // Escape closes the dialog.
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && state !== 'saving') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose, state]);
 
   const save = async () => {
     setState('saving');
     setError(null);
 
+    const block = {
+      id: isUpdate ? context.blockId! : newBlockId(blockType),
+      blockType,
+      sortOrder: 0,
+      data,
+    } as StoryBlock;
+
     try {
+      if (mode === 'add') {
+        await addStoryBlock(context.storyId, block);
+        onDone(`The block was added to “${context.storyTitle}”.`);
+        onClose();
+        return;
+      }
+
       if (mode === 'block') {
-        await updateStoryBlock(source.storyId, block);
-        onSaved(`The block was updated in “${source.storyTitle}”.`);
+        await updateStoryBlock(context.storyId, block);
+        onDone(`The block was updated in “${context.storyTitle}”.`);
         onClose();
         return;
       }
@@ -63,21 +94,21 @@ export function SaveToStoryDialog({
        * read first and only the one block is changed. Sending a partial
        * list would delete every block the editor did not send.
        */
-      const story = await getStory(source.storyId);
+      const story = await getStory(context.storyId);
       const blocks = (story.blocks ?? []).map((existing) =>
-        existing.id === source.blockId ? block : existing
+        existing.id === context.blockId ? block : existing
       );
 
       const result = await commitStoryVersion(
-        source.storyId,
+        context.storyId,
         blocks,
         summary.trim() || 'Block updated in the Block Studio'
       );
 
-      onSaved(
+      onDone(
         result.versionNumber
-          ? `Saved as version ${result.versionNumber} of “${source.storyTitle}”.`
-          : `Saved to “${source.storyTitle}”.`
+          ? `Saved as version ${result.versionNumber} of “${context.storyTitle}”.`
+          : `Saved to “${context.storyTitle}”.`
       );
       onClose();
     } catch (cause) {
@@ -102,6 +133,38 @@ export function SaveToStoryDialog({
     }
   };
 
+  const onDone = (message: string) => onSaved(message);
+
+  const choices: { mode: SaveMode; title: string; detail: string; warning?: boolean }[] = [
+    ...(isUpdate
+      ? []
+      : [
+          {
+            mode: 'add' as SaveMode,
+            title: 'Add the block to the story',
+            detail:
+              'The block is appended to the end of the story, and the API records an audit entry for it.',
+          },
+        ]),
+    ...(isUpdate
+      ? [
+          {
+            mode: 'version' as SaveMode,
+            title: 'Save as a new version',
+            detail:
+              'Snapshots an immutable version, records the change in the audit log, and prepends a “what changed” block for readers. The story keeps its status and the new content goes live at once — the platform has no staged revision that waits for a publish.',
+          },
+          {
+            mode: 'block' as SaveMode,
+            title: 'Update the block in place',
+            detail:
+              'Surgical, and live immediately. But it creates no version, no audit entry and no diff block — the story’s version history will not mention the change.',
+            warning: true,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-6 backdrop-blur-sm"
@@ -110,27 +173,19 @@ export function SaveToStoryDialog({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Save back to the story"
+        aria-label="Import into the story"
         onClick={(event) => event.stopPropagation()}
         className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0d1220]"
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-              Save back to the story
+              {isUpdate ? 'Save the block back' : 'Import the block into the story'}
             </h2>
             <p className="mt-0.5 truncate text-[11px] text-slate-500">
-              {source.storyTitle} · {block.blockType} block
+              {context.storyTitle} · {blockType} block
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         <div className="space-y-3 px-5 py-4">
@@ -139,57 +194,33 @@ export function SaveToStoryDialog({
               How
             </legend>
 
-            <label
-              className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors ${
-                mode === 'version'
-                  ? 'border-blue-500 bg-blue-50/60 dark:border-blue-500/50 dark:bg-blue-500/10'
-                  : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50'
-              }`}
-            >
-              <input
-                type="radio"
-                name="save-mode"
-                checked={mode === 'version'}
-                onChange={() => setMode('version')}
-                className="mt-0.5 accent-blue-600"
-              />
-              <span className="min-w-0">
-                <span className="block text-[13px] font-semibold text-slate-800 dark:text-slate-100">
-                  Save as a new version
+            {choices.map((choice) => (
+              <label
+                key={choice.mode}
+                className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors ${
+                  mode === choice.mode
+                    ? 'border-blue-500 bg-blue-50/60 dark:border-blue-500/50 dark:bg-blue-500/10'
+                    : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="save-mode"
+                  checked={mode === choice.mode}
+                  onChange={() => setMode(choice.mode)}
+                  className="mt-0.5 accent-blue-600"
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                    {choice.warning && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+                    {choice.title}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
+                    {choice.detail}
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
-                  Snapshots an immutable version, records the change in the audit log, and prepends
-                  a “what changed” block for readers. The story keeps its status and the new content
-                  goes live at once — the platform has no staged revision that waits for a publish.
-                </span>
-              </span>
-            </label>
-
-            <label
-              className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors ${
-                mode === 'block'
-                  ? 'border-blue-500 bg-blue-50/60 dark:border-blue-500/50 dark:bg-blue-500/10'
-                  : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50'
-              }`}
-            >
-              <input
-                type="radio"
-                name="save-mode"
-                checked={mode === 'block'}
-                onChange={() => setMode('block')}
-                className="mt-0.5 accent-blue-600"
-              />
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-800 dark:text-slate-100">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                  Update the block in place
-                </span>
-                <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
-                  Surgical, and live immediately. But it creates no version, no audit entry and no
-                  diff block — the story&apos;s version history will not mention the change.
-                </span>
-              </span>
-            </label>
+              </label>
+            ))}
           </fieldset>
 
           {mode === 'version' && (
@@ -226,7 +257,7 @@ export function SaveToStoryDialog({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="flex items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/50">
           <button
             type="button"
             onClick={onClose}
@@ -242,10 +273,16 @@ export function SaveToStoryDialog({
           >
             {state === 'saving' ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : mode === 'add' ? (
+              <FilePlus2 className="h-3.5 w-3.5" />
             ) : (
               <Check className="h-3.5 w-3.5" />
             )}
-            {mode === 'version' ? 'Save as a new version' : 'Update the block'}
+            {mode === 'add'
+              ? 'Add to story'
+              : mode === 'version'
+                ? 'Save as a new version'
+                : 'Update the block'}
           </button>
         </div>
       </div>

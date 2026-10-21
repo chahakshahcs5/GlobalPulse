@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, FileText, Trash2, Eye } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, FileText, Trash2, Eye, ExternalLink } from 'lucide-react';
 import type { StoryBlock, ArticleType } from '@ai-news/schemas';
 import {
   saveUserStory,
@@ -27,6 +27,8 @@ import {
   validateStoryBlocks,
 } from './block-factories';
 import { BlockSchemaEditor } from './BlockSchemaEditor';
+import { studioUrl } from '../../../../lib/studio-url';
+import { takeBlockFromComposer } from '@ai-news/block-studio';
 import { StoryMetadataSection } from './StoryMetadataSection';
 import { StoryTakeawaysSection } from './StoryTakeawaysSection';
 import { StoryBlockToolbar } from './StoryBlockToolbar';
@@ -60,10 +62,17 @@ export function StoryEditorDrawer({
   const [bullet3, setBullet3] = useState('');
   const [mediaBlocks, setMediaBlocks] = useState<MediaBlockDraft[]>([]);
   /**
+   * Identifies this composer session, so a block handed over by the studio
+   * finds its way back to this draft and not to another one.
+   */
+  const composerSession = useRef(
+    `composer_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+  );
+  /**
    * The payload each block had when it was loaded, so the form can mark the
    * fields the editor has changed.
    */
-  const [blockBaselines, setBlockBaselines] = useState<Record<string, MediaBlockDraft['data']>>({});
+  const [blockBaselines, setBlockBaselines] = useState<Record<string, Record<string, unknown>>>({});
   const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
 
   // Pre-populate fields when editing an existing story, or reset for new
@@ -169,6 +178,40 @@ export function StoryEditorDrawer({
     setMediaBlocks((prev: MediaBlockDraft[]) => [...prev, draft]);
     setBlockBaselines((previous) => ({ ...previous, [draft.id]: draft.data }));
   };
+
+  /**
+   * Pick up a block handed over by the Block Studio.
+   *
+   * The studio writes the block to the browser and the editor picks it up
+   * when they come back to this tab — the studio is usually opened in a new
+   * one. The block joins the draft, so it is written when the story is saved.
+   */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const collect = () => {
+      const handed = takeBlockFromComposer(composerSession.current);
+      if (!handed) return;
+
+      const id = handed.blockId ?? `blk_${handed.blockType}_${Date.now().toString(36)}`;
+      setMediaBlocks((prev: MediaBlockDraft[]) => {
+        const without = prev.filter((block) => block.id !== id);
+        return [...without, { id, type: handed.blockType, data: handed.data } as MediaBlockDraft];
+      });
+      setBlockBaselines((previous) => ({ ...previous, [id]: handed.data }));
+    };
+
+    // The editor coming back to this tab is the usual signal.
+    window.addEventListener('focus', collect);
+    // The studio may also write while this tab is in front.
+    window.addEventListener('storage', collect);
+    collect();
+
+    return () => {
+      window.removeEventListener('focus', collect);
+      window.removeEventListener('storage', collect);
+    };
+  }, [isOpen]);
 
   const removeMediaBlock = (id: string) => {
     setMediaBlocks((prev: MediaBlockDraft[]) => prev.filter((b: MediaBlockDraft) => b.id !== id));
@@ -415,6 +458,42 @@ export function StoryEditorDrawer({
             <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-4">
               <StoryBlockToolbar onAddBlock={handleAddBlock} />
 
+              {editingStory && (
+                <a
+                  href={studioUrl(editingStory.id, undefined, composerSession.current)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs transition-colors hover:border-blue-400 hover:bg-blue-50/60 dark:border-slate-700 dark:hover:border-blue-500 dark:hover:bg-blue-500/10"
+                >
+                  <span className="text-slate-600 dark:text-slate-300">
+                    Need a chart, a map or a media block? Build it in the Block Studio and send it
+                    straight into this story.
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1 font-bold text-blue-700 dark:text-blue-300">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open the Studio
+                  </span>
+                </a>
+              )}
+
+              {!editingStory && (
+                <a
+                  href={studioUrl(undefined, undefined, composerSession.current)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs transition-colors hover:border-blue-400 hover:bg-blue-50/60 dark:border-slate-700 dark:hover:border-blue-500 dark:hover:bg-blue-500/10"
+                >
+                  <span className="text-slate-600 dark:text-slate-300">
+                    Need a chart, a map or a media block? Build it in the Block Studio and send it
+                    straight into this draft.
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1 font-bold text-blue-700 dark:text-blue-300">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open the Studio
+                  </span>
+                </a>
+              )}
+
               {mediaBlocks.length > 0 && (
                 <div className="space-y-3 pt-2">
                   {mediaBlocks.map((block: MediaBlockDraft, idx: number) => (
@@ -422,17 +501,31 @@ export function StoryEditorDrawer({
                       key={block.id}
                       className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xs space-y-3"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                           Block {idx + 1}: {block.type}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => removeMediaBlock(block.id)}
-                          className="text-slate-400 hover:text-rose-500 transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          {editingStory && (
+                            <a
+                              href={studioUrl(editingStory.id, block.id, composerSession.current)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open this block in the Block Studio"
+                              className="flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-700 dark:border-slate-700 dark:text-slate-400 dark:hover:text-blue-300"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Studio
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMediaBlock(block.id)}
+                            className="text-slate-400 hover:text-rose-500 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       <BlockSchemaEditor

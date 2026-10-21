@@ -24,9 +24,12 @@ const PAGE_SIZE = 20;
 export function StoryBlockLoader({
   onClose,
   onLoad,
+  darkClass,
 }: {
   onClose: () => void;
   onLoad: (blockType: string, data: Record<string, unknown>, source: BlockSource) => void;
+  /** The class that turns on the chrome's dark utilities. */
+  darkClass: string;
 }) {
   const [stories, setStories] = React.useState<Story[]>([]);
   const [expanded, setExpanded] = React.useState<string | null>(null);
@@ -45,6 +48,15 @@ export function StoryBlockLoader({
     setToken(apiToken());
   }, []);
 
+  // Escape closes the modal.
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const load = React.useCallback(async (search: string, start: number, append: boolean) => {
     if (append) setLoadingMore(true);
     else setSearching(true);
@@ -56,9 +68,11 @@ export function StoryBlockLoader({
       setOffset(start + page.items.length);
       setState('ready');
       setError(null);
-      if (!append && page.items.length > 0) {
-        setExpanded((current) => current ?? page.items[0].id);
-      }
+      /*
+       * Nothing is expanded by default. The list is a list of stories, and
+       * opening one should be a choice — not something that happens while
+       * the editor is still reading.
+       */
     } catch (cause) {
       setState('error');
       setError(
@@ -99,8 +113,14 @@ export function StoryBlockLoader({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-6 backdrop-blur-sm">
-      <div className="mt-10 flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0d1220]">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-6 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className={`mt-10 flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0d1220] ${darkClass}`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="border-b border-slate-200 px-5 py-3.5 dark:border-slate-800">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -137,13 +157,12 @@ export function StoryBlockLoader({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3">
-          {state === 'loading' && (
-            <p className="flex items-center gap-2 px-3 py-6 text-xs text-slate-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading stories…
-            </p>
-          )}
+        <div
+          className={`flex-1 overflow-y-auto p-3 transition-opacity ${
+            searching && state === 'ready' ? 'opacity-50' : 'opacity-100'
+          }`}
+        >
+          {state === 'loading' && <StoryListSkeleton />}
 
           {state === 'error' && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-3 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
@@ -262,8 +281,36 @@ export function StoryBlockLoader({
   );
 }
 
-/** A short description of a block, so the list is readable at a glance. */
-function summarise(block: StoryBlock): string {
+/**
+ * The shape of a story while it is still loading.
+ *
+ * A spinner tells the editor that something is happening; a skeleton tells
+ * them what is about to arrive, and the list does not jump when it does.
+ */
+function StoryListSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div aria-hidden="true" className="space-y-2">
+      {Array.from({ length: rows }, (_, index) => (
+        <div
+          key={index}
+          className="animate-pulse rounded-lg border border-slate-200 p-3 dark:border-slate-800"
+          style={{ animationDelay: `${index * 70}ms` }}
+        >
+          <div className="mb-2 h-3.5 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+          <div className="flex items-center gap-3">
+            <div className="h-2.5 w-16 rounded bg-slate-100 dark:bg-slate-800/70" />
+            <div className="h-2.5 w-12 rounded bg-slate-100 dark:bg-slate-800/70" />
+            <div className="h-2.5 flex-1 rounded bg-slate-100 dark:bg-slate-800/70" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A short description of a block, so the list is readable at a glance. */ function summarise(
+  block: StoryBlock
+): string {
   const data = block.data as Record<string, unknown>;
   const title = data.title ?? data.headline ?? data.quote ?? data.altText ?? data.text;
   if (typeof title === 'string' && title.length > 0) {

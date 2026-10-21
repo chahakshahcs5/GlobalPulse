@@ -35,6 +35,7 @@ interface PrismaStoryRow {
   createdByClient: string;
   createdVia: string;
   currentVersionNumber: number;
+  currentVersionId?: string | null;
   heroImageUrl?: string | null;
   publishedAt?: Date | null;
   createdAt: Date;
@@ -223,6 +224,9 @@ export class PrismaStoryRepository implements IStoryRepository {
         sourceIds: story.sourceIds || [],
         categories: story.categories || [],
         currentVersionNumber: story.currentVersionNumber,
+        // The story has to record which version is current, not just how
+        // many there are. Without this the id is lost on every commit.
+        currentVersionId: story.currentVersionId ?? null,
         heroImageUrl: story.heroImageUrl,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
       },
@@ -597,6 +601,7 @@ export class PrismaStoryRepository implements IStoryRepository {
       createdByClient: row.createdByClient as Story['createdByClient'],
       createdVia: row.createdVia as Story['createdVia'],
       currentVersionNumber: row.currentVersionNumber,
+      currentVersionId: row.currentVersionId ?? undefined,
       heroImageUrl: row.heroImageUrl || undefined,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       createdAt: row.createdAt.toISOString(),

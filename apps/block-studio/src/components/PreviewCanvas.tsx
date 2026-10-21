@@ -2,13 +2,15 @@
 
 import React from 'react';
 import {
+  ArrowRight,
   BookOpen,
   Check,
   Copy,
+  FilePlus2,
   Monitor,
   Moon,
   Plus,
-  Save,
+  Send,
   Smartphone,
   Tablet,
   Trash2,
@@ -17,7 +19,7 @@ import type { StoryBlock } from '@ai-news/schemas';
 import { BlockItem } from '@ai-news/blocks-ui';
 import type { StudioBlock, StudioVariant } from '@ai-news/block-studio';
 import { VariantNameDialog } from './VariantNameDialog';
-import type { BlockSource } from './StoryBlockLoader';
+import { storyUrl, type StoryContext } from './story-context';
 import type { StudioTheme, StudioViewport } from './StudioShell';
 
 interface PreviewCanvasProps {
@@ -36,9 +38,12 @@ interface PreviewCanvasProps {
   onOpenLoader: () => void;
   onSaveVariant: (label: string) => void;
   onDeleteVariant: (variantId: string) => void;
-  /** Where the loaded block came from, when it came from a story. */
-  source: BlockSource | null;
-  onSaveToStory: () => void;
+  /** The story the studio is working in, when it was opened from one. */
+  storyContext: StoryContext | null;
+  /** True when the studio was opened by the story composer. */
+  connectedToComposer: boolean;
+  onSendToComposer: () => void;
+  onImportToStory: () => void;
 }
 
 const VIEWPORTS: { id: StudioViewport; label: string; icon: React.ReactNode }[] = [
@@ -71,8 +76,10 @@ export function PreviewCanvas({
   onOpenLoader,
   onSaveVariant,
   onDeleteVariant,
-  source,
-  onSaveToStory,
+  storyContext,
+  connectedToComposer,
+  onSendToComposer,
+  onImportToStory,
 }: PreviewCanvasProps) {
   const [copied, setCopied] = React.useState<'json' | 'block' | null>(null);
   /** The variant shown alongside the current one, when comparing. */
@@ -194,15 +201,27 @@ export function PreviewCanvas({
               From a story
             </button>
 
-            {source && (
+            {connectedToComposer && (
               <button
                 type="button"
-                onClick={onSaveToStory}
-                title={`Save this block back to “${source.storyTitle}”`}
+                onClick={onSendToComposer}
+                title="Send this block to the story you are writing"
+                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-blue-700"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Send to story
+              </button>
+            )}
+
+            {storyContext && (
+              <button
+                type="button"
+                onClick={onImportToStory}
+                title={`Import this block into “${storyContext.storyTitle}”`}
                 className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-semibold text-emerald-800 transition-colors hover:border-emerald-400 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
               >
-                <Save className="h-3.5 w-3.5" />
-                Save to story
+                <FilePlus2 className="h-3.5 w-3.5" />
+                {storyContext.blockId ? 'Save to story' : 'Add to story'}
               </button>
             )}
           </div>
@@ -237,6 +256,33 @@ export function PreviewCanvas({
           </div>
         </div>
       </header>
+
+      {storyContext && (
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-2 dark:border-emerald-500/25 dark:bg-emerald-500/10 ${darkClass}`}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <BookOpen className="h-3.5 w-3.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
+            <span className="truncate text-[12px] font-semibold text-emerald-900 dark:text-emerald-200">
+              {storyContext.storyTitle}
+            </span>
+            <span className="shrink-0 text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+              {storyContext.blockId
+                ? 'editing a block in this story'
+                : 'crafting a block for this story'}
+            </span>
+          </div>
+          <a
+            href={storyUrl(storyContext)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-100"
+          >
+            Open the story
+            <ArrowRight className="h-3 w-3" />
+          </a>
+        </div>
+      )}
 
       {block && block.variants.length > 0 && (
         <div

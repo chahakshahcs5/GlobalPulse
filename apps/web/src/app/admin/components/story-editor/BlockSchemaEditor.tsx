@@ -25,7 +25,7 @@ export function BlockSchemaEditor({
 }: {
   block: MediaBlockDraft;
   /** The payload as it was when the block was added, for marking changes. */
-  baseline?: MediaBlockDraft['data'];
+  baseline?: Record<string, unknown>;
   onChange: (data: MediaBlockDraft['data']) => void;
 }) {
   const schema = useMemo(() => schemaForType(block.type), [block.type]);

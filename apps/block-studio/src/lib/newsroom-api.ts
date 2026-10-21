@@ -150,6 +150,24 @@ export async function commitStoryVersion(
 }
 
 /**
+ * Append a new block to a story.
+ *
+ * This is the "craft a block in the studio and import it" path. The block is
+ * appended at the end of the story, and the API records an audit entry for
+ * it — unlike the in-place update, which records nothing.
+ */
+export async function addStoryBlock(storyId: string, block: StoryBlock): Promise<StoryBlock> {
+  const body = await request<StoryBlock | Envelope<StoryBlock>>(
+    `/api/stories/${encodeURIComponent(storyId)}/blocks`,
+    {
+      method: 'POST',
+      body: JSON.stringify(block),
+    }
+  );
+  return unwrap(body);
+}
+
+/**
  * Replace one block in a story, in place.
  *
  * The surgical path: the change is live at once, but it creates no version,
@@ -165,4 +183,9 @@ export async function updateStoryBlock(storyId: string, block: StoryBlock): Prom
     }
   );
   return unwrap(body);
+}
+
+/** A unique id for a block the studio has just built. */
+export function newBlockId(blockType: string): string {
+  return `blk_${blockType}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }

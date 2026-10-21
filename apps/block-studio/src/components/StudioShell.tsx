@@ -7,14 +7,17 @@ import {
   listStudioBlocks,
   listStudioCategories,
   searchStudioBlocks,
+  sendBlockToComposer,
   validateBlockData,
   withExtraVariants,
 } from '@ai-news/block-studio';
 import { BlockSidebar } from './BlockSidebar';
 import { PreviewCanvas } from './PreviewCanvas';
 import { DataInspector } from './DataInspector';
+import { getStory } from '../lib/newsroom-api';
 import { StoryBlockLoader, type BlockSource } from './StoryBlockLoader';
 import { SaveToStoryDialog } from './SaveToStoryDialog';
+import type { StoryContext } from './story-context';
 import { useLocalVariants } from './useLocalVariants';
 
 export type StudioTheme = 'light' | 'dark';
@@ -71,12 +74,25 @@ function cloneData(data: Record<string, unknown>): Record<string, unknown> {
  * what an editor sees here is what a reader sees there.
  */
 export function StudioShell() {
-  const [selectedType, setSelectedType] = React.useState<string>('chart');
-  const [variantId, setVariantId] = React.useState<string>('line');
-  const [data, setData] = React.useState<Record<string, unknown>>(() => {
-    const block = getStudioBlock('chart');
-    return block ? cloneData(block.variants[0].data) : {};
-  });
+  /*
+   * The studio opens on the first block in the catalog — the same one the
+   * sidebar lists first — rather than an arbitrary pick, so what you land on
+   * is always what you see at the top of the list.
+   */
+  const initial = React.useMemo(() => {
+    const first = listStudioCategories()[0]?.blocks[0];
+    if (!first) return { type: '', variantId: '', data: {} as Record<string, unknown> };
+    const variant = first.variants[0];
+    return {
+      type: first.type,
+      variantId: variant.id,
+      data: cloneData(variant.data),
+    };
+  }, []);
+
+  const [selectedType, setSelectedType] = React.useState<string>(initial.type);
+  const [variantId, setVariantId] = React.useState<string>(initial.variantId);
+  const [data, setData] = React.useState<Record<string, unknown>>(initial.data);
   const [theme, setTheme] = React.useState<StudioTheme>('dark');
   const [viewport, setViewport] = React.useState<StudioViewport>('desktop');
   const [tab, setTab] = React.useState<InspectorTab>('form');
@@ -87,13 +103,70 @@ export function StudioShell() {
   const [loaderOpen, setLoaderOpen] = React.useState(false);
   /**
    * The payload as it was when it was loaded, so the form can mark what has
-   * been changed since.
+   * been changed since. It starts as the payload itself, so nothing looks
+   * edited until something actually is.
    */
-  const [baseline, setBaseline] = React.useState<Record<string, unknown>>({});
-  /** Where the loaded block came from, so it can be saved back. */
-  const [source, setSource] = React.useState<BlockSource | null>(null);
-  const [saving, setSaving] = React.useState(false);
+  const [baseline, setBaseline] = React.useState<Record<string, unknown>>(initial.data);
+  /** The story the studio is working in, when it was opened from one. */
+  const [storyContext, setStoryContext] = React.useState<StoryContext | null>(null);
+  /**
+   * The composer session that opened the studio.
+   *
+   * A story being written does not exist on the server yet, so the block is
+   * handed back to the composer through the browser rather than written
+   * straight to the API.
+   */
+  const [composerSession, setComposerSession] = React.useState<string | null>(null);
+  const [importing, setImporting] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
+
+  /**
+   * Open the story the studio was sent to.
+   *
+   * The CMS links here with `?story=<id>&block=<id>`, so an editor can land
+   * in the studio with the block they were working on already open, and go
+   * back to the story afterwards.
+   */
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const storyId = params.get('story');
+    const session = params.get('draft');
+    if (session) setComposerSession(session);
+    if (!storyId) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const story = await getStory(storyId);
+        if (cancelled) return;
+
+        const blockId = params.get('block') ?? undefined;
+        setStoryContext({
+          storyId: story.id,
+          storyTitle: story.title,
+          storySlug: story.slug,
+          blockId,
+        });
+
+        if (blockId) {
+          const block = (story.blocks ?? []).find((candidate) => candidate.id === blockId);
+          if (block) {
+            const payload = block.data as Record<string, unknown>;
+            setSelectedType(block.blockType);
+            setData(payload);
+            setBaseline(payload);
+          }
+        }
+      } catch {
+        // The story could not be read. The studio still works as a preview.
+        setStoryContext(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // The studio chrome and the preview each keep their own theme, and both
   // are remembered between visits.
@@ -116,6 +189,24 @@ export function StudioShell() {
     setTheme(next);
     storeTheme(PREVIEW_THEME_STORAGE_KEY, next);
   }, []);
+
+  /**
+   * Hand the block back to the composer that opened the studio.
+   *
+   * This is the path for a story that is still being written: it has no
+   * server id yet, so the block travels through the browser and lands in the
+   * composer's draft.
+   */
+  const sendToComposer = React.useCallback(() => {
+    if (!composerSession) return;
+    sendBlockToComposer(composerSession, {
+      blockType: selectedType,
+      data,
+      blockId: storyContext?.blockId,
+    });
+    setNotice('The block was sent to the story. Switch back to the composer to see it.');
+    setTimeout(() => setNotice(null), 6000);
+  }, [composerSession, data, selectedType, storyContext?.blockId]);
 
   /*
    * The chrome theme is applied to the document element for the page-level
@@ -228,7 +319,17 @@ export function StudioShell() {
       setSelectedType(blockType);
       setData(blockData);
       setBaseline(blockData);
-      setSource(from);
+      // Picking a block from a different story means the studio is working in
+      // that story from now on.
+      setStoryContext((current) =>
+        current && current.storyId === from.storyId
+          ? { ...current, blockId: from.blockId }
+          : {
+              storyId: from.storyId,
+              storyTitle: from.storyTitle,
+              blockId: from.blockId,
+            }
+      );
     },
     []
   );
@@ -304,8 +405,10 @@ export function StudioShell() {
         onOpenLoader={() => setLoaderOpen(true)}
         onSaveVariant={saveCurrentAsVariant}
         onDeleteVariant={deleteLocalVariant}
-        source={source}
-        onSaveToStory={() => setSaving(true)}
+        storyContext={storyContext}
+        connectedToComposer={Boolean(composerSession)}
+        onSendToComposer={sendToComposer}
+        onImportToStory={() => setImporting(true)}
       />
 
       <DataInspector
@@ -322,20 +425,20 @@ export function StudioShell() {
         onToggleOpen={() => setInspectorOpen((current) => !current)}
       />
 
-      {loaderOpen && <StoryBlockLoader onClose={() => setLoaderOpen(false)} onLoad={loadBlock} />}
+      {loaderOpen && (
+        <StoryBlockLoader
+          onClose={() => setLoaderOpen(false)}
+          onLoad={loadBlock}
+          darkClass={chromeDarkClass}
+        />
+      )}
 
-      {saving && source && (
+      {importing && storyContext && (
         <SaveToStoryDialog
-          block={
-            {
-              id: source.blockId,
-              blockType: selectedType,
-              sortOrder: 0,
-              data,
-            } as StoryBlock
-          }
-          source={source}
-          onClose={() => setSaving(false)}
+          context={storyContext}
+          blockType={selectedType}
+          data={data}
+          onClose={() => setImporting(false)}
           onSaved={(message) => {
             setNotice(message);
             setTimeout(() => setNotice(null), 6000);

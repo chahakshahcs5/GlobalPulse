@@ -4,6 +4,10 @@
   "private": true,
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "scripts": {
+    "generate": "prisma generate --schema=prisma/schema.prisma",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma"
+  },
   "dependencies": {
     "@ai-news/observability": "workspace:*",
     "@ai-news/schemas": "workspace:*",

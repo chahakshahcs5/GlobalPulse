@@ -410,7 +410,25 @@ export class StoryService {
     }
 
     const story = await this.getStory(storyId, ctx.organizationId);
-    const nextVersionNumber = story.currentVersionNumber + 1;
+
+    /*
+     * The version number has to come from the versions themselves, not only
+     * from the story's counter.
+     *
+     * The counter can be behind — a story imported from elsewhere, one
+     * restored from a backup, or one whose counter failed to advance because
+     * an earlier write in the same commit threw. The unique constraint on
+     * (storyId, versionNumber) then rejects every new version, and the story
+     * can never be versioned again. Taking the highest of the two makes the
+     * commit self-healing.
+     */
+    const existingVersions = await this.db.stories.getVersions(storyId);
+    const highestVersion = existingVersions.reduce(
+      (highest, version) => Math.max(highest, version.versionNumber),
+      0
+    );
+    const nextVersionNumber = Math.max(story.currentVersionNumber, highestVersion) + 1;
+
     const versionId = generateId('ver');
     const now = new Date().toISOString();
 
