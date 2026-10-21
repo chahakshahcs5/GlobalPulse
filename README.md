@@ -135,10 +135,13 @@ flowchart TD
 │   ├── api/             # Production Fastify + NestJS HTTP REST Gateway & OpenAPI 3.1
 │   ├── mcp-server/      # Remote Model Context Protocol Server over Streamable HTTP
 │   ├── web/             # Next.js 15 Web Portal, Human CMS, and 4K Ultrawide Display Wall
+│   ├── block-studio/    # Block Studio: a Storybook-style workbench for every story block
 │   ├── mobile/          # Expo / React Native App (iOS, Android, Tablet dual-pane layout)
 │   └── worker/          # Asynchronous Background Job Processor (Audio, Media, Search)
 ├── libs/
 │   ├── schemas/         # Canonical Zod schemas for all 22 Story Blocks, Entities, Events
+│   ├── blocks-ui/       # Shared React renderers for every story block (web + studio)
+│   ├── block-studio/    # Block Studio engine: catalog, variants, schema-driven forms
 │   ├── database/        # Dual-engine repository (Prisma PostgreSQL + In-Memory Store)
 │   ├── events/          # Developing Event domain service and milestone tracker
 │   ├── entities/        # Named Entity domain service (People, Organizations, Countries)
@@ -190,6 +193,9 @@ pnpm dev:mcp
 
 # Start Next.js 15 Web Portal, CMS & 4K Wall (port 3002)
 pnpm dev:web
+
+# Start the Block Studio (port 3003) — preview and edit every story block
+pnpm dev:studio
 
 # Start Asynchronous BullMQ Background Worker
 pnpm dev:worker
@@ -273,6 +279,7 @@ All system aspects are thoroughly documented under [`docs/`](file:///c:/Users/ch
 | [**Deployment Guide**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/deployment.md)                       | Production Docker packaging, Kubernetes manifest guides, and 4K display wall signage         |
 | [**Database Architecture**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/database.md)                    | Dual-engine design: PostgreSQL with Prisma ORM, migrations, and high-speed in-memory engine  |
 | [**Content Model**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/content-model.md)                       | Structured block architecture, canonical schemas, and all 22 supported block types           |
+| [**Block Studio**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/block-studio.md)                         | The Storybook-style workbench for previewing and editing every story block                   |
 | [**Story Model & Versioning**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/story-model.md)              | Story lifecycle, revision snapshots, `WhatChanged` diffing, and audit trails                 |
 | [**Intelligence Platform**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/intelligence-platform.md)       | Claims & evidence, timelines, perspectives, knowledge graph, alerts, ingestion, source trust |
 | [**Multimedia & Visual Engines**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/media-model.md)           | Programmatic D3 charts (13 types), MapLibre geospatial maps, and timelines                   |

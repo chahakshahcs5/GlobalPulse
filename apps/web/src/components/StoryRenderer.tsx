@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { StoryBlock } from '@ai-news/schemas';
-import { BlockItem } from './story-blocks/BlockItem';
+import { BlockItem } from '@ai-news/blocks-ui';
 
 export interface StoryRendererProps {
   blocks: StoryBlock[];
@@ -74,4 +74,4 @@ export const StoryRenderer: React.FC<StoryRendererProps> = ({
 };
 
 export default StoryRenderer;
-export * from './story-blocks';
+export * from '@ai-news/blocks-ui';

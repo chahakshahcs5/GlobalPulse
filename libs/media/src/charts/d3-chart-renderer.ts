@@ -129,11 +129,20 @@ export class D3ChartRenderer {
     const hasYLabel = Boolean(chartData.yAxis?.label);
     const hasXLabel = Boolean(chartData.xAxis?.label);
     const hasFootnote = Boolean(chartData.sourceAttribution);
-    const showLegend = series.length > 1 || (series.length === 1 && Boolean(series[0].name));
+
+    // The legend can be turned off and placed by the block's payload. Left
+    // to the renderer, a single-series chart would keep a legend the author
+    // asked to hide.
+    const legendPosition = chartData.legend?.position ?? 'top';
+    const legendEnabled = chartData.legend?.show !== false;
+    const hasLegendData = series.length > 1 || (series.length === 1 && Boolean(series[0].name));
+    const showLegend = legendEnabled && hasLegendData;
+    const legendAtBottom = showLegend && legendPosition === 'bottom';
+    const legendAtRight = showLegend && legendPosition === 'right';
 
     // Dynamic top padding to prevent title, subtitle, and legend from colliding
     const paddingLeft = hasYLabel ? 82 : 65;
-    const paddingRight = 40;
+    let paddingRight = 40;
     const hasSubtitle = Boolean(chartData.subtitle);
 
     // Calculate dynamic legend row positions
@@ -142,24 +151,42 @@ export class D3ChartRenderer {
     let currentLegendY = hasSubtitle ? 66 : 50;
 
     if (showLegend) {
-      series.forEach((s) => {
-        const itemWidth = Math.max(90, Math.ceil(s.name.length * 7.2) + 36);
-        if (currentLegendX + itemWidth > width - paddingRight && currentLegendX > paddingLeft) {
-          currentLegendX = paddingLeft;
-          currentLegendY += 22;
-        }
-        legendSvg += `
-          <g transform="translate(${currentLegendX}, ${currentLegendY})">
-            <rect width="12" height="12" rx="2.5" fill="${s.color}" />
-            <text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
-          </g>
-        `;
-        currentLegendX += itemWidth;
-      });
+      if (legendAtRight) {
+        // A right-hand legend is a single vertical column.
+        let y = 30;
+        series.forEach((s) => {
+          legendSvg += `
+            <g transform="translate(${width - 150}, ${y})">
+              <rect width="12" height="12" rx="2.5" fill="${s.color}" />
+              <text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
+            </g>
+          `;
+          y += 20;
+        });
+        paddingRight = 165;
+      } else if (!legendAtBottom) {
+        // A top legend flows across, wrapping when it runs out of room.
+        series.forEach((s) => {
+          const itemWidth = Math.max(90, Math.ceil(s.name.length * 7.2) + 36);
+          if (currentLegendX + itemWidth > width - paddingRight && currentLegendX > paddingLeft) {
+            currentLegendX = paddingLeft;
+            currentLegendY += 22;
+          }
+          legendSvg += `
+            <g transform="translate(${currentLegendX}, ${currentLegendY})">
+              <rect width="12" height="12" rx="2.5" fill="${s.color}" />
+              <text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
+            </g>
+          `;
+          currentLegendX += itemWidth;
+        });
+      }
     }
 
-    const paddingTop = showLegend ? currentLegendY + 24 : hasSubtitle ? 68 : 50;
-    const paddingBottom = (hasXLabel ? 55 : 38) + (hasFootnote ? 18 : 0);
+    const paddingTop =
+      showLegend && !legendAtBottom && !legendAtRight ? currentLegendY + 24 : hasSubtitle ? 68 : 50;
+    const paddingBottom =
+      (hasXLabel ? 55 : 38) + (hasFootnote ? 18 : 0) + (legendAtBottom ? 30 : 0);
 
     const padding = {
       top: paddingTop,
@@ -185,8 +212,27 @@ export class D3ChartRenderer {
     }
 
     // Legend
-    if (showLegend && legendSvg) {
-      svgElements += legendSvg;
+    if (showLegend) {
+      if (legendAtBottom) {
+        // A bottom legend is laid out after the plot, so it is built at the
+        // foot of the chart rather than reused from the top.
+        let x = padding.left;
+        const y = height - padding.bottom + 12;
+        series.forEach((s) => {
+          const itemWidth = Math.max(90, Math.ceil(s.name.length * 7.2) + 36);
+          if (x + itemWidth > width - padding.right && x > padding.left) {
+            x = padding.left;
+          }
+          legendSvg += `
+            <g transform="translate(${x}, ${y})">
+              <rect width="12" height="12" rx="2.5" fill="${s.color}" />
+              <text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>
+            </g>
+          `;
+          x += itemWidth;
+        });
+      }
+      if (legendSvg) svgElements += legendSvg;
     }
 
     // Y Axis Label

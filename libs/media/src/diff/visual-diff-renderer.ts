@@ -96,6 +96,13 @@ export class VisualDiffRenderer {
         <div class="space-y-1">
           ${itemsHtml}
         </div>
+        ${
+          data.updatedAt
+            ? `<div class="pt-3 mt-1 border-t ${headerBorder} text-[11px] ${headerSub} font-mono">Updated ${escapeXml(
+                data.updatedAt
+              )}</div>`
+            : ''
+        }
       </div>
     `;
   }

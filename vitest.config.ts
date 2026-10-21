@@ -37,6 +37,8 @@ export default defineConfig({
       '@ai-news/search': path.resolve(__dirname, 'libs/search/src/index.ts'),
       '@ai-news/auth': path.resolve(__dirname, 'libs/auth/src/index.ts'),
       '@ai-news/media': path.resolve(__dirname, 'libs/media/src/index.ts'),
+      '@ai-news/blocks-ui': path.resolve(__dirname, 'libs/blocks-ui/src/index.ts'),
+      '@ai-news/block-studio': path.resolve(__dirname, 'libs/block-studio/src/index.ts'),
       '@ai-news/observability': path.resolve(__dirname, 'libs/observability/src/index.ts'),
       '@ai-news/jobs': path.resolve(__dirname, 'libs/jobs/src/index.ts'),
       '@ai-news/graphql': path.resolve(__dirname, 'libs/graphql/src/index.ts'),

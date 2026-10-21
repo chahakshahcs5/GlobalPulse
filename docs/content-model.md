@@ -460,14 +460,14 @@ reads before choosing a block type.
 ## 3. Extending the Block Model
 
 Adding a new block type (e.g. `financial_terminal`) requires no database migration, because
-blocks are stored as JSONB. It does require touching eight places:
+blocks are stored as JSONB. It does require touching nine places:
 
 1. **`libs/schemas/src/blocks.ts`** — the Zod schema, plus the type in the
    `StoryBlockSchema` discriminated union.
 2. **`libs/schemas/src/block-registry.ts`** — a `define(...)` entry with a category, a
    description and an example. The description is what an agent reads before choosing a
    block type, so it is worth writing carefully.
-3. **Web renderer** — a `case` in `apps/web/src/components/story-blocks/BlockItem.tsx` plus the
+3. **Web renderer** — a `case` in `libs/blocks-ui/src/blocks/BlockItem.tsx` plus the
    view component.
 4. **Mobile renderer** — a `case` in
    `apps/mobile/src/components/mobile-blocks/MobileBlockItem.tsx` plus the view component.
@@ -478,6 +478,8 @@ blocks are stored as JSONB. It does require touching eight places:
    agent can author the block.
 7. **`docs/content-model.md`** — run `pnpm docs:blocks` to regenerate the catalog.
 8. **Tests** — schema validation, renderer output, and the registry entry.
+9. **Block Studio sample** — a sample payload and any variants for the new type in
+   `libs/block-studio/src/samples.ts`, so the block is previewable in the studio.
 
 ```typescript
 // 1. In libs/schemas/src/blocks.ts

@@ -1233,7 +1233,9 @@ export const InterviewBlockSchema = BaseBlockSchema.extend({
       entityId: z.string().optional(),
     }),
     format: z.enum(['text', 'audio', 'video']).default('text'),
-    mediaUrl: z.string().url().optional(),
+    // Media is served from the platform's own origin, so a relative path is
+    // allowed here as it is for every other media block.
+    mediaUrl: z.string().url().or(z.string().startsWith('/')).optional(),
     transcript: z.string().optional(),
     segments: z
       .array(

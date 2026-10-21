@@ -329,7 +329,7 @@ The catalog is served from `GET /api/blocks`, the GraphQL `getBlockCatalog` quer
 payload shape before writing a story.
 
 **Renderer parity.** Every registered block type has a renderer on both the web
-(`apps/web/src/components/story-blocks/`) and the mobile
+(`libs/blocks-ui/src/blocks/`) and the mobile
 (`apps/mobile/src/components/mobile-blocks/`) surface. `tests/unit/blocks/block-renderer-coverage.test.ts`
 fails the build when a type is registered without a renderer, because an unrendered block is
 silently dropped from the published article.

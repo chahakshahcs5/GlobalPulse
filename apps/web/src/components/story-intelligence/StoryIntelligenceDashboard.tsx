@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { Story, StoryIntelligence, Entity } from '@ai-news/schemas';
 import * as api from '../../lib/api-client';
-import { BlockItem } from '../story-blocks/BlockItem';
+import { BlockItem } from '@ai-news/blocks-ui';
 
 /**
  * Unified story dashboard.

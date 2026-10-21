@@ -148,6 +148,52 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
+  apps/block-studio:
+    dependencies:
+      '@ai-news/block-studio':
+        specifier: workspace:*
+        version: link:../../libs/block-studio
+      '@ai-news/blocks-ui':
+        specifier: workspace:*
+        version: link:../../libs/blocks-ui
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../../libs/schemas
+      lucide-react:
+        specifier: ^1.48.0
+        version: 1.48.0(react@19.3.0)
+      next:
+        specifier: ^16.3.6
+        version: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.3.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.3.3
+        version: 4.3.3
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.4
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      postcss:
+        specifier: ^8.5.28
+        version: 8.5.28
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
   apps/mcp-server:
     dependencies:
       '@ai-news/auth':
@@ -291,6 +337,50 @@ importers:
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/block-studio:
+    dependencies:
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/blocks-ui:
+    dependencies:
+      '@ai-news/media':
+        specifier: workspace:*
+        version: link:../media
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../shared
+      lucide-react:
+        specifier: ^1.48.0
+        version: 1.48.0(react@19.3.0)
+      mermaid:
+        specifier: ^12.0.0
+        version: 12.0.0
+      react:
+        specifier: ^19.0.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
       typescript:
         specifier: ^5.8.2
         version: 5.9.3

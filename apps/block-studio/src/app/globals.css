@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+
+/*
+ * The shared block renderers live in `libs/blocks-ui`, outside this app's
+ * directory, so Tailwind needs an explicit source for their utilities.
+ */
+@source '../../../../libs/blocks-ui/src';
+
+.preview-surface {
+  container-type: inline-size;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * The studio's own chrome has its own light/dark switch, deliberately kept
+ * separate from the `dark` variant the block renderers use.
+ *
+ * The preview canvas must be able to render a *light* block while the studio
+ * chrome is dark. If the chrome used the `dark` variant, a light preview
+ * nested inside it would still pick up the blocks' dark styles. So the chrome
+ * switches on `studio-dark`, and only the preview surface ever carries
+ * `dark`.
+ */
+@custom-variant studio-dark (&:where(.studio-dark, .studio-dark *));
+
+@layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
+    --scroll-thumb: #cbd5e1;
+    color-scheme: light;
+  }
+
+  .studio-dark {
+    --bg-main: #0b0f19;
+    --bg-card: #111827;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #1e293b;
+    --scroll-thumb: #334155;
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}

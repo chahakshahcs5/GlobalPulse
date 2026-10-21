@@ -7,7 +7,7 @@ import {
   InterviewBlockView,
   LiveDataBlockView,
   FactCheckBlockView,
-} from '../../../apps/web/src/components/story-blocks/IntelligenceBlockViews';
+} from '../../../libs/blocks-ui/src/blocks/IntelligenceBlockViews';
 import {
   DataExplorerBlockView,
   RankingBlockView,
@@ -16,7 +16,7 @@ import {
   ElectionBlockView,
   DisasterBlockView,
   ScienceBlockView,
-} from '../../../apps/web/src/components/story-blocks/DataBlockViews';
+} from '../../../libs/blocks-ui/src/blocks/DataBlockViews';
 import {
   AnnotatedImageBlockView,
   VideoGalleryBlockView,
@@ -24,7 +24,7 @@ import {
   WaveformBlockView,
   TranscriptBlockView,
   DatasetBlockView,
-} from '../../../apps/web/src/components/story-blocks/MediaExpansionViews';
+} from '../../../libs/blocks-ui/src/blocks/MediaExpansionViews';
 
 /**
  * Render smoke tests for the block views that were previously unrendered.

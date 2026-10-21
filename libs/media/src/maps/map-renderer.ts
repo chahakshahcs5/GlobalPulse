@@ -169,6 +169,43 @@ export class MapRenderer {
       `;
     });
 
+    // Routes. A route map draws the path itself, not just its endpoints.
+    let routeSvgs = '';
+    if (mapData.routes && mapData.routes.length > 0) {
+      const routeColors = ['#f59e0b', '#ec4899', '#06b6d4', '#a855f7'];
+      mapData.routes.forEach((route, idx) => {
+        if (!route?.coordinates || route.coordinates.length < 2) return;
+        const points = route.coordinates
+          .map((coord) => {
+            const parsed = parseCoordinates(coord);
+            if (!parsed) return null;
+            const [px, py] = project(parsed[0], parsed[1]);
+            return `${px.toFixed(1)},${py.toFixed(1)}`;
+          })
+          .filter(Boolean)
+          .join(' ');
+        if (!points) return;
+        const color = routeColors[idx % routeColors.length];
+        routeSvgs += `
+          <polyline points="${points}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.9" />
+          <polyline points="${points}" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.35" stroke-dasharray="1,7" stroke-linecap="round" />
+          <text x="${project(route.coordinates[0][0], route.coordinates[0][1])[0] + 10}" y="${project(route.coordinates[0][0], route.coordinates[0][1])[1] - 8}" font-size="11" font-weight="700" fill="${color}" font-family="system-ui, sans-serif">${escapeXml(route.name || 'Route')}</text>
+        `;
+      });
+    }
+
+    // The map type decides what the reader is looking at, so it is stated
+    // on the map rather than left implicit.
+    const mapTypeLabel: Record<string, string> = {
+      points: 'Points',
+      choropleth: 'Choropleth',
+      heatmap: 'Heatmap',
+      route: 'Route',
+      comparison: 'Comparison',
+    };
+    const resolvedMapType = mapData.mapType || 'points';
+    const mapTypeText = mapTypeLabel[resolvedMapType] || resolvedMapType;
+
     // Layer Badges
     const paddingRight = 20;
     let layerBadges = '';
@@ -184,6 +221,21 @@ export class MapRenderer {
           </g>
         `;
       });
+    }
+
+    // Regions under comparison, listed so the comparison is legible.
+    let comparisonBadges = '';
+    if (mapData.comparisonRegionIds && mapData.comparisonRegionIds.length > 0) {
+      const cx0 = 20;
+      const cy0 = height - 40;
+      const text = `Comparing: ${mapData.comparisonRegionIds.join(', ')}`;
+      const badgeWidth = Math.min(width - 40, Math.max(120, text.length * 6.4 + 20));
+      comparisonBadges = `
+        <g transform="translate(${cx0}, ${cy0})">
+          <rect width="${badgeWidth}" height="22" rx="4" fill="${isDark ? 'rgba(30,41,59,0.85)' : 'rgba(241,245,249,0.92)'}" stroke="${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}" />
+          <text x="10" y="15" font-size="10" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(text)}</text>
+        </g>
+      `;
     }
 
     // Header card with auto-sizing to eliminate text overflow
@@ -219,19 +271,31 @@ export class MapRenderer {
         
         <!-- Tracking Links -->
         ${trackingArcs}
-        
+
+        <!-- Routes -->
+        ${routeSvgs}
+
         <!-- Center Target Reticle -->
         <g transform="translate(${cx}, ${cy})">
           <circle cx="0" cy="0" r="7" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="2,2" />
           <circle cx="0" cy="0" r="2.5" fill="#3b82f6" />
         </g>
-        
+
         <!-- Interactive Marker Points -->
         ${markerSvgs}
-        
+
         <!-- Layer Badges -->
         ${layerBadges}
-        
+
+        <!-- Comparison Regions -->
+        ${comparisonBadges}
+
+        <!-- Map Type -->
+        <g transform="translate(20, ${height - 66})">
+          <rect width="86" height="20" rx="4" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />
+          <text x="10" y="14" font-size="10" font-weight="700" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(mapTypeText)}</text>
+        </g>
+
         <!-- Dynamic Header Card (No Overflow) -->
         <g transform="translate(20, 20)">
           <rect width="${headerWidth}" height="${headerHeight}" rx="10" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />

@@ -23,7 +23,7 @@ function collectCaseStatements(directory: string): Set<string> {
 }
 
 describe('Block renderer coverage', () => {
-  const webDir = join(process.cwd(), 'apps/web/src/components/story-blocks');
+  const webDir = join(process.cwd(), 'libs/blocks-ui/src/blocks');
   const mobileDir = join(process.cwd(), 'apps/mobile/src/components/mobile-blocks');
 
   it('renders every registered block type on the web', () => {
