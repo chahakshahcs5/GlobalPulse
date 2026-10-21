@@ -18,3 +18,4 @@ export * from './runtime';
 export * from './inline-markdown';
 export * from './TableBlockView';
 export * from './BlockItem';
+export * from './presentation';

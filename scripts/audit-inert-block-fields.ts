@@ -106,6 +106,27 @@ function readDataProperties(source: string): Set<string> {
 
 const inert: string[] = [];
 
+/*
+ * The envelope's presentation options.
+ *
+ * A block's presentation — how wide it is, how it is aligned, which theme it
+ * is drawn in — is read in one place: the wrapper around the renderers, in
+ * `BlockItem.tsx`, and the layout it asks for is worked out in
+ * `presentation.ts`. That is what lets one set of options apply to every
+ * block type. It is also a promise the platform has to keep, so the fields
+ * are checked here like the rest.
+ */
+const PRESENTATION_FIELDS = ['width', 'align', 'theme'];
+const presentationSources = [
+  readFileSync(join(BLOCKS_DIR, 'BlockItem.tsx'), 'utf8'),
+  readFileSync(join(BLOCKS_DIR, 'presentation.ts'), 'utf8'),
+].join('\n');
+
+for (const field of PRESENTATION_FIELDS) {
+  const used = new RegExp(`presentation[^\\n]*\\.${field}\\b`).test(presentationSources);
+  if (!used) inert.push(`presentation :: ${field}`);
+}
+
 for (const definition of listBlockDefinitions()) {
   const fields = dataFieldsOf(definition.schema);
   if (fields.length === 0) continue;

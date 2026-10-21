@@ -6,10 +6,12 @@ import type { StoryBlock } from '@ai-news/schemas';
 import {
   ApiError,
   addStoryBlock,
+  blockOf,
   commitStoryVersion,
   getStory,
   newBlockId,
   updateStoryBlock,
+  type StudioPayload,
 } from '../lib/newsroom-api';
 import type { StoryContext } from './story-context';
 
@@ -38,13 +40,13 @@ export type SaveMode = 'version' | 'block' | 'add';
 export function SaveToStoryDialog({
   context,
   blockType,
-  data,
+  payload,
   onClose,
   onSaved,
 }: {
   context: StoryContext;
   blockType: string;
-  data: Record<string, unknown>;
+  payload: StudioPayload;
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
@@ -67,12 +69,17 @@ export function SaveToStoryDialog({
     setState('saving');
     setError(null);
 
-    const block = {
-      id: isUpdate ? context.blockId! : newBlockId(blockType),
+    /*
+     * The whole block goes back, not just its content: the presentation, the
+     * accessibility text, the provenance and the citations are part of the
+     * block, and a block that came through the studio keeps them.
+     */
+    const block = blockOf(
       blockType,
-      sortOrder: 0,
-      data,
-    } as StoryBlock;
+      isUpdate ? context.blockId! : newBlockId(blockType),
+      0,
+      payload
+    ) as StoryBlock;
 
     try {
       if (mode === 'add') {

@@ -3,7 +3,8 @@
 import React from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 import type { Story, StoryBlock } from '@ai-news/schemas';
-import { getCurrentUser, searchStories } from '../lib/newsroom-api';
+import { getCurrentUser, payloadOf, searchStories } from '../lib/newsroom-api';
+import type { StudioPayload } from '../lib/newsroom-api';
 
 /** Where a loaded block came from, so it can be saved back. */
 export interface BlockSource {
@@ -28,7 +29,7 @@ export function StoryBlockLoader({
   darkClass,
 }: {
   onClose: () => void;
-  onLoad: (blockType: string, data: Record<string, unknown>, source: BlockSource) => void;
+  onLoad: (blockType: string, payload: StudioPayload, source: BlockSource) => void;
   /** The class that turns on the chrome's dark utilities. */
   darkClass: string;
 }) {
@@ -117,7 +118,7 @@ export function StoryBlockLoader({
     setExpanded((current) => (current === storyId ? null : storyId));
 
   const load_ = (block: StoryBlock, story: Story) => {
-    onLoad(block.blockType, block.data as Record<string, unknown>, {
+    onLoad(block.blockType, payloadOf(block), {
       story,
       blockId: block.id,
     });

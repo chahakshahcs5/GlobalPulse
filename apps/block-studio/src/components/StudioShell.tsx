@@ -3,13 +3,16 @@
 import React from 'react';
 import type { StoryBlock } from '@ai-news/schemas';
 import {
+  blockOf,
   getStudioBlock,
   listStudioBlocks,
   listStudioCategories,
+  payloadOf,
   searchStudioBlocks,
   sendBlockToComposer,
-  validateBlockData,
+  validateBlockPayload,
   withExtraVariants,
+  type StudioPayload,
 } from '@ai-news/block-studio';
 import { BlockSidebar } from './BlockSidebar';
 import { PreviewCanvas } from './PreviewCanvas';
@@ -81,18 +84,26 @@ export function StudioShell() {
    */
   const initial = React.useMemo(() => {
     const first = listStudioCategories()[0]?.blocks[0];
-    if (!first) return { type: '', variantId: '', data: {} as Record<string, unknown> };
+    if (!first) return { type: '', variantId: '', payload: { data: {} } as StudioPayload };
     const variant = first.variants[0];
     return {
       type: first.type,
       variantId: variant.id,
-      data: cloneData(variant.data),
+      payload: { data: cloneData(variant.data) } as StudioPayload,
     };
   }, []);
 
   const [selectedType, setSelectedType] = React.useState<string>(initial.type);
   const [variantId, setVariantId] = React.useState<string>(initial.variantId);
-  const [data, setData] = React.useState<Record<string, unknown>>(initial.data);
+  /**
+   * The whole block, minus the platform's own bookkeeping.
+   *
+   * It is the content, how the block is presented, how it is described for
+   * readers who cannot see it, where it came from and what it cites — so
+   * that all of it can be edited, and none of it can be lost on the way
+   * back to the story.
+   */
+  const [payload, setPayload] = React.useState<StudioPayload>(initial.payload);
   const [theme, setTheme] = React.useState<StudioTheme>('dark');
   const [viewport, setViewport] = React.useState<StudioViewport>('desktop');
   const [tab, setTab] = React.useState<InspectorTab>('form');
@@ -106,7 +117,7 @@ export function StudioShell() {
    * been changed since. It starts as the payload itself, so nothing looks
    * edited until something actually is.
    */
-  const [baseline, setBaseline] = React.useState<Record<string, unknown>>(initial.data);
+  const [baseline, setBaseline] = React.useState<StudioPayload>(initial.payload);
   /** The story the studio is working in, when it was opened from one. */
   const [storyContext, setStoryContext] = React.useState<StoryContext | null>(null);
   /**
@@ -153,10 +164,10 @@ export function StudioShell() {
         if (blockId) {
           const block = (story.blocks ?? []).find((candidate) => candidate.id === blockId);
           if (block) {
-            const payload = block.data as Record<string, unknown>;
+            const loaded = payloadOf(block);
             setSelectedType(block.blockType);
-            setData(payload);
-            setBaseline(payload);
+            setPayload(loaded);
+            setBaseline(loaded);
           }
         }
       } catch {
@@ -203,12 +214,12 @@ export function StudioShell() {
     if (!composerSession) return;
     sendBlockToComposer(composerSession, {
       blockType: selectedType,
-      data,
+      payload,
       blockId: storyContext?.blockId,
     });
     setNotice('The block was sent to the story. Switch back to the composer to see it.');
     setTimeout(() => setNotice(null), 6000);
-  }, [composerSession, data, selectedType, storyContext?.blockId]);
+  }, [composerSession, payload, selectedType, storyContext?.blockId]);
 
   /*
    * The chrome theme is applied to the document element for the page-level
@@ -253,8 +264,9 @@ export function StudioShell() {
       if (!next) return;
       setSelectedType(type);
       setVariantId(next.defaultVariantId);
-      setData(cloneData(next.variants[0].data));
-      setBaseline(cloneData(next.variants[0].data));
+      const fresh: StudioPayload = { data: cloneData(next.variants[0].data) };
+      setPayload(fresh);
+      setBaseline(fresh);
     },
     [studioBlocks]
   );
@@ -264,8 +276,11 @@ export function StudioShell() {
       const next = block?.variants.find((candidate) => candidate.id === id);
       if (!next) return;
       setVariantId(id);
-      setData(cloneData(next.data));
-      setBaseline(cloneData(next.data));
+      // A variant is a treatment of the content. What the block says about
+      // itself — its accessibility text, its provenance — belongs to the
+      // block, so it stays.
+      setPayload((current) => ({ ...current, data: cloneData(next.data) }));
+      setBaseline((current) => ({ ...current, data: cloneData(next.data) }));
     },
     [block]
   );
@@ -280,11 +295,11 @@ export function StudioShell() {
         id,
         label: name,
         description: 'Saved in this browser.',
-        data: cloneData(data),
+        data: cloneData(payload.data),
       });
       setVariantId(id);
     },
-    [data, saveVariant, selectedType]
+    [payload, saveVariant, selectedType]
   );
 
   const deleteLocalVariant = React.useCallback(
@@ -293,7 +308,7 @@ export function StudioShell() {
       const fallback = block?.variants.find((candidate) => candidate.id !== id);
       if (fallback) {
         setVariantId(fallback.id);
-        setData(cloneData(fallback.data));
+        setPayload((current) => ({ ...current, data: cloneData(fallback.data) }));
       }
     },
     [block, removeVariant, selectedType]
@@ -301,11 +316,11 @@ export function StudioShell() {
 
   const reset = React.useCallback(() => {
     if (!variant) return;
-    setData(cloneData(variant.data));
+    setPayload((current) => ({ ...current, data: cloneData(variant.data) }));
   }, [variant]);
 
-  const updateData = React.useCallback((next: Record<string, unknown>) => {
-    setData(next);
+  const updatePayload = React.useCallback((next: StudioPayload) => {
+    setPayload(next);
   }, []);
 
   /**
@@ -316,11 +331,11 @@ export function StudioShell() {
    * sample the editor started from.
    */
   const loadBlock = React.useCallback(
-    (blockType: string, blockData: Record<string, unknown>, from: BlockSource) => {
+    (blockType: string, blockPayload: StudioPayload, from: BlockSource) => {
       if (!getStudioBlock(blockType)) return;
       setSelectedType(blockType);
-      setData(blockData);
-      setBaseline(blockData);
+      setPayload(blockPayload);
+      setBaseline(blockPayload);
       // Picking a block from a story means the studio is working in that
       // story from now on, and the story's own blocks are shown alongside
       // the catalog.
@@ -348,10 +363,10 @@ export function StudioShell() {
    */
   const selectStoryBlock = React.useCallback((block: StoryBlock) => {
     if (!getStudioBlock(block.blockType)) return;
-    const payload = (block.data ?? {}) as Record<string, unknown>;
+    const loaded = payloadOf(block);
     setSelectedType(block.blockType);
-    setData(payload);
-    setBaseline(payload);
+    setPayload(loaded);
+    setBaseline(loaded);
     setStoryContext((current) => (current ? { ...current, blockId: block.id } : current));
   }, []);
 
@@ -397,19 +412,13 @@ export function StudioShell() {
   );
 
   const validation = React.useMemo(
-    () => validateBlockData(selectedType, data),
-    [selectedType, data]
+    () => validateBlockPayload(selectedType, payload),
+    [selectedType, payload]
   );
 
   const previewBlock = React.useMemo(
-    () =>
-      ({
-        id: 'studio_preview',
-        blockType: selectedType,
-        sortOrder: 0,
-        data,
-      }) as unknown as StoryBlock,
-    [selectedType, data]
+    () => blockOf(selectedType, 'studio_preview', 0, payload),
+    [selectedType, payload]
   );
 
   const categories = React.useMemo(() => {
@@ -479,14 +488,14 @@ export function StudioShell() {
 
       <DataInspector
         blockType={selectedType}
-        data={data}
+        payload={payload}
         baseline={baseline}
         tab={tab}
         validation={validation}
         open={inspectorOpen}
         darkClass={chromeDarkClass}
         onTabChange={setTab}
-        onChange={updateData}
+        onChange={updatePayload}
         onReset={reset}
         onToggleOpen={() => setInspectorOpen((current) => !current)}
       />
@@ -503,7 +512,7 @@ export function StudioShell() {
         <SaveToStoryDialog
           context={storyContext}
           blockType={selectedType}
-          data={data}
+          payload={payload}
           onClose={() => setImporting(false)}
           onSaved={(message) => {
             setNotice(message);

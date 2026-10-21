@@ -41,21 +41,41 @@ describe('Block studio handoff', () => {
   it('carries a block from the studio to the composer', () => {
     sendBlockToComposer('session-1', {
       blockType: 'chart',
-      data: { chartType: 'bar', title: 'A chart' },
+      payload: { data: { chartType: 'bar', title: 'A chart' } },
     });
 
     const received = takeBlockFromComposer('session-1');
 
     expect(received).not.toBeNull();
     expect(received?.blockType).toBe('chart');
-    expect(received?.data).toEqual({ chartType: 'bar', title: 'A chart' });
+    expect(received?.payload.data).toEqual({ chartType: 'bar', title: 'A chart' });
     expect(received?.sentAt).toBeTruthy();
+  });
+
+  it('carries the whole block, not just its content', () => {
+    sendBlockToComposer('session-1', {
+      blockType: 'chart',
+      payload: {
+        data: { chartType: 'bar', title: 'A chart' },
+        presentation: { width: 'contained', align: 'center' },
+        accessibility: { textSummary: 'A bar chart of reported cases.' },
+        provenance: { methodology: 'Figures from the ministry.', license: 'CC BY 4.0' },
+        citationIds: ['src_1'],
+      },
+    });
+
+    const received = takeBlockFromComposer('session-1');
+
+    expect(received?.payload.presentation).toEqual({ width: 'contained', align: 'center' });
+    expect(received?.payload.accessibility?.textSummary).toBe('A bar chart of reported cases.');
+    expect(received?.payload.provenance?.license).toBe('CC BY 4.0');
+    expect(received?.payload.citationIds).toEqual(['src_1']);
   });
 
   it('carries the id of the block being replaced', () => {
     sendBlockToComposer('session-1', {
       blockType: 'image',
-      data: { url: 'https://example.com/a.png' },
+      payload: { data: { url: 'https://example.com/a.png' } },
       blockId: 'blk_existing',
     });
 
@@ -63,7 +83,7 @@ describe('Block studio handoff', () => {
   });
 
   it('only hands the block over once', () => {
-    sendBlockToComposer('session-1', { blockType: 'image', data: {} });
+    sendBlockToComposer('session-1', { blockType: 'image', payload: { data: {} } });
 
     expect(takeBlockFromComposer('session-1')).not.toBeNull();
     // The same block must not be added to the draft twice.
@@ -71,8 +91,8 @@ describe('Block studio handoff', () => {
   });
 
   it('keeps sessions apart', () => {
-    sendBlockToComposer('session-1', { blockType: 'image', data: { url: 'a' } });
-    sendBlockToComposer('session-2', { blockType: 'chart', data: { title: 'b' } });
+    sendBlockToComposer('session-1', { blockType: 'image', payload: { data: { url: 'a' } } });
+    sendBlockToComposer('session-2', { blockType: 'chart', payload: { data: { title: 'b' } } });
 
     expect(takeBlockFromComposer('session-1')?.blockType).toBe('image');
     expect(takeBlockFromComposer('session-2')?.blockType).toBe('chart');
@@ -83,7 +103,7 @@ describe('Block studio handoff', () => {
   });
 
   it('writes under a key scoped to the session', () => {
-    sendBlockToComposer('session-1', { blockType: 'image', data: {} });
+    sendBlockToComposer('session-1', { blockType: 'image', payload: { data: {} } });
 
     expect(localStorageStub.getItem(handoffKey('session-1'))).not.toBeNull();
   });

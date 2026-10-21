@@ -11,7 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
-import { listStudioCategories } from '@ai-news/block-studio';
+import { blockOf, listStudioCategories, type StudioPayload } from '@ai-news/block-studio';
 import { BlockSchemaEditor } from './BlockSchemaEditor';
 import type { BlockChange } from './types';
 
@@ -94,13 +94,16 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
     );
   };
 
-  const update = (id: string, data: StoryBlock['data']) => {
+  const update = (id: string, payload: StudioPayload) => {
     const changed = blocks.find((block) => block.id === id);
     if (!changed) return;
-    onChange(
-      blocks.map((block) => (block.id === id ? { ...block, data } : block)) as StoryBlock[],
-      { kind: 'edited', block: { ...changed, data } as StoryBlock }
-    );
+    // The whole block is replaced, so the presentation, the accessibility
+    // text, the provenance and the citations travel with the content.
+    const updated = blockOf(changed.blockType, changed.id, changed.sortOrder, payload);
+    onChange(blocks.map((block) => (block.id === id ? updated : block)) as StoryBlock[], {
+      kind: 'edited',
+      block: updated,
+    });
   };
 
   const categories = useMemo(() => listStudioCategories(), []);
@@ -308,7 +311,10 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
 
             {isOpen && (
               <div className="p-3">
-                <BlockSchemaEditor block={block} onChange={(data) => update(block.id, data)} />
+                <BlockSchemaEditor
+                  block={block}
+                  onChange={(payload) => update(block.id, payload)}
+                />
               </div>
             )}
           </div>

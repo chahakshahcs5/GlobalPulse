@@ -1,3 +1,5 @@
+import type { StudioPayload } from './types';
+
 /**
  * Handing a block from the studio back to the story composer.
  *
@@ -13,7 +15,14 @@
 
 export interface HandedOffBlock {
   blockType: string;
-  data: Record<string, unknown>;
+  /**
+   * The whole block, not just its content.
+   *
+   * The block's presentation, accessibility text, provenance and citations
+   * travel with it, so a block that is edited in the studio and handed back
+   * keeps everything it had.
+   */
+  payload: StudioPayload;
   /** The block being replaced, when the studio was editing an existing one. */
   blockId?: string;
   sentAt: string;
