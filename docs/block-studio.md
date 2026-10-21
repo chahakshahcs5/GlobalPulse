@@ -65,6 +65,54 @@ are shown next to the field that caused them, with the path that failed. The
 payload leaves unset, so an editor never has to guess what the platform would
 do with a blank field.
 
+## Loading a real block, and saving it back
+
+The studio is at its most useful when it is pointed at real content.
+**From a story** searches the newsroom's stories through the API — a query
+goes to the server rather than filtering a list the studio already has — and
+pages through the results.
+
+Picking a block loads its payload into the editor, so an editor can see how
+a block that is already live actually reads, change it, and take the
+corrected payload back to the story. **Save to story** offers two ways back:
+
+- **Save as a new version** — the workflow-aware path. It snapshots an
+  immutable version, records the change in the audit log with the change
+  summary, and prepends a `what_changed` block so readers can see what
+  moved. The story keeps its status and the new content goes live at once:
+  the platform has no staged revision that waits for a publish, so a version
+  commit _is_ both the audit record and the publish.
+- **Update the block in place** — surgical and immediate, but it creates no
+  version, no audit entry and no diff block. The story's version history
+  will not mention the change.
+
+The studio needs a token to write. It is kept in the browser, and the
+**API token** field at the foot of the loader is where it goes. In
+development that is a dev token, `Bearer dev-editor`.
+
+The studio proxies the API through its own origin, so the browser never
+talks to the API directly and no CORS setup is needed. Point it somewhere
+with `apps/block-studio/.env`:
+
+```bash
+API_INTERNAL_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+## Saving a variant
+
+**Save as variant** keeps the payload as it stands now, under a name of your
+choosing. Saved variants live in your own browser, so a variant you are
+working on does not become everyone's default; the samples in the repository
+are untouched. A saved variant can be removed again from the variant bar.
+
+## Seeing what you changed
+
+A field you have edited is marked **edited**, so an editor can see at a
+glance what they have touched since the block was loaded. The **Compare**
+menu in the variant bar puts a second variant alongside the current one,
+which is how two treatments of the same block are judged side by side.
+
 ## Every field has to do something
 
 A field the schema declares but the renderer ignores is a field an editor can
@@ -96,26 +144,49 @@ sample still appears in the catalog with an empty payload.
 
 `tests/unit/blocks/block-studio-samples.test.ts` checks that every sample
 validates against its schema and that the generated form reaches every part
-of the payload, so a sample cannot quietly drift away from its block.## How it is put together
+of the payload, so a sample cannot quietly drift away from its block.
+
+## How it is put together
 
 ```text
 libs/blocks-ui/       The shared renderers. The web app and the studio both
                       render blocks through this package, which is what makes
                       a preview trustworthy.
 libs/block-studio/    The engine: the catalog, the variants, the Zod → form
-                      converter, and the validator. Framework-agnostic.
+                      converter, the validator — and the editing components
+                      themselves, so a host can reuse the form.
 apps/block-studio/    The studio UI.
 ```
 
-Two details are worth knowing if you change this area.
+### The same form in the newsroom CMS
+
+The composer in the newsroom CMS uses the same schema-driven form as the
+studio. That is not a convenience — it is what stops the two from drifting
+apart, and it is what stopped the composer from producing blocks the
+platform would reject.
+
+The composer used to keep a flattened, invented shape: a chart's axis as a
+bare string, its rows as a text blob, a table's rows as one comma-separated
+line. It rebuilt that shape on save, and the platform rejected the result.
+A chart written in the CMS was not a chart the site could render.
+
+Now the composer's blocks carry the payload their schema declares, the form
+is generated from that same schema, and the composer's output is checked
+against it before the story is saved. The schema is the single source of
+truth for both.
+
+### Two details worth knowing if you change this area
 
 **The block renderers do not talk to the API directly.** They take a runtime
 through `BlockRuntimeProvider`. The web app supplies its real API client; the
 studio supplies nothing, so live blocks fall back to the snapshot in their
 payload — which is exactly what a preview should do.
 
-**The studio chrome and the preview have separate themes.** The chrome uses
-its own `studio-dark` variant, not the `dark` variant the block renderers
-use. If the chrome used `dark`, a light preview nested inside it would still
-pick up the blocks' dark styles. Keeping them apart is what allows a light
-preview inside a dark studio, and a dark preview inside a light one.
+**The studio chrome and the preview have separate themes.** Both use the
+`dark` variant, but the `dark` class is put on the chrome panels themselves
+rather than on the document. If it were on the document, a light preview
+nested inside a dark studio would still pick up the blocks' dark styles.
+Keeping the class on the panels is what allows a light preview inside a
+dark studio, and a dark preview inside a light one — and it is what lets
+the same editing component be used by the newsroom CMS, where the app's own
+`dark` class is already on the document.

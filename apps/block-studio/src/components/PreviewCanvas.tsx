@@ -1,10 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Check, Copy, Monitor, Moon, Smartphone, Tablet } from 'lucide-react';
+import {
+  BookOpen,
+  Check,
+  Copy,
+  Monitor,
+  Moon,
+  Plus,
+  Save,
+  Smartphone,
+  Tablet,
+  Trash2,
+} from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
 import { BlockItem } from '@ai-news/blocks-ui';
 import type { StudioBlock, StudioVariant } from '@ai-news/block-studio';
+import { VariantNameDialog } from './VariantNameDialog';
+import type { BlockSource } from './StoryBlockLoader';
 import type { StudioTheme, StudioViewport } from './StudioShell';
 
 interface PreviewCanvasProps {
@@ -15,9 +28,17 @@ interface PreviewCanvasProps {
   viewport: StudioViewport;
   viewportWidth: string;
   isValid: boolean;
+  /** The class that turns on the chrome's dark utilities. */
+  darkClass: string;
   onThemeChange: (theme: StudioTheme) => void;
   onViewportChange: (viewport: StudioViewport) => void;
   onSelectVariant: (variantId: string) => void;
+  onOpenLoader: () => void;
+  onSaveVariant: (label: string) => void;
+  onDeleteVariant: (variantId: string) => void;
+  /** Where the loaded block came from, when it came from a story. */
+  source: BlockSource | null;
+  onSaveToStory: () => void;
 }
 
 const VIEWPORTS: { id: StudioViewport; label: string; icon: React.ReactNode }[] = [
@@ -43,11 +64,27 @@ export function PreviewCanvas({
   viewport,
   viewportWidth,
   isValid,
+  darkClass,
   onThemeChange,
   onViewportChange,
   onSelectVariant,
+  onOpenLoader,
+  onSaveVariant,
+  onDeleteVariant,
+  source,
+  onSaveToStory,
 }: PreviewCanvasProps) {
   const [copied, setCopied] = React.useState<'json' | 'block' | null>(null);
+  /** The variant shown alongside the current one, when comparing. */
+  const [compareWith, setCompareWith] = React.useState<string>('');
+  /** Whether the "name this variant" dialog is open. */
+  const [namingVariant, setNamingVariant] = React.useState(false);
+
+  const compareVariant = React.useMemo(
+    () => block?.variants.find((candidate) => candidate.id === compareWith) ?? null,
+    [block, compareWith]
+  );
+  const isComparing = Boolean(compareVariant) && compareVariant?.id !== variant?.id;
 
   const copy = React.useCallback(
     async (what: 'json' | 'block') => {
@@ -76,20 +113,31 @@ export function PreviewCanvas({
   );
 
   return (
-    <main className="flex h-screen min-w-0 flex-col overflow-hidden bg-slate-100 studio-dark:bg-[#080c16]">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5 studio-dark:border-slate-800 studio-dark:bg-[#0d1220]">
+    /*
+     * The canvas background follows the chrome theme directly rather than
+     * through the `dark` variant: the preview lives inside this element, and
+     * a `dark` ancestor would force the blocks' dark styles on it.
+     */
+    <main
+      className={`flex h-screen min-w-0 flex-col overflow-hidden ${
+        darkClass ? 'bg-[#080c16]' : 'bg-slate-100'
+      }`}
+    >
+      <header
+        className={`flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-[#0d1220] ${darkClass}`}
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="truncate font-mono text-sm font-bold text-slate-900 studio-dark:text-white">
+            <h2 className="truncate font-mono text-sm font-bold text-slate-900 dark:text-white">
               {block?.type ?? '—'}
             </h2>
             {block && (
-              <span className="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 studio-dark:bg-slate-800 studio-dark:text-slate-400">
+              <span className="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 {block.category}
               </span>
             )}
             {!isValid && (
-              <span className="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[11px] font-bold text-rose-700 ring-1 ring-rose-500/30 studio-dark:bg-rose-500/15 studio-dark:text-rose-300">
+              <span className="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[11px] font-bold text-rose-700 ring-1 ring-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300">
                 invalid payload
               </span>
             )}
@@ -102,7 +150,7 @@ export function PreviewCanvas({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center rounded-lg border border-slate-300 bg-slate-100 p-0.5 studio-dark:border-slate-700 studio-dark:bg-slate-900/60">
+          <div className="flex items-center rounded-lg border border-slate-300 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-900/60">
             {VIEWPORTS.map((option) => (
               <button
                 key={option.id}
@@ -113,7 +161,7 @@ export function PreviewCanvas({
                 className={`rounded-md p-1.5 transition-colors ${
                   viewport === option.id
                     ? 'bg-blue-600 text-white'
-                    : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800 studio-dark:text-slate-400 studio-dark:hover:bg-slate-800 studio-dark:hover:text-slate-200'
+                    : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 {option.icon}
@@ -125,7 +173,7 @@ export function PreviewCanvas({
             type="button"
             onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
             title="Toggle the preview theme"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 studio-dark:border-slate-700 studio-dark:bg-slate-900/60 studio-dark:text-slate-300 studio-dark:hover:border-slate-600 studio-dark:hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
           >
             {theme === 'dark' ? (
               <Moon className="h-3.5 w-3.5" />
@@ -138,9 +186,33 @@ export function PreviewCanvas({
           <div className="flex items-center gap-1.5">
             <button
               type="button"
+              onClick={onOpenLoader}
+              title="Open a block from a live story"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              From a story
+            </button>
+
+            {source && (
+              <button
+                type="button"
+                onClick={onSaveToStory}
+                title={`Save this block back to “${source.storyTitle}”`}
+                className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-semibold text-emerald-800 transition-colors hover:border-emerald-400 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Save to story
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
               onClick={() => copy('json')}
               title="Copy the block's data payload as JSON"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 studio-dark:border-slate-700 studio-dark:bg-slate-900/60 studio-dark:text-slate-300 studio-dark:hover:border-slate-600 studio-dark:hover:text-white"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             >
               {copied === 'json' ? (
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -153,7 +225,7 @@ export function PreviewCanvas({
               type="button"
               onClick={() => copy('block')}
               title="Copy the whole block — id, type, sort order and data — ready to paste into a story"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 studio-dark:border-slate-700 studio-dark:bg-slate-900/60 studio-dark:text-slate-300 studio-dark:hover:border-slate-600 studio-dark:hover:text-white"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             >
               {copied === 'block' ? (
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -167,26 +239,84 @@ export function PreviewCanvas({
       </header>
 
       {block && block.variants.length > 0 && (
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-4 py-2 studio-dark:border-slate-800 studio-dark:bg-[#0b101c]">
+        <div
+          className={`flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-[#0b101c] ${darkClass}`}
+        >
           {block.variants.map((candidate) => {
             const isActive = candidate.id === variant?.id;
+            const isLocal = candidate.id.startsWith('local_');
             return (
-              <button
-                key={candidate.id}
-                type="button"
-                onClick={() => onSelectVariant(candidate.id)}
-                title={candidate.description}
-                className={`shrink-0 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300 studio-dark:bg-slate-800/60 studio-dark:text-slate-400 studio-dark:hover:bg-slate-700/70 studio-dark:hover:text-slate-200'
-                }`}
-              >
-                {candidate.label}
-              </button>
+              <span key={candidate.id} className="group relative flex shrink-0 items-center">
+                <button
+                  type="button"
+                  onClick={() => onSelectVariant(candidate.id)}
+                  title={candidate.description}
+                  className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/70 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {candidate.label}
+                </button>
+                {isLocal && (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteVariant(candidate.id)}
+                    title="Remove this saved variant"
+                    aria-label={`Remove the ${candidate.label} variant`}
+                    className="ml-1 rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-rose-500 focus:opacity-100 group-hover:opacity-100"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => setNamingVariant(true)}
+            title="Save the payload as it stands now as a new variant"
+            className="ml-1 flex shrink-0 items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-300"
+          >
+            <Plus className="h-3 w-3" />
+            Save as variant
+          </button>
+
+          {block && block.variants.length > 1 && (
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 pl-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Compare
+              </span>
+              <select
+                value={compareWith}
+                onChange={(event) => setCompareWith(event.target.value)}
+                aria-label="Compare with another variant"
+                className="rounded-md border border-slate-300 bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+              >
+                <option value="">Off</option>
+                {block.variants
+                  .filter((candidate) => candidate.id !== variant?.id)
+                  .map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.label}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
         </div>
+      )}
+
+      {namingVariant && (
+        <VariantNameDialog
+          onCancel={() => setNamingVariant(false)}
+          onSave={(label) => {
+            onSaveVariant(label);
+            setNamingVariant(false);
+          }}
+        />
       )}
 
       <div className="flex-1 overflow-auto p-6">
@@ -197,24 +327,61 @@ export function PreviewCanvas({
           from a tablet one.
         */}
         <div
-          className="preview-surface mx-auto transition-[max-width] duration-200"
-          style={{
-            maxWidth: viewportWidth,
-            width: viewportWidth === '100%' ? '100%' : viewportWidth,
-          }}
+          className={`preview-surface mx-auto transition-[max-width] duration-200 ${
+            isComparing ? 'max-w-none grid grid-cols-1 gap-4 xl:grid-cols-2' : ''
+          }`}
+          style={
+            isComparing
+              ? undefined
+              : {
+                  maxWidth: viewportWidth,
+                  width: viewportWidth === '100%' ? '100%' : viewportWidth,
+                }
+          }
         >
-          <div
-            className={`min-h-[320px] rounded-xl border border-slate-200 ${
-              theme === 'dark' ? 'dark bg-slate-900' : 'bg-white'
-            } studio-dark:border-slate-800`}
-          >
-            <div className="px-6 py-5 sm:px-8">
-              <BlockItem block={previewBlock} theme={theme} storyId="studio-preview" />
+          <div>
+            <div
+              className={`min-h-[320px] rounded-xl border border-slate-200 ${
+                theme === 'dark' ? 'dark bg-slate-900' : 'bg-white'
+              } dark:border-slate-800`}
+            >
+              <div className="px-6 py-5 sm:px-8">
+                <BlockItem block={previewBlock} theme={theme} storyId="studio-preview" />
+              </div>
             </div>
+
+            {variant?.description && (
+              <p className="mt-3 text-center text-[12px] text-slate-500">{variant.description}</p>
+            )}
           </div>
 
-          {variant?.description && (
-            <p className="mt-3 text-center text-[12px] text-slate-500">{variant.description}</p>
+          {isComparing && compareVariant && (
+            <div>
+              <div
+                className={`min-h-[320px] rounded-xl border border-dashed border-slate-300 ${
+                  theme === 'dark' ? 'dark bg-slate-900/60' : 'bg-slate-50'
+                } dark:border-slate-700`}
+              >
+                <div className="px-6 py-5 sm:px-8">
+                  <BlockItem
+                    block={
+                      {
+                        id: 'studio_compare',
+                        blockType: previewBlock.blockType,
+                        sortOrder: 0,
+                        data: compareVariant.data,
+                      } as StoryBlock
+                    }
+                    theme={theme}
+                    storyId="studio-preview"
+                  />
+                </div>
+              </div>
+              <p className="mt-3 text-center text-[12px] text-slate-500">
+                {compareVariant.label}
+                {compareVariant.description ? ` — ${compareVariant.description}` : ''}
+              </p>
+            </div>
           )}
         </div>
       </div>

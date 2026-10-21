@@ -13,3 +13,5 @@ export * from './path';
 export * from './registry';
 export * from './samples';
 export * from './validation';
+export * from './components/FormEditor';
+export * from './components/JsonEditor';

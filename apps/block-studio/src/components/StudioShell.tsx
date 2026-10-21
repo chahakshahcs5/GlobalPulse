@@ -4,13 +4,18 @@ import React from 'react';
 import type { StoryBlock } from '@ai-news/schemas';
 import {
   getStudioBlock,
+  listStudioBlocks,
   listStudioCategories,
   searchStudioBlocks,
   validateBlockData,
+  withExtraVariants,
 } from '@ai-news/block-studio';
 import { BlockSidebar } from './BlockSidebar';
 import { PreviewCanvas } from './PreviewCanvas';
 import { DataInspector } from './DataInspector';
+import { StoryBlockLoader, type BlockSource } from './StoryBlockLoader';
+import { SaveToStoryDialog } from './SaveToStoryDialog';
+import { useLocalVariants } from './useLocalVariants';
 
 export type StudioTheme = 'light' | 'dark';
 export type StudioViewport = 'mobile' | 'tablet' | 'desktop';
@@ -79,6 +84,16 @@ export function StudioShell() {
   const [chromeTheme, setChromeTheme] = React.useState<ChromeTheme>('dark');
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [inspectorOpen, setInspectorOpen] = React.useState(true);
+  const [loaderOpen, setLoaderOpen] = React.useState(false);
+  /**
+   * The payload as it was when it was loaded, so the form can mark what has
+   * been changed since.
+   */
+  const [baseline, setBaseline] = React.useState<Record<string, unknown>>({});
+  /** Where the loaded block came from, so it can be saved back. */
+  const [source, setSource] = React.useState<BlockSource | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [notice, setNotice] = React.useState<string | null>(null);
 
   // The studio chrome and the preview each keep their own theme, and both
   // are remembered between visits.
@@ -102,9 +117,12 @@ export function StudioShell() {
     storeTheme(PREVIEW_THEME_STORAGE_KEY, next);
   }, []);
 
-  // The chrome theme is applied to the document element, because the studio
-  // chrome wraps the preview. It uses its own `studio-dark` class so it never
-  // collides with the blocks' `dark` variant.
+  /*
+   * The chrome theme is applied to the document element for the page-level
+   * colours, and to the chrome panels themselves for their `dark:` utilities.
+   * The preview surface carries its own `dark` class, so the two themes stay
+   * independent.
+   */
   const [chromeReady, setChromeReady] = React.useState(false);
 
   React.useEffect(() => {
@@ -118,21 +136,35 @@ export function StudioShell() {
     // not overwrite the reader's choice with the default.
     if (!chromeReady) return;
     const root = document.documentElement;
-    root.classList.toggle('studio-dark', chromeTheme === 'dark');
+    root.classList.toggle('studio-shell-dark', chromeTheme === 'dark');
     storeTheme(THEME_STORAGE_KEY, chromeTheme);
   }, [chromeTheme, chromeReady]);
 
-  const block = getStudioBlock(selectedType);
+  /** The class the chrome panels carry so their `dark:` utilities apply. */
+  const chromeDarkClass = chromeTheme === 'dark' ? 'dark' : '';
+
+  // Variants the editor saved on their own machine, merged into the catalog.
+  const { variants: localVariants, saveVariant, removeVariant } = useLocalVariants();
+  const studioBlocks = React.useMemo(
+    () => withExtraVariants(listStudioBlocks(), localVariants),
+    [localVariants]
+  );
+
+  const block = studioBlocks.find((candidate) => candidate.type === selectedType);
   const variant =
     block?.variants.find((candidate) => candidate.id === variantId) ?? block?.variants[0];
 
-  const selectType = React.useCallback((type: string) => {
-    const next = getStudioBlock(type);
-    if (!next) return;
-    setSelectedType(type);
-    setVariantId(next.defaultVariantId);
-    setData(cloneData(next.variants[0].data));
-  }, []);
+  const selectType = React.useCallback(
+    (type: string) => {
+      const next = studioBlocks.find((candidate) => candidate.type === type);
+      if (!next) return;
+      setSelectedType(type);
+      setVariantId(next.defaultVariantId);
+      setData(cloneData(next.variants[0].data));
+      setBaseline(cloneData(next.variants[0].data));
+    },
+    [studioBlocks]
+  );
 
   const selectVariant = React.useCallback(
     (id: string) => {
@@ -140,8 +172,38 @@ export function StudioShell() {
       if (!next) return;
       setVariantId(id);
       setData(cloneData(next.data));
+      setBaseline(cloneData(next.data));
     },
     [block]
+  );
+
+  /** Keep the payload as it stands now, under a name of the editor's choosing. */
+  const saveCurrentAsVariant = React.useCallback(
+    (label: string) => {
+      const name = label.trim();
+      if (!name) return;
+      const id = `local_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+      saveVariant(selectedType, {
+        id,
+        label: name,
+        description: 'Saved in this browser.',
+        data: cloneData(data),
+      });
+      setVariantId(id);
+    },
+    [data, saveVariant, selectedType]
+  );
+
+  const deleteLocalVariant = React.useCallback(
+    (id: string) => {
+      removeVariant(selectedType, id);
+      const fallback = block?.variants.find((candidate) => candidate.id !== id);
+      if (fallback) {
+        setVariantId(fallback.id);
+        setData(cloneData(fallback.data));
+      }
+    },
+    [block, removeVariant, selectedType]
   );
 
   const reset = React.useCallback(() => {
@@ -152,6 +214,24 @@ export function StudioShell() {
   const updateData = React.useCallback((next: Record<string, unknown>) => {
     setData(next);
   }, []);
+
+  /**
+   * Open a block that is already live in a story.
+   *
+   * The block type is switched to match, and the payload replaces whatever
+   * was being edited — the variant is kept, so the studio still knows which
+   * sample the editor started from.
+   */
+  const loadBlock = React.useCallback(
+    (blockType: string, blockData: Record<string, unknown>, from: BlockSource) => {
+      if (!getStudioBlock(blockType)) return;
+      setSelectedType(blockType);
+      setData(blockData);
+      setBaseline(blockData);
+      setSource(from);
+    },
+    []
+  );
 
   const validation = React.useMemo(
     () => validateBlockData(selectedType, data),
@@ -182,7 +262,7 @@ export function StudioShell() {
 
   return (
     <div
-      className="grid h-screen overflow-hidden bg-[#f8fafc] studio-dark:bg-[#080c16]"
+      className="grid h-screen overflow-hidden bg-[#f8fafc] dark:bg-[#080c16]"
       style={{
         /*
          * A collapsed pane keeps a narrow strip, so the button that brings
@@ -199,6 +279,7 @@ export function StudioShell() {
         selectedType={selectedType}
         query={query}
         chromeTheme={chromeTheme}
+        darkClass={chromeDarkClass}
         open={sidebarOpen}
         onQueryChange={setQuery}
         onSelectType={selectType}
@@ -216,22 +297,57 @@ export function StudioShell() {
         viewport={viewport}
         viewportWidth={VIEWPORT_WIDTH[viewport]}
         isValid={validation.ok}
+        darkClass={chromeDarkClass}
         onThemeChange={changePreviewTheme}
         onViewportChange={setViewport}
         onSelectVariant={selectVariant}
+        onOpenLoader={() => setLoaderOpen(true)}
+        onSaveVariant={saveCurrentAsVariant}
+        onDeleteVariant={deleteLocalVariant}
+        source={source}
+        onSaveToStory={() => setSaving(true)}
       />
 
       <DataInspector
         blockType={selectedType}
         data={data}
+        baseline={baseline}
         tab={tab}
         validation={validation}
         open={inspectorOpen}
+        darkClass={chromeDarkClass}
         onTabChange={setTab}
         onChange={updateData}
         onReset={reset}
         onToggleOpen={() => setInspectorOpen((current) => !current)}
       />
+
+      {loaderOpen && <StoryBlockLoader onClose={() => setLoaderOpen(false)} onLoad={loadBlock} />}
+
+      {saving && source && (
+        <SaveToStoryDialog
+          block={
+            {
+              id: source.blockId,
+              blockType: selectedType,
+              sortOrder: 0,
+              data,
+            } as StoryBlock
+          }
+          source={source}
+          onClose={() => setSaving(false)}
+          onSaved={(message) => {
+            setNotice(message);
+            setTimeout(() => setNotice(null), 6000);
+          }}
+        />
+      )}
+
+      {notice && (
+        <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-[12px] font-semibold text-emerald-800 shadow-lg dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300">
+          {notice}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,13 @@
 @import 'tailwindcss';
 
 /*
- * The shared block renderers live in `libs/blocks-ui`, outside this app's
- * directory. Tailwind scans from the app root, so they need an explicit
- * source or their utility classes would be dropped from the build.
+ * The shared block renderers and the shared block editor live in `libs`,
+ * outside this app's directory. Tailwind scans from the app root, so they
+ * need an explicit source or their utility classes would be dropped from
+ * the build.
  */
 @source '../../../../libs/blocks-ui/src';
+@source '../../../../libs/block-studio/src';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

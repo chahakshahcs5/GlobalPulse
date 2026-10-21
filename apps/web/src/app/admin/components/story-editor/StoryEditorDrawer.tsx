@@ -11,8 +11,22 @@ import {
 } from '../../../../lib/news-store';
 import { StoryRenderer } from '../../../../components/StoryRenderer';
 import type { MediaBlockDraft, StoryEditorDrawerProps } from './types';
-import { createDefaultMediaBlock, assembleStoryBlocks } from './block-factories';
-import { BlockFieldEditor } from './BlockFieldEditor';
+import type {
+  CalloutDraftData,
+  ChartDraftData,
+  ImageDraftData,
+  QuoteDraftData,
+  StatisticDraftData,
+  TableDraftData,
+  TimelineDraftData,
+  VideoDraftData,
+} from './types';
+import {
+  createDefaultMediaBlock,
+  assembleStoryBlocks,
+  validateStoryBlocks,
+} from './block-factories';
+import { BlockSchemaEditor } from './BlockSchemaEditor';
 import { StoryMetadataSection } from './StoryMetadataSection';
 import { StoryTakeawaysSection } from './StoryTakeawaysSection';
 import { StoryBlockToolbar } from './StoryBlockToolbar';
@@ -45,6 +59,11 @@ export function StoryEditorDrawer({
   const [bullet2, setBullet2] = useState('');
   const [bullet3, setBullet3] = useState('');
   const [mediaBlocks, setMediaBlocks] = useState<MediaBlockDraft[]>([]);
+  /**
+   * The payload each block had when it was loaded, so the form can mark the
+   * fields the editor has changed.
+   */
+  const [blockBaselines, setBlockBaselines] = useState<Record<string, MediaBlockDraft['data']>>({});
   const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
 
   // Pre-populate fields when editing an existing story, or reset for new
@@ -79,146 +98,50 @@ export function StoryEditorDrawer({
       setBullet2(items[1] || '');
       setBullet3(items[2] || '');
 
+      /*
+       * A block the composer understands is loaded with the payload its
+       * schema declares. The composer used to keep a flattened, invented
+       * shape and rebuild it on save, which meant a chart written here was
+       * not a chart the platform could render.
+       */
       const loadedMedia: MediaBlockDraft[] = [];
-      blocks.forEach((b: StoryBlock, idx: number) => {
-        if (b.blockType === 'image') {
-          const imgData = b.data as
-            { url?: string; caption?: string; credit?: string; altText?: string } | undefined;
-          loadedMedia.push({
-            id: b.id || `img_${idx}`,
-            type: 'image',
-            data: {
-              url: imgData?.url || '',
-              caption: imgData?.caption || '',
-              credit: imgData?.credit || '',
-              altText: imgData?.altText || '',
-            },
-          });
-        } else if (b.blockType === 'chart') {
-          const chartData = b.data as unknown as
-            | {
-                chartType?: string;
-                title?: string;
-                xAxis?: string | { label?: string; key?: string };
-                yAxis?: string | { label?: string; key?: string };
-                dataRows?: string;
-              }
-            | undefined;
-          loadedMedia.push({
-            id: b.id || `chart_${idx}`,
-            type: 'chart',
-            data: {
-              chartType: chartData?.chartType || 'bar',
-              title: chartData?.title || '',
-              xAxis:
-                typeof chartData?.xAxis === 'string'
-                  ? chartData.xAxis
-                  : chartData?.xAxis?.label || '',
-              yAxis:
-                typeof chartData?.yAxis === 'string'
-                  ? chartData.yAxis
-                  : chartData?.yAxis?.label || '',
-              dataRows: chartData?.dataRows || '',
-            },
-          });
-        } else if (b.blockType === 'quote' || (b.blockType as string) === 'pull_quote') {
-          const quoteData = b.data as
-            { quote?: string; attribution?: string; title?: string } | undefined;
-          loadedMedia.push({
-            id: b.id || `quote_${idx}`,
-            type: 'quote',
-            data: {
-              quote: quoteData?.quote || '',
-              attribution: quoteData?.attribution || '',
-              title: quoteData?.title || '',
-            },
-          });
-        } else if (b.blockType === 'timeline') {
-          const tData = b.data as
-            | {
-                title?: string;
-                items?: Array<{ date: string; headline: string; body: string }>;
-              }
-            | undefined;
-          loadedMedia.push({
-            id: b.id || `time_${idx}`,
-            type: 'timeline',
-            data: {
-              title: tData?.title || '',
-            },
-            items: tData?.items || [],
-          });
-        } else if (b.blockType === 'video') {
-          const vidData = b.data as
-            { url?: string; caption?: string; durationSeconds?: number } | undefined;
-          loadedMedia.push({
-            id: b.id || `vid_${idx}`,
-            type: 'video',
-            data: {
-              url: vidData?.url || '',
-              caption: vidData?.caption || '',
-              durationSeconds: vidData?.durationSeconds || 120,
-            },
-          });
-        } else if (b.blockType === 'table') {
-          const tableData = b.data as
-            | {
-                title?: string;
-                headers?: string[] | string;
-                rows?: unknown[][];
-                footer?: string;
-              }
-            | undefined;
-          loadedMedia.push({
-            id: b.id || `tbl_${idx}`,
-            type: 'table',
-            data: {
-              title: tableData?.title || '',
-              headers: Array.isArray(tableData?.headers)
-                ? tableData?.headers.join(', ')
-                : tableData?.headers || '',
-              rowsText: Array.isArray(tableData?.rows)
-                ? tableData?.rows.map((r: unknown[]) => r.join(', ')).join('\n')
-                : '',
-              footer: tableData?.footer || '',
-            },
-          });
-        } else if (b.blockType === 'callout') {
-          const calloutData = b.data as
-            { style?: string; title?: string; text?: string } | undefined;
-          loadedMedia.push({
-            id: b.id || `call_${idx}`,
-            type: 'callout',
-            data: {
-              style: calloutData?.style || 'info',
-              title: calloutData?.title || '',
-              text: calloutData?.text || '',
-            },
-          });
-        } else if (b.blockType === 'statistic') {
-          const statData = b.data as
-            | {
-                label?: string;
-                value?: string;
-                trend?: string;
-                trendValue?: string;
-                context?: string;
-              }
-            | undefined;
-          loadedMedia.push({
-            id: b.id || `stat_${idx}`,
-            type: 'statistic',
-            data: {
-              label: statData?.label || '',
-              value: statData?.value || '',
-              trend: statData?.trend || 'up',
-              trendValue: statData?.trendValue || '',
-              context: statData?.context || '',
-            },
-          });
+      blocks.forEach((block: StoryBlock, index: number) => {
+        const id = block.id || `blk_${block.blockType}_${index}`;
+        const data = block.data as Record<string, unknown>;
+
+        switch (block.blockType) {
+          case 'image':
+            loadedMedia.push({ id, type: 'image', data: data as ImageDraftData });
+            break;
+          case 'chart':
+            loadedMedia.push({ id, type: 'chart', data: data as ChartDraftData });
+            break;
+          case 'quote':
+            loadedMedia.push({ id, type: 'quote', data: data as QuoteDraftData });
+            break;
+          case 'timeline':
+            loadedMedia.push({ id, type: 'timeline', data: data as TimelineDraftData });
+            break;
+          case 'video':
+            loadedMedia.push({ id, type: 'video', data: data as VideoDraftData });
+            break;
+          case 'table':
+            loadedMedia.push({ id, type: 'table', data: data as TableDraftData });
+            break;
+          case 'callout':
+            loadedMedia.push({ id, type: 'callout', data: data as CalloutDraftData });
+            break;
+          case 'statistic':
+            loadedMedia.push({ id, type: 'statistic', data: data as StatisticDraftData });
+            break;
+          default:
+            // A block the composer does not edit is left alone; it stays in
+            // the story, but the composer does not claim to own it.
+            break;
         }
       });
       setMediaBlocks(loadedMedia);
+      setBlockBaselines(Object.fromEntries(loadedMedia.map((draft) => [draft.id, draft.data])));
     } else {
       setTitle('');
       setSummary('');
@@ -242,22 +165,18 @@ export function StoryEditorDrawer({
   if (!isOpen) return null;
 
   const handleAddBlock = (type: MediaBlockDraft['type']) => {
-    setMediaBlocks((prev: MediaBlockDraft[]) => [...prev, createDefaultMediaBlock(type)]);
+    const draft = createDefaultMediaBlock(type);
+    setMediaBlocks((prev: MediaBlockDraft[]) => [...prev, draft]);
+    setBlockBaselines((previous) => ({ ...previous, [draft.id]: draft.data }));
   };
 
   const removeMediaBlock = (id: string) => {
     setMediaBlocks((prev: MediaBlockDraft[]) => prev.filter((b: MediaBlockDraft) => b.id !== id));
   };
 
-  const updateMediaBlockData = (
-    id: string,
-    field: string,
-    value: string | number | readonly string[] | undefined
-  ) => {
+  const updateMediaBlockData = (id: string, data: MediaBlockDraft['data']) => {
     setMediaBlocks((prev: MediaBlockDraft[]) =>
-      prev.map((b: MediaBlockDraft) =>
-        b.id === id ? { ...b, data: { ...b.data, [field]: value } } : b
-      )
+      prev.map((b: MediaBlockDraft) => (b.id === id ? ({ ...b, data } as MediaBlockDraft) : b))
     );
   };
 
@@ -285,6 +204,21 @@ export function StoryEditorDrawer({
     }
 
     const newBlocks = getAssembledBlocks();
+
+    /*
+     * The composer and the platform share one schema, so a block that fails
+     * here is a block the platform would reject on publish. Better to say so
+     * now, while the editor is still looking at it.
+     */
+    const blockIssues = validateStoryBlocks(newBlocks);
+    if (blockIssues.length > 0) {
+      alert(
+        `Some blocks are not valid yet:\n\n${blockIssues
+          .map((issue) => `• ${issue.blockType}: ${issue.message}`)
+          .join('\n')}`
+      );
+      return;
+    }
 
     try {
       const initialStatus = submitMode === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
@@ -501,7 +435,11 @@ export function StoryEditorDrawer({
                         </button>
                       </div>
 
-                      <BlockFieldEditor block={block} updateMediaBlockData={updateMediaBlockData} />
+                      <BlockSchemaEditor
+                        block={block}
+                        baseline={blockBaselines[block.id]}
+                        onChange={(data) => updateMediaBlockData(block.id, data)}
+                      />
                     </div>
                   ))}
                 </div>

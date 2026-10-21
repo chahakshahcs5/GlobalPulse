@@ -2,23 +2,26 @@
 
 import React from 'react';
 import { ChevronDown, ChevronRight, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import type { FormField, ValidationIssue } from '@ai-news/block-studio';
-import { getAtPath } from '@ai-news/block-studio';
+import type { FormField } from '../form-schema';
+import type { ValidationIssue } from '../validation';
+import { getAtPath } from '../path';
 
 interface FieldControlProps {
   field: FormField;
   path: string;
   value: unknown;
+  /** The value this field had before the editor started. */
+  baselineValue: unknown;
   onChange: (path: string, value: unknown) => void;
   issues: Map<string, ValidationIssue[]>;
   depth: number;
 }
 
 const INPUT_CLASS =
-  'w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none studio-dark:border-slate-700 studio-dark:bg-slate-900/80 studio-dark:text-slate-100 studio-dark:placeholder:text-slate-600';
+  'w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-600';
 
 const PANEL_CLASS =
-  'rounded-lg border border-slate-200 bg-slate-50 studio-dark:border-slate-800 studio-dark:bg-slate-900/30';
+  'rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/30';
 
 function joinPath(prefix: string, key: string): string {
   return prefix.length === 0 ? key : `${prefix}.${key}`;
@@ -142,23 +145,30 @@ function JsonField({
         }}
         spellCheck={false}
         rows={6}
-        className={`w-full resize-y rounded-md border bg-white p-2 font-mono text-[12px] leading-relaxed text-slate-800 focus:outline-none studio-dark:bg-slate-950/70 studio-dark:text-slate-200 ${
+        className={`w-full resize-y rounded-md border bg-white p-2 font-mono text-[12px] leading-relaxed text-slate-800 focus:outline-none dark:bg-slate-950/70 dark:text-slate-200 ${
           error
-            ? 'border-rose-400 studio-dark:border-rose-500/60'
-            : 'border-slate-300 focus:border-blue-500 studio-dark:border-slate-700'
+            ? 'border-rose-400 dark:border-rose-500/60'
+            : 'border-slate-300 focus:border-blue-500 dark:border-slate-700'
         }`}
       />
       {error && (
-        <p className="mt-1 text-[11px] font-medium text-rose-600 studio-dark:text-rose-300">
-          {error}
-        </p>
+        <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-300">{error}</p>
       )}
     </div>
   );
 }
 
-/** A short label for an array item, so the collapsed list stays readable. */
-function summariseItem(field: FormField, item: unknown, index: number): string {
+/** Whether a value differs from the one the editor started with. */
+function hasChanged(value: unknown, baseline: unknown): boolean {
+  if (value === undefined && baseline === undefined) return false;
+  return JSON.stringify(value ?? null) !== JSON.stringify(baseline ?? null);
+}
+
+/** A short label for an array item, so the collapsed list stays readable. */ function summariseItem(
+  field: FormField,
+  item: unknown,
+  index: number
+): string {
   if (field.item && field.item.kind === 'object') {
     const first = (field.item.fields ?? []).find((child) => child.kind === 'text');
     if (first) {
@@ -183,7 +193,15 @@ function summariseItem(field: FormField, item: unknown, index: number): string {
  * collapses to a one-line summary. The first item starts open so the shape
  * of the list is obvious; the rest start closed.
  */
-function ArrayField({ field, path, value, onChange, issues, depth }: FieldControlProps) {
+function ArrayField({
+  field,
+  path,
+  value,
+  baselineValue,
+  onChange,
+  issues,
+  depth,
+}: FieldControlProps) {
   const items = Array.isArray(value) ? value : [];
   const item = field.item;
   const [expanded, setExpanded] = React.useState<Record<number, boolean>>({ 0: true });
@@ -205,7 +223,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
         <button
           type="button"
           onClick={() => replace([...items, item ? defaultValueFor(item) : null])}
-          className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white studio-dark:border-slate-700 studio-dark:bg-slate-800 studio-dark:text-slate-300"
+          className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <Plus className="h-3 w-3" />
           Add
@@ -225,7 +243,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
           return (
             <div
               key={index}
-              className="overflow-hidden rounded-md border border-slate-200 bg-white studio-dark:border-slate-800 studio-dark:bg-slate-950/40"
+              className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/40"
             >
               <div className="flex items-center gap-1 px-1.5 py-1">
                 <button
@@ -233,7 +251,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                   onClick={() => toggle(index)}
                   aria-expanded={isOpen}
                   aria-label={isOpen ? `Collapse ${summary}` : `Expand ${summary}`}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 studio-dark:text-slate-300 studio-dark:hover:bg-slate-800/70 studio-dark:hover:text-white"
+                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
                 >
                   {isOpen ? (
                     <ChevronDown className="h-3 w-3 shrink-0" />
@@ -255,7 +273,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                       [next[index - 1], next[index]] = [next[index], next[index - 1]];
                       replace(next);
                     }}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 studio-dark:text-slate-500 studio-dark:hover:bg-slate-800 studio-dark:hover:text-slate-200"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
                     <ChevronUp className="h-3 w-3" />
                   </button>
@@ -269,7 +287,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                       [next[index + 1], next[index]] = [next[index], next[index + 1]];
                       replace(next);
                     }}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 studio-dark:text-slate-500 studio-dark:hover:bg-slate-800 studio-dark:hover:text-slate-200"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
                     <ChevronDown className="h-3 w-3" />
                   </button>
@@ -277,7 +295,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                     type="button"
                     aria-label="Remove"
                     onClick={() => replace(items.filter((_, i) => i !== index))}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600 studio-dark:text-slate-500 studio-dark:hover:bg-rose-500/20 studio-dark:hover:text-rose-300"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-500/20 dark:hover:text-rose-300"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -285,7 +303,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
               </div>
 
               {isOpen && (
-                <div className="border-t border-slate-200 p-2 studio-dark:border-slate-800">
+                <div className="border-t border-slate-200 p-2 dark:border-slate-800">
                   {item && field.ofObjects ? (
                     <div className="space-y-2">
                       {(item.fields ?? []).map((child) => (
@@ -294,6 +312,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                           field={child}
                           path={joinPath(itemPath, child.key)}
                           value={getAtPath(entry, child.key)}
+                          baselineValue={getAtPath(baselineValue, `${index}.${child.key}`)}
                           onChange={onChange}
                           issues={issues}
                           depth={depth + 1}
@@ -306,6 +325,7 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
                         field={item}
                         path={itemPath}
                         value={entry}
+                        baselineValue={getAtPath(baselineValue, String(index))}
                         onChange={onChange}
                         issues={issues}
                         depth={depth + 1}
@@ -329,9 +349,18 @@ function ArrayField({ field, path, value, onChange, issues, depth }: FieldContro
  * with what the platform will accept — there is no second description of the
  * payload to keep up to date.
  */
-function FieldControl({ field, path, value, onChange, issues, depth }: FieldControlProps) {
+function FieldControl({
+  field,
+  path,
+  value,
+  baselineValue,
+  onChange,
+  issues,
+  depth,
+}: FieldControlProps) {
   const fieldIssues = issues.get(path) ?? [];
   const hasError = fieldIssues.length > 0;
+  const changed = hasChanged(value, baselineValue);
 
   if (field.kind === 'object') {
     return (
@@ -346,6 +375,7 @@ function FieldControl({ field, path, value, onChange, issues, depth }: FieldCont
               field={child}
               path={joinPath(path, child.key)}
               value={getAtPath(value, child.key)}
+              baselineValue={getAtPath(baselineValue, child.key)}
               onChange={onChange}
               issues={issues}
               depth={depth + 1}
@@ -362,6 +392,7 @@ function FieldControl({ field, path, value, onChange, issues, depth }: FieldCont
         field={field}
         path={path}
         value={value}
+        baselineValue={baselineValue}
         onChange={onChange}
         issues={issues}
         depth={depth}
@@ -370,19 +401,27 @@ function FieldControl({ field, path, value, onChange, issues, depth }: FieldCont
   }
 
   const errorLine = hasError ? (
-    <p className="mt-1 text-[11px] font-medium text-rose-600 studio-dark:text-rose-300">
+    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-300">
       {fieldIssues[0].message}
     </p>
   ) : null;
 
   const label = (
     <label className="mb-1 flex items-baseline gap-1.5">
-      <span className="text-[12px] font-semibold text-slate-700 studio-dark:text-slate-300">
+      <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
         {field.label}
       </span>
       {!field.required && <span className="text-[9px] uppercase text-slate-500">optional</span>}
+      {changed && (
+        <span
+          title="Changed since this payload was loaded"
+          className="rounded bg-amber-100 px-1 py-px text-[9px] font-bold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+        >
+          edited
+        </span>
+      )}
       {hasError && (
-        <span className="text-[9px] font-bold uppercase text-rose-600 studio-dark:text-rose-400">
+        <span className="text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400">
           invalid
         </span>
       )}
@@ -535,12 +574,17 @@ export interface FormEditorProps {
   fields: FormField[];
   path: string;
   data: unknown;
+  /**
+   * The payload as it was before editing began. Fields that differ from it
+   * are marked, so an editor can see at a glance what they have changed.
+   */
+  baseline?: unknown;
   onChange: (path: string, value: unknown) => void;
   issues: Map<string, ValidationIssue[]>;
 }
 
 /** The generated form for a block's payload. */
-export function FormEditor({ fields, path, data, onChange, issues }: FormEditorProps) {
+export function FormEditor({ fields, path, data, baseline, onChange, issues }: FormEditorProps) {
   if (fields.length === 0) {
     return <p className="text-[13px] text-slate-500">This block has no editable fields.</p>;
   }
@@ -553,6 +597,7 @@ export function FormEditor({ fields, path, data, onChange, issues }: FormEditorP
           field={field}
           path={joinPath(path, field.key)}
           value={getAtPath(data, field.key)}
+          baselineValue={getAtPath(baseline, field.key)}
           onChange={onChange}
           issues={issues}
           depth={0}

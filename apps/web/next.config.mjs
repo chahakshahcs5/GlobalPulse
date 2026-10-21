@@ -16,6 +16,7 @@ const nextConfig = {
     '@ai-news/auth',
     '@ai-news/media',
     '@ai-news/blocks-ui',
+    '@ai-news/block-studio',
   ],
   async redirects() {
     return [

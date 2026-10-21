@@ -115,3 +115,30 @@ export function searchStudioBlocks(query: string): StudioBlock[] {
 export function countStudioVariants(): number {
   return listStudioBlocks().reduce((total, block) => total + block.variants.length, 0);
 }
+
+/**
+ * Add extra variants to the catalog.
+ *
+ * The studio lets an editor save the payload they are working on as a new
+ * variant. Those are kept on the editor's own machine, so they are merged in
+ * here rather than written into the shipped samples.
+ */
+export function withExtraVariants(
+  blocks: StudioBlock[],
+  extras: Record<string, StudioVariant[]>
+): StudioBlock[] {
+  const extraKeys = Object.keys(extras);
+  if (extraKeys.length === 0) return blocks;
+
+  return blocks.map((block) => {
+    const extra = extras[block.type];
+    if (!extra || extra.length === 0) return block;
+
+    const existingIds = new Set(block.variants.map((variant) => variant.id));
+    const additions = extra.filter((variant) => !existingIds.has(variant.id));
+
+    return additions.length === 0
+      ? block
+      : { ...block, variants: [...block.variants, ...additions] };
+  });
+}

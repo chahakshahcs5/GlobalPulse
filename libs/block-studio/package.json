@@ -7,9 +7,15 @@
   "types": "src/index.ts",
   "dependencies": {
     "@ai-news/schemas": "workspace:*",
+    "lucide-react": "^1.48.0",
     "zod": "^3.24.2"
   },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "devDependencies": {
+    "@types/react": "^19.3.0",
     "typescript": "^5.8.2"
   }
 }

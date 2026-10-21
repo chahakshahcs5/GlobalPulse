@@ -53,14 +53,14 @@ export function JsonEditor({ data, onChange }: JsonEditorProps) {
         onChange={(event) => handleChange(event.target.value)}
         spellCheck={false}
         aria-label="Block payload as JSON"
-        className={`h-[calc(100vh-320px)] min-h-[320px] w-full resize-none rounded-lg border bg-white p-3 font-mono text-[12px] leading-relaxed text-slate-800 focus:outline-none studio-dark:bg-slate-950/70 studio-dark:text-slate-200 ${
+        className={`h-[calc(100vh-320px)] min-h-[320px] w-full resize-none rounded-lg border bg-white p-3 font-mono text-[12px] leading-relaxed text-slate-800 focus:outline-none dark:bg-slate-950/70 dark:text-slate-200 ${
           error
-            ? 'border-rose-400 studio-dark:border-rose-500/60'
-            : 'border-slate-300 focus:border-blue-500 studio-dark:border-slate-700'
+            ? 'border-rose-400 dark:border-rose-500/60'
+            : 'border-slate-300 focus:border-blue-500 dark:border-slate-700'
         }`}
       />
       {error && (
-        <p className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[12px] font-medium text-rose-700 studio-dark:border-rose-500/30 studio-dark:bg-rose-500/10 studio-dark:text-rose-300">
+        <p className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[12px] font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           {error}
         </p>
       )}

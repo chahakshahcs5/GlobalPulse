@@ -1,20 +1,31 @@
-import type { StoryBlock } from '@ai-news/schemas';
+import { StoryBlockSchema, type StoryBlock } from '@ai-news/schemas';
 import type { MediaBlockDraft } from './types';
 
+/**
+ * The starting payload for a block the composer has just added.
+ *
+ * Every one of these is a payload the platform's own schema accepts, so an
+ * editor who adds a chart and publishes without touching it still gets a
+ * story the platform will render.
+ */
 export function createDefaultMediaBlock(type: MediaBlockDraft['type']): MediaBlockDraft {
-  const id = Date.now().toString();
+  const id = `blk_${type}_${Date.now().toString(36)}`;
+
   switch (type) {
     case 'image':
       return {
         id,
         type: 'image',
         data: {
-          url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-          caption: 'High-precision foundry cleanroom lithography operations.',
-          credit: 'Advanced Semiconductor Standards Bureau',
-          altText: 'Cleanroom technician inspecting wafer',
+          url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1200&q=80',
+          altText: 'Rows of solar panels in a field at first light',
+          caption: 'The Northfield array at first light, six months after commissioning.',
+          aspectRatio: '16:9',
+          credit: 'Nia Bergman / GlobalPulse',
+          sourceAttribution: 'Northfield Energy',
         },
       };
+
     case 'chart':
       return {
         id,
@@ -22,11 +33,21 @@ export function createDefaultMediaBlock(type: MediaBlockDraft['type']): MediaBlo
         data: {
           chartType: 'bar',
           title: 'Sovereign Compute & Model Training Throughput',
-          xAxis: 'Jurisdiction',
-          yAxis: 'EFLOPS',
-          dataRows: 'United States: 42\nEuropean Union: 28\nIndia: 31\nJapan: 19',
+          subtitle: 'Peak throughput by jurisdiction',
+          xAxis: { key: 'jurisdiction', label: 'Jurisdiction' },
+          yAxis: { label: 'Throughput', unit: 'EFLOPS' },
+          series: [{ name: 'Peak throughput', key: 'eflops' }],
+          values: [
+            { jurisdiction: 'United States', eflops: 42 },
+            { jurisdiction: 'European Union', eflops: 28 },
+            { jurisdiction: 'India', eflops: 31 },
+            { jurisdiction: 'Japan', eflops: 19 },
+          ],
+          methodology: 'Peak sustained throughput reported by each national programme.',
+          sourceAttribution: 'GlobalPulse data desk',
         },
       };
+
     case 'quote':
       return {
         id,
@@ -38,48 +59,61 @@ export function createDefaultMediaBlock(type: MediaBlockDraft['type']): MediaBlo
           title: 'Director of Machine Verification, Global Safety Taskforce',
         },
       };
+
     case 'timeline':
       return {
         id,
         type: 'timeline',
         data: {
           title: 'Key Milestones & Timeline',
+          items: [
+            {
+              date: 'Phase 1 · 09:00',
+              headline: 'Working Group Formal Convening',
+              body: 'Delegations confirm the multilateral agenda.',
+            },
+            {
+              date: 'Phase 2 · 14:30',
+              headline: 'Technical Framework Approved',
+              body: 'All parties ratify the operational protocol.',
+            },
+          ],
         },
-        items: [
-          {
-            date: 'Phase 1 • 09:00 AM',
-            headline: 'Working Group Formal Convening',
-            body: 'Delegations confirm multilateral agenda.',
-          },
-          {
-            date: 'Phase 2 • 02:30 PM',
-            headline: 'Technical Framework Approved',
-            body: 'All parties ratify operational protocol.',
-          },
-        ],
       };
+
     case 'video':
       return {
         id,
         type: 'video',
         data: {
           url: '/videos/starship-downlink.mp4',
+          aspectRatio: '16:9',
           caption: 'Live video dispatch and ministerial press briefing.',
           durationSeconds: 180,
         },
       };
+
     case 'table':
       return {
         id,
         type: 'table',
         data: {
           title: 'Comparative Benchmark Matrix',
-          headers: 'Metric / Indicator, Baseline 2024, Current 2025, Target 2026',
-          rowsText:
-            'Throughput (TFLOPS), 14.2, 48.9, 120.0\nThermal Dissipation (W), 280, 210, 165\nLatency (μs), 4.2, 1.8, 0.9',
+          headers: ['Metric / Indicator', 'Baseline 2024', 'Current 2025', 'Target 2026'],
+          rows: [
+            ['Throughput (TFLOPS)', '14.2', '48.9', '120.0'],
+            ['Thermal Dissipation (W)', '280', '210', '165'],
+            ['Latency (μs)', '4.2', '1.8', '0.9'],
+          ],
           footer: 'Source: Official Engineering Audit and Independent Laboratory Validation.',
+          sortable: true,
+          filterable: true,
+          searchable: true,
+          downloadable: true,
+          sourceAttribution: 'GlobalPulse engineering desk',
         },
       };
+
     case 'callout':
       return {
         id,
@@ -90,6 +124,7 @@ export function createDefaultMediaBlock(type: MediaBlockDraft['type']): MediaBlo
           text: 'This policy dispatch incorporates verified statements from accredited delegations and primary regulatory filings.',
         },
       };
+
     case 'statistic':
       return {
         id,
@@ -97,9 +132,11 @@ export function createDefaultMediaBlock(type: MediaBlockDraft['type']): MediaBlo
         data: {
           label: 'Total Sovereign Allocation ($ Billion)',
           value: '42.8',
+          unit: '$bn',
           trend: 'up',
           trendValue: '+28.4% YoY',
           context: 'Cumulative multilateral infrastructure development commitments.',
+          sourceAttribution: 'GlobalPulse data desk',
         },
       };
   }
@@ -114,6 +151,13 @@ export interface AssembleBlocksInput {
   storyId?: string;
 }
 
+/**
+ * Turn the composer's fields into the story's block list.
+ *
+ * The result is validated against the platform's own block schema before it
+ * is returned, so a payload that would be rejected on publish is caught in
+ * the editor instead.
+ */
 export function assembleStoryBlocks({
   leadParagraph,
   bullet1,
@@ -133,12 +177,12 @@ export function assembleStoryBlocks({
     });
   }
 
-  const keyTakeaways = [bullet1, bullet2, bullet3].filter((b) => b.trim().length > 0);
+  const keyTakeaways = [bullet1, bullet2, bullet3].filter((bullet) => bullet.trim().length > 0);
   if (keyTakeaways.length > 0) {
     blocks.push({
       id: `blk_takeaways_${storyId}`,
       blockType: 'summary',
-      sortOrder: 1,
+      sortOrder: blocks.length,
       data: {
         headline: 'Key Takeaways',
         bulletPoints: keyTakeaways,
@@ -146,112 +190,45 @@ export function assembleStoryBlocks({
     });
   }
 
-  mediaBlocks.forEach((m) => {
-    const sortOrder = blocks.length;
-    if (m.type === 'image') {
-      blocks.push({
-        id: `img_${m.id}`,
-        blockType: 'image',
-        sortOrder,
-        data: {
-          url: String(m.data.url || ''),
-          caption: m.data.caption ? String(m.data.caption) : undefined,
-          credit: m.data.credit ? String(m.data.credit) : undefined,
-          altText: String(m.data.altText || m.data.caption || 'Image'),
-          aspectRatio: '16:9',
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'chart') {
-      blocks.push({
-        id: `chart_${m.id}`,
-        blockType: 'chart',
-        sortOrder,
-        data: {
-          chartType: m.data.chartType,
-          title: m.data.title,
-          xAxis: m.data.xAxis,
-          yAxis: m.data.yAxis,
-          dataRows: m.data.dataRows,
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'quote') {
-      blocks.push({
-        id: `quote_${m.id}`,
-        blockType: 'quote',
-        sortOrder,
-        data: {
-          quote: String(m.data.quote || ''),
-          attribution: String(m.data.attribution || ''),
-          title: m.data.title ? String(m.data.title) : undefined,
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'timeline') {
-      blocks.push({
-        id: `timeline_${m.id}`,
-        blockType: 'timeline',
-        sortOrder,
-        data: {
-          title: m.data.title ? String(m.data.title) : 'Timeline',
-          items: m.items || [],
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'video') {
-      blocks.push({
-        id: `video_${m.id}`,
-        blockType: 'video',
-        sortOrder,
-        data: {
-          url: String(m.data.url || ''),
-          caption: m.data.caption ? String(m.data.caption) : undefined,
-          durationSeconds: m.data.durationSeconds ? Number(m.data.durationSeconds) : 120,
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'table') {
-      const headers = String(m.data.headers || '')
-        .split(',')
-        .map((h) => h.trim())
-        .filter(Boolean);
-      const rows = String(m.data.rowsText || '')
-        .split('\n')
-        .map((r) => r.split(',').map((c) => c.trim()))
-        .filter((r) => r.length > 0 && r[0]);
-      blocks.push({
-        id: `table_${m.id}`,
-        blockType: 'table',
-        sortOrder,
-        data: {
-          title: m.data.title ? String(m.data.title) : undefined,
-          headers,
-          rows,
-          footer: m.data.footer ? String(m.data.footer) : undefined,
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'callout') {
-      blocks.push({
-        id: `callout_${m.id}`,
-        blockType: 'callout',
-        sortOrder,
-        data: {
-          style: m.data.style || 'info',
-          title: m.data.title ? String(m.data.title) : undefined,
-          text: String(m.data.text || ''),
-        },
-      } as unknown as StoryBlock);
-    } else if (m.type === 'statistic') {
-      blocks.push({
-        id: `stat_${m.id}`,
-        blockType: 'statistic',
-        sortOrder,
-        data: {
-          label: String(m.data.label || ''),
-          value: String(m.data.value || ''),
-          trend: m.data.trend || 'neutral',
-          trendValue: m.data.trendValue ? String(m.data.trendValue) : undefined,
-          context: m.data.context ? String(m.data.context) : undefined,
-        },
-      } as unknown as StoryBlock);
-    }
-  });
+  for (const draft of mediaBlocks) {
+    blocks.push({
+      id: draft.id,
+      blockType: draft.type,
+      sortOrder: blocks.length,
+      data: draft.data,
+    } as StoryBlock);
+  }
 
   return blocks;
+}
+
+export interface BlockValidationIssue {
+  blockId: string;
+  blockType: string;
+  message: string;
+}
+
+/**
+ * Check the composer's blocks against the platform schema.
+ *
+ * The composer and the platform share one schema, so a block that fails
+ * here would also fail on publish. Catching it here means the editor finds
+ * out while they are still looking at it.
+ */
+export function validateStoryBlocks(blocks: StoryBlock[]): BlockValidationIssue[] {
+  const issues: BlockValidationIssue[] = [];
+
+  for (const block of blocks) {
+    const result = StoryBlockSchema.safeParse(block);
+    if (result.success) continue;
+    for (const issue of result.error.issues) {
+      issues.push({
+        blockId: block.id,
+        blockType: block.blockType,
+        message: `${issue.path.join('.') || 'block'} ${issue.message}`,
+      });
+    }
+  }
+
+  return issues;
 }

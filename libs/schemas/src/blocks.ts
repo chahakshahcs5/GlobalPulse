@@ -1609,6 +1609,43 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
 export type Block = StoryBlock;
 export type BaseBlock = z.infer<typeof BaseBlockSchema>;
+
+/**
+ * The payload a caller provides for a block.
+ *
+ * This is the schema's *input* type, not its output type. A field the
+ * schema gives a default may be left out by the caller — the platform fills
+ * it in on write — so an editor's form must not be forced to spell out every
+ * defaulted field by hand.
+ */
+export type BlockDataInput<T extends z.ZodTypeAny> = z.input<T>['data'];
+
+export type HeadingBlockDataInput = BlockDataInput<typeof HeadingBlockSchema>;
+export type ParagraphBlockDataInput = BlockDataInput<typeof ParagraphBlockSchema>;
+export type SummaryBlockDataInput = BlockDataInput<typeof SummaryBlockSchema>;
+export type QuoteBlockDataInput = BlockDataInput<typeof QuoteBlockSchema>;
+export type ImageBlockDataInput = BlockDataInput<typeof ImageBlockSchema>;
+export type GalleryBlockDataInput = BlockDataInput<typeof GalleryBlockSchema>;
+export type ChartBlockDataInput = BlockDataInput<typeof ChartBlockSchema>;
+export type TableBlockDataInput = BlockDataInput<typeof TableBlockSchema>;
+export type TimelineBlockDataInput = BlockDataInput<typeof TimelineBlockSchema>;
+export type MapBlockDataInput = BlockDataInput<typeof MapBlockSchema>;
+export type VideoBlockDataInput = BlockDataInput<typeof VideoBlockSchema>;
+export type AudioBlockDataInput = BlockDataInput<typeof AudioBlockSchema>;
+export type CalloutBlockDataInput = BlockDataInput<typeof CalloutBlockSchema>;
+export type StatisticBlockDataInput = BlockDataInput<typeof StatisticBlockSchema>;
+export type CitationBlockDataInput = BlockDataInput<typeof CitationBlockSchema>;
+export type SourceBlockDataInput = BlockDataInput<typeof SourceBlockSchema>;
+export type EntityBlockDataInput = BlockDataInput<typeof EntityBlockSchema>;
+export type ComparisonBlockDataInput = BlockDataInput<typeof ComparisonBlockSchema>;
+export type RelatedStoriesBlockDataInput = BlockDataInput<typeof RelatedStoriesBlockSchema>;
+export type DocumentViewerBlockDataInput = BlockDataInput<typeof DocumentViewerBlockSchema>;
+export type InterviewBlockDataInput = BlockDataInput<typeof InterviewBlockSchema>;
+export type FlowBlockDataInput = BlockDataInput<typeof FlowBlockSchema>;
+export type DiagramBlockDataInput = BlockDataInput<typeof DiagramBlockSchema>;
+export type SlideDeckBlockDataInput = BlockDataInput<typeof SlideDeckBlockSchema>;
+export type ImageDiffBlockDataInput = BlockDataInput<typeof ImageDiffBlockSchema>;
+export type EmbedBlockDataInput = BlockDataInput<typeof EmbedBlockSchema>;
 export type HeadingBlock = z.infer<typeof HeadingBlockSchema>;
 export type ParagraphBlock = z.infer<typeof ParagraphBlockSchema>;
 export type SummaryBlock = z.infer<typeof SummaryBlockSchema>;

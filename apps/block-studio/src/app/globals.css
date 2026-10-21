@@ -1,28 +1,17 @@
 @import 'tailwindcss';
 
 /*
- * The shared block renderers live in `libs/blocks-ui`, outside this app's
- * directory, so Tailwind needs an explicit source for their utilities.
+ * The shared block renderers and the shared block editor live outside this
+ * app's directory, so Tailwind needs an explicit source for their utilities.
  */
 @source '../../../../libs/blocks-ui/src';
+@source '../../../../libs/block-studio/src';
 
 .preview-surface {
   container-type: inline-size;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-/*
- * The studio's own chrome has its own light/dark switch, deliberately kept
- * separate from the `dark` variant the block renderers use.
- *
- * The preview canvas must be able to render a *light* block while the studio
- * chrome is dark. If the chrome used the `dark` variant, a light preview
- * nested inside it would still pick up the blocks' dark styles. So the chrome
- * switches on `studio-dark`, and only the preview surface ever carries
- * `dark`.
- */
-@custom-variant studio-dark (&:where(.studio-dark, .studio-dark *));
 
 @layer base {
   :root {
@@ -35,7 +24,20 @@
     color-scheme: light;
   }
 
-  .studio-dark {
+  /*
+   * The studio's chrome and the block preview have separate themes, and both
+   * use the same `dark` variant.
+   *
+   * The `dark` class goes on the chrome elements themselves rather than on
+   * the document, so a light preview nested inside a dark studio does not
+   * pick up the blocks' dark styles. The preview surface carries its own
+   * `dark` class, and the chrome elements carry theirs.
+   *
+   * The document carries `studio-shell-dark` instead, which only sets the
+   * page-level colours (the canvas behind the panels, the scrollbars).
+   */
+  .dark,
+  .studio-shell-dark {
     --bg-main: #0b0f19;
     --bg-card: #111827;
     --text-primary: #f8fafc;
