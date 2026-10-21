@@ -87,7 +87,7 @@ export function registerCollectionTools(
 
   server.tool(
     'get_collection',
-    '[READ-ONLY] Retrieve a reading list or themed collection by ID or URL slug with full populated stories.',
+    "[READ-ONLY] Retrieve a reading list or themed collection by ID or URL slug. The stories are summaries — use get_story to fetch a story's full content and blocks.",
     {
       idOrSlug: z.string().min(1).describe('Collection unique ID or URL slug'),
     },

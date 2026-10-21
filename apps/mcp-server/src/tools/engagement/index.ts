@@ -4,7 +4,6 @@ import {
   EngagementService,
   NewsletterService,
   CollectionService,
-  StoryService,
   PerspectivesService,
 } from '@ai-news/stories';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
@@ -27,7 +26,6 @@ export function registerEngagementTools(
   getPrincipal: () => AuthenticatedPrincipal
 ) {
   const engagementService = new EngagementService(db);
-  const storyService = new StoryService(db);
   const newsletterService = new NewsletterService(db);
   const collectionService = new CollectionService(db);
   const perspectivesService = new PerspectivesService();
@@ -36,5 +34,5 @@ export function registerEngagementTools(
   registerReactionBookmarkTools(server, engagementService, getPrincipal);
   registerNewsletterSocialTools(server, db, newsletterService, getPrincipal);
   registerCollectionTools(server, collectionService, getPrincipal);
-  registerPollPerspectiveTools(server, storyService, perspectivesService, getPrincipal);
+  registerPollPerspectiveTools(server, perspectivesService, engagementService, getPrincipal);
 }

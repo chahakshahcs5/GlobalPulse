@@ -1,20 +1,19 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { StoryService, PerspectivesService } from '@ai-news/stories';
-import type { PollBlock } from '@ai-news/schemas';
+import type { PerspectivesService, EngagementService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { mcpJsonResponse, mcpErrorResponse } from '../tool-helpers';
 
 export function registerPollPerspectiveTools(
   server: McpServer,
-  storyService: StoryService,
   perspectivesService: PerspectivesService,
+  engagementService: EngagementService,
   getPrincipal: () => AuthenticatedPrincipal
 ) {
   // Poll engagement
   server.tool(
     'cast_poll_vote',
-    '[INTERACTIVE READER ENGAGEMENT] Cast a reader vote on a story poll block.',
+    '[INTERACTIVE READER ENGAGEMENT] Cast a reader vote on a story poll block. A reader may change their vote; the previous choice is replaced rather than counted twice.',
     {
       storyId: z.string().min(1).describe('Target story ID'),
       blockId: z.string().min(1).describe('Block ID of the poll'),
@@ -25,63 +24,20 @@ export function registerPollPerspectiveTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const story = await storyService.getStory(storyId, principal.organizationId);
-        const block = story.blocks?.find((b) => b.id === blockId);
-        if (!block || block.blockType !== 'poll') {
-          return mcpErrorResponse(`Poll block "${blockId}" not found in story "${storyId}".`);
-        }
-
-        const pollData = block.data as {
-          pollId: string;
-          question: string;
-          options: Array<{ id: string; text: string; voteCount: number }>;
-          totalVotes: number;
-          closed?: boolean;
-        };
-
-        if (pollData.closed) {
-          return mcpErrorResponse('This poll has been closed.');
-        }
-
-        const option = pollData.options.find((o) => o.id === optionId);
-        if (!option) {
-          return mcpErrorResponse(`Option "${optionId}" not found in poll.`);
-        }
-
-        const updatedOptions = pollData.options.map((o) =>
-          o.id === optionId ? { ...o, voteCount: o.voteCount + 1 } : o
-        );
-        const updatedTotal = pollData.totalVotes + 1;
-
-        const updatedBlock: PollBlock = {
-          id: block.id,
-          blockType: 'poll',
-          sortOrder: block.sortOrder,
-          data: {
-            pollId: pollData.pollId,
-            question: pollData.question,
-            options: updatedOptions,
-            totalVotes: updatedTotal,
-            closed: pollData.closed ?? false,
-          },
-        };
-
-        await storyService.updateBlock(storyId, blockId, updatedBlock, {
+        const tally = await engagementService.castPollVote(storyId, blockId, optionId, {
+          userId: principal.id,
           organizationId: principal.organizationId,
-          authorId: principal.id,
-          clientType: principal.clientType,
-          createdVia: 'mcp',
         });
 
         return mcpJsonResponse({
           message: 'Vote successfully recorded.',
           poll: {
-            pollId: pollData.pollId,
-            question: pollData.question,
-            totalVotes: updatedTotal,
-            options: updatedOptions.map((o) => ({
+            pollId: tally.pollId,
+            question: tally.question,
+            totalVotes: tally.totalVotes,
+            options: tally.options.map((o) => ({
               ...o,
-              percentage: ((o.voteCount / updatedTotal) * 100).toFixed(1),
+              percentage: o.percentage.toFixed(1),
             })),
           },
         });
@@ -104,29 +60,21 @@ export function registerPollPerspectiveTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:read');
 
-        const story = await storyService.getStory(storyId, principal.organizationId);
-        const block = story.blocks?.find((b) => b.id === blockId);
-        if (!block || block.blockType !== 'poll') {
-          return mcpErrorResponse(`Poll block "${blockId}" not found in story "${storyId}".`);
-        }
+        const tally = await engagementService.getPollTally(
+          storyId,
+          blockId,
+          principal.id,
+          principal.organizationId
+        );
 
-        const pollData = block.data as {
-          pollId: string;
-          question: string;
-          options: Array<{ id: string; text: string; voteCount: number }>;
-          totalVotes: number;
-          closed?: boolean;
-        };
-
-        const total = pollData.totalVotes || 0;
         return mcpJsonResponse({
-          pollId: pollData.pollId,
-          question: pollData.question,
-          totalVotes: total,
-          closed: pollData.closed || false,
-          options: pollData.options.map((o) => ({
+          pollId: tally.pollId,
+          question: tally.question,
+          totalVotes: tally.totalVotes,
+          closed: tally.closed,
+          options: tally.options.map((o) => ({
             ...o,
-            percentage: total > 0 ? ((o.voteCount / total) * 100).toFixed(1) : '0.0',
+            percentage: o.percentage.toFixed(1),
           })),
         });
       } catch (err: unknown) {

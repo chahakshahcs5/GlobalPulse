@@ -20,6 +20,13 @@ export function registerInteractiveDocumentTools(
       storyId: z.string().min(1).describe('Target story ID'),
       title: z.string().optional().describe('Title of the ticker (e.g. "Live Market Pulse")'),
       refreshIntervalSeconds: z.number().int().min(5).max(3600).default(30),
+      liveKey: z
+        .string()
+        .min(1)
+        .optional()
+        .describe(
+          'Live feed key to bind to (see set_live_feed). Omit to render a static snapshot.'
+        ),
       items: z
         .array(
           z.object({
@@ -83,6 +90,7 @@ export function registerInteractiveDocumentTools(
         data: {
           title: existingBlock.data.title,
           refreshIntervalSeconds: existingBlock.data.refreshIntervalSeconds,
+          liveKey: existingBlock.data.liveKey,
           items: items.map((it) => ({
             ...it,
             sparkline: it.sparkline || [],
@@ -100,6 +108,77 @@ export function registerInteractiveDocumentTools(
 
       return mcpJsonResponse({ message: `Live ticker "${blockId}" updated.`, block: updated });
     }
+  );
+
+  // add_quiz_block
+  server.tool(
+    'add_quiz_block',
+    '[WRITE] Add a knowledge check. Each question has options, one correct answer, and an explanation revealed once the reader has answered.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      title: z.string().min(1).describe('Heading for the quiz (e.g. "Test your understanding")'),
+      description: z.string().max(4000).optional().describe('Explainer shown above the questions'),
+      questions: z
+        .array(
+          z.object({
+            id: z.string().min(1).describe('Stable id for the question'),
+            question: z.string().min(1).describe('The question to ask'),
+            options: z
+              .array(
+                z.object({
+                  id: z.string().min(1).describe('Stable id for the option'),
+                  text: z.string().min(1).describe('The option text'),
+                  correct: z.boolean().default(false).describe('Whether this is the right answer'),
+                })
+              )
+              .min(2)
+              .max(6),
+            explanation: z
+              .string()
+              .max(2000)
+              .optional()
+              .describe('Shown once the reader has answered'),
+            sourceId: z.string().optional().describe('Registered source id backing the answer'),
+          })
+        )
+        .min(1)
+        .max(20),
+      showScore: z.boolean().default(true),
+      allowRetry: z.boolean().default(true),
+      methodology: z.string().max(4000).optional(),
+      sourceAttribution: z.string().optional(),
+    },
+    async ({ storyId, ...data }) =>
+      helperAdd(storyId, {
+        id: generateId('blk_quiz'),
+        blockType: 'quiz',
+        sortOrder: 0,
+        data,
+      })
+  );
+
+  // add_live_comments_block
+  server.tool(
+    'add_live_comments_block',
+    "[WRITE] Add a live reader comment thread inside the article body. The thread loads on mount and updates over the story's realtime channel.",
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      title: z.string().min(1).describe('Heading for the thread (e.g. "What readers are saying")'),
+      description: z.string().max(4000).optional().describe('Explainer shown above the comments'),
+      maxComments: z.number().int().min(1).max(50).default(10),
+      roles: z
+        .array(z.enum(['reader', 'subscriber', 'journalist', 'editor', 'ai_agent']))
+        .optional()
+        .describe('Only show comments from these roles'),
+      showCta: z.boolean().default(true),
+    },
+    async ({ storyId, ...data }) =>
+      helperAdd(storyId, {
+        id: generateId('blk_lcmt'),
+        blockType: 'live_comments',
+        sortOrder: 0,
+        data,
+      })
   );
 
   // 28. add_poll_block
