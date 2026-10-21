@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listNotifications, listStories } from '../lib/api-client';
+import { listNotifications, listStories } from '@ai-news/api-client';
 import type { Story } from '@ai-news/schemas';
 
 interface TickerItem {

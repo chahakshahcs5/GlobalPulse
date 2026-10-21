@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import * as api from './api-client';
+import * as api from '@ai-news/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,14 +69,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Restore session on mount
+  /*
+   * Restore the session on mount.
+   *
+   * There are two ways in, and the second is the one that matters. The
+   * token kept in this tab is the fast path — but it is per-tab, and it
+   * knows nothing about the other apps of the product. The session the API
+   * holds is the real one: it is the same cookie the Block Studio sees, and
+   * it is alive after a sign-in anywhere in the product.
+   *
+   * So the portal asks the API who it is talking to. Without that, signing
+   * in the studio would leave the portal looking signed out.
+   */
   useEffect(() => {
-    const savedUser = loadPersistedUser();
-    const savedToken = api.getAuthToken();
-    if (savedUser && savedToken) {
-      setUser(savedUser);
-      setToken(savedToken);
-    }
+    let cancelled = false;
+
+    const restore = async () => {
+      const savedToken = api.getAuthToken();
+      if (savedToken) {
+        const savedUser = loadPersistedUser();
+        if (savedUser) {
+          if (!cancelled) {
+            setUser(savedUser);
+            setToken(savedToken);
+          }
+          return;
+        }
+      }
+
+      try {
+        const current = await api.getCurrentUser();
+        if (!cancelled && current) {
+          setUser(current);
+          setToken(savedToken);
+        }
+      } catch {
+        // No session. The portal stays signed out.
+      }
+    };
+
+    void restore();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAuthResponse = useCallback((authUser: AuthUser, authToken: string) => {
@@ -130,18 +166,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [handleAuthResponse]
   );
 
+  /*
+   * Signing out ends the session for the whole product, not just for this
+   * tab — the API's cookie is cleared, so the studio is signed out too.
+   */
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     api.setAuthToken(null);
     persistUser(null);
+    void api.logoutUser().catch(() => {
+      // The local session is gone either way.
+    });
   }, []);
 
   const value: AuthContextValue = {
     user,
     token,
     isLoading,
-    isAuthenticated: !!user && !!token,
+    isAuthenticated: !!user,
     login,
     register,
     logout,

@@ -142,6 +142,9 @@ graph TD
 - **`libs/sources`**: Primary source registry supporting permissible excerpt attribution and verification scores.
 - **`libs/search`**: Hybrid search engine combining full-text tokenization, Jaccard similarity deduplication, and vector embeddings.
 - **`libs/media`**: Programmatic visualization engine rendering 13 D3 chart types, MapLibre GL fallback maps, and interactive timelines.
+- **`libs/api-client`**: The one door to the newsroom API. The web portal, the Block Studio and anything else that talks to the API go through it, so they speak the same dialect and share one session.
+- **`libs/blocks-ui`**: The shared block renderers. The web app and the Block Studio both render blocks through it, which is what makes a studio preview trustworthy.
+- **`libs/block-studio`**: The Block Studio's engine — the catalog, the variants, the Zod → form converter and the validator.
 
 ### 2.3 Data & Persistence Tier (`libs/database`)
 

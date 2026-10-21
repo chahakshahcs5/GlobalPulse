@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MapPin, Wind, Droplets, RefreshCw } from 'lucide-react';
-import { getWeatherForecast, reverseGeocode } from '../lib/api-client';
+import { getWeatherForecast, reverseGeocode } from '@ai-news/api-client';
 import { emitWeatherLocationUpdated } from '../lib/event-bus';
 
 interface WeatherForecastDay {

@@ -150,6 +150,9 @@ importers:
 
   apps/block-studio:
     dependencies:
+      '@ai-news/api-client':
+        specifier: workspace:*
+        version: link:../../libs/api-client
       '@ai-news/block-studio':
         specifier: workspace:*
         version: link:../../libs/block-studio
@@ -259,6 +262,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ai-news/api-client':
+        specifier: workspace:*
+        version: link:../../libs/api-client
       '@ai-news/block-studio':
         specifier: workspace:*
         version: link:../../libs/block-studio
@@ -327,6 +333,16 @@ importers:
       '@types/node':
         specifier: ^22.13.9
         version: 22.20.4
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  libs/api-client:
+    dependencies:
+      '@ai-news/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+    devDependencies:
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
@@ -418,6 +434,9 @@ importers:
 
   libs/database:
     dependencies:
+      '@ai-news/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@ai-news/observability':
         specifier: workspace:*
         version: link:../observability

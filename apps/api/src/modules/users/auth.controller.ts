@@ -13,6 +13,7 @@ import { FastifyReply } from 'fastify';
 import { db } from '@ai-news/database';
 import { UserService } from '@ai-news/stories';
 import { NestAuthGuard, Principal } from '../../common/auth.guard';
+import { sessionCookie } from '../../common/session-cookie';
 import { RegisterUserInput, LoginInput, UpdatePreferencesInput } from '@ai-news/schemas';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
@@ -29,12 +30,7 @@ export class AuthController {
     const result = await this.userService.register(body);
 
     // Set secure cookie for browser sessions
-    const isProd = process.env.NODE_ENV === 'production';
-    const secureFlag = isProd ? '; Secure' : '';
-    reply.header(
-      'Set-Cookie',
-      `gp_token=${result.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 3600}${secureFlag}`
-    );
+    reply.header('Set-Cookie', sessionCookie(result.token));
 
     return result;
   }
@@ -47,12 +43,7 @@ export class AuthController {
   async login(@Body() body: LoginInput, @Res({ passthrough: true }) reply: FastifyReply) {
     const result = await this.userService.login(body);
 
-    const isProd = process.env.NODE_ENV === 'production';
-    const secureFlag = isProd ? '; Secure' : '';
-    reply.header(
-      'Set-Cookie',
-      `gp_token=${result.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 3600}${secureFlag}`
-    );
+    reply.header('Set-Cookie', sessionCookie(result.token));
 
     return result;
   }
@@ -63,9 +54,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) reply: FastifyReply) {
-    const isProd = process.env.NODE_ENV === 'production';
-    const secureFlag = isProd ? '; Secure' : '';
-    reply.header('Set-Cookie', `gp_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`);
+    reply.header('Set-Cookie', sessionCookie('', 0));
     return { success: true, message: 'Logged out successfully.' };
   }
 

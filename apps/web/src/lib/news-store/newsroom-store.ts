@@ -8,7 +8,7 @@ import type {
   NewsroomMetrics,
   Story,
 } from '@ai-news/schemas';
-import * as api from '../api-client';
+import * as api from '@ai-news/api-client';
 import { notifyStoryMutation } from './stories-store';
 
 export function useNewsroomMetrics() {

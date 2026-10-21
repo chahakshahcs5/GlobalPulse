@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { listPublishers, listSources, listFollowing, listCategories } from '../../lib/api-client';
+import { listPublishers, listSources, listFollowing, listCategories } from '@ai-news/api-client';
 import { PublisherCard } from '../../components/PublisherCard';
 import { formatDeterministicDate } from '../../lib/date-utils';
 import {

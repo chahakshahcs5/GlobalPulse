@@ -2,12 +2,20 @@
 
 import React, { useState } from 'react';
 import { X, Mail, User, ShieldCheck, LogIn, UserPlus, KeyRound, AlertCircle } from 'lucide-react';
+import { loginUser, registerUser } from '@ai-news/api-client';
 
 export interface UserSession {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'editor' | 'reader';
+  /**
+   * The session token.
+   *
+   * It is deliberately not persisted to `localStorage`: a token that outlives
+   * the tab is a token that outlives the session. The API's `HttpOnly`
+   * cookie carries the session, and it cannot be read by script.
+   */
   token?: string;
 }
 
@@ -41,50 +49,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     try {
-      const endpoint = mode === 'signin' ? '/api/auth/login' : '/api/auth/register';
-      const body =
+      /*
+       * The shared client, not a bespoke fetch. It is the same sign-in the
+       * Block Studio performs, against the same endpoint, and the API's
+       * session cookie comes back either way — which is what makes the
+       * session shared across the product rather than per-app.
+       */
+      const result =
         mode === 'signin'
-          ? { email, password }
-          : { email, password, name, role: 'reader', organizationId: 'org_default' };
+          ? await loginUser(email, password)
+          : await registerUser(name, email, password);
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const user: UserSession = {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role || 'reader',
-          token: data.token,
-        };
-        onLoginSuccess(user);
-        onClose();
-        return;
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || data.error || 'Authentication failed. Please verify credentials.');
-      }
+      const user: UserSession = {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: (result.user.role as UserSession['role']) || 'reader',
+      };
+      onLoginSuccess(user);
+      onClose();
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
+      const message =
+        err instanceof Error && err.message
           ? err.message
-          : 'Unable to reach authentication service. Please check your connection.'
-      );
+          : 'Unable to reach authentication service. Please check your connection.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const quickLoginAs = (role: 'admin' | 'editor' | 'reader') => {
+    /*
+     * The seeded newsroom accounts, so a new editor can see the product
+     * from each side without having to be given a password first.
+     */
     const creds: Record<'admin' | 'editor' | 'reader', { email: string; pass: string }> = {
       admin: { email: 'admin@news.platform', pass: 'Admin123!' },
       editor: { email: 'editor@news.platform', pass: 'Editor123!' },
-      reader: { email: 'journalist@news.platform', pass: 'Journalist123!' },
+      reader: { email: 'sarah.jenkins@reader.test', pass: 'Reader123!' },
     };
     setEmail(creds[role].email);
     setPassword(creds[role].pass);

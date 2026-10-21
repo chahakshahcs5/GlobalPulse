@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ApiError, setAuthToken, getAuthToken } from '../../../apps/web/src/lib/api-client';
+import { ApiError, setAuthToken, getAuthToken } from '@ai-news/api-client';
 import { getBookmarks, toggleBookmark } from '../../../apps/web/src/lib/news-store';
 
 describe('Web Data Layer & Client Utilities (Unit Tests)', () => {

@@ -15,6 +15,7 @@ const nextConfig = {
     '@ai-news/search',
     '@ai-news/auth',
     '@ai-news/media',
+    '@ai-news/api-client',
     '@ai-news/blocks-ui',
     '@ai-news/block-studio',
   ],

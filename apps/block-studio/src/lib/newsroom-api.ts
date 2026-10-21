@@ -1,10 +1,24 @@
 import type { Story, StoryBlock } from '@ai-news/schemas';
+import {
+  ApiError,
+  addBlock as addStoryBlock,
+  getAuthToken,
+  reorderBlocks,
+  request,
+  setAuthToken,
+  updateBlock as updateStoryBlock,
+} from '@ai-news/api-client';
+import { getCurrentUser, loginUser, logoutUser, registerUser } from '@ai-news/api-client';
 
 /**
  * The newsroom API, as the studio uses it.
  *
- * The studio proxies the API through its own origin, so requests are
- * relative and the browser never talks to the API directly.
+ * The studio talks to the same API, through the same client and with the
+ * same session as the rest of the product — so a sign-in in the web portal
+ * is a sign-in here too.
+ *
+ * The studio proxies the API through its own origin, so the browser never
+ * talks to the API directly and no CORS setup is needed.
  */
 
 export interface Paginated<T> {
@@ -15,87 +29,10 @@ export interface Paginated<T> {
   hasMore: boolean;
 }
 
-interface Envelope<T> {
-  success: boolean;
-  data: T;
-  meta?: {
-    total: number;
-    limit: number;
-    offset?: number;
-    nextCursor?: string;
-    hasMore: boolean;
-  };
-}
-
-/**
- * Unwrap the API's envelope when there is one.
- *
- * The list endpoint answers with an envelope, but the single-story endpoint
- * answers with the story itself. Both shapes are handled here rather than at
- * each call site, so a change in one does not silently break the other.
- */
-function unwrap<T>(body: T | Envelope<T>): T {
-  if (
-    body !== null &&
-    typeof body === 'object' &&
-    'data' in body &&
-    'success' in (body as unknown as Record<string, unknown>)
-  ) {
-    return (body as Envelope<T>).data;
-  }
-  return body as T;
-}
-
-/** The token the studio authenticates with, if it has one. */
-export function apiToken(): string {
-  if (typeof window === 'undefined') return '';
-  // The token is set by the developer in the browser, not baked into the app.
-  return window.localStorage.getItem('block_studio_api_token') ?? '';
-}
-
-export function setApiToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem('block_studio_api_token', token.trim());
-  } catch {
-    // Private mode; the token simply is not kept.
-  }
-}
-
-export class NewsroomApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number
-  ) {
-    super(message);
-    this.name = 'NewsroomApiError';
-  }
-}
-
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = apiToken();
-  const response = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    let detail = `The API answered ${response.status}.`;
-    try {
-      const body = (await response.json()) as { message?: string; error?: string };
-      detail = body.message ?? body.error ?? detail;
-    } catch {
-      // Keep the generic message.
-    }
-    throw new NewsroomApiError(detail, response.status);
-  }
-
-  return (await response.json()) as T;
-}
+export { ApiError, getAuthToken, setAuthToken };
+export { getCurrentUser, loginUser, logoutUser, registerUser };
+/** The shared client's block operations, under the names the studio uses. */
+export { addStoryBlock, updateStoryBlock, reorderBlocks };
 
 /** Search the newsroom's stories. */
 export async function searchStories(
@@ -108,8 +45,12 @@ export async function searchStories(
   params.set('limit', String(limit));
   params.set('offset', String(offset));
 
-  const body = await request<Envelope<Story[]>>(`/api/stories?${params.toString()}`);
+  const body = await request<{
+    data: Story[];
+    meta?: { total: number; limit: number; offset?: number; hasMore: boolean };
+  }>(`/api/stories?${params.toString()}`);
   const items = Array.isArray(body.data) ? body.data : [];
+
   return {
     items,
     total: body.meta?.total ?? items.length,
@@ -121,8 +62,7 @@ export async function searchStories(
 
 /** Read one story, with its blocks. */
 export async function getStory(id: string): Promise<Story> {
-  const body = await request<Story | Envelope<Story>>(`/api/stories/${encodeURIComponent(id)}`);
-  return unwrap(body);
+  return request<Story>(`/api/stories/${encodeURIComponent(id)}`);
 }
 
 /**
@@ -139,14 +79,13 @@ export async function commitStoryVersion(
   blocks: StoryBlock[],
   changeSummary: string
 ): Promise<{ versionNumber?: number }> {
-  const body = await request<{ versionNumber?: number } | Envelope<{ versionNumber?: number }>>(
+  return request<{ versionNumber?: number }>(
     `/api/stories/${encodeURIComponent(storyId)}/versions`,
     {
       method: 'POST',
       body: JSON.stringify({ blocks, changeSummary }),
     }
   );
-  return unwrap(body) ?? {};
 }
 
 /**
@@ -156,16 +95,6 @@ export async function commitStoryVersion(
  * appended at the end of the story, and the API records an audit entry for
  * it — unlike the in-place update, which records nothing.
  */
-export async function addStoryBlock(storyId: string, block: StoryBlock): Promise<StoryBlock> {
-  const body = await request<StoryBlock | Envelope<StoryBlock>>(
-    `/api/stories/${encodeURIComponent(storyId)}/blocks`,
-    {
-      method: 'POST',
-      body: JSON.stringify(block),
-    }
-  );
-  return unwrap(body);
-}
 
 /**
  * Replace one block in a story, in place.
@@ -174,16 +103,6 @@ export async function addStoryBlock(storyId: string, block: StoryBlock): Promise
  * no audit entry and no diff block. The story's version history will not
  * mention it.
  */
-export async function updateStoryBlock(storyId: string, block: StoryBlock): Promise<StoryBlock> {
-  const body = await request<StoryBlock | Envelope<StoryBlock>>(
-    `/api/stories/${encodeURIComponent(storyId)}/blocks/${encodeURIComponent(block.id)}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(block),
-    }
-  );
-  return unwrap(body);
-}
 
 /** A unique id for a block the studio has just built. */
 export function newBlockId(blockType: string): string {

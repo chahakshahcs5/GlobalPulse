@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import type { Publisher } from '@ai-news/schemas';
 import { CheckCircle2, Globe, Users, Plus, Check } from 'lucide-react';
-import { followTarget, unfollowTarget } from '../lib/api-client';
+import { followTarget, unfollowTarget } from '@ai-news/api-client';
 import { emitSourcesUpdated } from '../lib/event-bus';
 
 interface PublisherCardProps {

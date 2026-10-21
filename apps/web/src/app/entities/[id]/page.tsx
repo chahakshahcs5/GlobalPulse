@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEntity, listStories, listEvents } from '../../../lib/api-client';
+import { getEntity, listStories, listEvents } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import { ArrowLeft, Calendar, Newspaper } from 'lucide-react';
 import type { Story, Event as NewsEvent, Entity } from '@ai-news/schemas';

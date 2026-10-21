@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listSpecialDesks, listStories } from '../../lib/api-client';
+import { listSpecialDesks, listStories } from '@ai-news/api-client';
 import { useTaxonomy } from '../../lib/news-store';
 import { CANONICAL_CATEGORIES, type SpecialDesk, type Story } from '@ai-news/schemas';
 import { DynamicIcon } from '../../components/DynamicIcon';

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { getPublisherProfile, followTarget, unfollowTarget } from '../../../lib/api-client';
+import { getPublisherProfile, followTarget, unfollowTarget } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import {
   CheckCircle2,

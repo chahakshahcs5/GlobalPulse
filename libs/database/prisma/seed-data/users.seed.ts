@@ -1,5 +1,26 @@
 import type { NewsroomUser } from '@ai-news/schemas';
 
+/**
+ * The passwords for the seeded newsroom accounts.
+ *
+ * The product has one session, and a session starts with a sign-in. These
+ * accounts are the ones an editor signs in as — the newsroom portal offers
+ * them by name, and the Block Studio offers the same sign-in — so they have
+ * to be able to sign in.
+ *
+ * These are development credentials for accounts the seed itself creates.
+ * They are not secrets and are not meant to survive into production.
+ */
+export const baselineUserPasswords: Record<string, string> = {
+  usr_admin: 'Admin123!',
+  usr_editor: 'Editor123!',
+  usr_journalist_david: 'Journalist123!',
+  usr_journalist_amara: 'Journalist123!',
+  usr_factchecker_priya: 'Editor123!',
+  usr_reader_sarah: 'Reader123!',
+  usr_reader_aravind: 'Reader123!',
+};
+
 export const baselineUsers: NewsroomUser[] = [
   {
     id: 'usr_admin',

@@ -25,6 +25,8 @@
       "@ai-news/schemas": ["../../libs/schemas/src/index.ts"],
       "@ai-news/shared": ["../../libs/shared/src/index.ts"],
       "@ai-news/media": ["../../libs/media/src/index.ts"],
+      "@ai-news/api-client": ["../../libs/api-client/src/index.ts"],
+      "@ai-news/api-client/*": ["../../libs/api-client/src/*.ts"],
       "@ai-news/blocks-ui": ["../../libs/blocks-ui/src/index.ts"],
       "@ai-news/block-studio": ["../../libs/block-studio/src/index.ts"],
       "zod": ["../../libs/schemas/node_modules/zod"]

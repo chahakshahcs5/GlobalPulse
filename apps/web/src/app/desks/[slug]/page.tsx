@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { getSpecialDesk, listStories } from '../../../lib/api-client';
+import { getSpecialDesk, listStories } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import { SkeletonBone } from '../../../components/StorySkeletons';
 import { ArrowLeft, Radio, Pin, TrendingUp, Share2, Newspaper, Star } from 'lucide-react';

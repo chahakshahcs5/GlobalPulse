@@ -11,7 +11,7 @@ import {
   Newspaper,
   AlertCircle,
 } from 'lucide-react';
-import { getStoryFullCoverage } from '../lib/api-client';
+import { getStoryFullCoverage } from '@ai-news/api-client';
 
 interface FullCoverageModalProps {
   slug: string | null;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { listAuditLogs } from '../../../lib/api-client';
+import { listAuditLogs } from '@ai-news/api-client';
 import type { AuditLog } from '@ai-news/schemas';
 
 export default function AuditLogsPage() {

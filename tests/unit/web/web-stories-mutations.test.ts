@@ -16,7 +16,7 @@ const apiMocks = vi.hoisted(() => ({
   listStories: vi.fn(async () => [] as Story[]),
 }));
 
-vi.mock('../../../apps/web/src/lib/api-client', () => apiMocks);
+vi.mock('@ai-news/api-client', () => apiMocks);
 
 // Store module is imported after the mock so its internal `import * as api` binds to the mock.
 const {

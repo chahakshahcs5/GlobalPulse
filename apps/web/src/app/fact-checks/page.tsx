@@ -18,7 +18,7 @@ import {
   Sparkles,
   ShieldAlert,
 } from 'lucide-react';
-import { listFactChecks } from '../../lib/api-client';
+import { listFactChecks } from '@ai-news/api-client';
 import { formatLocalDate } from '../../lib/date-utils';
 import type { FactCheckClaim } from '@ai-news/schemas';
 

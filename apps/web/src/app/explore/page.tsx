@@ -16,7 +16,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useTaxonomy } from '../../lib/news-store';
-import { listPublishers } from '../../lib/api-client';
+import { listPublishers } from '@ai-news/api-client';
 import type { Publisher } from '@ai-news/schemas';
 import { DynamicIcon } from '../../components/DynamicIcon';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { listAuditLogs } from '../../../lib/api-client';
+import { listAuditLogs } from '@ai-news/api-client';
 import {
   Bot,
   Sparkles,

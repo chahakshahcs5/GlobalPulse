@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getStoryBySlug } from '../../../lib/api-client/stories';
+import { getStoryBySlug } from '@ai-news/api-client/stories';
 
 interface StoryLayoutProps {
   children: React.ReactNode;

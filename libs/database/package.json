@@ -9,6 +9,7 @@
     "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
   "dependencies": {
+    "@ai-news/auth": "workspace:*",
     "@ai-news/observability": "workspace:*",
     "@ai-news/schemas": "workspace:*",
     "@ai-news/shared": "workspace:*",

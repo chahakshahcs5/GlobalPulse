@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Story } from '@ai-news/schemas';
-import * as api from '../api-client';
+import * as api from '@ai-news/api-client';
 import { eventBus, emitStoriesUpdated } from '../event-bus';
 
 /** Event emitted after a story mutation so other hooks refetch */
@@ -16,6 +16,28 @@ export function useAllStories() {
   const [isApiConnected, setIsApiConnected] = useState(false);
   const fetchInProgress = useRef(false);
   const hasAttemptedFetch = useRef(false);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attempt = useRef(0);
+
+  /*
+   * A failed fetch is retried.
+   *
+   * The API is not always reachable — a tunnel closes, a deploy restarts
+   * it — and a newsroom that cannot reach the API for a moment should not
+   * be shown an empty newsroom. An empty list is a statement about the
+   * newsroom, and it has to be true.
+   */
+  const scheduleRetry = useCallback(() => {
+    if (retryTimer.current) return;
+    const delay = Math.min(2000 * 2 ** attempt.current, 15000);
+    attempt.current += 1;
+    retryTimer.current = setTimeout(() => {
+      retryTimer.current = null;
+      void fetchStoriesRef.current?.();
+    }, delay);
+  }, []);
+
+  const fetchStoriesRef = useRef<(() => Promise<void>) | null>(null);
 
   const fetchStories = useCallback(async () => {
     if (fetchInProgress.current) return;
@@ -25,16 +47,20 @@ export function useAllStories() {
       // API is reachable — use its data (even if empty)
       setStories(apiStories || []);
       setIsApiConnected(true);
+      attempt.current = 0;
     } catch {
       // API unreachable — do not substitute mock stories
       setStories([]);
       setIsApiConnected(false);
+      scheduleRetry();
     } finally {
       hasAttemptedFetch.current = true;
       fetchInProgress.current = false;
       setIsLoading(false);
     }
-  }, []);
+  }, [scheduleRetry]);
+
+  fetchStoriesRef.current = fetchStories;
 
   useEffect(() => {
     fetchStories();
@@ -70,6 +96,10 @@ export function useAllStories() {
     return () => {
       unsubscribeBus();
       unsubscribeRealtime?.();
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
     };
   }, [fetchStories]);
 
@@ -135,7 +165,10 @@ export async function updateUserStory(
   });
 
   // 2. If blocks are provided, commit a new version snapshot
-  if (storyData.blocks && storyData.blocks.length > 0) {
+  //
+  // An empty list is a change too: a story whose blocks were all removed
+  // has to be committed as well, or the removal never happens.
+  if (storyData.blocks !== undefined) {
     await api.createStoryVersion(storyId, {
       changeSummary: storyData.changeSummary || 'Story updated via Editorial CMS',
       title: storyData.title,

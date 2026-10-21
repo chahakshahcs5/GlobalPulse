@@ -11,7 +11,7 @@ import {
   getPollTally,
   getStoryComments,
   subscribeToRealtimeEvents,
-} from '../lib/api-client';
+} from '@ai-news/api-client';
 
 /**
  * The site router, handed to the shared block renderers so internal links

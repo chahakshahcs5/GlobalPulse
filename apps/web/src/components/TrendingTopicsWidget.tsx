@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { listTopics, getTrendingStories } from '../lib/api-client';
+import { listTopics, getTrendingStories } from '@ai-news/api-client';
 import { TrendingUp, Hash } from 'lucide-react';
 
 interface TrendingTopicsWidgetProps {

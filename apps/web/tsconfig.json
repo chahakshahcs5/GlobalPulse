@@ -34,6 +34,8 @@
       "@ai-news/search": ["../../libs/search/src/index.ts"],
       "@ai-news/auth": ["../../libs/auth/src/index.ts"],
       "@ai-news/media": ["../../libs/media/src/index.ts"],
+      "@ai-news/api-client": ["../../libs/api-client/src/index.ts"],
+      "@ai-news/api-client/*": ["../../libs/api-client/src/*.ts"],
       "@ai-news/blocks-ui": ["../../libs/blocks-ui/src/index.ts"],
       "@ai-news/block-studio": ["../../libs/block-studio/src/index.ts"]
     }

@@ -8,7 +8,7 @@ import {
   type NavTab,
   type Story,
 } from '@ai-news/schemas';
-import * as api from '../api-client';
+import * as api from '@ai-news/api-client';
 import { useAllStories } from './stories-store';
 import { eventBus, emitTaxonomyUpdated } from '../event-bus';
 

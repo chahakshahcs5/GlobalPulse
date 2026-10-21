@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { Story } from '@ai-news/schemas';
-import * as api from '../../../../lib/api-client';
+import * as api from '@ai-news/api-client';
 import { StoryIntelligenceDashboard } from '../../../../components/story-intelligence/StoryIntelligenceDashboard';
 
 export default function StoryIntelligencePage() {

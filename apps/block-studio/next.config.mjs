@@ -2,7 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
-  transpilePackages: ['@ai-news/blocks-ui', '@ai-news/block-studio', '@ai-news/schemas'],
+  transpilePackages: [
+    '@ai-news/api-client',
+    '@ai-news/blocks-ui',
+    '@ai-news/block-studio',
+    '@ai-news/schemas',
+  ],
   // The studio loads real blocks from the newsroom API, so it needs the same
   // proxy the web portal uses.
   async rewrites() {

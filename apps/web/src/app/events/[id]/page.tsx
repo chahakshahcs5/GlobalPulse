@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEvent, listStories, getEntity } from '../../../lib/api-client';
+import { getEvent, listStories, getEntity } from '@ai-news/api-client';
 import { MapRenderer } from '@ai-news/media';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import type { Story, Entity, Event as NewsEvent } from '@ai-news/schemas';

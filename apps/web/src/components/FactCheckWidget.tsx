@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listFactChecks } from '../lib/api-client';
+import { listFactChecks } from '@ai-news/api-client';
 import { ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 import type { FactCheckClaim } from '@ai-news/schemas';
 

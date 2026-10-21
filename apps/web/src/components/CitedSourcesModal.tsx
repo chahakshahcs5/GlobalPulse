@@ -13,7 +13,7 @@ import {
   Search,
 } from 'lucide-react';
 import type { Story, Source, StoryBlock } from '@ai-news/schemas';
-import { listSources } from '../lib/api-client';
+import { listSources } from '@ai-news/api-client';
 import { formatLocalDateTime } from '../lib/date-utils';
 
 interface CitedSourcesModalProps {

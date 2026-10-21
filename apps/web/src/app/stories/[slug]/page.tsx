@@ -23,7 +23,7 @@ import {
   Lock,
 } from 'lucide-react';
 import type { Story, StoryBlock } from '@ai-news/schemas';
-import * as api from '../../../lib/api-client';
+import * as api from '@ai-news/api-client';
 import { useAllStories, useBookmarks, toggleBookmark } from '../../../lib/news-store';
 import { StoryRenderer } from '../../../components/StoryRenderer';
 import { FullCoverageModal } from '../../../components/FullCoverageModal';

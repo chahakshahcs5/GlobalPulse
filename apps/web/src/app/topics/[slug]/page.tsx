@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { getTopicDossier, listStories } from '../../../lib/api-client';
+import { getTopicDossier, listStories } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../../lib/date-utils';
 import {
   ArrowLeft,

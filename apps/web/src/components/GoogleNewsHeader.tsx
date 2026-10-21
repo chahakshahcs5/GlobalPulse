@@ -22,6 +22,7 @@ import { useBookmarks, useTaxonomy } from '../lib/news-store';
 import { SearchModal } from './SearchModal';
 import { BookmarksDrawer } from './BookmarksDrawer';
 import { AuthModal, type UserSession } from './AuthModal';
+import { getCurrentUser, logoutUser } from '@ai-news/api-client';
 import { DynamicIcon } from './DynamicIcon';
 
 interface HeaderTabItem {
@@ -233,31 +234,42 @@ export const GoogleNewsHeader: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  /*
+   * The session belongs to the product, not to this page. The header asks
+   * the API who the user is, so a sign-in that happened in the Block Studio
+   * — or in another tab — is already here when the portal loads.
+   */
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('globalpulse_user');
-      if (savedUser) setCurrentUser(JSON.parse(savedUser));
-    } catch {
-      // Ignore
-    }
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!cancelled && user) {
+          setCurrentUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: (user.role as UserSession['role']) || 'reader',
+          });
+        }
+      } catch {
+        // Not signed in. The header shows the sign-in button.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLoginSuccess = (user: UserSession) => {
     setCurrentUser(user);
-    try {
-      localStorage.setItem('globalpulse_user', JSON.stringify(user));
-    } catch {
-      // Ignore
-    }
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    try {
-      localStorage.removeItem('globalpulse_user');
-    } catch {
-      // Ignore
-    }
+    void logoutUser();
   };
 
   useEffect(() => {

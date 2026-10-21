@@ -14,7 +14,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import type { Story, StoryIntelligence, Entity } from '@ai-news/schemas';
-import * as api from '../../lib/api-client';
+import * as api from '@ai-news/api-client';
 import { BlockItem } from '@ai-news/blocks-ui';
 
 /**

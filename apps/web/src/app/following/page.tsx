@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Layers, Newspaper, Rss, User } from 'lucide-react';
-import { listFollowingResolved } from '../../lib/api-client';
+import { listFollowingResolved } from '@ai-news/api-client';
 import { useMyNotifications } from '../../lib/news-store';
 import { formatDeterministicDateTime } from '../../lib/date-utils';
 import type { EditorialNotification } from '@ai-news/schemas';

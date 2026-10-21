@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { listStories } from '../../lib/api-client';
+import { listStories } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../lib/date-utils';
 import { AlgorithmTunerModal } from '../../components/AlgorithmTunerModal';
 import { TopicBalanceWidget } from '../../components/TopicBalanceWidget';

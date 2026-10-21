@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, X, Clock, BookOpen, Loader2 } from 'lucide-react';
 import { useAllStories } from '../lib/news-store';
-import * as api from '../lib/api-client';
+import * as api from '@ai-news/api-client';
 import { formatDeterministicDate } from '../lib/date-utils';
 
 interface SearchModalProps {

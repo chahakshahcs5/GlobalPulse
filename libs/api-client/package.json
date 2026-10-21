@@ -1,0 +1,18 @@
+{
+  "name": "@ai-news/api-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The newsroom API client, shared by the web portal, the Block Studio and anything else that talks to the API.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@ai-news/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

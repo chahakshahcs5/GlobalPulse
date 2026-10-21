@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Comment } from '@ai-news/schemas';
-import * as api from '../api-client';
+import * as api from '@ai-news/api-client';
 
 export function useStoryComments(storyId: string) {
   const [comments, setComments] = useState<Comment[]>([]);

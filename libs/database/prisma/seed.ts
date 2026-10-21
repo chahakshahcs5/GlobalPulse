@@ -21,6 +21,7 @@ import { logger } from '@ai-news/observability';
 import { CANONICAL_CATEGORIES, BASELINE_NAV_TABS } from '@ai-news/schemas';
 import {
   baselineUsers,
+  baselineUserPasswords,
   baselineTopics,
   baselineEntities,
   baselinePublishers,
@@ -33,6 +34,7 @@ import {
   commentsToSeed,
   baselineFactChecks,
 } from './seed-data';
+import { PasswordHasher } from '@ai-news/auth';
 
 export async function seedDatabase(db: DatabaseService): Promise<void> {
   logger.info('Starting enterprise database seed with canonical schema records...');
@@ -64,11 +66,29 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     }
   }
 
-  // 1. Baseline Users
+  /*
+   * 1. Baseline Users
+   *
+   * The seeded accounts are the ones an editor signs in as, so they are
+   * given passwords. An account that already exists but has none — the
+   * case for a database seeded before passwords were part of the seed —
+   * is given one too, and only then: a password that is already set is
+   * never overwritten.
+   */
   for (const u of baselineUsers) {
+    const password = baselineUserPasswords[u.id];
     const existing = await db.users.findById(u.id);
+
     if (!existing) {
-      await db.users.create(u);
+      await db.users.create(password ? { ...u, passwordHash: PasswordHasher.hash(password) } : u);
+      continue;
+    }
+
+    if (!existing.passwordHash && password) {
+      await db.users.update({
+        ...existing,
+        passwordHash: PasswordHasher.hash(password),
+      });
     }
   }
 

@@ -8,6 +8,7 @@
     "start": "next start -p 3002"
   },
   "dependencies": {
+    "@ai-news/api-client": "workspace:*",
     "@ai-news/block-studio": "workspace:*",
     "@ai-news/blocks-ui": "workspace:*",
     "lucide-react": "^1.48.0",
