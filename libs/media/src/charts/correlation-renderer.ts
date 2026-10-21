@@ -6,6 +6,13 @@ export interface RenderCorrelationOptions {
   width?: number;
   height?: number;
   theme?: 'dark' | 'light';
+  /**
+   * Whether to draw the title inside the SVG.
+   *
+   * A block that already shows the title as a real heading turns this off,
+   * so the reader is not shown the same title twice.
+   */
+  showTitle?: boolean;
 }
 
 /**
@@ -60,16 +67,18 @@ export class CorrelationRenderer {
     const count = matrix.variables.length;
 
     const labelWidth = 132;
-    const topPad = 96;
+    const topPad = options.showTitle === false ? 42 : 96;
     const bottomPad = 96;
     const gridW = width - labelWidth - 32;
     const gridH = height - topPad - bottomPad;
     const cellSize = Math.min(gridW, gridH) / count;
 
     let elements = '';
-    elements += `<text x="24" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
-    if (blockData.subtitle) {
-      elements += `<text x="24" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+    if (options.showTitle !== false) {
+      elements += `<text x="24" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
+      if (blockData.subtitle) {
+        elements += `<text x="24" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+      }
     }
 
     // Column headers

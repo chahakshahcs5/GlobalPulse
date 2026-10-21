@@ -271,7 +271,6 @@ export const PodcastBlockView: React.FC<{ data: PodcastBlock['data'] }> = ({ dat
 
 export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ data }) => {
   const peaks = data.peaks;
-  const mid = Math.floor(peaks.length / 2);
 
   return (
     <figure aria-label={data.title || 'Audio waveform'} className="my-6">
@@ -325,7 +324,7 @@ export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ d
           Source: {data.sourceAttribution}
         </p>
       )}
-      <span className="sr-only">{mid} amplitude samples rendered as bars</span>
+      <span className="sr-only">{peaks.length} amplitude samples rendered as bars</span>
     </figure>
   );
 };

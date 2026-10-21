@@ -5,6 +5,13 @@ export interface RenderKnowledgeGraphOptions {
   width?: number;
   height?: number;
   theme?: 'dark' | 'light';
+  /**
+   * Whether to draw the title inside the SVG.
+   *
+   * A block that already shows the title as a real heading turns this off,
+   * so the reader is not shown the same title twice.
+   */
+  showTitle?: boolean;
 }
 
 interface PositionedNode {
@@ -164,7 +171,9 @@ export class KnowledgeGraphRenderer {
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
     const centerX = width / 2;
-    const centerY = height / 2 + 18;
+    // The graph sits a little low when the SVG carries its own heading, so
+    // the title does not crowd the top ring.
+    const centerY = options.showTitle === false ? height / 2 : height / 2 + 18;
     const radius = Math.min(width / 2 - 130, height / 2 - 54);
 
     const positioned = KnowledgeGraphRenderer.layout(blockData, centerX, centerY, radius);
@@ -180,9 +189,11 @@ export class KnowledgeGraphRenderer {
     };
 
     let elements = '';
-    elements += `<text x="24" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
-    if (blockData.description) {
-      elements += `<text x="24" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.description)}</text>`;
+    if (options.showTitle !== false) {
+      elements += `<text x="24" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
+      if (blockData.description) {
+        elements += `<text x="24" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.description)}</text>`;
+      }
     }
 
     // The rings, so the distance from the focus is readable.

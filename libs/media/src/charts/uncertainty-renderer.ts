@@ -5,6 +5,13 @@ export interface RenderUncertaintyOptions {
   width?: number;
   height?: number;
   theme?: 'dark' | 'light';
+  /**
+   * Whether to draw the title inside the SVG.
+   *
+   * A block that already shows the title as a real heading turns this off,
+   * so the reader is not shown the same title twice.
+   */
+  showTitle?: boolean;
 }
 
 /**
@@ -55,7 +62,12 @@ export class UncertaintyRenderer {
 
     // The right padding has to hold the value and interval labels, which sit
     // past the end of the longest whisker.
-    const padding = { top: 78, right: 132, bottom: 62, left: 190 };
+    const padding = {
+      top: options.showTitle === false ? 30 : 78,
+      right: 132,
+      bottom: 62,
+      left: 190,
+    };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
@@ -70,9 +82,11 @@ export class UncertaintyRenderer {
     }
 
     let elements = '';
-    elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
-    if (blockData.subtitle) {
-      elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+    if (options.showTitle !== false) {
+      elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
+      if (blockData.subtitle) {
+        elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+      }
     }
 
     // Grid + value axis

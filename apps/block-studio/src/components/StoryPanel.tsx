@@ -97,7 +97,7 @@ export function StoryPanel({
               </span>
               {context.status && (
                 <span
-                  className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  className={`rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
                     context.status === 'PUBLISHED'
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
@@ -110,7 +110,7 @@ export function StoryPanel({
             <span className="mt-0.5 block truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">
               {context.storyTitle}
             </span>
-            <span className="mt-0.5 block font-mono text-[10px] tabular-nums text-slate-400">
+            <span className="mt-0.5 block font-mono text-[11px] tabular-nums text-slate-400">
               {blocks.length} block{blocks.length === 1 ? '' : 's'} in this story
             </span>
           </span>
@@ -138,7 +138,7 @@ export function StoryPanel({
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800/70'
                     }`}
                   >
-                    <span className="mt-px shrink-0 font-mono text-[10px] tabular-nums text-slate-400">
+                    <span className="mt-px shrink-0 font-mono text-[11px] tabular-nums text-slate-400">
                       {String(index + 1).padStart(2, '0')}
                     </span>
                     <span className="min-w-0 flex-1">

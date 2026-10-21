@@ -11,7 +11,10 @@ import { AnimatedMapRenderer } from '@ai-news/media';
  * spread rather than only its end state. The frames are ordered by the
  * publisher; the scrubber is the reader's control.
  */
-export const AnimatedMapBlockView: React.FC<{ data: AnimatedMapBlock['data'] }> = ({ data }) => {
+export const AnimatedMapBlockView: React.FC<{
+  data: AnimatedMapBlock['data'];
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
   const [frameIndex, setFrameIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(false);
 
@@ -43,11 +46,11 @@ export const AnimatedMapBlockView: React.FC<{ data: AnimatedMapBlock['data'] }> 
   const svg = React.useMemo(
     () =>
       AnimatedMapRenderer.renderFrame(data, frameIndex, {
-        theme: 'light',
+        theme,
         width: 800,
         height: 450,
       }),
-    [data, frameIndex]
+    [data, frameIndex, theme]
   );
 
   const frame = data.frames[frameIndex];

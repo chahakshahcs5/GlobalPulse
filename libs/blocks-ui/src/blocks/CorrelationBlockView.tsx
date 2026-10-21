@@ -11,12 +11,22 @@ import { CorrelationModel, CorrelationRenderer } from '@ai-news/media';
  * reader should be able to tell a strong, well-evidenced relationship from a
  * strong-looking one computed from three observations.
  */
-export const CorrelationBlockView: React.FC<{ data: CorrelationBlock['data'] }> = ({ data }) => {
+export const CorrelationBlockView: React.FC<{
+  data: CorrelationBlock['data'];
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
   const matrix = React.useMemo(() => CorrelationModel.compute(data), [data]);
   const summary = React.useMemo(() => CorrelationModel.summarise(matrix), [matrix]);
   const svg = React.useMemo(
-    () => CorrelationRenderer.renderToSvg(data, { theme: 'light', width: 800, height: 520 }),
-    [data]
+    () =>
+      CorrelationRenderer.renderToSvg(data, {
+        theme,
+        width: 800,
+        height: 520,
+        // The heading below already says this, so the chart does not repeat it.
+        showTitle: false,
+      }),
+    [data, theme]
   );
 
   const strongest = matrix.strongest;
