@@ -2,12 +2,14 @@
 
 import { useMemo } from 'react';
 import {
-  FormEditor,
-  buildDataFormFields,
+  BlockForm,
+  buildBlockFormSections,
   issuesByPath,
+  payloadOf,
   schemaForType,
   setAtPath,
-  validateBlockData,
+  validateBlockPayload,
+  type StudioPayload,
 } from '@ai-news/block-studio';
 import type { StoryBlock } from '@ai-news/schemas';
 
@@ -21,6 +23,11 @@ import type { StoryBlock } from '@ai-news/schemas';
  * It works on a real block — any type the platform supports — rather than
  * on a handful of special cases. A story is made of blocks, and the
  * composer edits the blocks the story actually has.
+ *
+ * The whole block is edited, not just its content: the presentation, the
+ * accessibility text, the provenance and the citations are as editable here
+ * as they are in the studio, and they are carried through when the block is
+ * saved.
  */
 export function BlockSchemaEditor({
   block,
@@ -29,18 +36,24 @@ export function BlockSchemaEditor({
 }: {
   block: StoryBlock;
   /** The payload as it was when the block was loaded, for marking changes. */
-  baseline?: Record<string, unknown>;
-  onChange: (data: StoryBlock['data']) => void;
+  baseline?: StudioPayload;
+  onChange: (payload: StudioPayload) => void;
 }) {
   const schema = useMemo(() => schemaForType(block.blockType), [block.blockType]);
-  const fields = useMemo(() => (schema ? buildDataFormFields(schema) : null), [schema]);
+  const sections = useMemo(
+    () => (schema ? buildBlockFormSections(block.blockType, schema) : null),
+    [block.blockType, schema]
+  );
+
+  const payload = useMemo(() => payloadOf(block), [block]);
+
   const validation = useMemo(
-    () => validateBlockData(block.blockType, block.data),
-    [block.blockType, block.data]
+    () => validateBlockPayload(block.blockType, payload),
+    [block.blockType, payload]
   );
   const issues = useMemo(() => issuesByPath(validation.issues), [validation.issues]);
 
-  if (!fields) {
+  if (!sections) {
     return (
       <p className="text-xs text-slate-500 dark:text-slate-400">
         No schema is registered for the {block.blockType} block.
@@ -60,14 +73,11 @@ export function BlockSchemaEditor({
         </ul>
       )}
 
-      <FormEditor
-        fields={fields.fields ?? []}
-        path=""
-        data={block.data}
+      <BlockForm
+        sections={sections}
+        payload={payload}
         baseline={baseline}
-        onChange={(path, value) =>
-          onChange(setAtPath(block.data, path, value) as StoryBlock['data'])
-        }
+        onChange={(path, value) => onChange(setAtPath(payload, path, value) as StudioPayload)}
         issues={issues}
       />
     </div>

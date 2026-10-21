@@ -10,6 +10,9 @@ import {
 } from '@ai-news/api-client';
 import { getCurrentUser, loginUser, logoutUser, registerUser } from '@ai-news/api-client';
 
+export { blockOf, payloadOf } from '@ai-news/block-studio';
+export type { StudioPayload } from '@ai-news/block-studio';
+
 /**
  * The newsroom API, as the studio uses it.
  *

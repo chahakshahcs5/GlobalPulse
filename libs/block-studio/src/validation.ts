@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getBlockDefinition } from '@ai-news/schemas';
+import type { StudioPayload } from './types';
 
 export interface ValidationIssue {
   /** Dot path to the offending value, e.g. `xAxis.key`. */
@@ -63,6 +64,50 @@ export function validateBlockData(type: string, data: unknown): ValidationResult
     message: error.message,
     value: error.path.length > 0 ? getAtPathSafe(data, issuePath(error)) : data,
   }));
+
+  return { ok: false, issues };
+}
+
+/**
+ * Validate a whole block payload against the schema the platform stores.
+ *
+ * The payload is the block without the platform's own bookkeeping — its
+ * content, its presentation, its accessibility text, its provenance and its
+ * citations — so all of it is checked, not just the content.
+ *
+ * The paths in the issues are relative to the payload's root, which is where
+ * the editor's form fields are addressed from: `data.url`,
+ * `presentation.width`, `accessibility.textSummary`.
+ */
+export function validateBlockPayload(type: string, payload: StudioPayload): ValidationResult {
+  const schema = schemaForType(type);
+  if (!schema) {
+    return {
+      ok: false,
+      issues: [{ path: '', message: `Unknown block type "${type}".` }],
+    };
+  }
+
+  // The registry stores the whole block envelope (id, blockType, sortOrder
+  // and everything else). The platform's own fields are filled in; the
+  // payload's are validated as they stand.
+  const result = schema.safeParse({
+    id: 'studio_preview',
+    blockType: type,
+    sortOrder: 0,
+    ...payload,
+  });
+
+  if (result.success) return { ok: true, issues: [] };
+
+  const issues: ValidationIssue[] = result.error.issues.map((error) => {
+    const path = error.path.map((segment) => String(segment)).join('.');
+    return {
+      path,
+      message: error.message,
+      value: error.path.length > 0 ? getAtPathSafe(payload, path) : payload,
+    };
+  });
 
   return { ok: false, issues };
 }

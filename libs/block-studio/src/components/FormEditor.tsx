@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, ChevronUp, Plus, Trash2 } from 'lucide-react
 import type { FormField } from '../form-schema';
 import type { ValidationIssue } from '../validation';
 import { getAtPath } from '../path';
+import { BLOCK_COLOR_SWATCHES, isFieldVisible } from '../hints';
 
 interface FieldControlProps {
   field: FormField;
@@ -15,6 +16,14 @@ interface FieldControlProps {
   onChange: (path: string, value: unknown) => void;
   issues: Map<string, ValidationIssue[]>;
   depth: number;
+  /**
+   * The whole payload, from its root.
+   *
+   * A field can depend on another one — a map's routes only apply to a
+   * route map — so the rule is read against the payload rather than
+   * against the value of the field being edited.
+   */
+  payload?: unknown;
 }
 
 const INPUT_CLASS =
@@ -88,13 +97,10 @@ function JsonField({
   path,
   value,
   onChange,
-  controlId,
 }: {
   path: string;
   value: unknown;
   onChange: (path: string, value: unknown) => void;
-  /** Ties the field to the label above it. */
-  controlId?: string;
 }) {
   const [draft, setDraft] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -132,7 +138,6 @@ function JsonField({
   return (
     <div>
       <textarea
-        id={controlId}
         value={text}
         onChange={(event) => handleChange(event.target.value)}
         onBlur={() => {
@@ -166,6 +171,139 @@ function JsonField({
 function hasChanged(value: unknown, baseline: unknown): boolean {
   if (value === undefined && baseline === undefined) return false;
   return JSON.stringify(value ?? null) !== JSON.stringify(baseline ?? null);
+}
+
+/**
+ * A colour, chosen from a swatch rather than typed.
+ *
+ * The palette is the one the renderers already draw with, so a colour picked
+ * here is a colour that already looks right in a story. The hex box stays,
+ * because a colour outside the palette is a legitimate choice — the schema
+ * still checks it either way.
+ */
+function ColorField({
+  path,
+  value,
+  onChange,
+}: {
+  path: string;
+  value: unknown;
+  onChange: (path: string, value: unknown) => void;
+}) {
+  const current = typeof value === 'string' ? value : '';
+  const isSwatch = (swatch: string) => current.toLowerCase() === swatch.toLowerCase();
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {BLOCK_COLOR_SWATCHES.map((swatch) => (
+          <button
+            key={swatch}
+            type="button"
+            title={swatch}
+            aria-label={`Use the colour ${swatch}`}
+            aria-pressed={isSwatch(swatch)}
+            onClick={() => onChange(path, swatch)}
+            className={`h-6 w-6 rounded-md border-2 transition-transform ${
+              isSwatch(swatch)
+                ? 'scale-110 border-blue-500'
+                : 'border-slate-200 hover:scale-105 dark:border-slate-700'
+            }`}
+            style={{ backgroundColor: swatch }}
+          />
+        ))}
+      </div>
+      <input
+        type="text"
+        value={current}
+        placeholder="#3b82f6"
+        spellCheck={false}
+        onChange={(event) => onChange(path, event.target.value)}
+        className={`${INPUT_CLASS} mt-2 font-mono`}
+      />
+    </div>
+  );
+}
+
+/**
+ * A short list of options, as a row of buttons.
+ *
+ * A dropdown hides the alternatives behind a click, and for a field with
+ * three or four choices the alternatives are the point — an editor should
+ * be able to see them all at once.
+ */
+function SegmentField({
+  field,
+  path,
+  value,
+  onChange,
+}: {
+  field: FormField;
+  path: string;
+  value: unknown;
+  onChange: (path: string, value: unknown) => void;
+}) {
+  const current = value === undefined || value === null ? '' : String(value);
+
+  return (
+    <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-slate-900/70">
+      {(field.options ?? []).map((option) => {
+        const isSelected = current === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() => onChange(path, option.value)}
+            className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+              isSelected
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-500 hover:bg-white hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A date.
+ *
+ * The value is a string, and it is often a full timestamp — a publication
+ * time, not a date. The picker edits the date part of it and leaves the
+ * time alone, so picking a day never silently drops the hour.
+ */
+function DateField({
+  path,
+  value,
+  onChange,
+}: {
+  path: string;
+  value: unknown;
+  onChange: (path: string, value: unknown) => void;
+}) {
+  const current = typeof value === 'string' ? value : '';
+  const datePart = /^\d{4}-\d{2}-\d{2}/.test(current) ? current.slice(0, 10) : '';
+  const timePart = /T(\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)/.exec(current)?.[1];
+
+  return (
+    <input
+      type="date"
+      value={datePart}
+      onChange={(event) => {
+        const next = event.target.value;
+        if (!next) {
+          onChange(path, '');
+          return;
+        }
+        onChange(path, timePart ? `${next}T${timePart}` : next);
+      }}
+      className={INPUT_CLASS}
+    />
+  );
 }
 
 /** A short label for an array item, so the collapsed list stays readable. */ function summariseItem(
@@ -205,6 +343,7 @@ function ArrayField({
   onChange,
   issues,
   depth,
+  payload,
 }: FieldControlProps) {
   const items = Array.isArray(value) ? value : [];
   const item = field.item;
@@ -218,17 +357,16 @@ function ArrayField({
   return (
     <div className={PANEL_CLASS}>
       <div className="flex items-center justify-between gap-2 px-2.5 py-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           {field.label}
-          <span className="ml-1.5 font-mono normal-case text-slate-500 dark:text-slate-400">
+          <span className="ml-1.5 font-mono normal-case text-slate-500">
             {items.length} item{items.length === 1 ? '' : 's'}
           </span>
         </span>
         <button
           type="button"
           onClick={() => replace([...items, item ? defaultValueFor(item) : null])}
-          aria-label={`Add an item to ${field.label}`}
-          className="flex min-h-6 items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <Plus className="h-3 w-3" />
           Add
@@ -236,9 +374,7 @@ function ArrayField({
       </div>
 
       {items.length === 0 && (
-        <p className="px-2.5 pb-2 text-[11px] italic text-slate-500 dark:text-slate-400">
-          No items yet.
-        </p>
+        <p className="px-2.5 pb-2 text-[11px] italic text-slate-500">No items yet.</p>
       )}
 
       <div className="space-y-1.5 px-2 pb-2">
@@ -258,24 +394,21 @@ function ArrayField({
                   onClick={() => toggle(index)}
                   aria-expanded={isOpen}
                   aria-label={isOpen ? `Collapse ${summary}` : `Expand ${summary}`}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-1 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
+                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
                 >
                   {isOpen ? (
                     <ChevronDown className="h-3 w-3 shrink-0" />
                   ) : (
                     <ChevronRight className="h-3 w-3 shrink-0" />
                   )}
-                  <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                    [{index}]
-                  </span>
+                  <span className="font-mono text-[11px] text-slate-400">[{index}]</span>
                   <span className="truncate">{summary}</span>
                 </button>
 
                 <div className="flex shrink-0 items-center gap-0.5">
                   <button
                     type="button"
-                    aria-label={`Move ${summary} up`}
-                    title="Move up"
+                    aria-label="Move up"
                     disabled={index === 0}
                     onClick={() => {
                       const next = [...items];
@@ -283,14 +416,13 @@ function ArrayField({
                       [next[index - 1], next[index]] = [next[index], next[index - 1]];
                       replace(next);
                     }}
-                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
-                    <ChevronUp className="h-3.5 w-3.5" />
+                    <ChevronUp className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
-                    aria-label={`Move ${summary} down`}
-                    title="Move down"
+                    aria-label="Move down"
                     disabled={index === items.length - 1}
                     onClick={() => {
                       const next = [...items];
@@ -298,18 +430,17 @@ function ArrayField({
                       [next[index + 1], next[index]] = [next[index], next[index + 1]];
                       replace(next);
                     }}
-                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronDown className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
-                    aria-label={`Remove ${summary}`}
-                    title="Remove"
+                    aria-label="Remove"
                     onClick={() => replace(items.filter((_, i) => i !== index))}
-                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/20 dark:hover:text-rose-300"
+                    className="rounded p-1 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-500/20 dark:hover:text-rose-300"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   </button>
                 </div>
               </div>
@@ -328,6 +459,7 @@ function ArrayField({
                           onChange={onChange}
                           issues={issues}
                           depth={depth + 1}
+                          payload={payload}
                         />
                       ))}
                     </div>
@@ -341,6 +473,7 @@ function ArrayField({
                         onChange={onChange}
                         issues={issues}
                         depth={depth + 1}
+                        payload={payload}
                       />
                     )
                   )}
@@ -369,19 +502,39 @@ function FieldControl({
   onChange,
   issues,
   depth,
+  payload,
 }: FieldControlProps) {
   const fieldIssues = issues.get(path) ?? [];
   const hasError = fieldIssues.length > 0;
   const changed = hasChanged(value, baselineValue);
 
+  /** Whether an advanced field has been opened. */
+  const [opened, setOpened] = React.useState(false);
+
+  /**
+   * Whether the field applies.
+   *
+   * A field can depend on another one — a map's routes only apply to a
+   * route map — so a field that does not apply is not drawn at all. An
+   * editor is never shown a control that would have no effect.
+   */
+  const visible = isFieldVisible(field.visibleWhen, (target) => getAtPath(payload, target));
+  if (!visible) return null;
+
   if (field.kind === 'object') {
+    const children = (field.fields ?? []).filter((child) =>
+      isFieldVisible(child.visibleWhen, (target) => getAtPath(payload, target))
+    );
+    // An object whose every child is out of scope has nothing to show.
+    if (children.length === 0) return null;
+
     return (
       <fieldset className={`${PANEL_CLASS} ${depth === 0 ? 'p-2.5' : 'p-2'}`}>
-        <legend className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <legend className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
           {field.label}
         </legend>
         <div className="space-y-2.5">
-          {(field.fields ?? []).map((child) => (
+          {children.map((child) => (
             <FieldControl
               key={child.key}
               field={child}
@@ -391,6 +544,7 @@ function FieldControl({
               onChange={onChange}
               issues={issues}
               depth={depth + 1}
+              payload={payload}
             />
           ))}
         </div>
@@ -408,6 +562,7 @@ function FieldControl({
         onChange={onChange}
         issues={issues}
         depth={depth}
+        payload={payload}
       />
     );
   }
@@ -418,48 +573,71 @@ function FieldControl({
     </p>
   ) : null;
 
-  /*
-   * The label is tied to the control by id, so a screen reader announces
-   * the field's name with the control rather than reading the label as an
-   * unlabelled paragraph of text above it.
-   */
-  const controlId = `field_${path}`;
+  /** The guidance a hint attached to the field. */
+  const helpLine = field.help ? (
+    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{field.help}</p>
+  ) : null;
 
   const label = (
-    <label htmlFor={controlId} className="mb-1 flex items-baseline gap-1.5">
+    <label className="mb-1 flex items-baseline gap-1.5">
       <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
         {field.label}
       </span>
-      {!field.required && (
-        <span className="text-[11px] uppercase text-slate-500 dark:text-slate-400">optional</span>
-      )}
+      {field.unit && <span className="font-mono text-[10px] text-slate-500">{field.unit}</span>}
+      {!field.required && <span className="text-[9px] uppercase text-slate-500">optional</span>}
       {changed && (
         <span
           title="Changed since this payload was loaded"
-          className="rounded bg-amber-100 px-1 py-px text-[11px] font-bold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+          className="rounded bg-amber-100 px-1 py-px text-[9px] font-bold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
         >
           edited
         </span>
       )}
       {hasError && (
-        <span className="text-[11px] font-bold uppercase text-rose-600 dark:text-rose-400">
+        <span className="text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400">
           invalid
         </span>
       )}
     </label>
   );
 
-  if (field.kind === 'boolean') {
-    /*
-     * A boolean the payload leaves unset shows its schema default, so the
-     * control agrees with what the renderer actually does. `chart.legend.show`
-     * defaults to true, so an absent legend is drawn — and the checkbox says
-     * so too.
-     */
-    const effective = value === undefined ? Boolean(field.defaultValue) : Boolean(value);
-
+  /**
+   * An advanced field is folded away until it is asked for.
+   *
+   * Some options matter to a specialist and mean nothing to most editors —
+   * a chart's facet field, a table's page size. Keeping them out of the way
+   * is what makes a long form readable, without hiding them.
+   */
+  if (field.advanced && !opened) {
     return (
       <div>
+        <button
+          type="button"
+          onClick={() => setOpened(true)}
+          className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+        >
+          <ChevronRight className="h-3 w-3" />
+          {field.label}
+          <span className="text-[9px] uppercase text-slate-400">advanced</span>
+        </button>
+        {helpLine}
+        {errorLine}
+      </div>
+    );
+  }
+
+  /** The control itself, drawn the way the field's control asks for. */
+  const control = (() => {
+    if (field.kind === 'boolean') {
+      /*
+       * A boolean the payload leaves unset shows its schema default, so the
+       * control agrees with what the renderer actually does. `chart.legend.show`
+       * defaults to true, so an absent legend is drawn — and the checkbox says
+       * so too.
+       */
+      const effective = value === undefined ? Boolean(field.defaultValue) : Boolean(value);
+
+      return (
         <div className="flex items-center gap-2">
           <input
             id={`field_${path}`}
@@ -472,17 +650,24 @@ function FieldControl({
             {field.label}
           </label>
         </div>
-        {errorLine}
-      </div>
-    );
-  }
+      );
+    }
 
-  if (field.kind === 'select') {
-    return (
-      <div>
-        {label}
+    if (field.control === 'segment') {
+      return <SegmentField field={field} path={path} value={value} onChange={onChange} />;
+    }
+
+    if (field.control === 'color') {
+      return <ColorField path={path} value={value} onChange={onChange} />;
+    }
+
+    if (field.control === 'date') {
+      return <DateField path={path} value={value} onChange={onChange} />;
+    }
+
+    if (field.kind === 'select') {
+      return (
         <select
-          id={controlId}
           value={
             value === undefined || value === null
               ? field.defaultValue === undefined
@@ -508,88 +693,79 @@ function FieldControl({
             </option>
           ))}
         </select>
-        {errorLine}
-      </div>
-    );
-  }
+      );
+    }
 
-  if (field.kind === 'number') {
-    return (
-      <div>
-        {label}
-        <input
-          id={controlId}
-          type="number"
-          value={
-            typeof value === 'number' && Number.isFinite(value)
-              ? value
-              : value === undefined || value === null || value === ''
-                ? ''
-                : String(value)
-          }
-          min={field.min}
-          max={field.max}
-          step={field.step ?? 'any'}
-          placeholder={placeholderFor(field)}
-          onChange={(event) => {
-            const raw = event.target.value;
-            if (raw === '') {
-              onChange(path, undefined);
-              return;
+    if (field.kind === 'number') {
+      return (
+        <div>
+          {label}
+          <input
+            id={`field_${path}`}
+            type="number"
+            value={
+              typeof value === 'number' && Number.isFinite(value)
+                ? value
+                : value === undefined || value === null || value === ''
+                  ? ''
+                  : String(value)
             }
-            const parsed = Number(raw);
-            onChange(path, Number.isNaN(parsed) ? raw : parsed);
-          }}
-          className={INPUT_CLASS}
-        />
-        {(field.min !== undefined || field.max !== undefined) && (
-          <p className="mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-            {field.min ?? '−∞'} … {field.max ?? '∞'}
-          </p>
-        )}
-        {errorLine}
-      </div>
-    );
-  }
+            min={field.min}
+            max={field.max}
+            step={field.step ?? 'any'}
+            placeholder={placeholderFor(field)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (raw === '') {
+                onChange(path, undefined);
+                return;
+              }
+              const parsed = Number(raw);
+              onChange(path, Number.isNaN(parsed) ? raw : parsed);
+            }}
+            className={INPUT_CLASS}
+          />
+          {(field.min !== undefined || field.max !== undefined) && (
+            <p className="mt-0.5 font-mono text-[9px] text-slate-500">
+              {field.min ?? '−∞'} … {field.max ?? '∞'}
+            </p>
+          )}
+        </div>
+      );
+    }
 
-  if (field.kind === 'textarea') {
-    return (
-      <div>
-        {label}
+    if (field.kind === 'textarea') {
+      return (
         <textarea
-          id={controlId}
           rows={3}
           value={value === undefined || value === null ? '' : String(value)}
           placeholder={placeholderFor(field)}
           onChange={(event) => onChange(path, event.target.value)}
           className={`${INPUT_CLASS} resize-y font-mono leading-relaxed`}
         />
-        {errorLine}
-      </div>
-    );
-  }
+      );
+    }
 
-  if (field.kind === 'json') {
+    if (field.kind === 'json') {
+      return <JsonField path={path} value={value} onChange={onChange} />;
+    }
+
     return (
-      <div>
-        {label}
-        <JsonField path={path} value={value} onChange={onChange} controlId={controlId} />
-        {errorLine}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {label}
       <input
-        id={controlId}
         type={field.format === 'url' ? 'url' : 'text'}
         value={value === undefined || value === null ? '' : String(value)}
         placeholder={placeholderFor(field)}
         onChange={(event) => onChange(path, event.target.value)}
         className={INPUT_CLASS}
       />
+    );
+  })();
+
+  return (
+    <div>
+      {label}
+      {control}
+      {helpLine}
       {errorLine}
     </div>
   );
@@ -606,16 +782,27 @@ export interface FormEditorProps {
   baseline?: unknown;
   onChange: (path: string, value: unknown) => void;
   issues: Map<string, ValidationIssue[]>;
+  /**
+   * The whole payload, from its root.
+   *
+   * Fields that depend on other fields are decided against the payload
+   * rather than against the value of the field being edited.
+   */
+  payload?: unknown;
 }
 
 /** The generated form for a block's payload. */
-export function FormEditor({ fields, path, data, baseline, onChange, issues }: FormEditorProps) {
+export function FormEditor({
+  fields,
+  path,
+  data,
+  baseline,
+  onChange,
+  issues,
+  payload,
+}: FormEditorProps) {
   if (fields.length === 0) {
-    return (
-      <p className="text-[13px] text-slate-500 dark:text-slate-400">
-        This block has no editable fields.
-      </p>
-    );
+    return <p className="text-[13px] text-slate-500">This block has no editable fields.</p>;
   }
 
   return (
@@ -630,6 +817,7 @@ export function FormEditor({ fields, path, data, baseline, onChange, issues }: F
           onChange={onChange}
           issues={issues}
           depth={0}
+          payload={payload}
         />
       ))}
     </div>

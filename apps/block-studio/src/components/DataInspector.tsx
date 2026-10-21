@@ -3,27 +3,37 @@
 import React from 'react';
 import { AlertTriangle, PanelRight, RotateCcw } from 'lucide-react';
 import {
-  buildDataFormFields,
+  BlockForm,
+  buildBlockFormSections,
   issuesByPath,
   schemaForType,
   setAtPath,
+  type StudioPayload,
   type ValidationResult,
 } from '@ai-news/block-studio';
 import type { InspectorTab } from './StudioShell';
-import { FormEditor, JsonEditor } from '@ai-news/block-studio';
+import { JsonEditor } from '@ai-news/block-studio';
 
 interface DataInspectorProps {
   blockType: string;
-  data: Record<string, unknown>;
+  /**
+   * The whole block, minus the platform's bookkeeping.
+   *
+   * The content is one part of it. The block's presentation, its
+   * accessibility text, its provenance and its citations are edited in the
+   * same inspector, because they are as much a part of the block as its
+   * words are.
+   */
+  payload: StudioPayload;
   /** The payload as it was when it was loaded, for marking what changed. */
-  baseline?: Record<string, unknown>;
+  baseline?: StudioPayload;
   tab: InspectorTab;
   validation: ValidationResult;
   open: boolean;
   /** The class that turns on the chrome's dark utilities. */
   darkClass: string;
   onTabChange: (tab: InspectorTab) => void;
-  onChange: (data: Record<string, unknown>) => void;
+  onChange: (payload: StudioPayload) => void;
   onReset: () => void;
   onToggleOpen: () => void;
 }
@@ -37,7 +47,7 @@ interface DataInspectorProps {
  */
 export function DataInspector({
   blockType,
-  data,
+  payload,
   baseline,
   tab,
   validation,
@@ -49,14 +59,17 @@ export function DataInspector({
   onToggleOpen,
 }: DataInspectorProps) {
   const schema = React.useMemo(() => schemaForType(blockType), [blockType]);
-  const fields = React.useMemo(() => (schema ? buildDataFormFields(schema) : null), [schema]);
+  const sections = React.useMemo(
+    () => (schema ? buildBlockFormSections(blockType, schema) : null),
+    [blockType, schema]
+  );
   const issueMap = React.useMemo(() => issuesByPath(validation.issues), [validation.issues]);
 
   const handleFieldChange = React.useCallback(
     (path: string, value: unknown) => {
-      onChange(setAtPath(data, path, value));
+      onChange(setAtPath(payload, path, value) as StudioPayload);
     },
-    [data, onChange]
+    [payload, onChange]
   );
 
   if (!open) {
@@ -120,7 +133,7 @@ export function DataInspector({
           <button
             type="button"
             onClick={onReset}
-            title="Restore this variant's sample payload"
+            title="Restore this variant's content"
             className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -157,11 +170,10 @@ export function DataInspector({
           JSON draft.
         */}
         <div className={tab === 'form' ? '' : 'hidden'}>
-          {fields ? (
-            <FormEditor
-              fields={fields.fields ?? []}
-              path=""
-              data={data}
+          {sections ? (
+            <BlockForm
+              sections={sections}
+              payload={payload}
               baseline={baseline}
               onChange={handleFieldChange}
               issues={issueMap}
@@ -173,7 +185,10 @@ export function DataInspector({
           )}
         </div>
         <div className={tab === 'json' ? '' : 'hidden'}>
-          <JsonEditor data={data} onChange={onChange} />
+          <JsonEditor
+            data={payload}
+            onChange={(next) => onChange(next as unknown as StudioPayload)}
+          />
         </div>
       </div>
     </aside>

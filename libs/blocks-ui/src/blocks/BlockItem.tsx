@@ -4,6 +4,7 @@ import React from 'react';
 import type { StoryBlock } from '@ai-news/schemas';
 import { MapRenderer, VisualDiffRenderer } from '@ai-news/media';
 import { renderInlineMarkdown } from './inline-markdown';
+import { presentationClass } from './presentation';
 import { TableBlockView } from './TableBlockView';
 import { ChartBlockView } from './ChartBlockView';
 import { AudioBlockView } from './AudioBlockView';
@@ -58,12 +59,20 @@ import {
   DatasetBlockView,
 } from './MediaExpansionViews';
 
-export const BlockItem: React.FC<{
-  block: StoryBlock;
-  theme: 'dark' | 'light';
-  /** Parent story id — required by blocks that talk to the server. */
-  storyId?: string;
-}> = ({ block, theme, storyId }) => {
+/**
+ * Draw the block itself.
+ *
+ * Every block type has its own view, and the presentation options — how
+ * wide it is, how it is aligned, which theme it is drawn in — are applied
+ * around that view rather than inside it. That is what lets one set of
+ * options apply to all fifty-five block types without each of them having
+ * to know about them.
+ */
+function renderBlock(
+  block: StoryBlock,
+  theme: 'dark' | 'light',
+  storyId?: string
+): React.ReactNode {
   switch (block.blockType) {
     case 'heading': {
       const { level, text, subtext } = block.data;
@@ -545,4 +554,43 @@ export const BlockItem: React.FC<{
     default:
       return null;
   }
+}
+
+/**
+ * A block, drawn with its presentation applied.
+ *
+ * The presentation lives on the block's envelope rather than in its data,
+ * because it describes how the block sits in the story rather than what the
+ * block says — the same chart can appear at two widths in two stories
+ * without its payload changing.
+ */
+export const BlockItem: React.FC<{
+  block: StoryBlock;
+  theme: 'dark' | 'light';
+  /** Parent story id — required by blocks that talk to the server. */
+  storyId?: string;
+}> = ({ block, theme, storyId }) => {
+  const presentation = block.presentation;
+
+  /*
+   * A block that pins its own theme is drawn in that theme, whichever theme
+   * the page is in. `inherit` — and a block with no presentation at all —
+   * follows the page.
+   */
+  const effectiveTheme =
+    presentation?.theme === 'light' || presentation?.theme === 'dark' ? presentation.theme : theme;
+
+  /*
+   * A block with no presentation is drawn exactly as it always was: no
+   * wrapper, no classes, nothing that could move it on the page.
+   */
+  if (!presentation) {
+    return <>{renderBlock(block, effectiveTheme, storyId)}</>;
+  }
+
+  return (
+    <div className={presentationClass(presentation)}>
+      {renderBlock(block, effectiveTheme, storyId)}
+    </div>
+  );
 };

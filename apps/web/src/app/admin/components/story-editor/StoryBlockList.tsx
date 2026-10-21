@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, ChevronUp, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
+import { blockOf, type StudioPayload } from '@ai-news/block-studio';
 import { BlockTypePicker } from './BlockTypePicker';
 import { BlockSchemaEditor } from './BlockSchemaEditor';
 import type { BlockChange } from './types';
@@ -85,12 +86,22 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
     );
   };
 
-  const update = (id: string, data: StoryBlock['data']) => {
+  /**
+   * A block was edited.
+   *
+   * The whole block is rebuilt from the payload, so the presentation, the
+   * accessibility text, the provenance and the citations travel with it — a
+   * block that is edited in the composer keeps everything it had.
+   */
+  const update = (id: string, payload: StudioPayload) => {
     const changed = blocks.find((block) => block.id === id);
     if (!changed) return;
+
+    const rebuilt = blockOf(changed.blockType, changed.id, changed.sortOrder, payload);
+
     onChange(
-      blocks.map((block) => (block.id === id ? { ...block, data } : block)) as StoryBlock[],
-      { kind: 'edited', block: { ...changed, data } as StoryBlock }
+      blocks.map((block) => (block.id === id ? rebuilt : block)),
+      { kind: 'edited', block: rebuilt }
     );
   };
 

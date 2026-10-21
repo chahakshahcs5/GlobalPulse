@@ -164,19 +164,15 @@ export function PreviewCanvas({
 
   const copy = React.useCallback(
     async (what: 'json' | 'block') => {
+      /*
+       * The content is copied on its own; the block is copied whole, so it
+       * carries its presentation, its accessibility text, its provenance and
+       * its citations with it.
+       */
       const text =
         what === 'json'
           ? JSON.stringify(previewBlock.data, null, 2)
-          : JSON.stringify(
-              {
-                id: previewBlock.id,
-                blockType: previewBlock.blockType,
-                sortOrder: previewBlock.sortOrder,
-                data: previewBlock.data,
-              },
-              null,
-              2
-            );
+          : JSON.stringify(previewBlock, null, 2);
       try {
         await navigator.clipboard.writeText(text);
         setCopied(what);

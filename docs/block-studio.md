@@ -28,7 +28,7 @@ reader sees.
 | --------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Catalog** (left)    | Every registered block type, grouped by the registry's own categories. Searchable, and each category collapses. |
 | **Preview** (centre)  | The block, rendered live. Light or dark, at mobile, tablet or full width.                                       |
-| **Inspector** (right) | The payload: a form generated from the block's schema, or the raw JSON.                                         |
+| **Inspector** (right) | The block: a form generated from the block's schema, section by section, or the raw JSON.                       |
 
 Both side panels collapse from their own headers, so the preview can have the
 whole screen. The studio's own light/dark theme and the preview's light/dark
@@ -60,10 +60,114 @@ from somewhere else. Both tabs write to the same payload, and the preview
 updates as you type.
 
 Every field is checked against the block's schema as you edit, and the errors
-are shown next to the field that caused them, with the path that failed. The
-**Defaults** button fills in the schema's declared defaults for any field the
-payload leaves unset, so an editor never has to guess what the platform would
-do with a blank field.
+are shown next to the field that caused them, with the path that failed.
+
+## The block, not just its content
+
+A block is more than its words. Every block also says how it is presented,
+how it is described for readers who cannot see it, where its content came
+from, and what it cites. The inspector edits all of it, in sections:
+
+| Section           | What it holds                                                              |
+| ----------------- | -------------------------------------------------------------------------- |
+| **Content**       | What the block says.                                                       |
+| **Presentation**  | How the block sits in the story: its width, its alignment, its theme.      |
+| **Accessibility** | The block's accessible name, its description and its text summary.         |
+| **Provenance**    | Where the content came from, how it was produced, and what licence it has. |
+| **Citations**     | The registered sources the block draws on.                                 |
+
+Only _Content_ starts open; the rest are one click away, because they are
+used far less often.
+
+The sections are generated from the schema, so a block type that has nothing
+to say about its provenance simply has no provenance section. The **JSON**
+tab shows the whole payload, envelope and all.
+
+Because the whole block is carried — not just its content — a block that
+goes into the studio and comes back keeps its accessibility text, its
+methodology note, its licence and its citations. It used to lose them: the
+studio rebuilt the block from its content alone, and the API replaces a block
+wholesale, so everything outside `data` was dropped on the way back to the
+story.
+
+## How a field is edited
+
+The schema says what a block may contain. It cannot say how that content
+should be _edited_, so the studio keeps a small layer of **hints** beside
+it, in `libs/block-studio/src/hints.ts`:
+
+```ts
+export interface FieldHint {
+  label?: string; // replace the label generated from the field's name
+  help?: string; // a line of guidance under the control
+  group?: string; // the group the field belongs to
+  order?: number; // its position within the group
+  unit?: string; // a suffix, e.g. `%` or `km`
+  advanced?: boolean; // collapsed until it is asked for
+  visibleWhen?: { field: string; equals?: unknown; in?: unknown[] };
+  control?: 'color' | 'segment' | 'date';
+}
+```
+
+A hint never changes what the payload may be — the schema still has the last
+word on that, and the validator still checks against it. It only changes how
+the field is presented.
+
+The hints in use today:
+
+- **Groups.** A chart's fields are grouped into _Chart_, _Headline_, _Axes_,
+  _Data_, _Annotations_ and _Sourcing_, so a payload of forty-seven fields
+  reads as a handful of things an editor recognises.
+- **Better controls.** A colour is picked from a swatch rather than typed as
+  `#3b82f6`; a short list of options — an image's aspect ratio, a callout's
+  style, a legend's position — is a row of buttons rather than a dropdown; a
+  date is a date picker.
+- **Conditions.** A map's routes are only shown for a route map, and a
+  chart's facet field only for a small-multiples chart. An editor is never
+  shown a control that would have no effect.
+- **Guidance.** Fields that are easy to get wrong — an axis label, a
+  methodology note — say what belongs in them.
+
+Adding a hint for a field is a one-line change, and it applies to the studio
+and the newsroom composer at once, because they share the form.
+
+## Styling
+
+Styling is exposed in two places, and deliberately not as a free-form style
+editor.
+
+**The style options a block already declares** are edited properly. A chart's
+series colours, its legend, an image's aspect ratio and a gallery's layout
+are all part of the block's content, and the hints give them the controls
+they deserve.
+
+**The presentation options every block shares** live on the block's
+envelope rather than in its content, because they describe how the block sits
+in the story rather than what it says — the same chart can appear at two
+widths in two stories without its payload changing.
+
+| Option  | Values                        | What it does                                                            |
+| ------- | ----------------------------- | ----------------------------------------------------------------------- |
+| `width` | `column`, `contained`, `full` | The story's own width, a narrower measure inside it, or the whole page. |
+| `align` | `left`, `center`, `right`     | How a contained block sits within the column.                           |
+| `theme` | `inherit`, `light`, `dark`    | Which theme the block's graphics are drawn in.                          |
+
+A block with no presentation is laid out exactly as it was before
+presentation existed — the options apply around the block, and a block that
+asks for nothing gets nothing.
+
+They are applied around the block, in one place, so they work for all
+fifty-five block types without each of them having to know about them.
+
+Two things are deliberately _not_ offered:
+
+- **Free-form CSS.** The renderers interpolate values into SVG attributes, so
+  an open-ended string is a safety risk as well as a design risk. The schema
+  constrains a colour to a plain CSS colour for exactly this reason.
+- **Per-block palettes.** The renderers are drawn against the design system's
+  palette; a per-block palette would mean rewriting thirty views and eight
+  SVG renderers, and would fight the design system. A publication's own
+  colours are a publication-level setting, not a per-block one.
 
 ## Loading a real block, and saving it back
 
@@ -143,6 +247,10 @@ choosing. Saved variants live in your own browser, so a variant you are
 working on does not become everyone's default; the samples in the repository
 are untouched. A saved variant can be removed again from the variant bar.
 
+A variant is a _treatment of the content_. What the block says about itself
+— its accessibility text, its provenance, its citations — belongs to the
+block, so it stays put when you switch variant.
+
 ## Seeing what you changed
 
 A field you have edited is marked **edited**, so an editor can see at a
@@ -173,6 +281,11 @@ renderers in `@ai-news/media`, so `chart.legend` counts as used only when
 `chartData.legend` is actually read — not when the file merely contains the
 word "legend".
 
+The presentation options are audited too. They are read in one place — the
+wrapper around the renderers, in `BlockItem.tsx` — rather than in each
+block's own view, and the audit checks them there, so adding one without
+honouring it is caught the same way.
+
 ## Adding a block type to the studio
 
 When you add a new block type to the platform, add a sample for it:
@@ -185,6 +298,11 @@ When you add a new block type to the platform, add a sample for it:
 Step 4 is the only one specific to the studio, and a block type with no
 sample still appears in the catalog with an empty payload.
 
+Its form is generated from the schema, so a new block type is editable
+without any studio work. If its fields would be clearer with a group, a
+guidance line or a better control, add a hint for it in
+`libs/block-studio/src/hints.ts` — but a hint is never required.
+
 `tests/unit/blocks/block-studio-samples.test.ts` checks that every sample
 validates against its schema and that the generated form reaches every part
 of the payload, so a sample cannot quietly drift away from its block.
@@ -196,14 +314,26 @@ libs/blocks-ui/       The shared renderers. The web app and the studio both
                       render blocks through this package, which is what makes
                       a preview trustworthy.
 libs/block-studio/    The engine: the catalog, the variants, the Zod → form
-                      converter, the validator — and the editing components
-                      themselves, so a host can reuse the form.
+                      converter, the hints, the validator — and the editing
+                      components themselves, so a host can reuse the form.
 libs/api-client/      The one door to the newsroom API. The web portal, the
                       Block Studio and anything else that talks to the API go
                       through it, so they all speak the same dialect and
                       share the same session.
 apps/block-studio/    The studio UI.
 ```
+
+Inside `libs/block-studio/src`:
+
+| File             | What it holds                                                       |
+| ---------------- | ------------------------------------------------------------------- |
+| `registry.ts`    | The catalog: every block type, with its variants.                   |
+| `samples.ts`     | The sample payloads the studio previews.                            |
+| `form-schema.ts` | The Zod → form converter, and the block's sections and groups.      |
+| `hints.ts`       | How each field is edited: its group, its guidance, its control.     |
+| `validation.ts`  | The validator, for the content alone and for the whole payload.     |
+| `payload.ts`     | Reading a payload off a block, and building a block from a payload. |
+| `components/`    | The editing components: `FormEditor`, `BlockForm`, `JsonEditor`.    |
 
 ### The same form in the newsroom CMS
 

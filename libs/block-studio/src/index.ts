@@ -9,10 +9,13 @@
  */
 export * from './types';
 export * from './form-schema';
+export * from './hints';
 export * from './handoff';
 export * from './path';
+export * from './payload';
 export * from './registry';
 export * from './samples';
 export * from './validation';
+export * from './components/BlockForm';
 export * from './components/FormEditor';
 export * from './components/JsonEditor';

@@ -26,11 +26,53 @@ export const BlockAccessibilitySchema = z.object({
 });
 export type BlockAccessibility = z.infer<typeof BlockAccessibilitySchema>;
 
+/**
+ * How a block is presented, independently of its content.
+ *
+ * These are the options every block type shares — how wide it sits, how it
+ * is aligned in the column, and which theme it is drawn in. They live on the
+ * envelope rather than in `data`, because they are the block's *presentation*
+ * and not part of what the block says: the same chart payload can appear in
+ * two stories with different widths, and the payload should not change.
+ *
+ * Every field is optional and every value is an enum, so the set of things
+ * an editor can do here is small, closed and reviewable. Free-form styling
+ * is deliberately not offered: block renderers interpolate values into SVG
+ * attributes, so an open-ended string is a correctness and safety risk.
+ */
+export const BlockPresentationSchema = z.object({
+  /**
+   * How much of the column the block may use.
+   *
+   * `column` is the story's own width, `contained` is a narrower measure
+   * inside it, and `full` breaks out of it altogether.
+   */
+  width: z.enum(['contained', 'column', 'full']).optional(),
+  /**
+   * How the block sits within the column.
+   *
+   * It only has something to say when the block is narrower than the
+   * column — that is, when its width is `contained`.
+   */
+  align: z.enum(['left', 'center', 'right']).optional(),
+  /**
+   * The theme the block is drawn in.
+   *
+   * `inherit` follows the page. `light` and `dark` pin the block's own
+   * graphics — the SVG renderers draw their charts, maps and diagrams — to
+   * one theme, whichever theme the page is in.
+   */
+  theme: z.enum(['inherit', 'light', 'dark']).optional(),
+});
+export type BlockPresentation = z.infer<typeof BlockPresentationSchema>;
+
 export const BaseBlockSchema = z.object({
   id: z.string().min(1),
   blockType: z.string(),
   sortOrder: z.number().int().nonnegative(),
   metadata: z.record(z.unknown()).optional(),
+  /** How the block is presented. See `BlockPresentationSchema`. */
+  presentation: BlockPresentationSchema.optional(),
   citationIds: z.array(z.string()).optional(),
   // The fields below extend the original block envelope without breaking
   // historic payloads: every one is optional and defaults are applied by
