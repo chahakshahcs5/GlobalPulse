@@ -1,7 +1,28 @@
-import type { Story } from '@ai-news/schemas';
+import type { Comment, PollTally, Story } from '@ai-news/schemas';
 import { offlineStorage, type OfflineStory } from './storage';
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
+/** Current values of a live feed backing a `live_data` / `live_ticker` block. */
+export interface LiveFeed {
+  key: string;
+  title: string;
+  provider?: string;
+  items: Array<{
+    id: string;
+    label: string;
+    value: number | string;
+    previousValue?: number | string;
+    change?: number;
+    unit?: string;
+    provider?: string;
+    asOf?: string;
+    sparkline?: number[];
+  }>;
+  asOf: string;
+  refreshIntervalSeconds: number;
+  sourceAttribution?: string;
+}
 
 export function mapApiStoryToOffline(
   story: Partial<Story> & { id: string; title: string }
@@ -115,6 +136,75 @@ export class MobileApiService {
     return offlineStorage
       .getAllSavedStories()
       .filter((s) => s.title.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q));
+  }
+
+  /**
+   * Live tally for a poll block.
+   *
+   * Votes are counted on the server, so the counts stored in the story
+   * payload are only the baseline. Reading the tally keeps mobile in step
+   * with the web reader.
+   */
+  public async fetchPollTally(storyId: string, blockId: string): Promise<PollTally | null> {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/stories/${encodeURIComponent(storyId)}/blocks/${encodeURIComponent(blockId)}/poll`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            'x-client-id': 'human_mobile',
+          },
+        }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as PollTally;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Comments on a story, for the in-story live comment block. */
+  public async fetchStoryComments(storyId: string): Promise<Comment[]> {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/stories/${encodeURIComponent(storyId)}/comments`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            'x-client-id': 'human_mobile',
+          },
+        }
+      );
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? (json as Comment[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Current values of a live feed.
+   *
+   * `live_ticker` / `live_data` blocks bound to a feed key show these values
+   * instead of the snapshot stored in the story payload.
+   */
+  public async fetchLiveFeed(key: string): Promise<LiveFeed | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/live/feeds/${encodeURIComponent(key)}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'x-client-id': 'human_mobile',
+        },
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as LiveFeed;
+    } catch {
+      return null;
+    }
   }
 
   public isNetworkConnected(): boolean {

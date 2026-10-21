@@ -5,9 +5,11 @@ import { styles } from './mobile-blocks/styles';
 
 export interface MobileBlockProps {
   blocks: StoryBlock[];
+  /** Parent story id — lets interactive blocks reach the server. */
+  storyId?: string;
 }
 
-export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
+export function MobileBlockRenderer({ blocks, storyId }: MobileBlockProps) {
   if (!blocks || blocks.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -20,7 +22,7 @@ export function MobileBlockRenderer({ blocks }: MobileBlockProps) {
     <View style={styles.container}>
       {blocks.map((block) => {
         const key = block.id || `blk_${Math.random()}`;
-        return <MobileBlockItem key={key} block={block} />;
+        return <MobileBlockItem key={key} block={block} storyId={storyId} />;
       })}
     </View>
   );

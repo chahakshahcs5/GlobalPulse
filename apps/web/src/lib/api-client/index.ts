@@ -11,3 +11,4 @@ export * from './newsroom';
 export * from './entities-sources';
 export * from './intelligence';
 export * from './weather';
+export * from './live';

@@ -9,6 +9,7 @@ export * from './personalization.service';
 export * from './clustering.service';
 export * from './template.service';
 export * from './liveblog.service';
+export * from './live-feed.service';
 export * from './fact-check.service';
 export * from './collaboration.service';
 export * from './newsletter.service';

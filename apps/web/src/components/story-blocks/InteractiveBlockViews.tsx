@@ -1,39 +1,133 @@
 'use client';
 
 import React from 'react';
-import type { PollBlock, LiveTickerBlock, ComparisonBlock } from '@ai-news/schemas';
+import type { PollBlock, LiveTickerBlock, ComparisonBlock, PollTally } from '@ai-news/schemas';
+import { getPollTally, castPollVote, subscribeToRealtimeEvents } from '../../lib/api-client';
+import { useLiveFeed } from './useLiveFeed';
 
-export const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string }> = ({
-  data,
-}) => {
+/**
+ * Reader poll.
+ *
+ * Votes are recorded on the server so the tally is shared across every
+ * reader, not just this browser. The component also listens on the story's
+ * realtime channel so the counts update live as other readers vote.
+ */
+export const PollBlockView: React.FC<{
+  data: PollBlock['data'];
+  blockId?: string;
+  storyId?: string;
+}> = ({ data, blockId, storyId }) => {
   const storageKey = `globalpulse_poll_${data.pollId}`;
-  const [votedOptionId, setVotedOptionId] = React.useState<string | null>(null);
+  const [votedOptionId, setVotedOptionId] = React.useState<string | null>(
+    data.userVotedOptionId ?? null
+  );
   const [options, setOptions] = React.useState(data.options);
   const [totalVotes, setTotalVotes] = React.useState(data.totalVotes);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [voteError, setVoteError] = React.useState<string | null>(null);
 
+  // Apply a server-computed tally to local state.
+  const applyTally = React.useCallback((tally: PollTally) => {
+    setOptions(
+      tally.options.map((o) => ({
+        id: o.id,
+        text: o.text,
+        voteCount: o.voteCount,
+      }))
+    );
+    setTotalVotes(tally.totalVotes);
+    if (tally.userVotedOptionId) {
+      setVotedOptionId(tally.userVotedOptionId);
+    }
+  }, []);
+
+  // Pull the authoritative tally (server votes + the payload baseline).
   React.useEffect(() => {
+    if (!storyId || !blockId) return;
+    let cancelled = false;
+
+    getPollTally(storyId, blockId)
+      .then((tally) => {
+        if (!cancelled) applyTally(tally);
+      })
+      .catch(() => {
+        // Keep the payload counts as a fallback when the API is unreachable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [storyId, blockId, applyTally]);
+
+  // Live updates: other readers voting on the same poll.
+  React.useEffect(() => {
+    if (!storyId || !blockId) return;
+
+    const unsubscribe = subscribeToRealtimeEvents([`story_${storyId}`], (event) => {
+      if (event.type !== 'poll.vote') return;
+      const payload = event.data as { blockId?: string; tally?: PollTally } | undefined;
+      if (!payload?.tally || payload.blockId !== blockId) return;
+      applyTally(payload.tally);
+    });
+
+    return unsubscribe;
+  }, [storyId, blockId, applyTally]);
+
+  // Fall back to a local record of the vote for readers who are not signed
+  // in, so the UI still reflects that they have chosen an option.
+  React.useEffect(() => {
+    if (votedOptionId) return;
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) setVotedOptionId(saved);
-      else if (data.userVotedOptionId) setVotedOptionId(data.userVotedOptionId);
-    } catch {}
-  }, [storageKey, data.userVotedOptionId]);
+    } catch {
+      // localStorage unavailable (private mode / SSR)
+    }
+  }, [storageKey, votedOptionId]);
 
-  const handleVote = (optionId: string) => {
+  const handleVote = async (optionId: string) => {
     if (votedOptionId || data.closed || isSubmitting) return;
 
     setIsSubmitting(true);
+    setVoteError(null);
+
+    // Optimistic update so the click feels instant; the server response
+    // replaces it with the authoritative tally.
     setVotedOptionId(optionId);
     try {
       localStorage.setItem(storageKey, optionId);
-    } catch {}
+    } catch {
+      // ignore
+    }
 
-    setOptions((prev) =>
-      prev.map((opt) => (opt.id === optionId ? { ...opt, voteCount: opt.voteCount + 1 } : opt))
-    );
-    setTotalVotes((prev) => prev + 1);
-    setIsSubmitting(false);
+    if (!storyId || !blockId) {
+      // No story context (e.g. the editor preview) — keep the local behaviour.
+      setOptions((prev) =>
+        prev.map((opt) => (opt.id === optionId ? { ...opt, voteCount: opt.voteCount + 1 } : opt))
+      );
+      setTotalVotes((prev) => prev + 1);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const tally = await castPollVote(storyId, blockId, optionId);
+      applyTally(tally);
+    } catch (err) {
+      setVotedOptionId(null);
+      try {
+        localStorage.removeItem(storageKey);
+      } catch {
+        // ignore
+      }
+      setVoteError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Your vote could not be recorded. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const hasVoted = Boolean(votedOptionId) || data.closed;
@@ -125,6 +219,15 @@ export const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string
         })}
       </div>
 
+      {voteError && (
+        <div
+          role="alert"
+          className="mt-4 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg px-3 py-2"
+        >
+          {voteError}
+        </div>
+      )}
+
       {hasVoted && (
         <div className="mt-4 pt-3 border-t border-indigo-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>
@@ -143,6 +246,21 @@ export const PollBlockView: React.FC<{ data: PollBlock['data']; blockId?: string
 
 export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = ({ data }) => {
   const [selectedSymbol, setSelectedSymbol] = React.useState<string | null>(null);
+  const live = useLiveFeed(data.liveKey, data.refreshIntervalSeconds || 30);
+
+  // A live feed supplies the freshest values; without one the block keeps
+  // showing the snapshot stored in the story payload.
+  const items: LiveTickerBlock['data']['items'] = live.items
+    ? live.items.map((item) => ({
+        symbol: item.id,
+        label: item.label,
+        value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
+        delta: item.change ?? 0,
+        unit: item.unit,
+        sparkline: item.sparkline ?? [],
+        lastUpdated: item.asOf ?? live.asOf ?? undefined,
+      }))
+    : data.items;
 
   return (
     <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
@@ -162,12 +280,14 @@ export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = 
           )}
         </div>
         <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-          Refreshes every {data.refreshIntervalSeconds || 30}s
+          {live.isLive
+            ? `Live · refreshes every ${data.refreshIntervalSeconds || 30}s`
+            : `Refreshes every ${data.refreshIntervalSeconds || 30}s`}
         </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        {data.items.map((item, idx) => {
+        {items.map((item, idx) => {
           const isPositive = item.delta >= 0;
           const isSelected = selectedSymbol === item.symbol;
 

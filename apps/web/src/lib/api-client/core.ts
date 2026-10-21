@@ -131,6 +131,8 @@ export function subscribeToRealtimeEvents(
     'comment.moderated',
     'comment.deleted',
     'reaction.updated',
+    'poll.vote',
+    'live.feed',
   ]) {
     eventSource.addEventListener(eventType, (e: MessageEvent) => {
       try {

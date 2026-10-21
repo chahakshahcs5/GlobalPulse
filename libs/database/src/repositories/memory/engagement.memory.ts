@@ -9,6 +9,7 @@ import type {
 import type {
   IEngagementRepository,
   ReadingProgressRecord,
+  PollVoteRecord,
 } from '../../interfaces/engagement.repository';
 
 export class MemoryEngagementRepository implements IEngagementRepository {
@@ -16,6 +17,8 @@ export class MemoryEngagementRepository implements IEngagementRepository {
   private reactions = new Map<string, StoryReaction>(); // reactionId -> Reaction
   private bookmarks = new Map<string, BookmarkItem>(); // bookmarkId -> BookmarkItem
   private progress = new Map<string, ReadingProgressRecord>(); // `${userId}:${storyId}` -> ReadingProgressRecord
+  /** `${blockId}:${userId}` -> PollVoteRecord (one vote per reader per block). */
+  private pollVotes = new Map<string, PollVoteRecord>();
 
   // ---------------------------------------------------------------------------
   // Comments
@@ -230,12 +233,37 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     return this.shares.get(storyId) || 0;
   }
 
+  // ---------------------------------------------------------------------------
+  // Poll Votes
+  // ---------------------------------------------------------------------------
+
+  async castPollVote(vote: PollVoteRecord): Promise<PollVoteRecord> {
+    const key = `${vote.blockId}:${vote.userId}`;
+    // A reader has one vote per block. Casting again replaces the choice
+    // rather than adding a second vote.
+    this.pollVotes.set(key, { ...vote });
+    return { ...vote };
+  }
+
+  async getPollVotes(blockId: string): Promise<PollVoteRecord[]> {
+    const list: PollVoteRecord[] = [];
+    for (const vote of this.pollVotes.values()) {
+      if (vote.blockId === blockId) list.push({ ...vote });
+    }
+    return list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async getUserPollVote(blockId: string, userId: string): Promise<string | null> {
+    return this.pollVotes.get(`${blockId}:${userId}`)?.optionId ?? null;
+  }
+
   snapshot(): {
     comments: Map<string, Comment>;
     reactions: Map<string, StoryReaction>;
     bookmarks: Map<string, BookmarkItem>;
     progress: Map<string, ReadingProgressRecord>;
     shares: Map<string, number>;
+    pollVotes: Map<string, PollVoteRecord>;
   } {
     return {
       comments: new Map(this.comments),
@@ -243,6 +271,7 @@ export class MemoryEngagementRepository implements IEngagementRepository {
       bookmarks: new Map(this.bookmarks),
       progress: new Map(this.progress),
       shares: new Map(this.shares),
+      pollVotes: new Map(this.pollVotes),
     };
   }
 
@@ -252,6 +281,7 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     bookmarks: Map<string, BookmarkItem>;
     progress?: Map<string, ReadingProgressRecord>;
     shares?: Map<string, number>;
+    pollVotes?: Map<string, PollVoteRecord>;
   }): void {
     this.comments = new Map(snapshot.comments);
     this.reactions = new Map(snapshot.reactions);
@@ -262,6 +292,9 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     if (snapshot.shares) {
       this.shares = new Map(snapshot.shares);
     }
+    if (snapshot.pollVotes) {
+      this.pollVotes = new Map(snapshot.pollVotes);
+    }
   }
 
   clear(): void {
@@ -270,5 +303,6 @@ export class MemoryEngagementRepository implements IEngagementRepository {
     this.bookmarks.clear();
     this.progress.clear();
     this.shares.clear();
+    this.pollVotes.clear();
   }
 }

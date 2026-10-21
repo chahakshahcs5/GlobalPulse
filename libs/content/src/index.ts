@@ -65,6 +65,9 @@ export function extractTextContent(blocks: StoryBlock[]): string {
       case 'chart':
         fragments.push(block.data.title);
         if (block.data.subtitle) fragments.push(block.data.subtitle);
+        for (const annotation of block.data.annotations ?? []) {
+          fragments.push(annotation.label, annotation.body);
+        }
         break;
       case 'timeline':
         if (block.data.title) fragments.push(block.data.title);
@@ -89,6 +92,82 @@ export function extractTextContent(blocks: StoryBlock[]): string {
         if (block.data.title) fragments.push(block.data.title);
         for (const it of block.data.items) {
           fragments.push(it.label, it.symbol);
+        }
+        break;
+      case 'uncertainty':
+        fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        for (const point of block.data.points) {
+          fragments.push(point.label);
+          if (point.note) fragments.push(point.note);
+        }
+        break;
+      case 'animated_map':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        for (const frame of block.data.frames) {
+          if (frame.label) fragments.push(frame.label);
+          for (const point of frame.points) {
+            fragments.push(point.label);
+          }
+        }
+        break;
+      case 'knowledge_graph':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        for (const node of block.data.nodes) {
+          fragments.push(node.label);
+        }
+        break;
+      case 'quiz':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        for (const question of block.data.questions) {
+          fragments.push(question.question);
+          for (const option of question.options) {
+            fragments.push(option.text);
+          }
+          if (question.explanation) fragments.push(question.explanation);
+        }
+        break;
+      case 'correlation':
+        fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        for (const variable of block.data.variables) {
+          fragments.push(variable.label);
+        }
+        break;
+      case 'sensitivity':
+        fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        fragments.push(block.data.outputLabel);
+        for (const input of block.data.inputs) {
+          fragments.push(input.label);
+          if (input.note) fragments.push(input.note);
+        }
+        break;
+      case 'live_comments':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        break;
+      case 'what_if':
+        fragments.push(block.data.title);
+        if (block.data.description) fragments.push(block.data.description);
+        fragments.push(block.data.outcomeLabel);
+        for (const input of block.data.inputs) {
+          fragments.push(input.label);
+          if (input.note) fragments.push(input.note);
+        }
+        for (const component of block.data.breakdown ?? []) {
+          fragments.push(component.label);
+        }
+        break;
+      case 'prediction_leaderboard':
+        fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        for (const prediction of block.data.predictions) {
+          fragments.push(prediction.forecaster, prediction.claim);
+          if (prediction.note) fragments.push(prediction.note);
         }
         break;
       case 'poll':

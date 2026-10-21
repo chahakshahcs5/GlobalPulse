@@ -566,4 +566,7 @@ export const styles = StyleSheet.create({
     gap: 2,
     paddingVertical: 4,
   },
+  quizOption: {
+    paddingVertical: 2,
+  },
 });

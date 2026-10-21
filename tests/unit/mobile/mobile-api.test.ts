@@ -104,4 +104,59 @@ describe('MobileApiService Unit Tests', () => {
     expect(searchResults).toHaveLength(1);
     expect(searchResults[0].title).toContain('BRICS Expansion');
   });
+
+  it('fetches the server-side poll tally', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        pollId: 'pol_grid_2026',
+        blockId: 'blk_poll_01',
+        storyId: 'sty_1',
+        question: 'Will peak demand exceed 45 GW?',
+        totalVotes: 16,
+        closed: false,
+        options: [
+          { id: 'opt_1', text: 'Yes', voteCount: 11, percentage: 68.8 },
+          { id: 'opt_2', text: 'No', voteCount: 5, percentage: 31.3 },
+        ],
+        userVotedOptionId: 'opt_1',
+      }),
+    } as Response);
+
+    const tally = await mobileApi.fetchPollTally('sty_1', 'blk_poll_01');
+
+    expect(tally?.totalVotes).toBe(16);
+    expect(tally?.options[0].voteCount).toBe(11);
+    expect(tally?.userVotedOptionId).toBe('opt_1');
+    expect(fetchSpy.mock.calls[0][0]).toContain('/api/stories/sty_1/blocks/blk_poll_01/poll');
+  });
+
+  it('returns null for a poll tally when the API is unreachable', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network unreachable'));
+    expect(await mobileApi.fetchPollTally('sty_1', 'blk_poll_01')).toBeNull();
+  });
+
+  it('fetches the current values of a live feed', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        key: 'grid_demand',
+        title: 'Grid Demand',
+        items: [{ id: 'peak', label: 'Peak demand', value: 43800, change: 6.3, unit: 'MW' }],
+        asOf: '2026-10-20T10:30:00.000Z',
+        refreshIntervalSeconds: 30,
+      }),
+    } as Response);
+
+    const feed = await mobileApi.fetchLiveFeed('grid_demand');
+
+    expect(feed?.key).toBe('grid_demand');
+    expect(feed?.items[0].value).toBe(43800);
+    expect(fetchSpy.mock.calls[0][0]).toContain('/api/live/feeds/grid_demand');
+  });
+
+  it('returns null for a live feed that does not exist', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+    expect(await mobileApi.fetchLiveFeed('missing')).toBeNull();
+  });
 });

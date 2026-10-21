@@ -13,8 +13,19 @@ import {
   MapBlockItem,
   StatisticBlockItem,
   TableBlockItem,
+  UncertaintyBlockItem,
+  SensitivityBlockItem,
+  PredictionLeaderboardBlockItem,
+  WhatIfBlockItem,
+  CorrelationBlockItem,
+  QuizBlockItem,
 } from './MobileDataBlocks';
-import { SourceBlockItem, EntityBlockItem, WhatChangedBlockItem } from './MobileEntityBlocks';
+import {
+  SourceBlockItem,
+  EntityBlockItem,
+  WhatChangedBlockItem,
+  KnowledgeGraphBlockItem,
+} from './MobileEntityBlocks';
 import {
   EvidenceBlockItem,
   PerspectiveBlockItem,
@@ -43,6 +54,7 @@ import {
   EmbedBlockItem,
   DiagramBlockItem,
   FlowBlockItem,
+  AnimatedMapBlockItem,
 } from './MobileVisualBlocks';
 import {
   CitationBlockItem,
@@ -51,13 +63,16 @@ import {
   PollBlockItem,
   LiveTickerBlockItem,
   DocumentViewerBlockItem,
+  LiveCommentsBlockItem,
 } from './MobileContextBlocks';
 
 export interface MobileBlockItemProps {
   block: StoryBlock;
+  /** Parent story id — required by blocks that talk to the server. */
+  storyId?: string;
 }
 
-export function MobileBlockItem({ block }: MobileBlockItemProps) {
+export function MobileBlockItem({ block, storyId }: MobileBlockItemProps) {
   switch (block.blockType) {
     case 'heading':
       return <HeadingBlockItem block={block} />;
@@ -103,6 +118,20 @@ export function MobileBlockItem({ block }: MobileBlockItemProps) {
       return <DataExplorerBlockItem block={block} />;
     case 'ranking':
       return <RankingBlockItem block={block} />;
+    case 'uncertainty':
+      return <UncertaintyBlockItem block={block} />;
+    case 'sensitivity':
+      return <SensitivityBlockItem block={block} />;
+    case 'prediction_leaderboard':
+      return <PredictionLeaderboardBlockItem block={block} />;
+    case 'what_if':
+      return <WhatIfBlockItem block={block} />;
+    case 'correlation':
+      return <CorrelationBlockItem block={block} />;
+    case 'quiz':
+      return <QuizBlockItem block={block} />;
+    case 'knowledge_graph':
+      return <KnowledgeGraphBlockItem block={block} />;
     case 'calculator':
       return <CalculatorBlockItem block={block} />;
     case 'financial':
@@ -139,6 +168,8 @@ export function MobileBlockItem({ block }: MobileBlockItemProps) {
       return <DiagramBlockItem block={block} />;
     case 'flow':
       return <FlowBlockItem block={block} />;
+    case 'animated_map':
+      return <AnimatedMapBlockItem block={block} />;
     case 'citation':
       return <CitationBlockItem block={block} />;
     case 'related_stories':
@@ -146,11 +177,13 @@ export function MobileBlockItem({ block }: MobileBlockItemProps) {
     case 'comparison':
       return <ComparisonBlockItem block={block} />;
     case 'poll':
-      return <PollBlockItem block={block} />;
+      return <PollBlockItem block={block} storyId={storyId} />;
     case 'live_ticker':
       return <LiveTickerBlockItem block={block} />;
     case 'document_viewer':
       return <DocumentViewerBlockItem block={block} />;
+    case 'live_comments':
+      return <LiveCommentsBlockItem block={block} storyId={storyId} />;
     default:
       return null;
   }

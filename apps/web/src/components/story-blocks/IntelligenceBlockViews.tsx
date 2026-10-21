@@ -8,6 +8,7 @@ import type {
   LiveDataBlock,
   FactCheckBlock,
 } from '@ai-news/schemas';
+import { useLiveFeed } from './useLiveFeed';
 
 /**
  * Renderers for the intelligence blocks: claims & evidence, multi-perspective
@@ -271,16 +272,47 @@ export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({
 };
 
 export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ data }) => {
+  const live = useLiveFeed(data.liveKey, data.refreshIntervalSeconds ?? 60);
+
+  // Prefer the live feed when the block is bound to one; otherwise show the
+  // snapshot that was stored in the story payload.
+  const items = live.items
+    ? live.items.map((item) => ({
+        id: item.id,
+        label: item.label,
+        provider: item.provider ?? 'Live',
+        value: item.value,
+        previousValue: item.previousValue,
+        change: item.change,
+        unit: item.unit,
+        asOf: item.asOf ?? live.asOf ?? new Date().toISOString(),
+      }))
+    : data.items;
+
+  const sourceAttribution = live.sourceAttribution ?? data.sourceAttribution;
+  const lastUpdated = live.asOf;
+
   return (
     <section
       aria-label={data.title || 'Live data'}
       className="my-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-4"
     >
-      {data.title && (
-        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">{data.title}</h3>
-      )}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        {data.title && (
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        )}
+        {live.isLive && (
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            Live
+          </span>
+        )}
+      </div>
       <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {data.items.map((item) => {
+        {items.map((item) => {
           const direction =
             item.change === undefined || item.change === 0
               ? 'flat'
@@ -324,9 +356,12 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
           );
         })}
       </ul>
-      {data.sourceAttribution && (
+      {sourceAttribution && (
         <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
-          Source: {data.sourceAttribution} · refreshes every {data.refreshIntervalSeconds}s
+          Source: {sourceAttribution} ·{' '}
+          {live.isLive
+            ? `refreshes every ${data.refreshIntervalSeconds ?? 60}s`
+            : `snapshot as of ${lastUpdated ? lastUpdated.slice(0, 16).replace('T', ' ') : 'publish'}`}
         </p>
       )}
     </section>

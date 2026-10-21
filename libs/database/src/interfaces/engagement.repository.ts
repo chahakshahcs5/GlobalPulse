@@ -47,6 +47,34 @@ export interface IEngagementRepository {
   // Social Shares (F15)
   recordShare(storyId: string, platform: string, userId?: string): Promise<{ shareCount: number }>;
   getShareCount(storyId: string): Promise<number>;
+
+  // Poll Votes
+  /**
+   * Records (or moves) a reader's vote on a poll block. A reader has at most
+   * one vote per block; casting again replaces the previous choice.
+   */
+  castPollVote(vote: PollVoteRecord): Promise<PollVoteRecord>;
+  /** Every recorded vote for a poll block, in cast order. */
+  getPollVotes(blockId: string): Promise<PollVoteRecord[]>;
+  /** The reader's current choice on a poll block, if any. */
+  getUserPollVote(blockId: string, userId: string): Promise<string | null>;
+}
+
+/**
+ * A single reader vote on a poll block.
+ *
+ * Votes are stored separately from the story payload so that the published
+ * article never has to be rewritten as votes come in.
+ */
+export interface PollVoteRecord {
+  id: string;
+  storyId: string;
+  blockId: string;
+  pollId: string;
+  optionId: string;
+  userId: string;
+  organizationId: string;
+  createdAt: string;
 }
 
 export interface ReadingProgressRecord {

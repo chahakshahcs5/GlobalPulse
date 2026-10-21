@@ -31,7 +31,16 @@ import {
   PollBlockSchema,
   QuoteBlockSchema,
   RankingBlockSchema,
+  AnimatedMapBlockSchema,
+  KnowledgeGraphBlockSchema,
+  QuizBlockSchema,
+  CorrelationBlockSchema,
+  SensitivityBlockSchema,
+  WhatIfBlockSchema,
+  LiveCommentsBlockSchema,
+  PredictionLeaderboardBlockSchema,
   RelatedStoriesBlockSchema,
+  UncertaintyBlockSchema,
   ScienceBlockSchema,
   SlideDeckBlockSchema,
   SourceBlockSchema,
@@ -182,7 +191,7 @@ define('embed', EmbedBlockSchema, {
 define('chart', ChartBlockSchema, {
   category: 'data',
   description:
-    'Accessible D3 chart: line, area, bar variants, scatter, pie/donut, waterfall, slope, bump, dot, lollipop, diverging, radar, small multiples, sparkline. Raw values are stored alongside the chart.',
+    'Programmatic D3 visualization. 21 chart types: line, area, bar, stacked_bar, grouped_bar, scatter, heatmap, histogram, waterfall, donut, pie, kpi, comparison, slope, dot_plot, lollipop, diverging_bar, sparkline, bump, radar and small_multiples. Supports click-to-reveal annotations anchored to specific data points.',
   example: {
     chartType: 'line',
     title: 'Reported cases over time',
@@ -234,6 +243,271 @@ define('ranking', RankingBlockSchema, {
     methodology: 'Composite index across 30 indicators.',
   },
 });
+define('uncertainty', UncertaintyBlockSchema, {
+  category: 'data',
+  description:
+    'Estimates with confidence intervals. Each point carries a point estimate, its lower and upper bounds, an optional sample size, and an optional source. Also supports a reference line for a consensus or target value.',
+  recommendedFor: ['forecasts', 'surveys', 'polling', 'model outputs', 'scientific estimates'],
+  example: {
+    title: 'Projected electricity demand, 2030',
+    unit: 'TWh',
+    intervalLabel: '95% credible interval',
+    confidenceLevel: 0.95,
+    points: [
+      { label: 'IEA', value: 9400, low: 8800, high: 10100, sourceId: 'src_iea' },
+      { label: 'Analyst consensus', value: 9100, low: 8400, high: 9900 },
+    ],
+    referenceValue: 9000,
+    referenceLabel: 'Current level',
+    methodology: 'Ranges reflect the 5th-95th percentile across 12,000 scenario draws.',
+  },
+});
+define('correlation', CorrelationBlockSchema, {
+  category: 'data',
+  description:
+    'Correlation matrix. The block carries the raw observations; the platform derives the Pearson coefficients, the sample sizes and the significance, so a reader can tell a well-evidenced relationship from one computed from three data points. Significant pairings are marked, and the summary states plainly that a correlation is not causation.',
+  recommendedFor: ['data journalism', 'research', 'feature analysis', 'exploratory reporting'],
+  example: {
+    title: 'What moves with what?',
+    subtitle: 'Pairwise correlations across the indicators',
+    variables: [
+      { key: 'gpu_price', label: 'GPU price', unit: '$' },
+      { key: 'power_draw', label: 'Power draw', unit: 'kW' },
+      { key: 'tokens_per_sec', label: 'Tokens/sec' },
+    ],
+    observations: [
+      { gpu_price: 1200, power_draw: 3.2, tokens_per_sec: 42 },
+      { gpu_price: 2400, power_draw: 6.1, tokens_per_sec: 58 },
+      { gpu_price: 3600, power_draw: 8.9, tokens_per_sec: 71 },
+      { gpu_price: 4800, power_draw: 11.4, tokens_per_sec: 88 },
+    ],
+    significanceThreshold: 0.05,
+    methodology:
+      "Pearson's r over the observations supplied, with a two-tailed t-test for significance.",
+  },
+});
+define('quiz', QuizBlockSchema, {
+  category: 'interactive',
+  description:
+    "Knowledge check. Each question has options, one correct answer, and an explanation revealed once the reader has answered — so the block teaches rather than only scoring. The reader's answers stay in their own browser.",
+  recommendedFor: ['explainers', 'education', 'reader engagement', 'comprehension checks'],
+  example: {
+    title: 'Test your understanding',
+    description: 'Four questions on what the report actually found.',
+    questions: [
+      {
+        id: 'q1',
+        question: 'What did the study measure?',
+        options: [
+          { id: 'a', text: 'Training cost only', correct: false },
+          { id: 'b', text: 'Inference cost across three model sizes', correct: true },
+        ],
+        explanation:
+          'The report covers inference cost at 7B, 13B and 70B parameters, not training.',
+        sourceId: 'src_study',
+      },
+    ],
+    showScore: true,
+    allowRetry: true,
+  },
+});
+define('knowledge_graph', KnowledgeGraphBlockSchema, {
+  category: 'context',
+  description:
+    'Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.',
+  recommendedFor: ['investigations', 'entity stories', 'source mapping', 'explainers'],
+  example: {
+    title: 'Who is connected to whom',
+    description: 'The entities behind the investigation and how they relate.',
+    nodes: [
+      { id: 'n1', label: 'Northwind Energy', type: 'company' },
+      { id: 'n2', label: 'Ada Okafor', type: 'person' },
+      { id: 'n3', label: 'Ministry of Energy', type: 'organization' },
+      { id: 'n4', label: 'The Ledger', type: 'source' },
+    ],
+    edges: [
+      { id: 'e1', from: 'n2', to: 'n1', relation: 'directs' },
+      { id: 'e2', from: 'n3', to: 'n1', relation: 'regulates' },
+      { id: 'e3', from: 'n4', to: 'n1', relation: 'reported on' },
+    ],
+    focusNodeId: 'n1',
+    methodology: 'Relationships are drawn from the platform knowledge graph.',
+  },
+});
+define('animated_map', AnimatedMapBlockSchema, {
+  category: 'map',
+  description:
+    'Map that moves through time. The reader scrubs through the frames, so the story shows how a situation spread rather than only its end state. Marker size and colour follow the value, on a scale fixed across every frame so the markers do not jump as the reader scrubs.',
+  recommendedFor: ['live coverage', 'outbreaks', 'disasters', 'conflicts', 'elections'],
+  example: {
+    title: 'How the outbreak spread',
+    description: 'Confirmed cases by reporting date.',
+    valueLabel: 'Confirmed cases',
+    unit: 'cases',
+    frames: [
+      {
+        at: '2026-03-01',
+        label: '1 March',
+        points: [{ id: 'p1', label: 'Northern coast', lng: 34.5, lat: 41.2, value: 12 }],
+      },
+      {
+        at: '2026-03-08',
+        label: '8 March',
+        points: [
+          { id: 'p1', label: 'Northern coast', lng: 34.5, lat: 41.2, value: 180 },
+          { id: 'p2', label: 'Inland', lng: 33.2, lat: 39.9, value: 64 },
+        ],
+      },
+    ],
+    autoplay: false,
+    methodology: 'Case counts by the date each report was published.',
+  },
+});
+define('sensitivity', SensitivityBlockSchema, {
+  category: 'data',
+  description:
+    'Sensitivity analysis. A base case plus a range for each input and an expression producing the output; the renderer moves one input at a time to the ends of its range and shows how far the outcome travels, so the reader can see which assumption actually drives the result.',
+  recommendedFor: ['models', 'forecasts', 'cost analysis', 'scenario planning', 'policy analysis'],
+  example: {
+    title: 'What drives the cost of a 50 MW solar farm?',
+    subtitle: 'Swing in total capital cost when one assumption moves at a time',
+    outputLabel: 'Total capital cost',
+    outputUnit: '$m',
+    baseOutput: 40,
+    expression: 'capacity * panel_cost + labour + grid_connection',
+    inputs: [
+      {
+        id: 'capacity',
+        label: 'Installed capacity',
+        base: 50,
+        low: 45,
+        high: 55,
+        unit: 'MW',
+      },
+      {
+        id: 'panel_cost',
+        label: 'Panel cost',
+        base: 0.6,
+        low: 0.5,
+        high: 0.72,
+        unit: '$m/MW',
+      },
+      {
+        id: 'labour',
+        label: 'Installation labour',
+        base: 6,
+        low: 4,
+        high: 9,
+        unit: '$m',
+      },
+      {
+        id: 'grid_connection',
+        label: 'Grid connection',
+        base: 4,
+        low: 2,
+        high: 7,
+        unit: '$m',
+      },
+    ],
+    methodology: 'Each input is varied across its range with the others held at base.',
+  },
+});
+define('prediction_leaderboard', PredictionLeaderboardBlockSchema, {
+  category: 'data',
+  description:
+    'Tracked predictions with a forecaster leaderboard. Each prediction carries a probability, and resolved ones carry an outcome; the platform scores forecasters by Brier score and reports whether they are well-calibrated rather than merely lucky.',
+  recommendedFor: ['accountability reporting', 'forecast tracking', 'model evaluation'],
+  example: {
+    title: 'Who called it? Forecasters on AGI capability',
+    subtitle: 'Resolved predictions ranked by Brier score',
+    scoringMethod:
+      'Brier score: mean squared error between the stated probability and the outcome.',
+    predictions: [
+      {
+        id: 'p1',
+        claim: 'A frontier lab announces an AGI-capable system before 2027',
+        forecaster: 'Desk A',
+        probability: 0.3,
+        predictedAt: '2026-01-15',
+        resolvesAt: '2027-01-01',
+        resolved: true,
+        outcome: 0,
+        sourceId: 'src_forecast_a',
+      },
+      {
+        id: 'p2',
+        claim: 'A frontier lab announces an AGI-capable system before 2027',
+        forecaster: 'Desk B',
+        probability: 0.6,
+        predictedAt: '2026-01-15',
+        resolvesAt: '2027-01-01',
+        resolved: true,
+        outcome: 0,
+      },
+    ],
+    methodology:
+      'Only resolved predictions count towards a score. An open prediction says nothing about a forecaster yet.',
+  },
+});
+define('what_if', WhatIfBlockSchema, {
+  category: 'interactive',
+  description:
+    "Interactive scenario explorer. The reader moves sliders over a range for each input and the outcome recomputes live from the block's own expressions, with an optional breakdown of the outcome into components and a baseline for comparison.",
+  recommendedFor: ['scenario planning', 'policy explainers', 'cost models', 'interactives'],
+  example: {
+    title: 'What would it take to cut household energy bills by a fifth?',
+    description: 'Move the sliders to see how a retrofit programme changes the average bill.',
+    outcomeLabel: 'Average household bill',
+    outcomeUnit: '$/year',
+    expression: 'base_bill * (1 - insulation_saving) * (1 - solar_saving)',
+    inputs: [
+      {
+        id: 'base_bill',
+        label: 'Current average bill',
+        min: 800,
+        max: 4000,
+        step: 50,
+        defaultValue: 1800,
+        unit: '$',
+      },
+      {
+        id: 'insulation_saving',
+        label: 'Insulation saving',
+        min: 0,
+        max: 0.35,
+        step: 0.01,
+        defaultValue: 0.15,
+        unit: '',
+      },
+      {
+        id: 'solar_saving',
+        label: 'Solar saving',
+        min: 0,
+        max: 0.4,
+        step: 0.01,
+        defaultValue: 0.1,
+        unit: '',
+      },
+    ],
+    breakdown: [
+      { label: 'Bill after insulation', expression: 'base_bill * (1 - insulation_saving)' },
+      { label: 'Solar contribution', expression: 'base_bill * solar_saving' },
+    ],
+    methodology: 'Savings are applied to the current average bill and compounded.',
+  },
+});
+define('live_comments', LiveCommentsBlockSchema, {
+  category: 'interactive',
+  description:
+    "Reader comments inside the article body. The thread is loaded on mount and kept live over the story's realtime channel, so a comment posted while the reader is mid-article appears without a refresh.",
+  recommendedFor: ['live coverage', 'community reporting', 'debates'],
+  example: {
+    title: 'What readers are saying',
+    description: 'The latest approved comments on this story.',
+    maxComments: 10,
+    showCta: true,
+  },
+});
 define('financial', FinancialBlockSchema, {
   category: 'data',
   description: 'Timestamped financial metrics and optional time series.',
@@ -283,12 +557,13 @@ define('flow', FlowBlockSchema, {
 // --- Interactive ------------------------------------------------------------
 define('live_ticker', LiveTickerBlockSchema, {
   category: 'interactive',
-  description: 'Volatile ticker values with refresh interval and timestamps.',
+  description:
+    'Market and numerical ticker with per-item sparklines. Binds to a live feed key to refresh in place over the realtime channel.',
 });
 define('live_data', LiveDataBlockSchema, {
   category: 'interactive',
   description:
-    'Named live datasets with provider, refresh interval, timestamp, license, and methodology.',
+    'Named live datasets with provider, refresh interval, timestamp, license, and methodology. Binds to a live feed key to refresh in place over the realtime channel.',
   example: {
     title: 'Markets',
     refreshIntervalSeconds: 60,
@@ -318,7 +593,8 @@ define('calculator', CalculatorBlockSchema, {
 });
 define('poll', PollBlockSchema, {
   category: 'interactive',
-  description: 'Reader poll with options, expiry, and vote counts.',
+  description:
+    'Reader poll. Votes are counted on the server — one vote per reader, shared live across everyone reading the story.',
 });
 define('document_viewer', DocumentViewerBlockSchema, {
   category: 'interactive',

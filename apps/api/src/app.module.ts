@@ -31,6 +31,7 @@ import { ProvenanceModule } from './modules/provenance/provenance.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { LocalizationModule } from './modules/localization/localization.module';
 import { WeatherModule } from './modules/weather/weather.module';
+import { LiveModule } from './modules/live/live.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import type { FastifyRequest } from 'fastify';
@@ -99,6 +100,7 @@ import type { FastifyRequest } from 'fastify';
     LocalizationModule,
     WeatherModule,
     IntelligenceModule,
+    LiveModule,
   ],
 })
 export class AppModule {}

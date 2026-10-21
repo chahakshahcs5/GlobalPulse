@@ -653,6 +653,48 @@ model StoryShare {
   @@map("story_shares")
 }
 
+/// A live feed backing `live_data` and `live_ticker` story blocks.
+///
+/// Feeds are stored outside the story payload so a published story can pick
+/// up fresh values without being republished. The API and the MCP server both
+/// read and write this table, so a feed published by an AI agent is the same
+/// feed readers see.
+model LiveFeed {
+  key                  String   @id
+  title                String
+  provider             String?
+  items                Json     @default("[]")
+  asOf                 DateTime @default(now())
+  refreshIntervalSeconds Int    @default(60)
+  license              String?
+  methodology          String?
+  sourceAttribution    String?
+  organizationId       String?
+  updatedAt            DateTime @updatedAt
+
+  @@map("live_feeds")
+}
+
+/// A reader vote on a `poll` story block.
+///
+/// Votes live outside the story payload so that the published article never
+/// has to be rewritten as votes arrive. One vote per reader per block.
+model PollVote {
+  id             String   @id @default(uuid())
+  storyId        String
+  blockId        String
+  pollId         String
+  optionId       String
+  userId         String
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  @@unique([blockId, userId])
+  @@index([storyId])
+  @@index([organizationId])
+  @@map("poll_votes")
+}
+
 model Category {
   id            String   @id @default(uuid())
   slug          String   @unique

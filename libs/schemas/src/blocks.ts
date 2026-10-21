@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ClaimStatusSchema, PerspectiveStanceSchema } from './intelligence';
+import { CommentAuthorRoleSchema } from './engagement';
 
 /**
  * Provenance attached to any externally sourced block. AI agents and humans
@@ -132,6 +133,24 @@ export const AnnotatedImageBlockSchema = BaseBlockSchema.extend({
   }),
 });
 
+export const ChartAnnotationSchema = z.object({
+  id: z.string().min(1),
+  /**
+   * The value of the chart's x-axis key for the data point this annotation
+   * points at (e.g. "2026" when `xAxis.key` is "year").
+   */
+  xValue: z.string().min(1),
+  /** The series the annotation points at, when the chart has more than one. */
+  seriesKey: z.string().optional(),
+  /** Short headline for the annotation. */
+  label: z.string().min(1),
+  /** The explanation revealed when the reader opens the annotation. */
+  body: z.string().max(2000),
+  /** Registered source id backing the annotation. */
+  sourceId: z.string().optional(),
+});
+export type ChartAnnotation = z.infer<typeof ChartAnnotationSchema>;
+
 export const ChartBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('chart'),
   data: z.object({
@@ -199,6 +218,11 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
       .min(1),
     values: z.array(z.record(z.unknown())).min(1),
     facetField: z.string().optional(),
+    /**
+     * Click-to-reveal annotations anchored to specific data points — the
+     * explainer treatment used to walk a reader through a chart.
+     */
+    annotations: z.array(ChartAnnotationSchema).optional(),
     sourceAttribution: z.string().optional(),
     methodology: z.string().max(4000).optional(),
     lastUpdated: z.string().optional(),
@@ -563,6 +587,11 @@ export const LiveTickerBlockSchema = BaseBlockSchema.extend({
     title: z.string().optional(),
     refreshIntervalSeconds: z.number().int().min(5).max(3600).default(30),
     items: z.array(LiveTickerItemSchema).min(1),
+    /**
+     * Bind the block to a platform live feed. Readers then receive fresher
+     * values over the realtime channel instead of the snapshot stored here.
+     */
+    liveKey: z.string().min(1).optional(),
   }),
 });
 
@@ -585,6 +614,36 @@ export const PollBlockSchema = BaseBlockSchema.extend({
     closed: z.boolean().default(false),
   }),
 });
+
+/**
+ * Server-computed poll tally.
+ *
+ * The `poll` block payload stores the baseline counts that were known when the
+ * story was authored (seed votes, or votes cast through another channel).
+ * Reader votes recorded against the story are held in a dedicated vote store
+ * and added on top of that baseline, so the published article payload never
+ * has to be rewritten on every vote.
+ */
+export const PollTallyOptionSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  voteCount: z.number().int().nonnegative(),
+  percentage: z.number().min(0).max(100),
+});
+export type PollTallyOption = z.infer<typeof PollTallyOptionSchema>;
+
+export const PollTallySchema = z.object({
+  pollId: z.string().min(1),
+  blockId: z.string().min(1),
+  storyId: z.string().min(1),
+  question: z.string().min(1),
+  totalVotes: z.number().int().nonnegative(),
+  closed: z.boolean(),
+  options: z.array(PollTallyOptionSchema),
+  /** The signed-in reader's choice, if they have voted. */
+  userVotedOptionId: z.string().nullable().default(null),
+});
+export type PollTally = z.infer<typeof PollTallySchema>;
 
 export const DocumentHighlightSchema = z.object({
   page: z.number().int().positive(),
@@ -711,6 +770,298 @@ export const CalculatorBlockSchema = BaseBlockSchema.extend({
     assumptions: z.array(z.string()).default([]),
     sourceAttribution: z.string().optional(),
     methodology: z.string().max(4000).optional(),
+  }),
+});
+
+export const SensitivityInputSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** Value used at the base case. */
+  base: z.number(),
+  /** Low end of the explored range. */
+  low: z.number(),
+  /** High end of the explored range. */
+  high: z.number(),
+  unit: z.string().optional(),
+  /** Free-text note explaining where the range comes from. */
+  note: z.string().max(2000).optional(),
+});
+export type SensitivityInput = z.infer<typeof SensitivityInputSchema>;
+
+export const SensitivityBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('sensitivity'),
+  data: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().optional(),
+    description: z.string().max(4000).optional(),
+    /** What the output measures (e.g. "Annual emissions"). */
+    outputLabel: z.string().min(1),
+    outputUnit: z.string().optional(),
+    /** The output at the base case. */
+    baseOutput: z.number(),
+    /**
+     * Expression producing the output from the input ids. Evaluated in the
+     * restricted arithmetic sandbox, one variable at a time, to find how far
+     * each input moves the outcome.
+     */
+    expression: z.string().min(1),
+    inputs: z.array(SensitivityInputSchema).min(1).max(12),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const PredictionSchema = z.object({
+  id: z.string().min(1),
+  /** What is being predicted (e.g. "AGI capability by 2027"). */
+  claim: z.string().min(1),
+  /** Who made the prediction. */
+  forecaster: z.string().min(1),
+  forecasterId: z.string().optional(),
+  /** Probability the claim comes true, 0-1. */
+  probability: z.number().min(0).max(1),
+  /** When the prediction resolves. */
+  resolvesAt: z.string().optional(),
+  /** When the prediction was made. */
+  predictedAt: z.string().optional(),
+  /** Whether the prediction has resolved. */
+  resolved: z.boolean().default(false),
+  /** 1 when the claim came true, 0 when it did not. */
+  outcome: z.number().min(0).max(1).optional(),
+  /** Registered source id backing the prediction. */
+  sourceId: z.string().optional(),
+  /** Note about the forecast or its resolution. */
+  note: z.string().max(2000).optional(),
+});
+export type Prediction = z.infer<typeof PredictionSchema>;
+
+export const PredictionLeaderboardBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('prediction_leaderboard'),
+  data: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().optional(),
+    description: z.string().max(4000).optional(),
+    predictions: z.array(PredictionSchema).min(1).max(200),
+    /** How the score is calculated, shown next to the leaderboard. */
+    scoringMethod: z.string().max(2000).optional(),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const WhatIfInputSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    /** Lowest value the reader can dial to. */
+    min: z.number(),
+    /** Highest value the reader can dial to. */
+    max: z.number(),
+    /** Granularity of the slider. */
+    step: z.number().positive().optional(),
+    /** Where the slider starts. */
+    defaultValue: z.number(),
+    unit: z.string().optional(),
+    /** Short note explaining the input. */
+    note: z.string().max(2000).optional(),
+  })
+  .refine((input) => input.min <= input.max, {
+    message: 'min must not be greater than max',
+    path: ['min'],
+  })
+  .refine((input) => input.defaultValue >= input.min && input.defaultValue <= input.max, {
+    // A default outside its own range would render a slider in an impossible
+    // position and start the scenario from a value the reader cannot see.
+    message: 'defaultValue must fall within the input range',
+    path: ['defaultValue'],
+  });
+export type WhatIfInput = z.infer<typeof WhatIfInputSchema>;
+
+export const WhatIfBreakdownSchema = z.object({
+  label: z.string().min(1),
+  /** Expression producing this component of the outcome. */
+  expression: z.string().min(1),
+  color: z.string().optional(),
+});
+export type WhatIfBreakdown = z.infer<typeof WhatIfBreakdownSchema>;
+
+export const WhatIfBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('what_if'),
+  data: z.object({
+    title: z.string().min(1),
+    description: z.string().max(4000).optional(),
+    inputs: z.array(WhatIfInputSchema).min(1).max(8),
+    /**
+     * Expression producing the outcome from the input ids. Evaluated in the
+     * restricted arithmetic sandbox as the reader moves the sliders.
+     */
+    expression: z.string().min(1),
+    outcomeLabel: z.string().min(1),
+    outcomeUnit: z.string().optional(),
+    /** Optional breakdown of the outcome into named components. */
+    breakdown: z.array(WhatIfBreakdownSchema).max(8).optional(),
+    /** The outcome at the default values, shown for comparison. */
+    baselineOutcome: z.number().optional(),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const LiveCommentsBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('live_comments'),
+  data: z.object({
+    title: z.string().min(1),
+    description: z.string().max(4000).optional(),
+    /** How many of the most recent comments to show. */
+    maxComments: z.number().int().min(1).max(50).default(10),
+    /** Only show comments from these roles. */
+    roles: z.array(CommentAuthorRoleSchema).optional(),
+    /** Show a link to the full discussion. */
+    showCta: z.boolean().default(true),
+  }),
+});
+
+export const CorrelationVariableSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  unit: z.string().optional(),
+});
+export type CorrelationVariable = z.infer<typeof CorrelationVariableSchema>;
+
+export const CorrelationBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('correlation'),
+  data: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().optional(),
+    description: z.string().max(4000).optional(),
+    /** The variables to correlate. */
+    variables: z.array(CorrelationVariableSchema).min(2).max(20),
+    /**
+     * One row per observation, keyed by the variable keys. The platform
+     * derives the coefficients, the sample sizes and the significance — a
+     * heatmap of hand-written correlation values hides how thin the evidence
+     * is.
+     */
+    observations: z.array(z.record(z.number())).min(2).max(5000),
+    /** Optional labels for the observations (e.g. years). */
+    rowLabels: z.array(z.string()).optional(),
+    /** Show the coefficient and the sample size in each cell, not just colour. */
+    showCoefficients: z.boolean().default(true),
+    /** The p-value below which a relationship is marked significant. */
+    significanceThreshold: z.number().min(0).max(1).default(0.05),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const QuizOptionSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  /** Whether this is the correct answer. */
+  correct: z.boolean().default(false),
+});
+export type QuizOption = z.infer<typeof QuizOptionSchema>;
+
+export const QuizQuestionSchema = z.object({
+  id: z.string().min(1),
+  question: z.string().min(1),
+  options: z.array(QuizOptionSchema).min(2).max(6),
+  /** Shown once the question has been answered. */
+  explanation: z.string().max(2000).optional(),
+  /** Registered source id backing the answer. */
+  sourceId: z.string().optional(),
+});
+export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+
+export const QuizBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('quiz'),
+  data: z.object({
+    title: z.string().min(1),
+    description: z.string().max(4000).optional(),
+    questions: z.array(QuizQuestionSchema).min(1).max(20),
+    /** Show the reader's score once every question is answered. */
+    showScore: z.boolean().default(true),
+    /** Let the reader try again after finishing. */
+    allowRetry: z.boolean().default(true),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const KnowledgeGraphNodeSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** The kind of thing: person, organization, company, country, source, story, event… */
+  type: z.string().min(1),
+  description: z.string().max(2000).optional(),
+  url: z.string().url().optional(),
+});
+export type KnowledgeGraphNode = z.infer<typeof KnowledgeGraphNodeSchema>;
+
+export const KnowledgeGraphEdgeSchema = z.object({
+  id: z.string().min(1),
+  /** The id of the node the relationship starts at. */
+  from: z.string().min(1),
+  /** The id of the node the relationship points to. */
+  to: z.string().min(1),
+  /** The relationship, in words (e.g. "employs", "cited by"). */
+  relation: z.string().min(1),
+  weight: z.number().optional(),
+  /** A short label for the edge, shown on hover or in the list. */
+  label: z.string().optional(),
+});
+export type KnowledgeGraphEdge = z.infer<typeof KnowledgeGraphEdgeSchema>;
+
+export const KnowledgeGraphBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('knowledge_graph'),
+  data: z.object({
+    title: z.string().min(1),
+    description: z.string().max(4000).optional(),
+    nodes: z.array(KnowledgeGraphNodeSchema).min(1).max(120),
+    edges: z.array(KnowledgeGraphEdgeSchema).max(400).default([]),
+    /** The node the layout centres on. Defaults to the most connected node. */
+    focusNodeId: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const AnimatedMapPointSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  /** The value that drives the marker's size and colour. */
+  value: z.number().optional(),
+  /** Marks this point as the focus of the story. */
+  highlight: z.boolean().default(false),
+});
+export type AnimatedMapPoint = z.infer<typeof AnimatedMapPointSchema>;
+
+export const AnimatedMapFrameSchema = z.object({
+  /** When this frame's state was recorded. */
+  at: z.string().min(1),
+  /** A short label for the frame (e.g. "March 2026"). */
+  label: z.string().optional(),
+  /** The points visible in this frame. */
+  points: z.array(AnimatedMapPointSchema).default([]),
+});
+export type AnimatedMapFrame = z.infer<typeof AnimatedMapFrameSchema>;
+
+export const AnimatedMapBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('animated_map'),
+  data: z.object({
+    title: z.string().min(1),
+    description: z.string().max(4000).optional(),
+    /** The frames, in chronological order. */
+    frames: z.array(AnimatedMapFrameSchema).min(2).max(60),
+    /** What the values represent (e.g. "confirmed cases"). */
+    valueLabel: z.string().optional(),
+    unit: z.string().optional(),
+    /** Play the frames automatically when the block is first seen. */
+    autoplay: z.boolean().default(false),
+    methodology: z.string().max(4000).optional(),
+    sourceAttribution: z.string().optional(),
   }),
 });
 
@@ -920,6 +1271,52 @@ export const LiveDataBlockSchema = BaseBlockSchema.extend({
     title: z.string().optional(),
     refreshIntervalSeconds: z.number().int().min(5).max(3600).default(60),
     items: z.array(LiveDataItemSchema).min(1),
+    /**
+     * Bind the block to a platform live feed. Readers then receive fresher
+     * values over the realtime channel instead of the snapshot stored here.
+     */
+    liveKey: z.string().min(1).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+
+export const UncertaintyPointSchema = z.object({
+  id: z.string().min(1).optional(),
+  /** What the estimate is about (e.g. "Q3 revenue", "Induction fusion"). */
+  label: z.string().min(1),
+  /** The point estimate. */
+  value: z.number(),
+  /** Lower bound of the interval. Must not exceed `value`. */
+  low: z.number(),
+  /** Upper bound of the interval. Must not be below `value`. */
+  high: z.number(),
+  /** Sample size behind the estimate, when known. */
+  n: z.number().int().nonnegative().optional(),
+  /** Registered source id backing this estimate. */
+  sourceId: z.string().optional(),
+  /** Short editorial caveat shown alongside the estimate. */
+  note: z.string().max(2000).optional(),
+});
+export type UncertaintyPoint = z.infer<typeof UncertaintyPointSchema>;
+
+export const UncertaintyBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('uncertainty'),
+  data: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().optional(),
+    description: z.string().max(4000).optional(),
+    /** Unit for every estimate (e.g. "GWh", "$bn", "%"). */
+    unit: z.string().optional(),
+    /** How the interval should be described (e.g. "95% credible interval"). */
+    intervalLabel: z.string().optional(),
+    /** Confidence level behind the intervals (0-1). */
+    confidenceLevel: z.number().min(0).max(1).optional(),
+    points: z.array(UncertaintyPointSchema).min(1).max(50),
+    /** A reference line — consensus, target, or baseline. */
+    referenceValue: z.number().optional(),
+    referenceLabel: z.string().optional(),
+    /** How the estimates and intervals were produced. */
+    methodology: z.string().max(4000).optional(),
     sourceAttribution: z.string().optional(),
   }),
 });
@@ -1182,12 +1579,21 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   DataExplorerBlockSchema,
   CalculatorBlockSchema,
   RankingBlockSchema,
+  AnimatedMapBlockSchema,
+  KnowledgeGraphBlockSchema,
+  QuizBlockSchema,
+  CorrelationBlockSchema,
+  SensitivityBlockSchema,
+  WhatIfBlockSchema,
+  LiveCommentsBlockSchema,
+  PredictionLeaderboardBlockSchema,
   FinancialBlockSchema,
   ElectionBlockSchema,
   DisasterBlockSchema,
   ScienceBlockSchema,
   InterviewBlockSchema,
   LiveDataBlockSchema,
+  UncertaintyBlockSchema,
   EvidenceBlockSchema,
   PerspectiveBlockSchema,
   FactCheckBlockSchema,
@@ -1233,12 +1639,21 @@ export type AnnotatedImageBlock = z.infer<typeof AnnotatedImageBlockSchema>;
 export type DataExplorerBlock = z.infer<typeof DataExplorerBlockSchema>;
 export type CalculatorBlock = z.infer<typeof CalculatorBlockSchema>;
 export type RankingBlock = z.infer<typeof RankingBlockSchema>;
+export type AnimatedMapBlock = z.infer<typeof AnimatedMapBlockSchema>;
+export type KnowledgeGraphBlock = z.infer<typeof KnowledgeGraphBlockSchema>;
+export type QuizBlock = z.infer<typeof QuizBlockSchema>;
+export type CorrelationBlock = z.infer<typeof CorrelationBlockSchema>;
+export type SensitivityBlock = z.infer<typeof SensitivityBlockSchema>;
+export type WhatIfBlock = z.infer<typeof WhatIfBlockSchema>;
+export type LiveCommentsBlock = z.infer<typeof LiveCommentsBlockSchema>;
+export type PredictionLeaderboardBlock = z.infer<typeof PredictionLeaderboardBlockSchema>;
 export type FinancialBlock = z.infer<typeof FinancialBlockSchema>;
 export type ElectionBlock = z.infer<typeof ElectionBlockSchema>;
 export type DisasterBlock = z.infer<typeof DisasterBlockSchema>;
 export type ScienceBlock = z.infer<typeof ScienceBlockSchema>;
 export type InterviewBlock = z.infer<typeof InterviewBlockSchema>;
 export type LiveDataBlock = z.infer<typeof LiveDataBlockSchema>;
+export type UncertaintyBlock = z.infer<typeof UncertaintyBlockSchema>;
 export type EvidenceBlock = z.infer<typeof EvidenceBlockSchema>;
 export type PerspectiveBlock = z.infer<typeof PerspectiveBlockSchema>;
 export type FactCheckBlock = z.infer<typeof FactCheckBlockSchema>;

@@ -765,6 +765,7 @@ export default function StoryPage() {
               blocks={story.blocks}
               theme={isDark ? 'dark' : 'light'}
               depth={readingDepth}
+              storyId={story.id}
             />
 
             {/* Investigative Deep Dive Background Report */}

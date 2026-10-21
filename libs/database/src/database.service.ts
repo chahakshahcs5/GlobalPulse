@@ -24,6 +24,7 @@ import type {
   IKnowledgeGraphRepository,
   IIngestionRepository,
   ISourceCorrectionRepository,
+  ILiveFeedRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -51,6 +52,7 @@ import {
   MemoryKnowledgeGraphRepository,
   MemoryIngestionRepository,
   MemorySourceCorrectionRepository,
+  MemoryLiveFeedRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -78,6 +80,7 @@ import {
   PrismaKnowledgeGraphRepository,
   PrismaIngestionRepository,
   PrismaSourceCorrectionRepository,
+  PrismaLiveFeedRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -115,6 +118,7 @@ export class DatabaseService {
   public knowledgeGraph: IKnowledgeGraphRepository;
   public ingestion: IIngestionRepository;
   public sourceCorrections: ISourceCorrectionRepository;
+  public liveFeeds: ILiveFeedRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -141,6 +145,7 @@ export class DatabaseService {
   private memoryKnowledgeGraph = new MemoryKnowledgeGraphRepository();
   private memoryIngestion = new MemoryIngestionRepository();
   private memorySourceCorrections = new MemorySourceCorrectionRepository();
+  private memoryLiveFeeds = new MemoryLiveFeedRepository();
 
   private isPrismaActive = false;
 
@@ -200,6 +205,7 @@ export class DatabaseService {
     this.knowledgeGraph = this.memoryKnowledgeGraph;
     this.ingestion = this.memoryIngestion;
     this.sourceCorrections = this.memorySourceCorrections;
+    this.liveFeeds = this.memoryLiveFeeds;
   }
 
   /**
@@ -254,6 +260,7 @@ export class DatabaseService {
         this.knowledgeGraph = new PrismaKnowledgeGraphRepository(getPrisma);
         this.ingestion = new PrismaIngestionRepository(getPrisma);
         this.sourceCorrections = new PrismaSourceCorrectionRepository(getPrisma);
+        this.liveFeeds = new PrismaLiveFeedRepository(getPrisma);
         this.isPrismaActive = true;
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 25 domains).');
         return true;
@@ -323,6 +330,7 @@ export class DatabaseService {
     const graphSnap = this.memoryKnowledgeGraph.snapshot();
     const ingestionSnap = this.memoryIngestion.snapshot();
     const correctionSnap = this.memorySourceCorrections.snapshot();
+    const liveFeedSnap = this.memoryLiveFeeds.snapshot();
 
     try {
       const result = await work(null);
@@ -353,6 +361,7 @@ export class DatabaseService {
       this.memoryKnowledgeGraph.restore(graphSnap);
       this.memoryIngestion.restore(ingestionSnap);
       this.memorySourceCorrections.restore(correctionSnap);
+      this.memoryLiveFeeds.restore(liveFeedSnap);
       throw err;
     } finally {
       this.releaseTransactionLock();
@@ -397,6 +406,7 @@ export class DatabaseService {
     this.memoryKnowledgeGraph.clear();
     this.memoryIngestion.clear();
     this.memorySourceCorrections.clear();
+    this.memoryLiveFeeds.clear();
   }
 }
 

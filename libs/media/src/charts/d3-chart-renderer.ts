@@ -71,6 +71,34 @@ export class D3ChartRenderer {
       return this.renderSlope(chartData, width, height, isDark);
     }
 
+    if (chartData.chartType === 'dot_plot') {
+      return this.renderDotPlot(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'lollipop') {
+      return this.renderLollipop(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'diverging_bar') {
+      return this.renderDivergingBar(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'sparkline') {
+      return this.renderSparkline(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'bump') {
+      return this.renderBump(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'radar') {
+      return this.renderRadar(chartData, width, height, isDark);
+    }
+
+    if (chartData.chartType === 'small_multiples') {
+      return this.renderSmallMultiples(chartData, width, height, isDark);
+    }
+
     // Extract values
     const xKey = chartData.xAxis.key;
     const xCategories = chartData.values.map((v) => String(v[xKey] ?? ''));
@@ -268,12 +296,68 @@ export class D3ChartRenderer {
       });
     }
 
+    // Annotation markers, anchored to the data points they explain.
+    svgElements += this.renderAnnotations(chartData, {
+      scaleX,
+      scaleY,
+      xKey,
+      series,
+    });
+
     // Source Attribution Footnote
     if (chartData.sourceAttribution) {
       svgElements += `<text x="${width - padding.right}" y="${height - 12}" text-anchor="end" font-size="10" fill="${subtextColor}" font-style="italic" font-family="system-ui, -apple-system, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>`;
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px; overflow: hidden;" role="img" aria-label="${escapeXml(chartData.title)}">${svgElements}</svg>`;
+  }
+
+  /**
+   * Draw a numbered marker at each annotated data point.
+   *
+   * The marker carries the annotation id so the client can open it. An
+   * annotation that does not match any data point is skipped rather than
+   * drawn at a wrong position — a mis-anchored marker would be worse than no
+   * marker at all.
+   */
+  private static renderAnnotations(
+    chartData: ChartBlock['data'],
+    ctx: {
+      scaleX: (index: number) => number;
+      scaleY: (value: number) => number;
+      xKey: string;
+      series: Array<{ key: string; color: string }>;
+    }
+  ): string {
+    const annotations = chartData.annotations ?? [];
+    if (annotations.length === 0) return '';
+
+    let svg = '';
+    annotations.forEach((annotation, idx) => {
+      const rowIdx = chartData.values.findIndex(
+        (row) => String(row[ctx.xKey] ?? '') === annotation.xValue
+      );
+      if (rowIdx === -1) return;
+
+      const seriesKey = annotation.seriesKey ?? ctx.series[0]?.key;
+      if (!seriesKey) return;
+
+      const rawValue = chartData.values[rowIdx][seriesKey];
+      const value = Number(rawValue ?? 0);
+      if (!Number.isFinite(value)) return;
+
+      const cx = ctx.scaleX(rowIdx);
+      const cy = ctx.scaleY(value);
+      const number = idx + 1;
+
+      svg += `<g class="chart-annotation" data-annotation-id="${escapeXml(annotation.id)}" data-annotation-index="${idx}" role="button" tabindex="0" aria-label="${escapeXml(`${number}. ${annotation.label}`)}" style="cursor:pointer">`;
+      svg += `<circle cx="${cx}" cy="${cy}" r="13" fill="#f59e0b" fill-opacity="0.25" />`;
+      svg += `<circle cx="${cx}" cy="${cy}" r="9" fill="#f59e0b" stroke="#0f172a" stroke-width="2" />`;
+      svg += `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a" font-family="system-ui, -apple-system, sans-serif">${number}</text>`;
+      svg += `</g>`;
+    });
+
+    return svg;
   }
 
   private static renderDonut(
@@ -765,6 +849,699 @@ export class D3ChartRenderer {
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Shared layout for the horizontal (category-on-Y) chart types.
+   *
+   * `dot_plot` and `lollipop` share the same geometry — categories down the
+   * left, values across the bottom — and only differ in whether a stem is
+   * drawn from the baseline to the marker.
+   */
+  private static horizontalLayout(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ) {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    const padding = { top: 76, right: 76, bottom: 58, left: 130 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    const xKey = chartData.xAxis.key;
+    const categories = chartData.values.map((v) => String(v[xKey] ?? ''));
+    const series = chartData.series.map((s, idx) => ({
+      ...s,
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
+    }));
+
+    let minVal = chartData.yAxis.min ?? 0;
+    let maxVal = chartData.yAxis.max ?? -Infinity;
+    for (const row of chartData.values) {
+      for (const s of series) {
+        const val = Number(row[s.key] ?? 0);
+        if (val > maxVal) maxVal = val;
+        if (val < minVal) minVal = val;
+      }
+    }
+    if (maxVal <= minVal) maxVal = minVal + 10;
+
+    const tickInfo = getNiceTicks(minVal, maxVal, 5);
+    minVal = tickInfo.min;
+    maxVal = tickInfo.max;
+    const range = maxVal - minVal;
+
+    const scaleX = (val: number) => padding.left + ((val - minVal) / range) * chartW;
+    const rowH = chartH / Math.max(1, categories.length);
+
+    return {
+      bgColor,
+      textColor,
+      subtextColor,
+      gridColor,
+      padding,
+      chartW,
+      chartH,
+      categories,
+      series,
+      minVal,
+      maxVal,
+      range,
+      scaleX,
+      rowH,
+      ticks: tickInfo.ticks,
+    };
+  }
+
+  /**
+   * Cleveland dot plot: one marker per category, no stems.
+   *
+   * Reads as a ranking rather than a magnitude comparison, which makes it the
+   * right default for "top N" style editorial charts.
+   */
+  private static renderDotPlot(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const L = this.horizontalLayout(chartData, width, height, isDark);
+
+    let elements = '';
+    elements += `<text x="${L.padding.left}" y="30" font-size="17" font-weight="700" fill="${L.textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${L.padding.left}" y="50" font-size="12" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    // Vertical grid lines + value labels
+    for (const tickVal of L.ticks) {
+      const x = L.scaleX(tickVal);
+      elements += `<line x1="${x}" y1="${L.padding.top}" x2="${x}" y2="${L.padding.top + L.chartH}" stroke="${L.gridColor}" stroke-dasharray="3,3" />`;
+      const numStr = formatChartValue(tickVal, L.range);
+      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+    }
+
+    // One row per category
+    chartData.values.forEach((row, rowIdx) => {
+      const cy = L.padding.top + rowIdx * L.rowH + L.rowH / 2;
+
+      elements += `<text x="${L.padding.left - 14}" y="${cy + 4}" text-anchor="end" font-size="12" font-weight="600" fill="${L.textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(L.categories[rowIdx])}</text>`;
+
+      // Stems first, so the value labels always sit on top of them.
+      L.series.forEach((s) => {
+        const val = Number(row[s.key] ?? 0);
+        const cx = L.scaleX(val);
+
+        // Connector from the plot edge to the marker.
+        elements += `<line x1="${L.padding.left}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="${s.color}" stroke-opacity="0.28" stroke-width="2" />`;
+        elements += `<circle cx="${cx}" cy="${cy}" r="7" fill="${L.bgColor}" stroke="${s.color}" stroke-width="3" data-val="${val}" />`;
+      });
+
+      L.series.forEach((s) => {
+        const val = Number(row[s.key] ?? 0);
+        const cx = L.scaleX(val);
+        elements += `<text x="${cx + 14}" y="${cy + 4}" font-size="11" font-weight="700" fill="${s.color}" stroke="${L.bgColor}" stroke-width="3" paint-order="stroke" font-family="system-ui, -apple-system, sans-serif">${formatChartValue(val, L.range)}</text>`;
+      });
+    });
+
+    elements += this.renderLegend(L.series, L.padding.left, 60, L.textColor);
+    elements += this.renderSource(chartData, width, height, L.subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${L.bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Lollipop chart: a stem from the baseline out to a marker.
+   *
+   * Same geometry as a dot plot, but the stem encodes the distance from zero,
+   * which keeps the magnitude readable while the circle stays the focal point.
+   */
+  private static renderLollipop(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const L = this.horizontalLayout(chartData, width, height, isDark);
+
+    let elements = '';
+    elements += `<text x="${L.padding.left}" y="30" font-size="17" font-weight="700" fill="${L.textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${L.padding.left}" y="50" font-size="12" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    // Baseline (zero) — the stems grow out of it.
+    const zeroX = L.scaleX(Math.max(L.minVal, Math.min(0, L.maxVal)));
+    elements += `<line x1="${zeroX}" y1="${L.padding.top}" x2="${zeroX}" y2="${L.padding.top + L.chartH}" stroke="${L.subtextColor}" stroke-opacity="0.35" stroke-width="1.5" />`;
+
+    for (const tickVal of L.ticks) {
+      const x = L.scaleX(tickVal);
+      elements += `<line x1="${x}" y1="${L.padding.top}" x2="${x}" y2="${L.padding.top + L.chartH}" stroke="${L.gridColor}" stroke-dasharray="3,3" />`;
+      const numStr = formatChartValue(tickVal, L.range);
+      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+    }
+
+    chartData.values.forEach((row, rowIdx) => {
+      const cy = L.padding.top + rowIdx * L.rowH + L.rowH / 2;
+
+      elements += `<text x="${L.padding.left - 14}" y="${cy + 4}" text-anchor="end" font-size="12" font-weight="600" fill="${L.textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(L.categories[rowIdx])}</text>`;
+
+      L.series.forEach((s) => {
+        const val = Number(row[s.key] ?? 0);
+        const cx = L.scaleX(val);
+
+        elements += `<line x1="${zeroX}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="${s.color}" stroke-width="3" stroke-linecap="round" />`;
+        elements += `<circle cx="${cx}" cy="${cy}" r="8" fill="${s.color}" stroke="${L.bgColor}" stroke-width="2" data-val="${val}" />`;
+      });
+
+      // Labels last, with a background-coloured halo so they stay readable
+      // where one series' stem runs under another series' value.
+      L.series.forEach((s) => {
+        const val = Number(row[s.key] ?? 0);
+        const cx = L.scaleX(val);
+        elements += `<text x="${cx + 16}" y="${cy + 4}" font-size="11" font-weight="700" fill="${L.textColor}" stroke="${L.bgColor}" stroke-width="3" paint-order="stroke" font-family="system-ui, -apple-system, sans-serif">${formatChartValue(val, L.range)}</text>`;
+      });
+    });
+
+    elements += this.renderLegend(L.series, L.padding.left, 60, L.textColor);
+    elements += this.renderSource(chartData, width, height, L.subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${L.bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Diverging bar chart: negative values extend left of a centred zero line,
+   * positive values extend right.
+   */
+  private static renderDivergingBar(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    const padding = { top: 76, right: 40, bottom: 58, left: 70 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    const xKey = chartData.xAxis.key;
+    const categories = chartData.values.map((v) => String(v[xKey] ?? ''));
+    const series = chartData.series.map((s, idx) => ({
+      ...s,
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
+    }));
+
+    let minVal = 0;
+    let maxVal = 0;
+    for (const row of chartData.values) {
+      for (const s of series) {
+        const val = Number(row[s.key] ?? 0);
+        maxVal = Math.max(maxVal, val);
+        minVal = Math.min(minVal, val);
+      }
+    }
+    if (maxVal === 0 && minVal === 0) maxVal = 10;
+    if (maxVal === minVal) maxVal = minVal + 10;
+
+    const tickInfo = getNiceTicks(minVal, maxVal, 5);
+    const lo = tickInfo.min;
+    const hi = tickInfo.max;
+    const range = hi - lo;
+
+    const scaleY = (val: number) => padding.top + chartH - ((val - lo) / range) * chartH;
+    const zeroY = scaleY(0);
+
+    let elements = '';
+    elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    for (const tickVal of tickInfo.ticks) {
+      const y = scaleY(tickVal);
+      elements += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="${gridColor}" stroke-dasharray="3,3" />`;
+      const numStr = formatChartValue(tickVal, range);
+      elements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+    }
+
+    const bandWidth = chartW / Math.max(1, categories.length);
+    const barWidth = Math.max(3, (bandWidth * 0.7) / series.length);
+
+    chartData.values.forEach((row, rowIdx) => {
+      const groupX = padding.left + rowIdx * bandWidth + (bandWidth * 0.15) / 2;
+
+      series.forEach((s, sIdx) => {
+        const val = Number(row[s.key] ?? 0);
+        const bx = groupX + sIdx * barWidth;
+        const by = scaleY(Math.max(0, val));
+        const bh = Math.max(1, Math.abs(scaleY(val) - zeroY));
+        // A negative value hangs below the zero line, so it needs a negative y.
+        const top = val >= 0 ? by : zeroY;
+
+        elements += `<rect x="${bx}" y="${top}" width="${Math.max(2, barWidth - 2)}" height="${bh}" rx="2" fill="${s.color}" data-val="${val}" />`;
+      });
+
+      elements += `<text x="${padding.left + rowIdx * bandWidth + bandWidth / 2}" y="${padding.top + chartH + 20}" text-anchor="middle" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(categories[rowIdx])}</text>`;
+    });
+
+    // The zero line is drawn last so it sits above the bars.
+    elements += `<line x1="${padding.left}" y1="${zeroY}" x2="${width - padding.right}" y2="${zeroY}" stroke="${textColor}" stroke-opacity="0.55" stroke-width="1.5" />`;
+
+    elements += this.renderLegend(series, padding.left, 60, textColor);
+    elements += this.renderSource(chartData, width, height, subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Sparkline: the trend of a single series with no axes, ticks or legend.
+   */
+  private static renderSparkline(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+
+    const series = chartData.series[0] || { name: 'Trend', key: 'value' };
+    const color = safeColor(series.color, DEFAULT_PALETTE[0]);
+    const values = chartData.values.map((v) => Number(v[series.key] ?? 0));
+
+    const padding = { top: 14, right: 20, bottom: 14, left: 20 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    let elements = '';
+    if (chartData.title) {
+      elements += `<text x="${padding.left}" y="12" font-size="12" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    }
+
+    if (values.length === 0) {
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+
+    const points = values.map((val, idx) => {
+      const x = padding.left + (idx / Math.max(1, values.length - 1)) * chartW;
+      const y = padding.top + chartH - ((val - min) / range) * chartH;
+      return { x, y, val };
+    });
+
+    const path = points.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+    const areaPath = `${padding.left},${padding.top + chartH} ${path} ${padding.left + chartW},${padding.top + chartH}`;
+
+    elements += `<polygon points="${areaPath}" fill="${color}" fill-opacity="0.14" />`;
+    elements += `<polyline points="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`;
+
+    const last = points[points.length - 1];
+    elements += `<circle cx="${last.x}" cy="${last.y}" r="4" fill="${color}" />`;
+    elements += `<text x="${last.x - 8}" y="${last.y - 10}" text-anchor="end" font-size="11" font-weight="700" fill="${textColor}" stroke="${bgColor}" stroke-width="3" paint-order="stroke" font-family="system-ui, -apple-system, sans-serif">${formatChartValue(last.val, range)}</text>`;
+
+    if (chartData.sourceAttribution) {
+      elements += `<text x="${padding.left}" y="${height - 4}" font-size="10" fill="${subtextColor}" font-style="italic" font-family="system-ui, -apple-system, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>`;
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Bump chart: how the ranking of a set of entities changes over time.
+   *
+   * `values` holds one row per time step; each series is an entity and its
+   * value is that entity's rank in that step (1 = best).
+   */
+  private static renderBump(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    const padding = { top: 80, right: 150, bottom: 56, left: 60 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    const xKey = chartData.xAxis.key;
+    const steps = chartData.values.map((v) => String(v[xKey] ?? ''));
+    const series = chartData.series.map((s, idx) => ({
+      ...s,
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
+    }));
+
+    // Rank bounds across every series and step.
+    let minRank = Infinity;
+    let maxRank = 0;
+    for (const row of chartData.values) {
+      for (const s of series) {
+        const rank = Number(row[s.key] ?? 0);
+        if (rank > 0) {
+          minRank = Math.min(minRank, rank);
+          maxRank = Math.max(maxRank, rank);
+        }
+      }
+    }
+    if (!Number.isFinite(minRank) || maxRank === 0) {
+      minRank = 1;
+      maxRank = Math.max(1, series.length);
+    }
+
+    const scaleX = (idx: number) =>
+      padding.left + (steps.length > 1 ? (idx / (steps.length - 1)) * chartW : chartW / 2);
+    const scaleY = (rank: number) => {
+      const span = Math.max(1, maxRank - minRank);
+      return padding.top + ((rank - minRank) / span) * chartH;
+    };
+
+    let elements = '';
+    elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    // Rank guide lines
+    for (let rank = minRank; rank <= maxRank; rank++) {
+      const y = scaleY(rank);
+      elements += `<line x1="${padding.left}" y1="${y}" x2="${padding.left + chartW}" y2="${y}" stroke="${gridColor}" stroke-dasharray="3,3" />`;
+      elements += `<text x="${padding.left - 12}" y="${y + 4}" text-anchor="end" font-size="10" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">#${rank}</text>`;
+    }
+
+    // Time step labels
+    steps.forEach((step, idx) => {
+      elements += `<text x="${scaleX(idx)}" y="${padding.top + chartH + 22}" text-anchor="middle" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(step)}</text>`;
+    });
+
+    series.forEach((s) => {
+      const points: string[] = [];
+      let lastX = padding.left;
+      let lastY = padding.top;
+      let hasPoint = false;
+
+      chartData.values.forEach((row, idx) => {
+        const rank = Number(row[s.key] ?? 0);
+        if (rank <= 0) return;
+        const x = scaleX(idx);
+        const y = scaleY(rank);
+        points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
+        lastX = x;
+        lastY = y;
+        hasPoint = true;
+      });
+
+      if (!hasPoint) return;
+
+      elements += `<polyline points="${points.join(' ')}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+
+      chartData.values.forEach((row, idx) => {
+        const rank = Number(row[s.key] ?? 0);
+        if (rank <= 0) return;
+        elements += `<circle cx="${scaleX(idx)}" cy="${scaleY(rank)}" r="5" fill="${bgColor}" stroke="${s.color}" stroke-width="2.5" />`;
+      });
+
+      // Label the entity at its final position.
+      elements += `<text x="${lastX + 12}" y="${lastY + 4}" font-size="11" font-weight="700" fill="${s.color}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text>`;
+    });
+
+    elements += this.renderSource(chartData, width, height, subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Radar chart: several series compared across a shared set of axes.
+   *
+   * Each axis is normalised against the series that share it, so the shape
+   * shows relative standing rather than raw units.
+   */
+  private static renderRadar(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+
+    const padding = { top: 80, right: 60, bottom: 70, left: 60 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    const xKey = chartData.xAxis.key;
+    const axes = chartData.values.map((v) => String(v[xKey] ?? ''));
+    const series = chartData.series.map((s, idx) => ({
+      ...s,
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
+    }));
+
+    const cx = padding.left + chartW / 2;
+    const cy = padding.top + chartH / 2;
+    const radius = Math.min(chartW, chartH) / 2 - 30;
+
+    // Normalise every axis against the values the series share for it.
+    const normalized = axes.map((_, axisIdx) => {
+      const raw = series.map((s) => Number(chartData.values[axisIdx]?.[s.key] ?? 0));
+      const min = Math.min(...raw);
+      const max = Math.max(...raw);
+      const span = max - min || 1;
+      return raw.map((v) => (max === min ? 0.5 : (v - min) / span));
+    });
+
+    const angleFor = (axisIdx: number) => {
+      const angle = (Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2;
+      return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    };
+
+    let elements = '';
+    elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    // Concentric rings
+    for (let ring = 1; ring <= 4; ring++) {
+      const r = (radius * ring) / 4;
+      const pts = axes
+        .map((_, axisIdx) => {
+          const angle = (Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2;
+          return `${(cx + r * Math.cos(angle)).toFixed(2)},${(cy + r * Math.sin(angle)).toFixed(2)}`;
+        })
+        .join(' ');
+      elements += `<polygon points="${pts}" fill="none" stroke="${gridColor}" stroke-width="1" />`;
+    }
+
+    // Radial axes + labels
+    axes.forEach((axisLabel, axisIdx) => {
+      const end = angleFor(axisIdx);
+      elements += `<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="${gridColor}" stroke-width="1" />`;
+      const labelX =
+        cx +
+        (radius + 18) * Math.cos((Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2);
+      const labelY =
+        cy +
+        (radius + 18) * Math.sin((Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2);
+      elements += `<text x="${labelX}" y="${labelY + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(axisLabel)}</text>`;
+    });
+
+    // One polygon per series
+    series.forEach((s, sIdx) => {
+      const pts = normalized
+        .map((axisValues, axisIdx) => {
+          const ratio = axisValues[sIdx];
+          const angle = (Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2;
+          const r = radius * ratio;
+          return `${(cx + r * Math.cos(angle)).toFixed(2)},${(cy + r * Math.sin(angle)).toFixed(2)}`;
+        })
+        .join(' ');
+
+      elements += `<polygon points="${pts}" fill="${s.color}" fill-opacity="0.18" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" />`;
+
+      normalized.forEach((axisValues, axisIdx) => {
+        const ratio = axisValues[sIdx];
+        const angle = (Math.PI * 2 * axisIdx) / Math.max(1, axes.length) - Math.PI / 2;
+        const r = radius * ratio;
+        elements += `<circle cx="${(cx + r * Math.cos(angle)).toFixed(2)}" cy="${(cy + r * Math.sin(angle)).toFixed(2)}" r="4" fill="${s.color}" />`;
+      });
+    });
+
+    elements += this.renderLegend(series, padding.left, 60, textColor);
+    elements += this.renderSource(chartData, width, height, subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /**
+   * Small multiples: one mini chart per facet.
+   *
+   * `facetField` names the column that splits the rows into panels. Every
+   * panel gets its own y-scale so a small-value facet is still readable.
+   */
+  private static renderSmallMultiples(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+    const subtextColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    const facetField = chartData.facetField;
+    const xKey = chartData.xAxis.key;
+
+    // Without a facet field there is nothing to split on — fall back to one
+    // panel per row so the block still renders meaningful output.
+    const groups = new Map<string, Array<Record<string, unknown>>>();
+    chartData.values.forEach((row) => {
+      const key = facetField ? String(row[facetField] ?? '') : String(row[xKey] ?? '');
+      const bucket = groups.get(key);
+      if (bucket) bucket.push(row);
+      else groups.set(key, [row]);
+    });
+
+    const panels = Array.from(groups.entries());
+    const columns = Math.min(3, Math.max(1, Math.ceil(Math.sqrt(panels.length))));
+    const rows = Math.ceil(panels.length / columns);
+
+    const margin = { top: 74, right: 24, bottom: 24, left: 24 };
+    const gap = 26;
+    const gridW = width - margin.left - margin.right;
+    const gridH = height - margin.top - margin.bottom;
+    const panelW = (gridW - gap * (columns - 1)) / columns;
+    const panelH = (gridH - gap * (rows - 1)) / rows;
+
+    const series = chartData.series.map((s, idx) => ({
+      ...s,
+      color: safeColor(s.color, DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length]),
+    }));
+
+    let elements = '';
+    elements += `<text x="${margin.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>`;
+    if (chartData.subtitle) {
+      elements += `<text x="${margin.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.subtitle)}</text>`;
+    }
+
+    panels.forEach(([facetName, facetRows], panelIdx) => {
+      const col = panelIdx % columns;
+      const row = Math.floor(panelIdx / columns);
+      const px = margin.left + col * (panelW + gap);
+      const py = margin.top + row * (panelH + gap);
+
+      const panelPadding = { top: 24, right: 12, bottom: 22, left: 44 };
+      const plotW = panelW - panelPadding.left - panelPadding.right;
+      const plotH = panelH - panelPadding.top - panelPadding.bottom;
+
+      elements += `<rect x="${px}" y="${py}" width="${panelW}" height="${panelH}" rx="8" fill="none" stroke="${gridColor}" stroke-width="1" />`;
+      elements += `<text x="${px + panelPadding.left}" y="${py + 15}" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(facetName)}</text>`;
+
+      let minVal = Infinity;
+      let maxVal = -Infinity;
+      for (const facetRow of facetRows) {
+        for (const s of series) {
+          const val = Number(facetRow[s.key] ?? 0);
+          minVal = Math.min(minVal, val);
+          maxVal = Math.max(maxVal, val);
+        }
+      }
+      if (!Number.isFinite(minVal) || maxVal === minVal) {
+        minVal = Math.min(0, minVal === Infinity ? 0 : minVal);
+        maxVal = minVal + 10;
+      }
+
+      const scaleY = (val: number) =>
+        py + panelPadding.top + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
+      const scaleX = (idx: number) =>
+        px +
+        panelPadding.left +
+        (facetRows.length > 1 ? (idx / (facetRows.length - 1)) * plotW : plotW / 2);
+
+      // Baseline + y labels
+      const baseY = scaleY(Math.max(minVal, 0));
+      elements += `<line x1="${px + panelPadding.left}" y1="${baseY}" x2="${px + panelPadding.left + plotW}" y2="${baseY}" stroke="${gridColor}" stroke-width="1" />`;
+      elements += `<text x="${px + panelPadding.left - 6}" y="${scaleY(maxVal) + 4}" text-anchor="end" font-size="9" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${formatChartValue(maxVal, maxVal - minVal)}</text>`;
+      elements += `<text x="${px + panelPadding.left - 6}" y="${scaleY(minVal) + 4}" text-anchor="end" font-size="9" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${formatChartValue(minVal, maxVal - minVal)}</text>`;
+
+      series.forEach((s) => {
+        const points = facetRows.map((facetRow, idx) => {
+          const val = Number(facetRow[s.key] ?? 0);
+          return `${scaleX(idx).toFixed(2)},${scaleY(val).toFixed(2)}`;
+        });
+
+        if (points.length === 1) {
+          const val = Number(facetRows[0][s.key] ?? 0);
+          elements += `<circle cx="${scaleX(0)}" cy="${scaleY(val)}" r="4" fill="${s.color}" />`;
+        } else {
+          elements += `<polyline points="${points.join(' ')}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`;
+          facetRows.forEach((facetRow, idx) => {
+            const val = Number(facetRow[s.key] ?? 0);
+            elements += `<circle cx="${scaleX(idx)}" cy="${scaleY(val)}" r="3" fill="${s.color}" />`;
+          });
+        }
+      });
+
+      // X labels: first and last category of the panel.
+      if (facetRows.length > 0) {
+        const firstLabel = String(facetRows[0][xKey] ?? '');
+        const lastLabel = String(facetRows[facetRows.length - 1][xKey] ?? '');
+        elements += `<text x="${scaleX(0)}" y="${py + panelPadding.top + plotH + 14}" text-anchor="middle" font-size="9" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(firstLabel)}</text>`;
+        if (facetRows.length > 1) {
+          elements += `<text x="${scaleX(facetRows.length - 1)}" y="${py + panelPadding.top + plotH + 14}" text-anchor="middle" font-size="9" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(lastLabel)}</text>`;
+        }
+      }
+    });
+
+    elements += this.renderSource(chartData, width, height, subtextColor);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">${elements}</svg>`;
+  }
+
+  /** Legend row shared by the chart types that render their own legend. */
+  private static renderLegend(
+    series: Array<{ name: string; color: string }>,
+    startX: number,
+    y: number,
+    textColor: string
+  ): string {
+    if (series.length <= 1) return '';
+    let legend = '';
+    let x = startX;
+    series.forEach((s) => {
+      const itemWidth = Math.max(90, Math.ceil(s.name.length * 7.2) + 36);
+      legend += `<g transform="translate(${x}, ${y})"><rect width="12" height="12" rx="2.5" fill="${s.color}" /><text x="18" y="10" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(s.name)}</text></g>`;
+      x += itemWidth;
+    });
+    return legend;
+  }
+
+  /** Source attribution footnote shared by the chart types that render one. */
+  private static renderSource(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    subtextColor: string
+  ): string {
+    if (!chartData.sourceAttribution) return '';
+    return `<text x="${width - 40}" y="${height - 12}" text-anchor="end" font-size="10" fill="${subtextColor}" font-style="italic" font-family="system-ui, -apple-system, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>`;
   }
 }
 

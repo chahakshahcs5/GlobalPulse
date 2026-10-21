@@ -121,7 +121,7 @@ export function StoryDetailScreen({ story, onBack, isTabletSplit }: StoryDetailS
 
       {/* Content Blocks */}
       <View style={styles.blocksWrapper}>
-        <MobileBlockRenderer blocks={story.blocks} />
+        <MobileBlockRenderer blocks={story.blocks} storyId={story.id} />
       </View>
     </ScrollView>
   );

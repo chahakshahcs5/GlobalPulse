@@ -9,6 +9,7 @@ import type {
 import type {
   IEngagementRepository,
   ReadingProgressRecord,
+  PollVoteRecord,
 } from '../../interfaces/engagement.repository';
 
 interface PrismaCommentRow {
@@ -39,6 +40,17 @@ interface PrismaReactionRow {
 interface PrismaBookmarkRow {
   id: string;
   storyId: string;
+  userId: string;
+  organizationId: string;
+  createdAt: Date;
+}
+
+interface PrismaPollVoteRow {
+  id: string;
+  storyId: string;
+  blockId: string;
+  pollId: string;
+  optionId: string;
   userId: string;
   organizationId: string;
   createdAt: Date;
@@ -484,5 +496,110 @@ export class PrismaEngagementRepository implements IEngagementRepository {
       }
     }
     return this.shareCounts.get(storyId) || 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Poll Votes
+  // ---------------------------------------------------------------------------
+
+  /** Fallback store used when the `poll_votes` table is not reachable. */
+  private pollVoteMap = new Map<string, PollVoteRecord>();
+
+  private get pollVoteClient():
+    | {
+        upsert: (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => Promise<PrismaPollVoteRow>;
+        findMany: (args: {
+          where: Record<string, unknown>;
+          orderBy?: Record<string, unknown>;
+        }) => Promise<PrismaPollVoteRow[]>;
+        findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaPollVoteRow | null>;
+      }
+    | undefined {
+    return (this.prisma as Record<string, unknown>)?.pollVote as typeof this.pollVoteClient;
+  }
+
+  private mapPollVote(row: PrismaPollVoteRow): PollVoteRecord {
+    return {
+      id: row.id,
+      storyId: row.storyId,
+      blockId: row.blockId,
+      pollId: row.pollId,
+      optionId: row.optionId,
+      userId: row.userId,
+      organizationId: row.organizationId,
+      createdAt:
+        row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+    };
+  }
+
+  async castPollVote(vote: PollVoteRecord): Promise<PollVoteRecord> {
+    if (this.pollVoteClient) {
+      try {
+        // One vote per reader per block: casting again replaces the choice.
+        const row = await this.pollVoteClient.upsert({
+          where: { blockId_userId: { blockId: vote.blockId, userId: vote.userId } },
+          create: {
+            id: vote.id,
+            storyId: vote.storyId,
+            blockId: vote.blockId,
+            pollId: vote.pollId,
+            optionId: vote.optionId,
+            userId: vote.userId,
+            organizationId: vote.organizationId,
+            createdAt: new Date(vote.createdAt),
+          },
+          update: {
+            optionId: vote.optionId,
+            createdAt: new Date(vote.createdAt),
+          },
+        });
+        return this.mapPollVote(row);
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
+    this.pollVoteMap.set(`${vote.blockId}:${vote.userId}`, { ...vote });
+    return { ...vote };
+  }
+
+  async getPollVotes(blockId: string): Promise<PollVoteRecord[]> {
+    if (this.pollVoteClient) {
+      try {
+        const rows = await this.pollVoteClient.findMany({
+          where: { blockId },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (rows && rows.length > 0) {
+          return rows.map((r) => this.mapPollVote(r));
+        }
+      } catch {
+        // Fallback to memory below
+      }
+    }
+
+    const list: PollVoteRecord[] = [];
+    for (const vote of this.pollVoteMap.values()) {
+      if (vote.blockId === blockId) list.push({ ...vote });
+    }
+    return list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async getUserPollVote(blockId: string, userId: string): Promise<string | null> {
+    if (this.pollVoteClient) {
+      try {
+        const row = await this.pollVoteClient.findFirst({
+          where: { blockId, userId },
+        });
+        if (row) return row.optionId;
+      } catch {
+        // Fallback to memory below
+      }
+    }
+    return this.pollVoteMap.get(`${blockId}:${userId}`)?.optionId ?? null;
   }
 }

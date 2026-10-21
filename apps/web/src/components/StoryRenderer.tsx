@@ -8,12 +8,15 @@ export interface StoryRendererProps {
   blocks: StoryBlock[];
   theme?: 'dark' | 'light';
   depth?: 'quick' | 'balanced' | 'deep_dive';
+  /** Parent story id — lets interactive blocks reach the server. */
+  storyId?: string;
 }
 
 export const StoryRenderer: React.FC<StoryRendererProps> = ({
   blocks,
   theme = 'dark',
   depth = 'balanced',
+  storyId,
 }) => {
   if (!blocks || blocks.length === 0) {
     return (
@@ -64,7 +67,7 @@ export const StoryRenderer: React.FC<StoryRendererProps> = ({
   return (
     <div className="space-y-6 max-w-4xl mx-auto my-8">
       {effectiveBlocks.map((block) => (
-        <BlockItem key={block.id} block={block} theme={theme} />
+        <BlockItem key={block.id} block={block} theme={theme} storyId={storyId} />
       ))}
     </div>
   );

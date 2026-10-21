@@ -10,6 +10,7 @@ import type {
   DisasterBlock,
   ScienceBlock,
 } from '@ai-news/schemas';
+import { evaluateExpression } from '@ai-news/shared';
 
 /**
  * Renderers for the data-journalism blocks.
@@ -312,23 +313,6 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
  * restricted arithmetic sandbox: only numbers, the four operations, parentheses,
  * and the known input identifiers are accepted.
  */
-function evaluateExpression(expression: string, values: Record<string, number>): number | null {
-  const substituted = expression.replace(/[A-Za-z_][A-Za-z0-9_]*/g, (identifier) => {
-    const value = values[identifier];
-    return value === undefined ? 'NaN' : String(value);
-  });
-
-  if (!/^[0-9+\-*/(). NaN]*$/.test(substituted)) return null;
-
-  try {
-    const result = Function(`"use strict"; return (${substituted});`)() as unknown;
-    if (typeof result !== 'number' || !Number.isFinite(result)) return null;
-    return result;
-  } catch {
-    return null;
-  }
-}
-
 export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = ({ data }) => {
   const [values, setValues] = useState<Record<string, number | string>>(() =>
     Object.fromEntries(

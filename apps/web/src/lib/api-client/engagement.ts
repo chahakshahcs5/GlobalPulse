@@ -1,7 +1,7 @@
 /**
  * API Client — Editorial Review, Comments, Reactions & Bookmarks
  */
-import type { Story, Comment, BookmarkItem } from '@ai-news/schemas';
+import type { Story, Comment, BookmarkItem, PollTally } from '@ai-news/schemas';
 import { request } from './core';
 
 export async function submitForReview(id: string): Promise<Story> {
@@ -86,6 +86,42 @@ export async function toggleServerBookmark(storyId: string) {
   return request<{ bookmarked: boolean }>(`/api/bookmarks/${encodeURIComponent(storyId)}`, {
     method: 'POST',
   });
+}
+
+// ---------------------------------------------------------------------------
+// Poll Votes
+// ---------------------------------------------------------------------------
+
+/**
+ * Live tally for a poll block.
+ *
+ * The tally merges the counts baked into the story payload with the votes
+ * recorded on the server, so it reflects every reader's choice — not just the
+ * ones cast in this browser.
+ */
+export async function getPollTally(storyId: string, blockId: string): Promise<PollTally> {
+  return request<PollTally>(
+    `/api/stories/${encodeURIComponent(storyId)}/blocks/${encodeURIComponent(blockId)}/poll`
+  );
+}
+
+/**
+ * Cast (or change) this reader's vote on a poll block.
+ *
+ * A reader has at most one vote per block; voting again replaces the choice.
+ */
+export async function castPollVote(
+  storyId: string,
+  blockId: string,
+  optionId: string
+): Promise<PollTally> {
+  return request<PollTally>(
+    `/api/stories/${encodeURIComponent(storyId)}/blocks/${encodeURIComponent(blockId)}/poll`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ optionId }),
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------

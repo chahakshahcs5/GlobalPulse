@@ -23,3 +23,4 @@ export * from './alert.repository';
 export * from './knowledge-graph.repository';
 export * from './ingestion.repository';
 export * from './source-correction.repository';
+export * from './live-feed.repository';

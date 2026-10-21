@@ -7,6 +7,7 @@ import type {
   EmbedBlock,
   DiagramBlock,
   FlowBlock,
+  AnimatedMapBlock,
 } from '@ai-news/schemas';
 import { styles } from './styles';
 
@@ -128,6 +129,50 @@ export function DiagramBlockItem({ block }: { block: DiagramBlock }) {
       <Text style={styles.intelMeta}>{data.format} diagram</Text>
       <Text style={styles.intelText}>{data.definition}</Text>
       {data.caption ? <Text style={styles.intelMeta}>{data.caption}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * Animated map.
+ *
+ * Mobile has no scrubber, so the frames are listed with their locations —
+ * the same information, read frame by frame.
+ */
+export function AnimatedMapBlockItem({ block }: { block: AnimatedMapBlock }) {
+  const data = block.data || {};
+
+  return (
+    <View style={styles.mediaCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTypeBadge}>TIMELINE MAP</Text>
+        <Text style={styles.cardMetaText}>
+          {data.frames.length} frame{data.frames.length === 1 ? '' : 's'}
+        </Text>
+      </View>
+      <Text style={styles.cardTitle}>{data.title}</Text>
+      {data.description && <Text style={styles.cardSubtitle}>{data.description}</Text>}
+
+      {data.frames.map((frame, index) => (
+        <View key={`${frame.at}-${index}`} style={styles.intelListItem}>
+          <Text style={styles.chartValueLabel}>{frame.label ?? frame.at.slice(0, 10)}</Text>
+          {frame.points.map((point) => (
+            <Text key={point.id} style={styles.intelMeta}>
+              {point.label}
+              {point.value !== undefined
+                ? ` — ${point.value.toLocaleString()}${data.unit ? ` ${data.unit}` : ''}`
+                : ''}
+            </Text>
+          ))}
+        </View>
+      ))}
+
+      {data.methodology && (
+        <Text style={styles.sourceFootnote}>Methodology: {data.methodology}</Text>
+      )}
+      {data.sourceAttribution && (
+        <Text style={styles.sourceFootnote}>Source: {data.sourceAttribution}</Text>
+      )}
     </View>
   );
 }

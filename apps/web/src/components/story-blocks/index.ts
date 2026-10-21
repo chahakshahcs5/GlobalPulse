@@ -11,4 +11,7 @@ export * from './MediaExpansionViews';
 export * from './IntelligenceBlockViews';
 export * from './DataBlockViews';
 export * from './EntitySourceBlockViews';
+export * from './ChartBlockView';
+export * from './UncertaintyBlockView';
+export * from './useLiveFeed';
 export * from './BlockItem';

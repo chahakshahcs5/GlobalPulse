@@ -16,6 +16,7 @@ import { EngagementService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Roles, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
+import { ValidationError } from '@ai-news/shared';
 import type {
   CreateCommentInput,
   ModerateCommentInput,
@@ -120,6 +121,43 @@ export class EngagementController {
     @Principal() principal: AuthenticatedPrincipal
   ) {
     return await this.engagementService.toggleReaction(storyId, reactionType || 'like', {
+      userId: principal.id,
+      organizationId: principal.organizationId,
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Poll Votes
+  // ---------------------------------------------------------------------------
+
+  @Get('stories/:id/blocks/:blockId/poll')
+  @RequireScope('news:read')
+  async getPollResults(
+    @Param('id') storyId: string,
+    @Param('blockId') blockId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    return await this.engagementService.getPollTally(
+      storyId,
+      blockId,
+      principal.id,
+      principal.organizationId
+    );
+  }
+
+  @Post('stories/:id/blocks/:blockId/poll')
+  @HttpCode(HttpStatus.OK)
+  @RequireScope('news:read')
+  async castPollVote(
+    @Param('id') storyId: string,
+    @Param('blockId') blockId: string,
+    @Body('optionId') optionId: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    if (!optionId || typeof optionId !== 'string') {
+      throw new ValidationError('optionId is required');
+    }
+    return await this.engagementService.castPollVote(storyId, blockId, optionId, {
       userId: principal.id,
       organizationId: principal.organizationId,
     });
