@@ -2,12 +2,14 @@ import { randomUUID } from 'crypto';
 import type { DatabaseService } from '@ai-news/database';
 import type {
   Story,
+  StorySummary,
   StoryCluster,
   CreateClusterInput,
   FullCoverageResult,
   ClusterPerspective,
   ClusterTimelineItem,
 } from '@ai-news/schemas';
+import { toStorySummary } from '@ai-news/schemas';
 
 function formatTimeAgo(isoString: string): string {
   try {
@@ -182,12 +184,13 @@ export class ClusteringService {
       cluster = await this.db.clusters.create(newCluster);
     }
 
-    // Hydrate all related stories
+    // Hydrate all related stories. These are summaries: a cluster can span
+    // dozens of stories, and the blocks are fetched when one is opened.
     const relatedStoryIds = (cluster.storyIds || []).filter((id) => id !== leadStory.id);
-    const relatedStories: Story[] = [];
+    const relatedStories: StorySummary[] = [];
     for (const rid of relatedStoryIds) {
       const s = await this.db.stories.findById(rid, orgId);
-      if (s) relatedStories.push(s);
+      if (s) relatedStories.push(toStorySummary(s));
     }
 
     // Hydrate fact-check verification for this story
@@ -236,7 +239,7 @@ export class ClusteringService {
       storyId: leadStory.id,
       title: cluster.title,
       summary: cluster.summary || leadStory.summary,
-      leadStory,
+      leadStory: toStorySummary(leadStory),
       relatedStories,
       perspectives: cluster.perspectives,
       timeline: cluster.timeline,

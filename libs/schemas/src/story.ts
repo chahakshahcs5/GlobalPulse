@@ -103,6 +103,63 @@ export const StorySchema = z.object({
 });
 export type Story = z.infer<typeof StorySchema>;
 
+/**
+ * A story without its blocks.
+ *
+ * Listings, boards, calendars, collections and cluster summaries are made of
+ * many stories at once. Embedding the full `StorySchema` in them means every
+ * one of those payloads carries the entire story-block union — and the
+ * inferred type of the containing schema grows with every block type the
+ * platform adds, until TypeScript refuses to serialize it.
+ *
+ * A summary carries everything a reader needs to identify and link to a
+ * story, and nothing that would bloat the payload. Fetch the full story when
+ * the blocks are actually needed.
+ */
+export const StorySummarySchema = z.object({
+  id: z.string().min(1),
+  organizationId: z.string().min(1),
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  status: StoryStatusSchema,
+  articleType: ArticleTypeSchema,
+  eventId: z.string().optional(),
+  currentVersionNumber: z.number().int().positive(),
+  currentVersionId: z.string().optional(),
+  topicIds: z.array(z.string()).default([]),
+  entityIds: z.array(z.string()).default([]),
+  sourceIds: z.array(z.string()).default([]),
+  categories: z.array(z.string()).optional(),
+  heroImageUrl: z.string().url().optional(),
+  isSubscriberOnly: z.boolean().optional(),
+  createdVia: CreatedViaSchema,
+  createdByClient: ClientTypeSchema,
+  authorId: z.string().min(1),
+  publishedAt: z.string().optional(),
+  scheduledPublishAt: z.string().optional(),
+  wordCount: z.number().int().nonnegative().optional(),
+  readingTimeMinutes: z.number().int().nonnegative().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type StorySummary = z.infer<typeof StorySummarySchema>;
+
+/**
+ * Strip a story down to its summary.
+ */
+export function toStorySummary(story: Story): StorySummary {
+  const { blocks: _blocks, idempotencyKey: _idempotencyKey, ...summary } = story;
+  return summary;
+}
+
+/**
+ * Strip several stories down to their summaries.
+ */
+export function toStorySummaries(stories: Story[]): StorySummary[] {
+  return stories.map(toStorySummary);
+}
+
 // Input schemas for validation
 export const CreateStoryInputSchema = z.object({
   title: z.string().min(1, 'Title is required').max(300),

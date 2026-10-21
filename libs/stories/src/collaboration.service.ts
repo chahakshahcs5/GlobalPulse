@@ -5,10 +5,12 @@ import type {
   StoryLockUser,
   StoryPresence,
   StoryPresenceUser,
+  StorySummary,
   KanbanBoard,
   CalendarSchedule,
   StoryStatus,
 } from '@ai-news/schemas';
+import { toStorySummary } from '@ai-news/schemas';
 
 export interface DistributedLockStore {
   get(storyId: string): Promise<StoryLock | undefined>;
@@ -212,10 +214,13 @@ export class CollaborationService {
 
   /**
    * F9: Retrieves newsroom pipeline Kanban board organized by status.
+   *
+   * The cards are story summaries. A board can show hundreds of stories and
+   * none of them need their blocks to be shown on a card.
    */
   async getKanbanBoard(orgId: string = 'org_default'): Promise<KanbanBoard> {
     const all = await this.db.stories.listPaginated({ limit: 500 }, orgId);
-    const columns: Record<StoryStatus, Story[]> = {
+    const columns: Record<StoryStatus, StorySummary[]> = {
       DRAFT: [],
       IN_REVIEW: [],
       SCHEDULED: [],
@@ -225,7 +230,7 @@ export class CollaborationService {
 
     for (const story of all.items) {
       if (columns[story.status]) {
-        columns[story.status].push(story);
+        columns[story.status].push(toStorySummary(story));
       }
     }
 
@@ -245,7 +250,8 @@ export class CollaborationService {
       .sort(
         (a, b) =>
           new Date(a.scheduledPublishAt!).getTime() - new Date(b.scheduledPublishAt!).getTime()
-      );
+      )
+      .map(toStorySummary);
 
     const publishedStories = all.items
       .filter((s) => s.status === 'PUBLISHED')
@@ -253,7 +259,8 @@ export class CollaborationService {
         (a, b) =>
           new Date(b.publishedAt || b.createdAt).getTime() -
           new Date(a.publishedAt || a.createdAt).getTime()
-      );
+      )
+      .map(toStorySummary);
 
     return {
       scheduledStories,

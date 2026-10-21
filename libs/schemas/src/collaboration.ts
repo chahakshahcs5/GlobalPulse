@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StoryStatusSchema, StorySchema } from './story';
+import { StoryStatusSchema, StorySummarySchema } from './story';
 
 export const StoryLockUserSchema = z.object({
   id: z.string(),
@@ -30,33 +30,44 @@ export const StoryPresenceSchema = z.object({
 });
 export type StoryPresence = z.infer<typeof StoryPresenceSchema>;
 
+/**
+ * The newsroom pipeline, grouped by workflow status.
+ *
+ * Each column holds story *summaries*. A board can show hundreds of stories,
+ * and none of them need their blocks to be shown on a card.
+ */
 export const KanbanBoardSchema: z.ZodObject<{
   columns: z.ZodObject<{
-    DRAFT: z.ZodArray<typeof StorySchema>;
-    IN_REVIEW: z.ZodArray<typeof StorySchema>;
-    SCHEDULED: z.ZodArray<typeof StorySchema>;
-    PUBLISHED: z.ZodArray<typeof StorySchema>;
-    ARCHIVED: z.ZodArray<typeof StorySchema>;
+    DRAFT: z.ZodArray<typeof StorySummarySchema>;
+    IN_REVIEW: z.ZodArray<typeof StorySummarySchema>;
+    SCHEDULED: z.ZodArray<typeof StorySummarySchema>;
+    PUBLISHED: z.ZodArray<typeof StorySummarySchema>;
+    ARCHIVED: z.ZodArray<typeof StorySummarySchema>;
   }>;
   totalCount: z.ZodNumber;
 }> = z.object({
   columns: z.object({
-    DRAFT: z.array(StorySchema),
-    IN_REVIEW: z.array(StorySchema),
-    SCHEDULED: z.array(StorySchema),
-    PUBLISHED: z.array(StorySchema),
-    ARCHIVED: z.array(StorySchema),
+    DRAFT: z.array(StorySummarySchema),
+    IN_REVIEW: z.array(StorySummarySchema),
+    SCHEDULED: z.array(StorySummarySchema),
+    PUBLISHED: z.array(StorySummarySchema),
+    ARCHIVED: z.array(StorySummarySchema),
   }),
   totalCount: z.number(),
 });
 export type KanbanBoard = z.infer<typeof KanbanBoardSchema>;
 
+/**
+ * The editorial calendar: what is scheduled, and what has shipped.
+ *
+ * As with the board, these are summaries.
+ */
 export const CalendarScheduleSchema: z.ZodObject<{
-  scheduledStories: z.ZodArray<typeof StorySchema>;
-  publishedStories: z.ZodArray<typeof StorySchema>;
+  scheduledStories: z.ZodArray<typeof StorySummarySchema>;
+  publishedStories: z.ZodArray<typeof StorySummarySchema>;
 }> = z.object({
-  scheduledStories: z.array(StorySchema),
-  publishedStories: z.array(StorySchema),
+  scheduledStories: z.array(StorySummarySchema),
+  publishedStories: z.array(StorySummarySchema),
 });
 export type CalendarSchedule = z.infer<typeof CalendarScheduleSchema>;
 

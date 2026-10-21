@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StorySchema } from './story';
+import { StorySummarySchema } from './story';
 
 export const StoryCollectionSchema = z.object({
   id: z.string(),
@@ -15,8 +15,14 @@ export const StoryCollectionSchema = z.object({
 });
 export type StoryCollection = z.infer<typeof StoryCollectionSchema>;
 
+/**
+ * A collection with the stories it contains.
+ *
+ * The stories are summaries, not full stories: a collection can hold dozens
+ * of them, and the blocks are fetched on demand when a story is opened.
+ */
 export const StoryCollectionWithStoriesSchema = StoryCollectionSchema.extend({
-  stories: z.array(StorySchema),
+  stories: z.array(StorySummarySchema),
 });
 export type StoryCollectionWithStories = z.infer<typeof StoryCollectionWithStoriesSchema>;
 

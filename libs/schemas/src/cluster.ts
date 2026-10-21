@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StorySchema } from './story';
+import { StorySummarySchema } from './story';
 
 export const ClusterPerspectiveSchema = z.object({
   storyId: z.string().optional(),
@@ -59,13 +59,21 @@ export const FullCoverageFactCheckSchema = z.object({
 });
 export type FullCoverageFactCheck = z.infer<typeof FullCoverageFactCheckSchema>;
 
+/**
+ * The full-coverage result.
+ *
+ * The lead and related stories are **summaries**: a cluster can span dozens
+ * of stories, and the blocks are fetched on demand when one is opened. The
+ * perspectives and timeline are the substance of this view, and they are
+ * carried in full.
+ */
 export const FullCoverageResultSchema = z.object({
   clusterId: z.string(),
   storyId: z.string(),
   title: z.string(),
   summary: z.string(),
-  leadStory: StorySchema,
-  relatedStories: z.array(StorySchema),
+  leadStory: StorySummarySchema,
+  relatedStories: z.array(StorySummarySchema),
   perspectives: z.array(ClusterPerspectiveSchema),
   timeline: z.array(ClusterTimelineItemSchema),
   factCheck: FullCoverageFactCheckSchema.optional(),

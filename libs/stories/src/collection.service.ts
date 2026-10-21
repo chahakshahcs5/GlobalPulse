@@ -3,8 +3,9 @@ import type {
   StoryCollection,
   StoryCollectionWithStories,
   CreateCollectionInput,
-  Story,
+  StorySummary,
 } from '@ai-news/schemas';
+import { toStorySummary } from '@ai-news/schemas';
 
 export type CollectionActor = { id: string; role: string };
 
@@ -58,7 +59,10 @@ export class CollectionService {
   }
 
   /**
-   * Get collection details populated with complete story objects.
+   * Get collection details populated with its stories.
+   *
+   * The stories are summaries — a collection can hold dozens of them, and
+   * their blocks are fetched on demand when a story is opened.
    */
   async getCollectionWithStories(
     id: string,
@@ -67,10 +71,10 @@ export class CollectionService {
     const collection = await this.db.collections.findById(id);
     if (!collection) return null;
 
-    const stories: Story[] = [];
+    const stories: StorySummary[] = [];
     for (const storyId of collection.storyIds) {
       const story = await this.db.stories.findById(storyId, orgId);
-      if (story) stories.push(story);
+      if (story) stories.push(toStorySummary(story));
     }
 
     return {
@@ -80,7 +84,7 @@ export class CollectionService {
   }
 
   /**
-   * Get collection by slug populated with stories.
+   * Get collection by slug populated with its stories.
    */
   async getCollectionBySlug(
     slug: string,
@@ -89,10 +93,10 @@ export class CollectionService {
     const collection = await this.db.collections.findBySlug(slug);
     if (!collection) return null;
 
-    const stories: Story[] = [];
+    const stories: StorySummary[] = [];
     for (const storyId of collection.storyIds) {
       const story = await this.db.stories.findById(storyId, orgId);
-      if (story) stories.push(story);
+      if (story) stories.push(toStorySummary(story));
     }
 
     return {
