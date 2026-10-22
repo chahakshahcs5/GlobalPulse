@@ -186,7 +186,7 @@ export const EvidenceBlockView: React.FC<{ data: EvidenceBlock['data'] }> = ({ d
             </div>
           )}
 
-          {layout !== 'claims' && data.evidence.length > 0 && (
+          {layout !== 'documents' && data.evidence.length > 0 && (
             <div className="px-5 py-4">
               <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
                 Supporting material
