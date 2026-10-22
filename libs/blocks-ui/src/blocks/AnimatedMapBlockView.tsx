@@ -28,6 +28,8 @@ export const AnimatedMapBlockView: React.FC<{
    * treatment changes.
    */
   const layout = data.layout ?? 'scrubber';
+  const isStatic = layout === 'static';
+  const isSlideshow = layout === 'slideshow';
 
   const [frameIndex, setFrameIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(false);
@@ -51,13 +53,14 @@ export const AnimatedMapBlockView: React.FC<{
     return () => clearInterval(timer);
   }, [isPlaying, frameCount, frameDurationMs]);
 
-  // Autoplay starts once, when the block is first seen.
+  // Autoplay starts once, when the block is first seen. A slideshow always
+  // plays; the other treatments only do so if the block asks for it.
   const hasAutoplayed = React.useRef(false);
   React.useEffect(() => {
     if (hasAutoplayed.current) return;
     hasAutoplayed.current = true;
-    if (data.autoplay) setIsPlaying(true);
-  }, [data.autoplay]);
+    if (data.autoplay || isSlideshow) setIsPlaying(true);
+  }, [data.autoplay, isSlideshow]);
 
   const frame = data.frames[frameIndex];
 
@@ -132,8 +135,8 @@ export const AnimatedMapBlockView: React.FC<{
     <section
       aria-label={data.title}
       className={[
-        layout === 'static' ? 'my-6' : 'my-8',
-        layout === 'static' ? 'rounded-xl' : 'rounded-2xl',
+        isStatic ? 'my-6' : 'my-8',
+        isStatic ? 'rounded-xl' : 'rounded-2xl',
         'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden',
       ].join(' ')}
     >
@@ -165,38 +168,45 @@ export const AnimatedMapBlockView: React.FC<{
       )}
 
       <div className="px-5 pb-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (frameIndex >= frameCount - 1) setFrameIndex(0);
-              setIsPlaying((playing) => !playing);
-            }}
-            aria-label={isPlaying ? 'Pause the animation' : 'Play the animation'}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white transition-colors hover:bg-indigo-500"
-          >
-            {isPlaying ? '❚❚' : '▶'}
-          </button>
+        {/*
+         * A static frame is a single frame: there is nothing to scrub and
+         * nothing to play, so the controls are left out rather than shown
+         * doing nothing.
+         */}
+        {!isStatic && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (frameIndex >= frameCount - 1) setFrameIndex(0);
+                setIsPlaying((playing) => !playing);
+              }}
+              aria-label={isPlaying ? 'Pause the animation' : 'Play the animation'}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white transition-colors hover:bg-indigo-500"
+            >
+              {isPlaying ? '❚❚' : '▶'}
+            </button>
 
-          <input
-            type="range"
-            min={0}
-            max={frameCount - 1}
-            step={1}
-            value={frameIndex}
-            onChange={(e) => {
-              setIsPlaying(false);
-              setFrameIndex(Number(e.target.value));
-            }}
-            aria-label="Frame"
-            aria-valuetext={frame.label ?? frame.at}
-            className="w-full accent-indigo-600 dark:accent-indigo-400"
-          />
+            <input
+              type="range"
+              min={0}
+              max={frameCount - 1}
+              step={1}
+              value={frameIndex}
+              onChange={(e) => {
+                setIsPlaying(false);
+                setFrameIndex(Number(e.target.value));
+              }}
+              aria-label="Frame"
+              aria-valuetext={frame.label ?? frame.at}
+              className="w-full accent-indigo-600 dark:accent-indigo-400"
+            />
 
-          <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">
-            {frameIndex + 1}/{frameCount}
-          </span>
-        </div>
+            <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">
+              {frameIndex + 1}/{frameCount}
+            </span>
+          </div>
+        )}
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
           <span>
