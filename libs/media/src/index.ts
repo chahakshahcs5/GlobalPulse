@@ -16,6 +16,8 @@ export * from './analysis/network-layout';
 export * from './charts/correlation-renderer';
 export * from './charts/knowledge-graph-renderer';
 export * from './maps/map-renderer';
+export * from './maps/map-style';
+export * from './maps/map-config';
 export * from './maps/animated-map-renderer';
 export * from './timelines/timeline-renderer';
 export * from './diagrams/diagram-renderer';

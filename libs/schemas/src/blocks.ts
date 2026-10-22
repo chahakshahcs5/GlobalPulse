@@ -412,7 +412,35 @@ export const MapBlockSchema = BaseBlockSchema.extend({
     mapType: z.enum(['points', 'choropleth', 'heatmap', 'route', 'comparison']).optional(),
     center: z.tuple([z.number(), z.number()]), // [lng, lat]
     zoom: z.number().min(0).max(22),
-    style: z.enum(['dark', 'light', 'satellite', 'streets']).default('dark'),
+    /**
+     * The basemap the map is drawn on.
+     *
+     * The roads, rivers and boundaries underneath the story. It is not the
+     * newsroom's to draw, and where it comes from is shown to the reader.
+     */
+    style: z.enum(['streets', 'light', 'bright', 'dark', 'fiord', 'satellite']).default('dark'),
+    /**
+     * How the map is projected.
+     *
+     * `globe` draws the round earth, which is the right shape for a story
+     * about distance, migration or anything that crosses a meridian.
+     */
+    projection: z.enum(['mercator', 'globe']).optional(),
+    /** How far the map is tilted, in degrees. A tilted map is a map in three dimensions. */
+    pitch: z.number().min(0).max(85).optional(),
+    /** Which way the map is turned, in degrees. */
+    bearing: z.number().min(-180).max(180).optional(),
+    /** Whether the reader can move the map. */
+    interactive: z.boolean().optional(),
+    /** Gather the marks together when they are close, and let the reader open them. */
+    cluster: z.boolean().optional(),
+    /** Show the zoom, compass and attribution controls. */
+    showControls: z.boolean().optional(),
+    /** Frame the map around what it shows rather than around a stated centre. */
+    fitToMarkers: z.boolean().optional(),
+    /** The furthest in a reader can zoom. */
+    minZoom: z.number().min(0).max(22).optional(),
+    maxZoom: z.number().min(0).max(22).optional(),
     markers: z
       .array(
         z.object({
@@ -430,7 +458,7 @@ export const MapBlockSchema = BaseBlockSchema.extend({
       .array(
         z.object({
           id: z.string().min(1),
-          type: z.enum(['fill', 'line', 'circle', 'heatmap']),
+          type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
           geojson: z.record(z.unknown()),
           property: z.string().optional(),
           colorScale: z.array(z.string()).optional(),
@@ -1367,10 +1395,102 @@ export const AnimatedMapBlockSchema = BaseBlockSchema.extend({
     unit: z.string().optional(),
     /** Play the frames automatically when the block is first seen. */
     autoplay: z.boolean().default(false),
+    /** How long each frame is held, in milliseconds. */
+    frameDurationMs: z.number().int().min(200).max(10000).optional(),
+    /** The basemap the map is drawn on. */
+    style: z.enum(['streets', 'light', 'bright', 'dark', 'fiord', 'satellite']).default('dark'),
+    /** How the map is projected. */
+    projection: z.enum(['mercator', 'globe']).optional(),
+    /** How far the map is tilted, in degrees. */
+    pitch: z.number().min(0).max(85).optional(),
+    /** Move the camera to each frame as it comes round. */
+    flyToFrame: z.boolean().optional(),
+    /** Show the zoom, compass and attribution controls. */
+    showControls: z.boolean().optional(),
     methodology: z.string().max(4000).optional(),
     sourceAttribution: z.string().optional(),
   }),
 });
+
+export const Map3DBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('map_3d'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    /**
+     * What kind of three-dimensional scene is drawn.
+     *
+     * `terrain` is the land itself, raised and shaded; `extruded` lifts the
+     * story's own shapes off the map; and `globe` is the round earth, which
+     * is the right shape for a story about distance.
+     */
+    scene: z.enum(['terrain', 'extruded', 'globe']).optional(),
+    /** The basemap the scene is drawn on. */
+    style: z.enum(['streets', 'light', 'bright', 'dark', 'fiord', 'satellite']).default('dark'),
+    center: z.tuple([z.number(), z.number()]).optional(),
+    zoom: z.number().min(0).max(22).optional(),
+    /** How far the map is tilted, in degrees. */
+    pitch: z.number().min(0).max(85).optional(),
+    /** Which way the map is turned, in degrees. */
+    bearing: z.number().min(-180).max(180).optional(),
+    /** How much the land is raised. One is the real world. */
+    terrainExaggeration: z.number().min(0).max(10).optional(),
+    /**
+     * The shapes lifted off the map.
+     *
+     * A building's height is read from one of its properties, so the same
+     * block can raise a skyline by floor count, by height in metres, or by
+     * whatever the data happens to hold.
+     */
+    extrusions: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          geojson: z.record(z.unknown()),
+          /** The property holding the height. */
+          heightKey: z.string().optional(),
+          /** The property holding the height the shape starts at. */
+          baseKey: z.string().optional(),
+          color: z.string().optional(),
+          colorScale: z.array(z.string()).optional(),
+        })
+      )
+      .optional(),
+    /** The map's own layers, drawn over the scene. */
+    layers: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
+          geojson: z.record(z.unknown()),
+          property: z.string().optional(),
+          colorScale: z.array(z.string()).optional(),
+        })
+      )
+      .optional(),
+    /** The places marked on the scene. */
+    markers: z
+      .array(
+        z.object({
+          coordinates: z.tuple([z.number(), z.number()]),
+          title: z.string().min(1),
+          description: z.string().optional(),
+          icon: z.string().optional(),
+          severity: z.string().optional(),
+        })
+      )
+      .optional(),
+    /** Whether the reader can move the scene. */
+    interactive: z.boolean().optional(),
+    /** Show the zoom, compass and attribution controls. */
+    showControls: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type Map3DBlock = z.infer<typeof Map3DBlockSchema>;
 
 export const RankingBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('ranking'),
@@ -2474,6 +2594,7 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   MotionChartBlockSchema,
   SandboxBlockSchema,
   Scene3DBlockSchema,
+  Map3DBlockSchema,
 ]);
 
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
@@ -2581,3 +2702,4 @@ export type ScrollyBlockDataInput = BlockDataInput<typeof ScrollyBlockSchema>;
 export type MotionChartBlockDataInput = BlockDataInput<typeof MotionChartBlockSchema>;
 export type SandboxBlockDataInput = BlockDataInput<typeof SandboxBlockSchema>;
 export type Scene3DBlockDataInput = BlockDataInput<typeof Scene3DBlockSchema>;
+export type Map3DBlockDataInput = BlockDataInput<typeof Map3DBlockSchema>;

@@ -1,6 +1,6 @@
 # Structured Content Model & Block System
 
-This document outlines the structured block content model, discriminant union architecture, and full catalog of all 65 supported block types in **GlobalPulse**.
+This document outlines the structured block content model, discriminant union architecture, and full catalog of all 66 supported block types in **GlobalPulse**.
 
 ---
 
@@ -16,7 +16,7 @@ Traditional CMS platforms store monolithic HTML or raw Markdown blobs. In contra
 
 ---
 
-## 2. Complete Catalog of 65 Supported Block Types
+## 2. Complete Catalog of 66 Supported Block Types
 
 Every block contains common envelope metadata:
 
@@ -343,12 +343,13 @@ values rather than an image, the annotations travel with the values they refer t
 
 <!-- BEGIN GENERATED BLOCK CATALOG: immersive -->
 
-### 2.6 Immersive & motion blocks (4)
+### 2.6 Immersive & motion blocks (5)
 
 51. **`scrolly`**: A scroll-driven narrative: a sticky scene that changes as the reader moves through each step of the story.
 52. **`motion_chart`**: A chart that draws itself in — bars growing, lines drawing on, figures counting up — honouring reduced-motion.
 53. **`sandbox`**: Custom HTML, CSS and JavaScript drawn in a sandboxed frame, with the block’s own data handed to it.
 54. **`scene_3d`**: A three-dimensional scene — a globe, a point cloud, a bar chart or a model — drawn in WebGL and explorable.
+55. **`map_3d`**: A map in three dimensions: the land raised and shaded, the story’s own shapes lifted off it, or the round earth.
 
 <!-- END GENERATED BLOCK CATALOG: immersive -->
 
@@ -436,17 +437,17 @@ Two interactive blocks that need no authoring effort beyond their own data:
 
 ### 2.7 Evidence, source & context blocks (11)
 
-55. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
-56. **`source`**: Registered source citation card.
-57. **`entity`**: Person, organization, company, country, location, or product card.
-58. **`related_stories`**: Related story references resolved by the frontend.
-59. **`what_changed`**: Structured change summary between two story versions.
-60. **`comparison`**: Two-option comparison card.
-61. **`citation`**: A claim coupled to one or more registered source IDs.
-62. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
-63. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
-64. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.
-65. **`interview`**: Structured Q&A interview with optional audio/video media and per-segment sources.
+56. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
+57. **`source`**: Registered source citation card.
+58. **`entity`**: Person, organization, company, country, location, or product card.
+59. **`related_stories`**: Related story references resolved by the frontend.
+60. **`what_changed`**: Structured change summary between two story versions.
+61. **`comparison`**: Two-option comparison card.
+62. **`citation`**: A claim coupled to one or more registered source IDs.
+63. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
+64. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
+65. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.
+66. **`interview`**: Structured Q&A interview with optional audio/video media and per-segment sources.
 
 <!-- END GENERATED BLOCK CATALOG: context -->
 

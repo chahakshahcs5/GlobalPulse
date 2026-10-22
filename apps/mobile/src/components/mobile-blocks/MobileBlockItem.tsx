@@ -11,6 +11,7 @@ import {
   ChartBlockItem,
   TimelineBlockItem,
   MapBlockItem,
+  Map3DBlockItem,
   StatisticBlockItem,
   TableBlockItem,
   UncertaintyBlockItem,
@@ -106,6 +107,8 @@ export function MobileBlockItem({ block, storyId }: MobileBlockItemProps) {
       return <TimelineBlockItem block={block} />;
     case 'map':
       return <MapBlockItem block={block} />;
+    case 'map_3d':
+      return <Map3DBlockItem block={block} />;
     case 'statistic':
       return <StatisticBlockItem block={block} />;
     case 'table':

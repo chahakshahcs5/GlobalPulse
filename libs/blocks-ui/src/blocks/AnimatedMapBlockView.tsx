@@ -2,7 +2,8 @@
 
 import React from 'react';
 import type { AnimatedMapBlock } from '@ai-news/schemas';
-import { AnimatedMapRenderer } from '@ai-news/media';
+import { AnimatedMapRenderer, buildMapConfig } from '@ai-news/media';
+import { MapCanvas } from './MapCanvas';
 
 /**
  * Animated map.
@@ -10,6 +11,10 @@ import { AnimatedMapRenderer } from '@ai-news/media';
  * The reader scrubs through the frames, so the block shows how a situation
  * spread rather than only its end state. The frames are ordered by the
  * publisher; the scrubber is the reader's control.
+ *
+ * The map is a real one, so the places are where they are and the camera can
+ * follow the situation as it moves. Where a map cannot be drawn, each frame
+ * is drawn as a picture instead, so the block still shows what happened.
  */
 export const AnimatedMapBlockView: React.FC<{
   data: AnimatedMapBlock['data'];
@@ -26,8 +31,10 @@ export const AnimatedMapBlockView: React.FC<{
 
   const [frameIndex, setFrameIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(false);
+  const [fallback, setFallback] = React.useState<string | null>(null);
 
   const frameCount = data.frames.length;
+  const frameDurationMs = data.frameDurationMs ?? 1200;
 
   // Autoplay advances through the frames and stops at the end.
   React.useEffect(() => {
@@ -40,9 +47,9 @@ export const AnimatedMapBlockView: React.FC<{
         }
         return current + 1;
       });
-    }, 1200);
+    }, frameDurationMs);
     return () => clearInterval(timer);
-  }, [isPlaying, frameCount]);
+  }, [isPlaying, frameCount, frameDurationMs]);
 
   // Autoplay starts once, when the block is first seen.
   const hasAutoplayed = React.useRef(false);
@@ -52,17 +59,73 @@ export const AnimatedMapBlockView: React.FC<{
     if (data.autoplay) setIsPlaying(true);
   }, [data.autoplay]);
 
-  const svg = React.useMemo(
-    () =>
-      AnimatedMapRenderer.renderFrame(data, frameIndex, {
-        theme,
-        width: 800,
-        height: 450,
-      }),
-    [data, frameIndex, theme]
+  const frame = data.frames[frameIndex];
+
+  /*
+   * The frame becomes a set of points the map draws.
+   *
+   * The value is kept on the point so the map can size it, and the highlight
+   * so the place the story is about can be picked out.
+   */
+  const points = React.useMemo(
+    () => ({
+      type: 'FeatureCollection',
+      features: frame.points.map((point) => ({
+        type: 'Feature',
+        properties: {
+          value: point.value ?? 0,
+          label: point.label ?? '',
+          highlight: Boolean(point.highlight),
+        },
+        geometry: { type: 'Point', coordinates: [point.lng, point.lat] },
+      })),
+    }),
+    [frame]
   );
 
-  const frame = data.frames[frameIndex];
+  const config = React.useMemo(
+    () =>
+      buildMapConfig(
+        {
+          center: frame.points[0] ? [frame.points[0].lng, frame.points[0].lat] : [0, 20],
+          zoom: 3,
+          style: data.style,
+        } as never,
+        {
+          showControls: data.showControls ?? true,
+          projection: data.projection,
+          pitch: data.pitch,
+        }
+      ),
+    [frame, data.style, data.showControls, data.projection, data.pitch]
+  );
+
+  /*
+   * The camera follows the situation, unless the block says it should not.
+   *
+   * It is fitted to the places in the frame, so a story that spreads shows
+   * the spreading rather than a fixed view of one place.
+   */
+  const fitTo = React.useMemo(
+    () =>
+      data.flyToFrame
+        ? frame.points.map((point) => [point.lng, point.lat] as [number, number])
+        : undefined,
+    [frame, data.flyToFrame]
+  );
+
+  const svg = React.useMemo(
+    () =>
+      fallback
+        ? AnimatedMapRenderer.renderFrame(data, frameIndex, {
+            theme,
+            width: 800,
+            height: 450,
+          })
+        : '',
+    [fallback, data, frameIndex, theme]
+  );
+
   const totalValue = frame.points.reduce((sum, point) => sum + (point.value ?? 0), 0);
 
   return (
@@ -81,9 +144,25 @@ export const AnimatedMapBlockView: React.FC<{
         )}
       </header>
 
-      <div className="p-3 sm:p-4">
-        <div className="[&_svg]:w-full [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: svg }} />
-      </div>
+      {fallback ? (
+        <div className="p-3 sm:p-4">
+          <div
+            className="[&_svg]:w-full [&_svg]:h-auto"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+          <p className="px-2 py-2 text-[11px] text-slate-500 dark:text-slate-400">
+            The interactive map could not be drawn here, so each frame is shown as a picture.
+          </p>
+        </div>
+      ) : (
+        <MapCanvas
+          config={config}
+          points={points}
+          fitTo={fitTo}
+          height={450}
+          onFallback={setFallback}
+        />
+      )}
 
       <div className="px-5 pb-4">
         <div className="flex items-center gap-3">
@@ -134,6 +213,9 @@ export const AnimatedMapBlockView: React.FC<{
       </div>
 
       <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+        <p>
+          Basemap: {config.basemap.label}. {config.attribution}.
+        </p>
         {data.methodology && <p>Methodology: {data.methodology}</p>}
         {data.sourceAttribution && <p>Source: {data.sourceAttribution}</p>}
       </footer>
