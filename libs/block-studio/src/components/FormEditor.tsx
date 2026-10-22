@@ -97,10 +97,13 @@ function JsonField({
   path,
   value,
   onChange,
+  controlId,
 }: {
   path: string;
   value: unknown;
   onChange: (path: string, value: unknown) => void;
+  /** Ties the field to the label above it. */
+  controlId?: string;
 }) {
   const [draft, setDraft] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -138,6 +141,7 @@ function JsonField({
   return (
     <div>
       <textarea
+        id={controlId}
         value={text}
         onChange={(event) => handleChange(event.target.value)}
         onBlur={() => {
@@ -357,16 +361,17 @@ function ArrayField({
   return (
     <div className={PANEL_CLASS}>
       <div className="flex items-center justify-between gap-2 px-2.5 py-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {field.label}
-          <span className="ml-1.5 font-mono normal-case text-slate-500">
+          <span className="ml-1.5 font-mono normal-case text-slate-500 dark:text-slate-400">
             {items.length} item{items.length === 1 ? '' : 's'}
           </span>
         </span>
         <button
           type="button"
           onClick={() => replace([...items, item ? defaultValueFor(item) : null])}
-          className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          aria-label={`Add an item to ${field.label}`}
+          className="flex min-h-6 items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-500 hover:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <Plus className="h-3 w-3" />
           Add
@@ -374,7 +379,9 @@ function ArrayField({
       </div>
 
       {items.length === 0 && (
-        <p className="px-2.5 pb-2 text-[11px] italic text-slate-500">No items yet.</p>
+        <p className="px-2.5 pb-2 text-[11px] italic text-slate-500 dark:text-slate-400">
+          No items yet.
+        </p>
       )}
 
       <div className="space-y-1.5 px-2 pb-2">
@@ -394,21 +401,24 @@ function ArrayField({
                   onClick={() => toggle(index)}
                   aria-expanded={isOpen}
                   aria-label={isOpen ? `Collapse ${summary}` : `Expand ${summary}`}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
+                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-1 text-left text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
                 >
                   {isOpen ? (
                     <ChevronDown className="h-3 w-3 shrink-0" />
                   ) : (
                     <ChevronRight className="h-3 w-3 shrink-0" />
                   )}
-                  <span className="font-mono text-[11px] text-slate-400">[{index}]</span>
+                  <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    [{index}]
+                  </span>
                   <span className="truncate">{summary}</span>
                 </button>
 
                 <div className="flex shrink-0 items-center gap-0.5">
                   <button
                     type="button"
-                    aria-label="Move up"
+                    aria-label={`Move ${summary} up`}
+                    title="Move up"
                     disabled={index === 0}
                     onClick={() => {
                       const next = [...items];
@@ -416,13 +426,14 @@ function ArrayField({
                       [next[index - 1], next[index]] = [next[index], next[index - 1]];
                       replace(next);
                     }}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
-                    <ChevronUp className="h-3 w-3" />
+                    <ChevronUp className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
-                    aria-label="Move down"
+                    aria-label={`Move ${summary} down`}
+                    title="Move down"
                     disabled={index === items.length - 1}
                     onClick={() => {
                       const next = [...items];
@@ -430,17 +441,18 @@ function ArrayField({
                       [next[index + 1], next[index]] = [next[index], next[index + 1]];
                       replace(next);
                     }}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
-                    <ChevronDown className="h-3 w-3" />
+                    <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
-                    aria-label="Remove"
+                    aria-label={`Remove ${summary}`}
+                    title="Remove"
                     onClick={() => replace(items.filter((_, i) => i !== index))}
-                    className="rounded p-1 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-500/20 dark:hover:text-rose-300"
+                    className="flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/20 dark:hover:text-rose-300"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -530,7 +542,7 @@ function FieldControl({
 
     return (
       <fieldset className={`${PANEL_CLASS} ${depth === 0 ? 'p-2.5' : 'p-2'}`}>
-        <legend className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <legend className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {field.label}
         </legend>
         <div className="space-y-2.5">
@@ -575,30 +587,55 @@ function FieldControl({
 
   /** The guidance a hint attached to the field. */
   const helpLine = field.help ? (
-    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{field.help}</p>
+    <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+      {field.help}
+    </p>
   ) : null;
 
+  /*
+   * The label is tied to the control by id, so a screen reader announces
+   * the field's name with the control rather than reading the label as an
+   * unlabelled paragraph of text above it.
+   */
+  const controlId = `field_${path}`;
+
   const label = (
-    <label className="mb-1 flex items-baseline gap-1.5">
-      <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
-        {field.label}
-      </span>
-      {field.unit && <span className="font-mono text-[10px] text-slate-500">{field.unit}</span>}
-      {!field.required && <span className="text-[9px] uppercase text-slate-500">optional</span>}
+    <div className="mb-1 flex items-baseline gap-1.5">
+      {/*
+       * A boolean draws its own name beside the checkbox, and that label is
+       * what names the control — so the row above it carries only the
+       * notes, and the field's name is not on screen twice.
+       */}
+      {field.kind !== 'boolean' && (
+        <label
+          htmlFor={controlId}
+          className="text-[12px] font-semibold text-slate-700 dark:text-slate-300"
+        >
+          {field.label}
+        </label>
+      )}
+      {field.unit && (
+        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+          {field.unit}
+        </span>
+      )}
+      {!field.required && (
+        <span className="text-[11px] uppercase text-slate-500 dark:text-slate-400">optional</span>
+      )}
       {changed && (
         <span
           title="Changed since this payload was loaded"
-          className="rounded bg-amber-100 px-1 py-px text-[9px] font-bold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+          className="rounded bg-amber-100 px-1 py-px text-[11px] font-bold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
         >
           edited
         </span>
       )}
       {hasError && (
-        <span className="text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400">
+        <span className="text-[11px] font-bold uppercase text-rose-600 dark:text-rose-400">
           invalid
         </span>
       )}
-    </label>
+    </div>
   );
 
   /**
@@ -668,6 +705,7 @@ function FieldControl({
     if (field.kind === 'select') {
       return (
         <select
+          id={controlId}
           value={
             value === undefined || value === null
               ? field.defaultValue === undefined
@@ -701,7 +739,7 @@ function FieldControl({
         <div>
           {label}
           <input
-            id={`field_${path}`}
+            id={controlId}
             type="number"
             value={
               typeof value === 'number' && Number.isFinite(value)
@@ -726,7 +764,7 @@ function FieldControl({
             className={INPUT_CLASS}
           />
           {(field.min !== undefined || field.max !== undefined) && (
-            <p className="mt-0.5 font-mono text-[9px] text-slate-500">
+            <p className="mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
               {field.min ?? '−∞'} … {field.max ?? '∞'}
             </p>
           )}
@@ -737,6 +775,7 @@ function FieldControl({
     if (field.kind === 'textarea') {
       return (
         <textarea
+          id={controlId}
           rows={3}
           value={value === undefined || value === null ? '' : String(value)}
           placeholder={placeholderFor(field)}
@@ -747,11 +786,12 @@ function FieldControl({
     }
 
     if (field.kind === 'json') {
-      return <JsonField path={path} value={value} onChange={onChange} />;
+      return <JsonField path={path} value={value} onChange={onChange} controlId={controlId} />;
     }
 
     return (
       <input
+        id={controlId}
         type={field.format === 'url' ? 'url' : 'text'}
         value={value === undefined || value === null ? '' : String(value)}
         placeholder={placeholderFor(field)}
@@ -802,7 +842,11 @@ export function FormEditor({
   payload,
 }: FormEditorProps) {
   if (fields.length === 0) {
-    return <p className="text-[13px] text-slate-500">This block has no editable fields.</p>;
+    return (
+      <p className="text-[13px] text-slate-500 dark:text-slate-400">
+        This block has no editable fields.
+      </p>
+    );
   }
 
   return (
