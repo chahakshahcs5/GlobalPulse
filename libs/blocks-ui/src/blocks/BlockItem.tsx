@@ -108,11 +108,36 @@ function renderBlock(
     }
 
     case 'paragraph': {
+      /*
+       * How the paragraph is set.
+       *
+       * Body copy, a lede set larger to lead the story, or a note set
+       * smaller and marked off from the text around it. The words are the
+       * same; only the setting changes.
+       */
+      const layout = block.data.layout ?? 'body';
+      const text =
+        block.data.format === 'markdown' ? renderInlineMarkdown(block.data.text) : block.data.text;
+
+      if (layout === 'lede') {
+        return (
+          <p className="my-5 text-xl sm:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100">
+            {text}
+          </p>
+        );
+      }
+
+      if (layout === 'note') {
+        return (
+          <p className="my-5 border-l-2 border-slate-300 dark:border-slate-700 pl-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            {text}
+          </p>
+        );
+      }
+
       return (
         <p className="text-base sm:text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-normal my-4">
-          {block.data.format === 'markdown'
-            ? renderInlineMarkdown(block.data.text)
-            : block.data.text}
+          {text}
         </p>
       );
     }
@@ -129,6 +154,56 @@ function renderBlock(
         critical:
           'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
       };
+      /*
+       * How the briefing is drawn.
+       *
+       * A card, a numbered list, or plain text with no furniture at all.
+       * The takeaways are the same; only the treatment changes.
+       */
+      const layout = block.data.layout ?? 'card';
+
+      const points = (numbered: boolean) => (
+        <ul className="space-y-2.5">
+          {block.data.bulletPoints.map((pt: string, idx: number) => (
+            <li
+              key={idx}
+              className="flex items-start gap-2.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium"
+            >
+              {numbered ? (
+                <span className="font-mono font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                  {idx + 1}.
+                </span>
+              ) : (
+                <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">•</span>
+              )}
+              <span>{pt}</span>
+            </li>
+          ))}
+        </ul>
+      );
+
+      if (layout === 'numbered') {
+        return (
+          <div className="my-6">
+            <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">
+              {block.data.headline}
+            </h4>
+            {points(true)}
+          </div>
+        );
+      }
+
+      if (layout === 'plain') {
+        return (
+          <div className="my-6">
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+              {block.data.headline}
+            </h4>
+            {points(false)}
+          </div>
+        );
+      }
+
       return (
         <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/30 p-5 sm:p-6 my-6 shadow-xs">
           <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider text-xs">
@@ -147,22 +222,74 @@ function renderBlock(
           <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">
             {block.data.headline}
           </h4>
-          <ul className="space-y-2.5">
-            {block.data.bulletPoints.map((pt: string, idx: number) => (
-              <li
-                key={idx}
-                className="flex items-start gap-2.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium"
-              >
-                <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">•</span>
-                <span>{pt}</span>
-              </li>
-            ))}
-          </ul>
+          {points(false)}
         </div>
       );
     }
 
     case 'quote': {
+      /*
+       * How the quote is drawn.
+       *
+       * A pull quote with a rule down the side, an inline quote that sits
+       * in the text, or a card with a border all round. The quotation is
+       * the same; only the treatment changes.
+       */
+      const layout = block.data.layout ?? 'pull';
+
+      if (layout === 'inline') {
+        return (
+          <p className="my-4 text-base text-slate-700 dark:text-slate-300">
+            <span className="italic font-serif-headline">&ldquo;{block.data.quote}&rdquo;</span>
+            {block.data.attribution && (
+              <span className="text-sm text-slate-500 dark:text-slate-400">
+                {' '}
+                — {block.data.attribution}
+              </span>
+            )}
+          </p>
+        );
+      }
+
+      if (layout === 'card') {
+        return (
+          <figure className="my-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-5">
+            <div className="flex items-start gap-3">
+              {block.data.avatarUrl && (
+                <img
+                  src={block.data.avatarUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-11 w-11 shrink-0 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                  loading="lazy"
+                />
+              )}
+              <div className="min-w-0">
+                <blockquote className="text-lg sm:text-xl font-medium font-serif-headline text-slate-900 dark:text-slate-100 italic leading-snug">
+                  &ldquo;{block.data.quote}&rdquo;
+                </blockquote>
+                <figcaption className="mt-2 text-sm text-slate-600 dark:text-slate-400 not-italic font-sans">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {block.data.attribution}
+                  </span>
+                  {block.data.title && <span className="text-slate-500">, {block.data.title}</span>}
+                  {block.data.sourceUrl && (
+                    <a
+                      href={block.data.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 text-xs font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Source ↗
+                    </a>
+                  )}
+                </figcaption>
+              </div>
+            </div>
+          </figure>
+        );
+      }
+
       return (
         <figure className="rounded-r-2xl border-l-4 border-blue-600 bg-slate-100/70 dark:bg-slate-800/40 p-5 my-6">
           <div className="flex items-start gap-3">

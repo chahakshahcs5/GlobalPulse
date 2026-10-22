@@ -98,6 +98,13 @@ export const HeadingBlockSchema = BaseBlockSchema.extend({
 export const ParagraphBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('paragraph'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['body', 'lede', 'note']).optional(),
     text: z.string().min(1),
     format: z.enum(['markdown', 'plain']).default('markdown'),
   }),
@@ -106,6 +113,13 @@ export const ParagraphBlockSchema = BaseBlockSchema.extend({
 export const SummaryBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('summary'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['card', 'numbered', 'plain']).optional(),
     headline: z.string().min(1),
     bulletPoints: z.array(z.string()).min(1),
     sentiment: z.enum(['neutral', 'positive', 'cautious', 'critical']).optional(),
@@ -115,6 +129,13 @@ export const SummaryBlockSchema = BaseBlockSchema.extend({
 export const QuoteBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('quote'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['pull', 'inline', 'card']).optional(),
     quote: z.string().min(1),
     attribution: z.string().min(1),
     title: z.string().optional(),
@@ -1120,6 +1141,13 @@ export type KnowledgeGraphEdge = z.infer<typeof KnowledgeGraphEdgeSchema>;
 export const KnowledgeGraphBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('knowledge_graph'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['graph', 'list', 'matrix']).optional(),
     title: z.string().min(1),
     description: z.string().max(4000).optional(),
     nodes: z.array(KnowledgeGraphNodeSchema).min(1).max(120),
@@ -1338,6 +1366,13 @@ export const ScienceBlockSchema = BaseBlockSchema.extend({
 export const InterviewBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('interview'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['qa', 'article', 'timeline']).optional(),
     title: z.string().min(1),
     interviewee: z.object({
       name: z.string().min(1),
@@ -1449,6 +1484,13 @@ export type EvidenceBlockItem = z.infer<typeof EvidenceBlockItemSchema>;
 export const EvidenceBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('evidence'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['claims', 'documents', 'split']).optional(),
     title: z.string().min(1),
     summary: z.string().optional(),
     claims: z
@@ -1471,6 +1513,13 @@ export const EvidenceBlockSchema = BaseBlockSchema.extend({
 export const PerspectiveBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('perspective'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['cards', 'columns', 'list']).optional(),
     title: z.string().optional(),
     perspectives: z
       .array(
@@ -1490,6 +1539,13 @@ export const PerspectiveBlockSchema = BaseBlockSchema.extend({
 export const FactCheckBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('fact_check'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['verdict', 'full', 'inline']).optional(),
     claim: z.string().min(1),
     claimant: z.string().optional(),
     status: ClaimStatusSchema,

@@ -78,6 +78,70 @@ const ConfidenceLabel: React.FC<{
 };
 
 export const EvidenceBlockView: React.FC<{ data: EvidenceBlock['data'] }> = ({ data }) => {
+  /*
+   * How the evidence is drawn.
+   *
+   * The claims above the documents, the documents on their own, or the
+   * two side by side. The record is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'claims';
+
+  const claimsList = (
+    <ul className="space-y-3">
+      {data.claims.map((claim, idx) => (
+        <li key={claim.claimId ?? idx} className="text-sm">
+          <div className="flex items-start gap-2">
+            <ClaimStatusBadge status={claim.status} />
+            <p className="text-slate-800 dark:text-slate-200 flex-1">{claim.text}</p>
+          </div>
+          <ConfidenceLabel
+            confidence={claim.confidence}
+            methodology={claim.confidenceMethodology}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+
+  const documentsList = (
+    <ul className="space-y-3">
+      {data.evidence.map((item, idx) => (
+        <li
+          key={item.id ?? idx}
+          className="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-900/40"
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <StanceBadge stance={item.stance} />
+            {item.type && (
+              <span className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
+                {item.type}
+              </span>
+            )}
+            {item.url ? (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:underline"
+              >
+                {item.title}
+              </a>
+            ) : (
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {item.title}
+              </span>
+            )}
+          </div>
+          {item.excerpt && (
+            <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400 italic">
+              “{item.excerpt}”
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <section
       aria-label={data.title || 'Evidence'}
@@ -92,70 +156,45 @@ export const EvidenceBlockView: React.FC<{ data: EvidenceBlock['data'] }> = ({ d
         )}
       </header>
 
-      {data.claims.length > 0 && (
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
-            Claims
-          </h4>
-          <ul className="space-y-3">
-            {data.claims.map((claim, idx) => (
-              <li key={claim.claimId ?? idx} className="text-sm">
-                <div className="flex items-start gap-2">
-                  <ClaimStatusBadge status={claim.status} />
-                  <p className="text-slate-800 dark:text-slate-200 flex-1">{claim.text}</p>
-                </div>
-                <ConfidenceLabel
-                  confidence={claim.confidence}
-                  methodology={claim.confidenceMethodology}
-                />
-              </li>
-            ))}
-          </ul>
+      {layout === 'split' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+          {data.claims.length > 0 && (
+            <div className="px-5 py-4">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
+                Claims
+              </h4>
+              {claimsList}
+            </div>
+          )}
+          {data.evidence.length > 0 && (
+            <div className="px-5 py-4">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
+                Supporting material
+              </h4>
+              {documentsList}
+            </div>
+          )}
         </div>
-      )}
+      ) : (
+        <>
+          {layout !== 'documents' && data.claims.length > 0 && (
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
+                Claims
+              </h4>
+              {claimsList}
+            </div>
+          )}
 
-      {data.evidence.length > 0 && (
-        <div className="px-5 py-4">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
-            Supporting material
-          </h4>
-          <ul className="space-y-3">
-            {data.evidence.map((item, idx) => (
-              <li
-                key={item.id ?? idx}
-                className="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-900/40"
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <StanceBadge stance={item.stance} />
-                  {item.type && (
-                    <span className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
-                      {item.type}
-                    </span>
-                  )}
-                  {item.url ? (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:underline"
-                    >
-                      {item.title}
-                    </a>
-                  ) : (
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                      {item.title}
-                    </span>
-                  )}
-                </div>
-                {item.excerpt && (
-                  <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400 italic">
-                    “{item.excerpt}”
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+          {layout !== 'claims' && data.evidence.length > 0 && (
+            <div className="px-5 py-4">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
+                Supporting material
+              </h4>
+              {documentsList}
+            </div>
+          )}
+        </>
       )}
 
       {(data.methodology || data.sourceAttribution) && (
@@ -169,6 +208,114 @@ export const EvidenceBlockView: React.FC<{ data: EvidenceBlock['data'] }> = ({ d
 };
 
 export const PerspectiveBlockView: React.FC<{ data: PerspectiveBlock['data'] }> = ({ data }) => {
+  /*
+   * How the positions are drawn.
+   *
+   * A card each, two plain columns, or a list. The positions are the
+   * same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'cards';
+
+  const stanceClass = (stance: string) =>
+    stance === 'SUPPORTS'
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+      : stance === 'OPPOSES'
+        ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+        : stance === 'MIXED'
+          ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+
+  if (layout === 'list') {
+    return (
+      <section aria-label={data.title || 'Perspectives'} className="my-8">
+        {data.title && (
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            {data.title}
+          </h3>
+        )}
+        <ul className="divide-y divide-slate-200 dark:divide-slate-800 border-y border-slate-200 dark:border-slate-800">
+          {data.perspectives.map((perspective, idx) => (
+            <li key={idx} className="py-3">
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100">
+                  {perspective.label}
+                </h4>
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${stanceClass(
+                    perspective.stance
+                  )}`}
+                >
+                  {perspective.stance}
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm text-slate-700 dark:text-slate-300">
+                {perspective.summary}
+              </p>
+              {perspective.quoteExcerpt && (
+                <blockquote className="mt-2 border-l-2 border-indigo-400 pl-3 text-sm italic text-slate-600 dark:text-slate-400">
+                  “{perspective.quoteExcerpt}”
+                </blockquote>
+              )}
+            </li>
+          ))}
+        </ul>
+        {data.methodology && (
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            Methodology: {data.methodology}
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  if (layout === 'columns') {
+    return (
+      <section aria-label={data.title || 'Perspectives'} className="my-8">
+        {data.title && (
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            {data.title}
+          </h3>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          {data.perspectives.map((perspective, idx) => (
+            <article key={idx} className="border-t-2 border-slate-900 dark:border-slate-100 pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100">
+                  {perspective.label}
+                </h4>
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${stanceClass(
+                    perspective.stance
+                  )}`}
+                >
+                  {perspective.stance}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                {perspective.summary}
+              </p>
+              {perspective.quoteExcerpt && (
+                <blockquote className="mt-3 border-l-2 border-indigo-400 pl-3 text-sm italic text-slate-600 dark:text-slate-400">
+                  “{perspective.quoteExcerpt}”
+                </blockquote>
+              )}
+              {perspective.sourceIds.length > 0 && (
+                <p className="mt-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  Sources: {perspective.sourceIds.join(', ')}
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+        {data.methodology && (
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            Methodology: {data.methodology}
+          </p>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section aria-label={data.title || 'Perspectives'} className="my-8">
       {data.title && (
@@ -210,6 +357,15 @@ export const PerspectiveBlockView: React.FC<{ data: PerspectiveBlock['data'] }> 
 };
 
 export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({ data }) => {
+  /*
+   * How the interview is drawn.
+   *
+   * As a question-and-answer, as an article the questions head, or as a
+   * timeline of what was said and when. The interview is the same; only
+   * the treatment changes.
+   */
+  const layout = data.layout ?? 'qa';
+
   return (
     <section
       aria-label={data.title}
@@ -232,36 +388,80 @@ export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({
           </a>
         )}
       </header>
-      <div className="divide-y divide-slate-200 dark:divide-slate-800">
-        {data.segments.map((segment, idx) => (
-          <div key={idx} className="px-5 py-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                Q
-              </span>
-              <p className="font-semibold text-slate-900 dark:text-slate-100 flex-1">
-                {segment.question}
+
+      {layout === 'article' && (
+        <div className="px-5 py-5 space-y-6">
+          {data.segments.map((segment, idx) => (
+            <div key={idx}>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100">{segment.question}</h4>
+              <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                {segment.answer}
               </p>
+              {segment.speaker && (
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {segment.speaker}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {layout === 'timeline' && (
+        <ol className="px-5 py-4">
+          {data.segments.map((segment, idx) => (
+            <li key={idx} className="relative pl-8 pb-5 last:pb-0">
+              <span className="absolute left-[7px] top-1.5 h-2.5 w-2.5 rounded-full bg-indigo-500" />
+              <span className="absolute left-[11px] top-4 bottom-0 w-px bg-slate-200 dark:bg-slate-800" />
               {segment.timestampSeconds !== undefined && (
-                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">
                   {formatTimestamp(segment.timestampSeconds)}
                 </span>
               )}
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                A
-              </span>
-              <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">{segment.answer}</p>
-              {segment.speaker && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {segment.speaker}
+              <p className="mt-0.5 font-semibold text-slate-900 dark:text-slate-100">
+                {segment.question}
+              </p>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{segment.answer}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {layout === 'qa' && (
+        <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          {data.segments.map((segment, idx) => (
+            <div key={idx} className="px-5 py-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                  Q
                 </span>
-              )}
+                <p className="font-semibold text-slate-900 dark:text-slate-100 flex-1">
+                  {segment.question}
+                </p>
+                {segment.timestampSeconds !== undefined && (
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {formatTimestamp(segment.timestampSeconds)}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  A
+                </span>
+                <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">
+                  {segment.answer}
+                </p>
+                {segment.speaker && (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {segment.speaker}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
       {data.sourceAttribution && (
         <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           Source: {data.sourceAttribution}
@@ -379,6 +579,43 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
 };
 
 export const FactCheckBlockView: React.FC<{ data: FactCheckBlock['data'] }> = ({ data }) => {
+  /*
+   * How the verdict is drawn.
+   *
+   * The full finding, the verdict alone, or a single line for a mention
+   * in the middle of a story. The finding is the same; only the
+   * treatment changes.
+   */
+  const layout = data.layout ?? 'full';
+
+  if (layout === 'inline') {
+    return (
+      <p className="my-3 flex flex-wrap items-baseline gap-2 text-xs">
+        <ClaimStatusBadge status={data.status} />
+        <span className="font-semibold text-slate-800 dark:text-slate-200">“{data.claim}”</span>
+        <span className="text-slate-600 dark:text-slate-400">{data.summary}</span>
+      </p>
+    );
+  }
+
+  if (layout === 'verdict') {
+    return (
+      <section
+        aria-label="Fact check"
+        className="my-6 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/5 p-4"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">
+            Fact check
+          </span>
+          <ClaimStatusBadge status={data.status} />
+        </div>
+        <p className="text-base font-semibold text-slate-900 dark:text-slate-100">“{data.claim}”</p>
+        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{data.summary}</p>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label="Fact check"
