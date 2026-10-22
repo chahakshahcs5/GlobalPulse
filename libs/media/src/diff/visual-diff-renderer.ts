@@ -65,9 +65,31 @@ export class VisualDiffRenderer {
           },
         };
 
+    /*
+     * How the changes are drawn.
+     *
+     * They can be a list of entries, a timeline with a rule down the side,
+     * or a summary that counts each kind of change. The changes are the
+     * same; only the treatment changes.
+     */
+    const layout = data.layout ?? 'list';
+
     const itemsHtml = data.items
       .map((item) => {
         const badge = badges[item.changeType] || badges.updated;
+        if (layout === 'timeline') {
+          return `
+            <li class="relative pl-6 pb-4 last:pb-0">
+              <span class="absolute left-[5px] top-2 h-2 w-2 rounded-full ${badge.color} border ${badge.border}"></span>
+              <span class="absolute left-[9px] top-4 bottom-0 w-px ${itemBorder} last:hidden"></span>
+              <div class="text-sm leading-relaxed">
+                <span class="font-medium ${descClass}">${escapeXml(item.description)}</span>
+                ${item.affectedSection ? `<span class="ml-2 text-xs ${sectionClass} font-mono">(${escapeXml(item.affectedSection)})</span>` : ''}
+              </div>
+              <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${badge.color} border ${badge.border}">${badge.label}</span>
+            </li>
+          `;
+        }
         return `
           <div class="flex items-start gap-3 py-2.5 border-b ${itemBorder} last:border-b-0">
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${badge.color} border ${badge.border} shrink-0">
@@ -82,6 +104,44 @@ export class VisualDiffRenderer {
       })
       .join('');
 
+    if (layout === 'summary') {
+      const counts = data.items.reduce<Record<string, number>>((tally, item) => {
+        tally[item.changeType] = (tally[item.changeType] ?? 0) + 1;
+        return tally;
+      }, {});
+      const summaryHtml = Object.entries(counts)
+        .map(([type, count]) => {
+          const badge = badges[type] || badges.updated;
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${badge.color} border ${badge.border} text-xs font-bold">${badge.label}<span class="font-mono">${count}</span></span>`;
+        })
+        .join('');
+
+      return `
+        <div class="rounded-xl p-4 ${bgClass} my-4 shadow-sm" role="region" aria-label="Version Updates">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b ${headerBorder}">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 class="text-sm font-bold uppercase tracking-wider ${headerTitle}">What Changed in this Revision</h3>
+            </div>
+            <span class="text-xs ${headerSub} font-mono">Updates vs Version ${data.previousVersionNumber}</span>
+          </div>
+          <div class="flex flex-wrap gap-2">${summaryHtml}</div>
+          <p class="mt-3 text-[11px] ${sectionClass}">
+            ${data.items.length} change${data.items.length === 1 ? '' : 's'} in this version.
+          </p>
+          ${
+            data.updatedAt
+              ? `<div class="pt-3 mt-3 border-t ${headerBorder} text-[11px] ${headerSub} font-mono">Updated ${escapeXml(
+                  data.updatedAt
+                )}</div>`
+              : ''
+          }
+        </div>
+      `;
+    }
+
     return `
       <div class="rounded-xl p-4 ${bgClass} my-4 shadow-sm" role="region" aria-label="Version Updates">
         <div class="flex items-center justify-between pb-3 mb-2 border-b ${headerBorder}">
@@ -93,9 +153,11 @@ export class VisualDiffRenderer {
           </div>
           <span class="text-xs ${headerSub} font-mono">Updates vs Version ${data.previousVersionNumber}</span>
         </div>
-        <div class="space-y-1">
-          ${itemsHtml}
-        </div>
+        ${
+          layout === 'timeline'
+            ? `<ul class="pt-1">${itemsHtml}</ul>`
+            : `<div class="space-y-1">${itemsHtml}</div>`
+        }
         ${
           data.updatedAt
             ? `<div class="pt-3 mt-1 border-t ${headerBorder} text-[11px] ${headerSub} font-mono">Updated ${escapeXml(

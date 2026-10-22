@@ -158,16 +158,16 @@ export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'many-claims',
-      label: 'Five claims',
-      description: 'Five claims, with the status of each one set out.',
+      id: 'claims-only',
+      label: 'Claims without evidence',
+      description: 'The claims and their status, with no documents attached.',
       data: {
-        title: 'Five claims, and where each one stands',
-        summary: 'Assessed against the filing record and the issued guidance.',
+        title: 'What the filings actually show',
+        summary: 'Two claims examined against the filing record.',
         claims: [
           {
             claimId: 'c1',
-            text: 'The reported figures were overstated at all four sites.',
+            text: 'Reported demand was overstated across all four sites.',
             status: 'SUPPORTED',
             confidence: 0.9,
             confidenceMethodology: 'All four sites showed a positive median gap.',
@@ -178,30 +178,7 @@ export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
             status: 'UNSUPPORTED',
             confidence: 0.3,
             confidenceMethodology:
-              'Measurement and classification errors explain the pattern; no document evidences intent.',
-          },
-          {
-            claimId: 'c3',
-            text: 'The overstatement grew every year of the review period.',
-            status: 'SUPPORTED',
-            confidence: 0.95,
-            confidenceMethodology: 'The annual median rose in each of the three years examined.',
-          },
-          {
-            claimId: 'c4',
-            text: 'Sites with a second sign-off reported more accurately.',
-            status: 'PARTIALLY_SUPPORTED',
-            confidence: 0.7,
-            confidenceMethodology:
-              'Directionally true, but only one site carried a sign-off throughout, so the comparison rests on a single case.',
-          },
-          {
-            claimId: 'c5',
-            text: 'The reporting instructions were never distributed to two of the four sites.',
-            status: 'DISPUTED',
-            confidence: 0.5,
-            confidenceMethodology:
-              'Two sites say they never received them; the authority says the instructions were published for all sites.',
+              'The pattern is better explained by measurement and classification errors; no document evidences intent.',
           },
         ],
         methodology: 'Each claim is assessed against the filing record and the issued guidance.',
@@ -350,21 +327,12 @@ export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'two-party',
-      label: 'Two parties',
-      description: 'A disagreement, with nothing else.',
+      id: 'with-quotes',
+      label: 'Every position quoted',
+      description: 'Each position with the words it was made in.',
       data: {
-        title: 'The disagreement',
+        title: 'What the parties say',
         perspectives: [
-          {
-            label: 'The review',
-            summary:
-              'An optional step is not a step. Three of the four sites published figures that nobody had checked.',
-            stance: 'SUPPORTS',
-            sourceIds: ['src_review_report'],
-            quoteExcerpt:
-              'We found no evidence of intent. What we found was a guidance document that made the check optional.',
-          },
           {
             label: 'The operator',
             summary:
@@ -372,6 +340,23 @@ export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
             stance: 'OPPOSES',
             sourceIds: ['src_operator_statement'],
             quoteExcerpt: 'We followed the guidance as it was written at the time.',
+          },
+          {
+            label: 'The review',
+            summary:
+              'The burden sat with the operator, and an optional step is not a step. The guidance has now been rewritten.',
+            stance: 'SUPPORTS',
+            sourceIds: ['src_review_report'],
+            quoteExcerpt:
+              'We found no evidence of intent. What we found was a guidance document that made the check optional.',
+          },
+          {
+            label: 'The regulator',
+            summary: 'A second sign-off is now mandatory and reporting is published quarterly.',
+            stance: 'NEUTRAL',
+            sourceIds: ['src_regulator_directive'],
+            quoteExcerpt:
+              'A second sign-off shall be mandatory for every reported value, and results shall be published quarterly.',
           },
         ],
         methodology: 'Each position is quoted from a published document.',

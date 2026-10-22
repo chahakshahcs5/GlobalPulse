@@ -441,10 +441,11 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
 
   live_comments: [
     {
-      id: 'discussion',
-      label: 'Reader discussion',
-      description: 'Comments load live over the story channel.',
+      id: 'list',
+      label: 'List',
+      description: 'The comments as a list, one after another.',
       data: {
+        layout: 'list',
         title: 'What readers are saying',
         description: 'The latest approved comments on this story.',
         maxComments: 10,
@@ -452,49 +453,26 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'no-cta',
-      label: 'Without the link',
-      description: 'The comments, with no link out to the full discussion.',
+      id: 'thread',
+      label: 'Thread',
+      description: 'The comments as a thread, with replies under what they answer.',
       data: {
+        layout: 'thread',
         title: 'What readers are saying',
         description: 'The latest approved comments on this story.',
         maxComments: 10,
-        showCta: false,
-      },
-    },
-    {
-      id: 'journalists-only',
-      label: 'Journalists only',
-      description: 'Only comments from people on the newsroom’s own staff.',
-      data: {
-        title: 'What our reporters are saying',
-        description: 'Comments from the reporting and editing teams only.',
-        maxComments: 5,
-        roles: ['journalist', 'editor'],
-        showCta: false,
-      },
-    },
-    {
-      id: 'readers-only',
-      label: 'Readers only',
-      description: 'Only comments from subscribers.',
-      data: {
-        title: 'Subscriber discussion',
-        description: 'The latest comments from our subscribers.',
-        maxComments: 25,
-        roles: ['subscriber'],
         showCta: true,
       },
     },
     {
-      id: 'with-agents',
-      label: 'Including agents',
-      description: 'Every role, including the ones posted by automated agents.',
+      id: 'compact',
+      label: 'Compact',
+      description: 'The comments as one-line excerpts, for a narrow column.',
       data: {
+        layout: 'compact',
         title: 'What readers are saying',
-        description: 'The latest approved comments on this story, from every role.',
-        maxComments: 20,
-        roles: ['reader', 'subscriber', 'journalist', 'editor', 'ai_agent'],
+        description: 'The latest approved comments on this story.',
+        maxComments: 10,
         showCta: true,
       },
     },
@@ -689,10 +667,11 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
 
   poll: [
     {
-      id: 'poll',
-      label: 'Reader poll',
-      description: 'One vote per reader, counted on the server.',
+      id: 'bars',
+      label: 'Bars',
+      description: 'The answers as rows filled to the proportion of votes.',
       data: {
+        layout: 'bars',
         pollId: 'poll_grid_trust_2026',
         question: 'Do you trust the figures your utility publishes?',
         options: [
@@ -706,10 +685,11 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'closed',
-      label: 'A closed poll',
-      description: 'A poll that has finished, with the final tally.',
+      id: 'pills',
+      label: 'Pills',
+      description: 'The answers as a row of pills, to tap.',
       data: {
+        layout: 'pills',
         pollId: 'poll_grid_trust_2026',
         question: 'Do you trust the figures your utility publishes?',
         options: [
@@ -719,14 +699,15 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
         ],
         totalVotes: 1389,
         expiresAt: '2026-12-31T23:59:59Z',
-        closed: true,
+        closed: false,
       },
     },
     {
-      id: 'voted',
-      label: 'Already voted',
-      description: 'A poll this reader has already answered.',
+      id: 'list',
+      label: 'List',
+      description: 'The answers as a list, with the counts beside them.',
       data: {
+        layout: 'list',
         pollId: 'poll_grid_trust_2026',
         question: 'Do you trust the figures your utility publishes?',
         options: [
@@ -735,42 +716,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
           { id: 'opt_no', text: 'No', voteCount: 288 },
         ],
         totalVotes: 1389,
-        userVotedOptionId: 'opt_some',
         expiresAt: '2026-12-31T23:59:59Z',
-        closed: false,
-      },
-    },
-    {
-      id: 'no-expiry',
-      label: 'No closing date',
-      description: 'A poll that stays open until it is closed by hand.',
-      data: {
-        pollId: 'poll_review_published_2026',
-        question: 'Should reporting sites be required to publish their meter data?',
-        options: [
-          { id: 'opt_yes', text: 'Yes, all of it', voteCount: 2841 },
-          { id: 'opt_meter', text: 'Only the meter data', voteCount: 1502 },
-          { id: 'opt_no', text: 'No', voteCount: 419 },
-        ],
-        totalVotes: 4762,
-        closed: false,
-      },
-    },
-    {
-      id: 'four-options',
-      label: 'Four options',
-      description: 'A poll with a wider answer.',
-      data: {
-        pollId: 'poll_second_signoff_2026',
-        question: 'What stopped the reporting gaps being caught earlier?',
-        options: [
-          { id: 'opt_rules', text: 'The rules were optional', voteCount: 1420 },
-          { id: 'opt_staff', text: 'Nobody had the time', voteCount: 998 },
-          { id: 'opt_notice', text: 'Nobody noticed', voteCount: 604 },
-          { id: 'opt_other', text: 'Something else', voteCount: 187 },
-        ],
-        totalVotes: 3209,
-        expiresAt: '2026-11-15T23:59:59Z',
         closed: false,
       },
     },

@@ -94,6 +94,74 @@ export const TableBlockView: React.FC<{ data: TableBlock['data'] }> = ({ data })
 
   const hasToolbar = Boolean(data.searchable || data.filterable || data.downloadable);
 
+  /*
+   * How the table is drawn.
+   *
+   * A table can be a grid of rows, a grid with every line drawn, or a stack
+   * of cards — one per row, each cell labelled by its column. The data is
+   * the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'striped';
+
+  if (layout === 'cards') {
+    return (
+      <figure className="my-6">
+        {(data.title || data.caption) && (
+          <figcaption className="mb-3">
+            {data.title && (
+              <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                {data.title}
+              </div>
+            )}
+            {data.caption && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{data.caption}</p>
+            )}
+          </figcaption>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {visibleRows.map((row: string[], rIdx: number) => (
+            <div
+              key={rIdx}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 p-4 shadow-sm"
+            >
+              <dl className="space-y-2">
+                {row.map((cell: string, cIdx: number) => (
+                  <div key={cIdx} className="flex items-baseline justify-between gap-4">
+                    <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {headers[cIdx]}
+                    </dt>
+                    <dd className="text-sm text-slate-800 dark:text-slate-200 text-right">
+                      {cell}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+          {visibleRows.length === 0 && (
+            <p className="text-xs text-slate-400 dark:text-slate-500 col-span-full">
+              No rows match the current filters.
+            </p>
+          )}
+        </div>
+
+        {(data.footer || data.sourceAttribution || data.methodology || data.lastUpdated) && (
+          <div className="mt-3 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {data.footer && <p className="italic">{data.footer}</p>}
+            <p className="flex flex-wrap gap-x-4 gap-y-0.5">
+              {data.sourceAttribution && <span>Source: {data.sourceAttribution}</span>}
+              {data.lastUpdated && <span>Updated: {data.lastUpdated}</span>}
+            </p>
+            {data.methodology && <p>Methodology: {data.methodology}</p>}
+          </div>
+        )}
+      </figure>
+    );
+  }
+
+  const isBordered = layout === 'bordered';
+
   return (
     <figure className="my-6 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm">
       {(data.title || data.caption) && (
@@ -139,8 +207,16 @@ export const TableBlockView: React.FC<{ data: TableBlock['data'] }> = ({ data })
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-          <thead className="bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-700">
+        <table
+          className={`w-full text-left text-sm text-slate-700 dark:text-slate-300 ${
+            isBordered ? 'border-collapse' : ''
+          }`}
+        >
+          <thead
+            className={`bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-700 ${
+              isBordered ? '[&_th]:border [&_th]:border-slate-200 dark:[&_th]:border-slate-700' : ''
+            }`}
+          >
             <tr>
               {headers.map((header: string, index: number) => (
                 <th key={index} className="px-4 py-3 whitespace-nowrap">
@@ -168,7 +244,12 @@ export const TableBlockView: React.FC<{ data: TableBlock['data'] }> = ({ data })
             {data.filterable && (
               <tr className="bg-slate-50/70 dark:bg-slate-900/40 font-normal">
                 {headers.map((header: string, index: number) => (
-                  <th key={index} className="px-2 py-1.5">
+                  <th
+                    key={index}
+                    className={`px-2 py-1.5 ${
+                      isBordered ? 'border border-slate-200 dark:border-slate-700' : ''
+                    }`}
+                  >
                     <input
                       type="text"
                       value={filters[index] ?? ''}
@@ -185,11 +266,15 @@ export const TableBlockView: React.FC<{ data: TableBlock['data'] }> = ({ data })
               </tr>
             )}
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+          <tbody className={isBordered ? '' : 'divide-y divide-slate-200 dark:divide-slate-800'}>
             {visibleRows.map((row: string[], rIdx: number) => (
               <tr
                 key={rIdx}
-                className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${
+                  isBordered
+                    ? '[&_td]:border [&_td]:border-slate-200 dark:[&_td]:border-slate-700'
+                    : ''
+                }`}
               >
                 {row.map((cell: string, cIdx: number) => (
                   <td key={cIdx} className="px-4 py-2.5">

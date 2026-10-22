@@ -244,6 +244,168 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
 };
 
 export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ data }) => {
+  /*
+   * How the ranking is drawn.
+   *
+   * A ranking can be a list of positions, a list of bars scaled to the
+   * value, or a podium with the leaders lifted above the rest. The
+   * ranking is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'numbered';
+
+  const items = data.items ?? [];
+  const values = items.map((item) => item.value ?? 0);
+  const maxValue = Math.max(...values, 0);
+  const minValue = Math.min(...values, 0);
+  const span = maxValue - minValue || 1;
+
+  const movement = (item: RankingBlock['data']['items'][number]) =>
+    item.previousRank === undefined ? null : item.previousRank - item.rank;
+
+  const movementBadge = (item: RankingBlock['data']['items'][number]) => {
+    const change = movement(item);
+    if (change === null) return null;
+    return (
+      <span
+        className={`w-10 text-right text-[11px] font-mono font-bold ${
+          change > 0
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : change < 0
+              ? 'text-rose-600 dark:text-rose-400'
+              : 'text-slate-400'
+        }`}
+        aria-label={
+          change > 0
+            ? `up ${change} places`
+            : change < 0
+              ? `down ${Math.abs(change)} places`
+              : 'unchanged'
+        }
+      >
+        {change > 0 ? `↑${change}` : change < 0 ? `↓${Math.abs(change)}` : '—'}
+      </span>
+    );
+  };
+
+  if (layout === 'bars') {
+    return (
+      <section aria-label={data.title} className="my-8">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.subtitle && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+        )}
+        <ol className="mt-4 space-y-2.5">
+          {items.map((item) => {
+            const value = item.value ?? 0;
+            const width = Math.max(2, ((value - minValue) / span) * 100);
+            return (
+              <li key={`${item.rank}-${item.name}`} className="flex items-center gap-3">
+                <span className="w-6 text-center font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
+                  {item.rank}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      {item.name}
+                    </span>
+                    {item.value !== undefined && (
+                      <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
+                        {item.value.toLocaleString()}
+                        {item.unit ? ` ${item.unit}` : ''}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-blue-500"
+                      style={{ width: `${width}%` }}
+                    />
+                  </div>
+                </div>
+                {movementBadge(item)}
+              </li>
+            );
+          })}
+        </ol>
+        <ProvenanceFooter
+          source={data.sourceAttribution}
+          methodology={data.methodology}
+          lastUpdated={data.lastUpdated}
+        />
+      </section>
+    );
+  }
+
+  if (layout === 'podium') {
+    const leaders = items.slice(0, 3);
+    const rest = items.slice(3);
+    const step = (rank: number) => (rank === 1 ? 'order-2' : rank === 2 ? 'order-1' : 'order-3');
+    const height = (rank: number) => (rank === 1 ? 'h-28' : rank === 2 ? 'h-20' : 'h-14');
+
+    return (
+      <section aria-label={data.title} className="my-8">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.subtitle && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+        )}
+
+        <ol className="mt-5 flex items-end justify-center gap-3">
+          {leaders.map((item) => (
+            <li
+              key={`${item.rank}-${item.name}`}
+              className={`flex-1 max-w-[12rem] ${step(item.rank)} flex flex-col items-center`}
+            >
+              <span className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {item.name}
+              </span>
+              {item.value !== undefined && (
+                <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {item.value.toLocaleString()}
+                  {item.unit ? ` ${item.unit}` : ''}
+                </span>
+              )}
+              <div
+                className={`mt-2 w-full rounded-t-lg bg-gradient-to-b from-blue-500 to-blue-600 ${height(
+                  item.rank
+                )} flex items-start justify-center pt-2 text-white`}
+              >
+                <span className="font-mono text-xl font-black">{item.rank}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {rest.length > 0 && (
+          <ol className="mt-5 space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+            {rest.map((item) => (
+              <li key={`${item.rank}-${item.name}`} className="flex items-center gap-3">
+                <span className="w-7 text-center font-mono font-bold text-slate-500 dark:text-slate-400">
+                  {item.rank}
+                </span>
+                <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {item.name}
+                </span>
+                {item.value !== undefined && (
+                  <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
+                    {item.value.toLocaleString()}
+                    {item.unit ? ` ${item.unit}` : ''}
+                  </span>
+                )}
+                {movementBadge(item)}
+              </li>
+            ))}
+          </ol>
+        )}
+
+        <ProvenanceFooter
+          source={data.sourceAttribution}
+          methodology={data.methodology}
+          lastUpdated={data.lastUpdated}
+        />
+      </section>
+    );
+  }
+
   return (
     <section aria-label={data.title} className="my-8">
       <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
@@ -252,7 +414,7 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
       )}
       <ol className="mt-4 space-y-2">
         {data.items.map((item) => {
-          const movement = item.previousRank === undefined ? null : item.previousRank - item.rank;
+          const change = movement(item);
           return (
             <li
               key={`${item.rank}-${item.name}`}
@@ -270,24 +432,24 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
                   {item.unit ? ` ${item.unit}` : ''}
                 </span>
               )}
-              {movement !== null && (
+              {change !== null && (
                 <span
                   className={`w-10 text-right text-[11px] font-mono font-bold ${
-                    movement > 0
+                    change > 0
                       ? 'text-emerald-600 dark:text-emerald-400'
-                      : movement < 0
+                      : change < 0
                         ? 'text-rose-600 dark:text-rose-400'
                         : 'text-slate-400'
                   }`}
                   aria-label={
-                    movement > 0
-                      ? `up ${movement} places`
-                      : movement < 0
-                        ? `down ${Math.abs(movement)} places`
+                    change > 0
+                      ? `up ${change} places`
+                      : change < 0
+                        ? `down ${Math.abs(change)} places`
                         : 'unchanged'
                   }
                 >
-                  {movement > 0 ? `↑${movement}` : movement < 0 ? `↓${Math.abs(movement)}` : '—'}
+                  {change > 0 ? `↑${change}` : change < 0 ? `↓${Math.abs(change)}` : '—'}
                 </span>
               )}
               {item.note && (

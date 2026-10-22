@@ -81,10 +81,23 @@ export const LiveCommentsBlockView: React.FC<{
 
   if (!storyId) return null;
 
+  /*
+   * How the discussion is drawn.
+   *
+   * The comments can be a list, a thread with replies indented under the
+   * comment they answer, or a compact run of one-line excerpts. The
+   * comments are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'list';
+
+  const isThread = layout === 'thread';
+
   return (
     <section
       aria-label={data.title}
-      className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      className={`my-8 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden ${
+        layout === 'compact' ? 'rounded-lg' : 'rounded-2xl'
+      }`}
     >
       <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
         <div>
@@ -108,26 +121,50 @@ export const LiveCommentsBlockView: React.FC<{
         <p className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">
           No comments yet. Start the discussion below the story.
         </p>
-      ) : (
+      ) : layout === 'compact' ? (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {visible.map((comment) => (
-            <li key={comment.id} className="px-5 py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                  {comment.authorName}
-                </span>
-                <span
-                  className="text-[10px] text-slate-400 dark:text-slate-500"
-                  suppressHydrationWarning
-                >
-                  {formatDeterministicDate(comment.createdAt)}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <li key={comment.id} className="flex items-baseline gap-2 px-5 py-2">
+              <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 shrink-0">
+                {comment.authorName}
+              </span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 {comment.content}
-              </p>
+              </span>
             </li>
           ))}
+        </ul>
+      ) : (
+        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          {visible.map((comment) => {
+            /*
+             * A reply is a comment that answers another one. In the thread
+             * treatment it is drawn indented under the comment it answers,
+             * with a rule joining the two.
+             */
+            const isReply = Boolean(comment.parentId);
+            return (
+              <li
+                key={comment.id}
+                className={`px-5 py-3 ${isThread && isReply ? 'pl-12 border-l-2 border-slate-100 dark:border-slate-800 ml-5' : ''}`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                    {comment.authorName}
+                  </span>
+                  <span
+                    className="text-[10px] text-slate-400 dark:text-slate-500"
+                    suppressHydrationWarning
+                  >
+                    {formatDeterministicDate(comment.createdAt)}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {comment.content}
+                </p>
+              </li>
+            );
+          })}
         </ul>
       )}
 

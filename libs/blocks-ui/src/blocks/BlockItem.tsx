@@ -243,6 +243,96 @@ function renderBlock(
 
     case 'statistic': {
       const { value, label, unit, trend, trendValue, comparison, period, context } = block.data;
+      /*
+       * How the statistic is drawn.
+       *
+       * A statistic can be a card, a line of text, or a hero figure with
+       * the number set large. The number is the same; only the weight it
+       * is given changes.
+       */
+      const layout = block.data.layout ?? 'card';
+
+      if (layout === 'inline') {
+        return (
+          <p className="my-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-slate-800 dark:text-slate-200">
+            <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              {value}
+              {unit && <span className="text-base font-bold text-slate-500 ml-0.5">{unit}</span>}
+            </span>
+            <span className="text-sm font-medium">{label}</span>
+            {trend && (
+              <span
+                className={`text-xs font-bold ${
+                  trend === 'up'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : trend === 'down'
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-slate-500'
+                }`}
+              >
+                {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} {trendValue || trend}
+              </span>
+            )}
+            {context && (
+              <span className="text-xs text-slate-500 dark:text-slate-400">{context}</span>
+            )}
+          </p>
+        );
+      }
+
+      if (layout === 'hero') {
+        return (
+          <div className="my-8 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {label}
+            </p>
+            <p className="mt-2 text-6xl sm:text-7xl font-black tracking-tight text-slate-900 dark:text-white">
+              {value}
+              {unit && (
+                <span className="text-3xl sm:text-4xl font-bold text-slate-400 dark:text-slate-500 ml-2">
+                  {unit}
+                </span>
+              )}
+            </p>
+            {trend && (
+              <p
+                className={`mt-3 text-sm font-bold ${
+                  trend === 'up'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : trend === 'down'
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-slate-500'
+                }`}
+              >
+                {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} {trendValue || trend}
+              </p>
+            )}
+            {context && (
+              <p className="mt-3 max-w-lg mx-auto text-sm text-slate-600 dark:text-slate-400">
+                {context}
+              </p>
+            )}
+            {comparison && (
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{comparison}</p>
+            )}
+            {(period || block.data.sourceAttribution || block.data.methodology) && (
+              <p className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-500">
+                {period && <span>Period: {period}</span>}
+                {block.data.sourceAttribution && (
+                  <span>Source: {block.data.sourceAttribution}</span>
+                )}
+                {block.data.lastUpdated && <span>Updated: {block.data.lastUpdated}</span>}
+              </p>
+            )}
+            {block.data.methodology && (
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-500">
+                Methodology: {block.data.methodology}
+              </p>
+            )}
+          </div>
+        );
+      }
+
       return (
         <div className="my-6 p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div>

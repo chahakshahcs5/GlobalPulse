@@ -158,10 +158,11 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
 
   source: [
     {
-      id: 'source',
-      label: 'Source card',
-      description: 'A registered source with a link out.',
+      id: 'card',
+      label: 'Card',
+      description: 'The source as a card, with its date and a link out.',
       data: {
+        layout: 'card',
         sourceId: 'src_review_report',
         title: 'Independent Grid Review: Findings and Recommendations',
         publisher: 'Office of the Independent Grid Review',
@@ -170,61 +171,40 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'dataset',
-      label: 'A dataset',
-      description: 'A published dataset, with its publisher and its date.',
+      id: 'compact',
+      label: 'Compact',
+      description: 'The source as one line, with the publisher in front.',
       data: {
-        sourceId: 'src_review_data',
-        title: 'The grid review dataset: 1,240 filings, re-checked',
-        publisher: 'GlobalPulse data desk',
-        url: 'https://example.org/datasets/grid-review-2026.csv',
+        layout: 'compact',
+        sourceId: 'src_review_report',
+        title: 'Independent Grid Review: Findings and Recommendations',
+        publisher: 'Office of the Independent Grid Review',
+        url: 'https://example.org/independent-grid-review-2026',
         publishedAt: '2026-10-01',
       },
     },
     {
-      id: 'guidance',
-      label: 'A guidance note',
-      description: 'The 2022 instructions the finding turns on.',
+      id: 'badge',
+      label: 'Badge',
+      description: 'The publisher as a badge, with the title beside it.',
       data: {
-        sourceId: 'src_site_guidance_2022',
-        title: 'Reporting instructions for grid reporting sites, 2022',
-        publisher: 'Grid Authority',
-        url: 'https://example.org/grid/reporting-instructions-2022',
-        publishedAt: '2022-04-11',
-      },
-    },
-    {
-      id: 'statement',
-      label: 'A statement',
-      description: 'A party’s own statement of its position.',
-      data: {
-        sourceId: 'src_operator_statement',
-        title: 'Northwind Energy: statement on the independent grid review',
-        publisher: 'Northwind Energy',
-        url: 'https://example.org/northwind/statement-2026-10-02',
-        publishedAt: '2026-10-02',
-      },
-    },
-    {
-      id: 'newspaper',
-      label: 'A newspaper article',
-      description: 'A piece of journalism, from another publication.',
-      data: {
-        sourceId: 'src_ledger_2026',
-        title: 'Grid figures “were never checked”, review finds',
-        publisher: 'The Ledger',
-        url: 'https://example.org/ledger/grid-figures-never-checked',
-        publishedAt: '2026-10-02',
+        layout: 'badge',
+        sourceId: 'src_review_report',
+        title: 'Independent Grid Review: Findings and Recommendations',
+        publisher: 'Office of the Independent Grid Review',
+        url: 'https://example.org/independent-grid-review-2026',
+        publishedAt: '2026-10-01',
       },
     },
   ],
 
   entity: [
     {
-      id: 'entity',
-      label: 'Entity card',
-      description: 'A person, company or place.',
+      id: 'card',
+      label: 'Card',
+      description: 'The entity as a card, with a portrait and a profile link.',
       data: {
+        layout: 'card',
         entityId: 'ent_ada_okafor',
         name: 'Ada Okafor',
         type: 'person',
@@ -233,106 +213,72 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'company',
-      label: 'A company',
-      description: 'An organisation, and what it does.',
+      id: 'compact',
+      label: 'Compact',
+      description: 'The entity as one line, with a small portrait.',
       data: {
-        entityId: 'ent_northwind',
-        name: 'Northwind Energy',
-        type: 'company',
-        description:
-          'Operator of three of the four reporting sites, and the largest single holder of grid capacity in the north.',
-        avatarUrl: 'https://i.pravatar.cc/300?img=12',
-      },
-    },
-    {
-      id: 'place',
-      label: 'A place',
-      description: 'A location, with no portrait.',
-      data: {
-        entityId: 'ent_harbour_east',
-        name: 'Harbour East',
-        type: 'location',
-        description:
-          'The reporting site with the largest gap between its reported and verified figures.',
-      },
-    },
-    {
-      id: 'organisation',
-      label: 'An organisation',
-      description: 'A body, rather than a business.',
-      data: {
-        entityId: 'ent_grid_authority',
-        name: 'Grid Authority',
-        type: 'organization',
-        description:
-          'The regulator that sets the reporting rules and receives the quarterly figures.',
-      },
-    },
-    {
-      id: 'with-link',
-      label: 'With a link',
-      description: 'An entity that links out to its own page.',
-      data: {
+        layout: 'compact',
         entityId: 'ent_ada_okafor',
         name: 'Ada Okafor',
         type: 'person',
         description: 'Director of the Independent Grid Review and former system operator.',
         avatarUrl: 'https://i.pravatar.cc/300?img=47',
+      },
+    },
+    {
+      id: 'chip',
+      label: 'Chip',
+      description: 'The entity as a small chip, with its initials.',
+      data: {
+        layout: 'chip',
+        entityId: 'ent_ada_okafor',
+        name: 'Ada Okafor',
+        type: 'person',
+        description: 'Director of the Independent Grid Review and former system operator.',
       },
     },
   ],
 
   related_stories: [
     {
-      id: 'related',
-      label: 'Related coverage',
-      description: 'Links to other stories on the topic.',
+      id: 'grid',
+      label: 'Grid',
+      description: 'The related stories in a two-column grid.',
       data: {
+        layout: 'grid',
         title: 'Related Coverage',
         storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
       },
     },
     {
-      id: 'one',
-      label: 'One story',
-      description: 'A single related story.',
+      id: 'list',
+      label: 'List',
+      description: 'The related stories as a list, one to a line.',
       data: {
-        title: 'Read next',
-        storyIds: ['story_grid_review_2026'],
+        layout: 'list',
+        title: 'Related Coverage',
+        storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
       },
     },
     {
-      id: 'many',
-      label: 'Five stories',
-      description: 'A longer list of related coverage.',
+      id: 'carousel',
+      label: 'Carousel',
+      description: 'The related stories in a row that scrolls sideways.',
       data: {
-        title: 'More on grid reporting',
-        storyIds: [
-          'story_grid_review_2026',
-          'story_utility_transparency_2025',
-          'story_meter_data_2025',
-          'story_quarterly_reporting_2026',
-          'story_northfield_appeal_2026',
-        ],
-      },
-    },
-    {
-      id: 'default-title',
-      label: 'Default title',
-      description: 'No title of its own, so the block falls back to its default.',
-      data: {
-        storyIds: ['story_grid_review_2026', 'story_meter_data_2025'],
+        layout: 'carousel',
+        title: 'Related Coverage',
+        storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
       },
     },
   ],
 
   what_changed: [
     {
-      id: 'changes',
-      label: 'What changed',
-      description: 'A structured summary of an update.',
+      id: 'list',
+      label: 'List',
+      description: 'The changes as a list, each with its own badge.',
       data: {
+        layout: 'list',
         previousVersionNumber: 3,
         updatedAt: '2026-10-02T09:15:00Z',
         items: [
@@ -355,81 +301,55 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'added',
-      label: 'Something added',
-      description: 'Only what was added to the story.',
+      id: 'timeline',
+      label: 'Timeline',
+      description: 'The changes down a timeline, with a rule beside them.',
       data: {
-        previousVersionNumber: 4,
-        updatedAt: '2026-10-03T14:20:00Z',
+        layout: 'timeline',
+        previousVersionNumber: 3,
+        updatedAt: '2026-10-02T09:15:00Z',
         items: [
+          {
+            changeType: 'corrected',
+            description: 'The May figure was corrected from 14.2 to 12.9 TWh.',
+            affectedSection: 'The numbers',
+          },
           {
             changeType: 'added',
             description: 'A third-party check was added to the verification chain diagram.',
             affectedSection: 'How it works',
           },
           {
-            changeType: 'added',
-            description: 'The response from the Grid Authority was added in full.',
-            affectedSection: 'The response',
-          },
-        ],
-      },
-    },
-    {
-      id: 'updated',
-      label: 'Something updated',
-      description: 'Only what was updated.',
-      data: {
-        previousVersionNumber: 4,
-        updatedAt: '2026-10-03T14:20:00Z',
-        items: [
-          {
             changeType: 'updated',
             description: 'The site ranking was refreshed with the Q3 filings.',
             affectedSection: 'The ranking',
           },
-          {
-            changeType: 'updated',
-            description: 'The reserve margin figure now reads 6.4 per cent rather than 6.1.',
-            affectedSection: 'The monitor',
-          },
         ],
       },
     },
     {
-      id: 'retracted',
-      label: 'Something retracted',
-      description: 'Only what was taken back.',
+      id: 'summary',
+      label: 'Summary',
+      description: 'The changes counted by kind, in one line each.',
       data: {
-        previousVersionNumber: 4,
-        updatedAt: '2026-10-03T14:20:00Z',
-        items: [
-          {
-            changeType: 'retracted',
-            description:
-              'The claim that the guidance was never distributed was retracted, because the distribution log was produced after publication.',
-            affectedSection: 'The guidance',
-          },
-          {
-            changeType: 'retracted',
-            description: 'A quotation attributed to the operator was withdrawn at their request.',
-            affectedSection: 'The response',
-          },
-        ],
-      },
-    },
-    {
-      id: 'single',
-      label: 'One change',
-      description: 'The smallest a change summary can be.',
-      data: {
-        previousVersionNumber: 4,
-        updatedAt: '2026-10-03T14:20:00Z',
+        layout: 'summary',
+        previousVersionNumber: 3,
+        updatedAt: '2026-10-02T09:15:00Z',
         items: [
           {
             changeType: 'corrected',
             description: 'The May figure was corrected from 14.2 to 12.9 TWh.',
             affectedSection: 'The numbers',
+          },
+          {
+            changeType: 'added',
+            description: 'A third-party check was added to the verification chain diagram.',
+            affectedSection: 'How it works',
+          },
+          {
+            changeType: 'updated',
+            description: 'The site ranking was refreshed with the Q3 filings.',
+            affectedSection: 'The ranking',
           },
         ],
       },
@@ -438,10 +358,11 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
 
   comparison: [
     {
-      id: 'comparison',
-      label: 'Two-option comparison',
-      description: 'Side by side, with points on each side.',
+      id: 'split',
+      label: 'Split',
+      description: 'The two options side by side, in their own panels.',
       data: {
+        layout: 'split',
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
@@ -462,10 +383,11 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'three-points',
-      label: 'Three points each',
-      description: 'A comparison with a point on either side of every line.',
+      id: 'table',
+      label: 'Table',
+      description: 'The two options as a table of matching points.',
       data: {
+        layout: 'table',
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
@@ -486,19 +408,18 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'five-points',
-      label: 'Five points each',
-      description: 'A fuller comparison, with the cost and the speed on each side.',
+      id: 'versus',
+      label: 'Versus',
+      description: 'The two options set against each other, with a rule between them.',
       data: {
+        layout: 'versus',
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
           points: [
             'Cheap: no new meter reading.',
-            'Fast: a signature on the same form, the same day.',
             'Catches classification errors, not measurement errors.',
             'Not independent of the reporting site.',
-            'Can be skipped, as it was at three of the four sites.',
           ],
         },
         subjectB: {
@@ -506,45 +427,8 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
           points: [
             'Catches both measurement and classification errors.',
             'Expensive: roughly a third of a reporting site budget.',
-            'Slow: the meter has to be read by someone from outside.',
             'Independent of the reporting site.',
-            'Cannot be skipped, because the operator does not control it.',
           ],
-        },
-      },
-    },
-    {
-      id: 'long-names',
-      label: 'Long names',
-      description: 'Two long headings, which is where a comparison usually breaks.',
-      data: {
-        title: 'Two ways to verify the number',
-        subjectA: {
-          name: 'A mandatory second sign-off by a second analyst employed by the reporting site',
-          points: ['Cheap: no new meter reading.', 'Not independent of the reporting site.'],
-        },
-        subjectB: {
-          name: 'A third-party meter check carried out by an accredited body appointed by the authority',
-          points: [
-            'Catches both measurement and classification errors.',
-            'Expensive: roughly a third of a reporting site budget.',
-          ],
-        },
-      },
-    },
-    {
-      id: 'minimal',
-      label: 'One point each',
-      description: 'The smallest a comparison can be.',
-      data: {
-        title: 'Two ways to verify the number',
-        subjectA: {
-          name: 'Internal second sign-off',
-          points: ['Cheap, but not independent.'],
-        },
-        subjectB: {
-          name: 'Third-party meter check',
-          points: ['Independent, but expensive.'],
         },
       },
     },
