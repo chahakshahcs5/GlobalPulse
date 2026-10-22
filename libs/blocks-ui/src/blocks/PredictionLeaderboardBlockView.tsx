@@ -169,6 +169,39 @@ export const PredictionLeaderboardBlockView: React.FC<{
               {data.scoringMethod}
             </p>
           )}
+
+          {/*
+            The scores say who is best. The predictions say what they were
+            best at, so they are listed too.
+          */}
+          {data.predictions.length > 0 && (
+            <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-3">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                The predictions
+              </h4>
+              <ul className="space-y-2">
+                {data.predictions.map((prediction) => (
+                  <li key={prediction.id} className="text-xs">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {prediction.claim}
+                      </span>
+                      <span className="font-mono text-slate-500 dark:text-slate-400 shrink-0">
+                        {Math.round(prediction.probability * 100)}%
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                      <span>{prediction.forecaster}</span>
+                      {prediction.forecasterId && <span>{prediction.forecasterId}</span>}
+                      {prediction.predictedAt && <span>made {prediction.predictedAt}</span>}
+                      {prediction.resolvesAt && <span>resolves {prediction.resolvesAt}</span>}
+                      {prediction.sourceId && <span>{prediction.sourceId}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2 px-5 py-4 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800">

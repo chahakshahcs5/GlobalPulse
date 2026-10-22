@@ -93,6 +93,11 @@ export const AnnotatedImageBlockView: React.FC<{ data: AnnotatedImageBlock['data
                 {annotation.description && (
                   <span className="block text-xs">{annotation.description}</span>
                 )}
+                {annotation.sourceId && (
+                  <span className="block font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                    {annotation.sourceId}
+                  </span>
+                )}
               </li>
             );
           })}
@@ -307,7 +312,11 @@ export const VideoGalleryBlockView: React.FC<{ data: VideoGalleryBlock['data'] }
                   <ol className="mt-1.5 space-y-1">
                     {video.transcriptSegments.map((segment, idx) => (
                       <li key={idx} className="text-[11px] text-slate-600 dark:text-slate-400">
-                        <span className="font-mono">{formatTimestamp(segment.startSeconds)}</span>{' '}
+                        <span className="font-mono">
+                          {formatTimestamp(segment.startSeconds)}
+                          {segment.endSeconds !== undefined &&
+                            `–${formatTimestamp(segment.endSeconds)}`}
+                        </span>{' '}
                         {segment.speaker ? <b>{segment.speaker}: </b> : null}
                         {segment.text}
                       </li>
@@ -504,7 +513,12 @@ export const PodcastBlockView: React.FC<{ data: PodcastBlock['data'] }> = ({ dat
                   )}
                   {episode.publishedAt && <span>{episode.publishedAt.slice(0, 10)}</span>}
                   {episode.speakers && episode.speakers.length > 0 && (
-                    <span>Speakers: {episode.speakers.map((s) => s.name).join(', ')}</span>
+                    <span>
+                      Speakers:{' '}
+                      {episode.speakers
+                        .map((s) => (s.role ? `${s.name} (${s.role})` : s.name))
+                        .join(', ')}
+                    </span>
                   )}
                   {episode.episodeUrl && (
                     <a
@@ -625,7 +639,10 @@ export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ d
                 key={`${segment.startSeconds}-${segment.label}`}
                 className="text-[11px] text-slate-600 dark:text-slate-400"
               >
-                <span className="font-mono">{formatTimestamp(segment.startSeconds)}</span>{' '}
+                <span className="font-mono">
+                  {formatTimestamp(segment.startSeconds)}
+                  {segment.endSeconds !== undefined && `–${formatTimestamp(segment.endSeconds)}`}
+                </span>{' '}
                 {segment.label}
                 {segment.blockRefId && (
                   <span className="ml-1 font-mono text-slate-400">→ {segment.blockRefId}</span>
@@ -762,7 +779,11 @@ export const TranscriptBlockView: React.FC<{ data: TranscriptBlock['data'] }> = 
           <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
             {data.mediaType} · {data.language}
             {data.speakers.length > 0
-              ? ` · ${data.speakers.map((speaker) => speaker.name).join(', ')}`
+              ? ` · ${data.speakers
+                  .map((speaker) =>
+                    speaker.role ? `${speaker.name} (${speaker.role})` : speaker.name
+                  )
+                  .join(', ')}`
               : ''}
           </p>
         </div>
@@ -783,6 +804,11 @@ export const TranscriptBlockView: React.FC<{ data: TranscriptBlock['data'] }> = 
           <li key={idx} className="px-5 py-3 flex gap-3">
             <span className="font-mono text-[11px] text-slate-400 shrink-0 w-12 pt-0.5">
               {formatTimestamp(segment.startSeconds)}
+              {segment.endSeconds !== undefined && (
+                <span className="block text-[10px] text-slate-300 dark:text-slate-600">
+                  {formatTimestamp(segment.endSeconds)}
+                </span>
+              )}
             </span>
             <div className="flex-1">
               {segment.speaker && (

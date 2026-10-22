@@ -239,6 +239,11 @@ export const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data })
                   className="font-mono text-[10px] text-blue-600 dark:text-blue-400 shrink-0 hover:underline"
                 >
                   {formatTimestamp(segment.startSeconds)}
+                  {segment.endSeconds !== undefined && (
+                    <span className="ml-1 text-slate-400 dark:text-slate-500">
+                      –{formatTimestamp(segment.endSeconds)}
+                    </span>
+                  )}
                 </button>
                 <span className="text-slate-600 dark:text-slate-300 leading-relaxed">
                   {segment.speaker && (

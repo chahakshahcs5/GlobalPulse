@@ -15,13 +15,36 @@ import type { StudioVariant } from '../types';
 export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
   heading: [
     {
+      id: 'story-title',
+      label: 'Story title',
+      description: 'A level-one heading, for the top of the story.',
+      data: {
+        level: 1,
+        style: 'plain',
+        text: 'Four reporting sites, and three of them checked nothing',
+      },
+    },
+    {
       id: 'section-heading',
       label: 'Section heading',
       description: 'A level-two heading with a standfirst.',
       data: {
         level: 2,
+        style: 'plain',
         text: 'What the new figures actually show',
         subtext: 'Three years of data, and the trend is not the one you would expect.',
+      },
+    },
+    {
+      id: 'standfirst',
+      label: 'Long standfirst',
+      description: 'A level-two heading whose standfirst carries the argument.',
+      data: {
+        level: 2,
+        style: 'plain',
+        text: 'The gap was never a rounding error',
+        subtext:
+          'Across 1,240 filings the reported figures ran a median of 9.4 per cent above the independently verified ones — and at three of the four sites, no second person had ever looked at the numbers before they were published.',
       },
     },
     {
@@ -30,16 +53,8 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       description: 'A level-three heading, no standfirst.',
       data: {
         level: 3,
+        style: 'plain',
         text: 'Where the money went',
-      },
-    },
-    {
-      id: 'story-title',
-      label: 'Story title',
-      description: 'A level-one heading, for the top of the story.',
-      data: {
-        level: 1,
-        text: 'Four reporting sites, and three of them checked nothing',
       },
     },
     {
@@ -48,18 +63,41 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       description: 'A level-four heading, for the smallest step in an argument.',
       data: {
         level: 4,
+        style: 'plain',
         text: 'What we cannot yet say',
       },
     },
     {
-      id: 'title-and-deck',
-      label: 'Title and deck',
-      description: 'A level-one heading with a standfirst under it.',
+      id: 'underlined',
+      label: 'Underlined',
+      description: 'A heading with a rule under it.',
       data: {
-        level: 1,
-        text: 'The gap was never a rounding error',
-        subtext:
-          'Across 1,240 filings the reported figures ran a median of 9.4 per cent above the independently verified ones — and at three of the four sites, no second person had ever looked at the numbers before they were published.',
+        level: 2,
+        style: 'underlined',
+        text: 'Where the money went',
+        subtext: 'Three years of data, and the trend is not the one you would expect.',
+      },
+    },
+    {
+      id: 'boxed',
+      label: 'Boxed',
+      description: 'A heading set in a box, for a change of gear.',
+      data: {
+        level: 2,
+        style: 'boxed',
+        text: 'What changed after the review',
+        subtext: 'And what did not.',
+      },
+    },
+    {
+      id: 'numbered',
+      label: 'Numbered',
+      description: 'A heading numbered against the steps of the story.',
+      data: {
+        level: 2,
+        style: 'numbered',
+        text: 'What changed after the review',
+        subtext: 'And what did not.',
       },
     },
   ],
@@ -134,6 +172,21 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       description: 'The takeaways in plain text, with nothing but a heading.',
       data: {
         layout: 'plain',
+        headline: 'The grid is holding, but the margin is thin',
+        bulletPoints: [
+          'Demand stayed within forecast for a fourth consecutive month.',
+          'Reserve margins fell to their lowest level since the programme began.',
+          'Two of the three delayed sites are back online.',
+        ],
+        sentiment: 'cautious',
+      },
+    },
+    {
+      id: 'grid',
+      label: 'Grid',
+      description: 'Each takeaway as a card of its own.',
+      data: {
+        layout: 'grid',
         headline: 'The grid is holding, but the margin is thin',
         bulletPoints: [
           'Demand stayed within forecast for a fourth consecutive month.',

@@ -90,6 +90,66 @@ function renderBlock(
   switch (block.blockType) {
     case 'heading': {
       const { level, text, subtext } = block.data;
+      /*
+       * How the heading is set.
+       *
+       * Plain, with a rule under it, in a box, or numbered. The level
+       * says how big it is; this says what kind of heading it is.
+       */
+      const headingStyle = block.data.style ?? 'plain';
+      const headingClass =
+        level === 1
+          ? 'text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-3'
+          : level === 2
+            ? 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-6 mb-2'
+            : level === 3
+              ? 'text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2'
+              : 'text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1';
+
+      if (headingStyle === 'boxed') {
+        return (
+          <div className="my-5 rounded-xl border-l-4 border-blue-500 bg-slate-50 dark:bg-slate-800/40 px-4 py-3">
+            <h2 className={`${headingClass} !mt-0 !mb-1`}>{text}</h2>
+            {subtext && (
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{subtext}</p>
+            )}
+          </div>
+        );
+      }
+
+      if (headingStyle === 'underlined') {
+        return (
+          <div className="my-5">
+            <h2
+              className={`${headingClass} border-b-2 border-slate-200 dark:border-slate-700 pb-2`}
+            >
+              {text}
+            </h2>
+            {subtext && (
+              <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                {subtext}
+              </p>
+            )}
+          </div>
+        );
+      }
+
+      if (headingStyle === 'numbered') {
+        return (
+          <div className="my-5 flex gap-3">
+            <span className="font-mono text-2xl font-bold text-slate-200 dark:text-slate-700 leading-none">
+              {String(level).padStart(2, '0')}
+            </span>
+            <div className="min-w-0">
+              <h2 className={`${headingClass} !mt-0 !mb-1`}>{text}</h2>
+              {subtext && (
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{subtext}</p>
+              )}
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="my-3">
           {level === 1 && (
@@ -195,6 +255,29 @@ function renderBlock(
           ))}
         </ul>
       );
+
+      if (layout === 'grid') {
+        return (
+          <div className="my-6">
+            <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-3">
+              {block.data.headline}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {block.data.bulletPoints.map((pt: string, idx: number) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 p-4 shadow-sm"
+                >
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{pt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
 
       if (layout === 'numbered') {
         return (
@@ -668,6 +751,72 @@ function renderBlock(
     }
 
     case 'citation': {
+      /*
+       * How the citation is drawn.
+       *
+       * As a claim with its sources, as a numbered footnote, as a
+       * bibliography entry, or as a bare marker pointing at the source.
+       * The claim is the same; only the treatment changes.
+       */
+      const citationLayout = block.data.layout ?? 'inline';
+
+      if (citationLayout === 'marker') {
+        return (
+          <p className="my-2 flex items-baseline gap-2 text-sm">
+            <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+              [{block.data.referenceNumber ?? '1'}]
+            </span>
+            <span className="text-slate-700 dark:text-slate-300">{block.data.claim}</span>
+            <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+              {block.data.sourceIds.length} source
+              {block.data.sourceIds.length === 1 ? '' : 's'}
+            </span>
+          </p>
+        );
+      }
+
+      if (citationLayout === 'footnote') {
+        return (
+          <div className="my-4 border-t border-slate-200 dark:border-slate-800 pt-2 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono font-bold text-slate-500 dark:text-slate-400">
+                {block.data.referenceNumber ?? '1'}.
+              </span>
+              <span className="text-slate-700 dark:text-slate-300">{block.data.claim}</span>
+              {block.data.page && <span className="font-mono">p. {block.data.page}</span>}
+            </div>
+            {block.data.quoteExcerpt && (
+              <blockquote className="mt-1.5 pl-3 border-l-2 border-slate-300 dark:border-slate-700 italic leading-relaxed">
+                {block.data.quoteExcerpt}
+              </blockquote>
+            )}
+            {block.data.accessedAt && (
+              <p className="mt-1 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                Accessed {block.data.accessedAt}
+              </p>
+            )}
+          </div>
+        );
+      }
+
+      if (citationLayout === 'bibliography') {
+        return (
+          <div className="my-4 flex gap-3 text-sm">
+            <span className="font-mono font-bold text-slate-400 dark:text-slate-500 shrink-0">
+              {block.data.referenceNumber ?? '1'}.
+            </span>
+            <div className="min-w-0">
+              <p className="text-slate-800 dark:text-slate-200">{block.data.claim}</p>
+              <p className="mt-0.5 text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                {block.data.sourceIds.join(', ')}
+                {block.data.page && ` · p. ${block.data.page}`}
+                {block.data.accessedAt && ` · accessed ${block.data.accessedAt}`}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="my-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 text-xs text-slate-600 dark:text-slate-400">
           <div className="flex items-center justify-between gap-3">

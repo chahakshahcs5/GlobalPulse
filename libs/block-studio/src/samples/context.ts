@@ -125,7 +125,7 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
     {
       id: 'card',
       label: 'Card',
-      description: 'The source as a card, with its date and a link out.',
+      description: 'The source as a card, with its kind, its date and a link out.',
       data: {
         layout: 'card',
         sourceId: 'src_review_report',
@@ -133,6 +133,7 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         publisher: 'Office of the Independent Grid Review',
         url: 'https://example.org/independent-grid-review-2026',
         publishedAt: '2026-10-01',
+        kind: 'report',
       },
     },
     {
@@ -146,6 +147,7 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         publisher: 'Office of the Independent Grid Review',
         url: 'https://example.org/independent-grid-review-2026',
         publishedAt: '2026-10-01',
+        kind: 'report',
       },
     },
     {
@@ -159,6 +161,39 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         publisher: 'Office of the Independent Grid Review',
         url: 'https://example.org/independent-grid-review-2026',
         publishedAt: '2026-10-01',
+        kind: 'report',
+      },
+    },
+    {
+      id: 'quote',
+      label: 'Quote',
+      description: 'The passage the story leans on, set as a pull quote.',
+      data: {
+        layout: 'quote',
+        sourceId: 'src_review_report',
+        title: 'Independent Grid Review: Findings and Recommendations',
+        publisher: 'Office of the Independent Grid Review',
+        url: 'https://example.org/independent-grid-review-2026',
+        publishedAt: '2026-10-01',
+        kind: 'report',
+        excerpt:
+          'Three of the four sites operated without an independent verification step at any point in the review period.',
+      },
+    },
+    {
+      id: 'reference',
+      label: 'Reference',
+      description: 'An entry in a numbered reference list.',
+      data: {
+        layout: 'reference',
+        sourceId: 'src_review_report',
+        title: 'Independent Grid Review: Findings and Recommendations',
+        publisher: 'Office of the Independent Grid Review',
+        url: 'https://example.org/independent-grid-review-2026',
+        publishedAt: '2026-10-01',
+        accessedAt: '2026-10-02',
+        kind: 'report',
+        referenceNumber: 1,
       },
     },
   ],
@@ -173,6 +208,8 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         entityId: 'ent_ada_okafor',
         name: 'Ada Okafor',
         type: 'person',
+        role: 'Director, Independent Grid Review',
+        organization: 'Office of the Independent Grid Review',
         description: 'Director of the Independent Grid Review and former system operator.',
         avatarUrl: 'https://i.pravatar.cc/300?img=47',
       },
@@ -186,6 +223,8 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         entityId: 'ent_ada_okafor',
         name: 'Ada Okafor',
         type: 'person',
+        role: 'Director, Independent Grid Review',
+        organization: 'Office of the Independent Grid Review',
         description: 'Director of the Independent Grid Review and former system operator.',
         avatarUrl: 'https://i.pravatar.cc/300?img=47',
       },
@@ -199,7 +238,44 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         entityId: 'ent_ada_okafor',
         name: 'Ada Okafor',
         type: 'person',
+        role: 'Director, Independent Grid Review',
+        organization: 'Office of the Independent Grid Review',
         description: 'Director of the Independent Grid Review and former system operator.',
+      },
+    },
+    {
+      id: 'profile',
+      label: 'Profile',
+      description: 'The entity as a full profile, with its role and its links.',
+      data: {
+        layout: 'profile',
+        entityId: 'ent_ada_okafor',
+        name: 'Ada Okafor',
+        type: 'person',
+        role: 'Director, Independent Grid Review',
+        organization: 'Office of the Independent Grid Review',
+        description:
+          'Director of the Independent Grid Review and former system operator. Appointed in 2025, and the author of the report that found the reporting gap.',
+        avatarUrl: 'https://i.pravatar.cc/300?img=47',
+        links: [
+          { label: 'The review', url: 'https://example.org/independent-grid-review-2026' },
+          { label: 'Appointment', url: 'https://example.org/press/okafor-appointment' },
+        ],
+      },
+    },
+    {
+      id: 'directory',
+      label: 'Directory',
+      description: 'The entity as a directory entry, with its organisation.',
+      data: {
+        layout: 'directory',
+        entityId: 'ent_ada_okafor',
+        name: 'Ada Okafor',
+        type: 'person',
+        role: 'Director, Independent Grid Review',
+        organization: 'Office of the Independent Grid Review',
+        description: 'Director of the Independent Grid Review and former system operator.',
+        avatarUrl: 'https://i.pravatar.cc/300?img=47',
       },
     },
   ],
@@ -213,16 +289,50 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         layout: 'grid',
         title: 'Related Coverage',
         storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
+        stories: [
+          {
+            id: 'story_grid_review_2026',
+            title: 'Three of the four sites checked nothing',
+            summary:
+              'The review that found that most of the country’s grid figures had never been verified.',
+            topic: 'Investigation',
+            publishedAt: '2026-10-01',
+          },
+          {
+            id: 'story_utility_transparency_2025',
+            title: 'What the utilities owe the public',
+            summary: 'A year earlier, the question the review would end up answering.',
+            topic: 'Analysis',
+            publishedAt: '2025-11-12',
+          },
+        ],
       },
     },
     {
       id: 'list',
       label: 'List',
-      description: 'The related stories as a list, one to a line.',
+      description: 'The related stories as a list, one after another.',
       data: {
         layout: 'list',
         title: 'Related Coverage',
         storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
+        stories: [
+          {
+            id: 'story_grid_review_2026',
+            title: 'Three of the four sites checked nothing',
+            summary:
+              'The review that found that most of the country’s grid figures had never been verified.',
+            topic: 'Investigation',
+            publishedAt: '2026-10-01',
+          },
+          {
+            id: 'story_utility_transparency_2025',
+            title: 'What the utilities owe the public',
+            summary: 'A year earlier, the question the review would end up answering.',
+            topic: 'Analysis',
+            publishedAt: '2025-11-12',
+          },
+        ],
       },
     },
     {
@@ -233,6 +343,72 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         layout: 'carousel',
         title: 'Related Coverage',
         storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
+        stories: [
+          {
+            id: 'story_grid_review_2026',
+            title: 'Three of the four sites checked nothing',
+            summary:
+              'The review that found that most of the country’s grid figures had never been verified.',
+            topic: 'Investigation',
+            publishedAt: '2026-10-01',
+          },
+          {
+            id: 'story_utility_transparency_2025',
+            title: 'What the utilities owe the public',
+            summary: 'A year earlier, the question the review would end up answering.',
+            topic: 'Analysis',
+            publishedAt: '2025-11-12',
+          },
+        ],
+      },
+    },
+    {
+      id: 'featured',
+      label: 'Featured',
+      description: 'The first story given the room, the rest beneath it.',
+      data: {
+        layout: 'featured',
+        title: 'Related Coverage',
+        storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
+        stories: [
+          {
+            id: 'story_grid_review_2026',
+            title: 'Three of the four sites checked nothing',
+            summary:
+              'The review that found that most of the country’s grid figures had never been verified.',
+            topic: 'Investigation',
+            publishedAt: '2026-10-01',
+          },
+          {
+            id: 'story_utility_transparency_2025',
+            title: 'What the utilities owe the public',
+            summary: 'A year earlier, the question the review would end up answering.',
+            topic: 'Analysis',
+            publishedAt: '2025-11-12',
+          },
+        ],
+      },
+    },
+    {
+      id: 'compact',
+      label: 'Compact',
+      description: 'The related stories as a run of titles, for a narrow column.',
+      data: {
+        layout: 'compact',
+        title: 'Related Coverage',
+        storyIds: ['story_grid_review_2026', 'story_utility_transparency_2025'],
+        stories: [
+          {
+            id: 'story_grid_review_2026',
+            title: 'Three of the four sites checked nothing',
+            topic: 'Investigation',
+          },
+          {
+            id: 'story_utility_transparency_2025',
+            title: 'What the utilities owe the public',
+            topic: 'Analysis',
+          },
+        ],
       },
     },
   ],
@@ -331,20 +507,33 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
           points: [
             'Cheap: no new meter reading.',
             'Catches classification errors, not measurement errors.',
             'Not independent of the reporting site.',
           ],
+          score: 3,
         },
         subjectB: {
           name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
           points: [
             'Catches both measurement and classification errors.',
             'Expensive: roughly a third of a reporting site budget.',
             'Independent of the reporting site.',
           ],
+          score: 8,
         },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
       },
     },
     {
@@ -356,20 +545,33 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
           points: [
             'Cheap: no new meter reading.',
             'Catches classification errors, not measurement errors.',
             'Not independent of the reporting site.',
           ],
+          score: 3,
         },
         subjectB: {
           name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
           points: [
             'Catches both measurement and classification errors.',
             'Expensive: roughly a third of a reporting site budget.',
             'Independent of the reporting site.',
           ],
+          score: 8,
         },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
       },
     },
     {
@@ -381,20 +583,147 @@ export const CONTEXT_SAMPLES: Record<string, StudioVariant[]> = {
         title: 'Two ways to verify the number',
         subjectA: {
           name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
           points: [
             'Cheap: no new meter reading.',
             'Catches classification errors, not measurement errors.',
             'Not independent of the reporting site.',
           ],
+          score: 3,
         },
         subjectB: {
           name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
           points: [
             'Catches both measurement and classification errors.',
             'Expensive: roughly a third of a reporting site budget.',
             'Independent of the reporting site.',
           ],
+          score: 8,
         },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
+      },
+    },
+    {
+      id: 'scorecard',
+      label: 'Scorecard',
+      description: 'The two options rated against the same criteria.',
+      data: {
+        layout: 'scorecard',
+        title: 'Two ways to verify the number',
+        subjectA: {
+          name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
+          points: [
+            'Cheap: no new meter reading.',
+            'Catches classification errors, not measurement errors.',
+            'Not independent of the reporting site.',
+          ],
+          score: 3,
+        },
+        subjectB: {
+          name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
+          points: [
+            'Catches both measurement and classification errors.',
+            'Expensive: roughly a third of a reporting site budget.',
+            'Independent of the reporting site.',
+          ],
+          score: 8,
+        },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
+      },
+    },
+    {
+      id: 'verdict',
+      label: 'Verdict',
+      description: 'The conclusion on its own, with the two options named beneath it.',
+      data: {
+        layout: 'verdict',
+        title: 'Two ways to verify the number',
+        subjectA: {
+          name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
+          points: [
+            'Cheap: no new meter reading.',
+            'Catches classification errors, not measurement errors.',
+            'Not independent of the reporting site.',
+          ],
+          score: 3,
+        },
+        subjectB: {
+          name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
+          points: [
+            'Catches both measurement and classification errors.',
+            'Expensive: roughly a third of a reporting site budget.',
+            'Independent of the reporting site.',
+          ],
+          score: 8,
+        },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
+      },
+    },
+    {
+      id: 'bars',
+      label: 'Bars',
+      description: 'The two options as bars scaled to their score.',
+      data: {
+        layout: 'bars',
+        title: 'Two ways to verify the number',
+        subjectA: {
+          name: 'Internal second sign-off',
+          subtitle: 'A second analyst at the same site',
+          points: [
+            'Cheap: no new meter reading.',
+            'Catches classification errors, not measurement errors.',
+            'Not independent of the reporting site.',
+          ],
+          score: 3,
+        },
+        subjectB: {
+          name: 'Third-party meter check',
+          subtitle: 'An accredited body, appointed by the authority',
+          points: [
+            'Catches both measurement and classification errors.',
+            'Expensive: roughly a third of a reporting site budget.',
+            'Independent of the reporting site.',
+          ],
+          score: 8,
+        },
+        verdict:
+          'The second sign-off is cheaper and faster; only the third-party check is actually independent.',
+        criteria: [
+          { label: 'Catches measurement error', a: 'weak', b: 'strong' },
+          { label: 'Catches classification error', a: 'strong', b: 'strong' },
+          { label: 'Cost', a: 'strong', b: 'weak' },
+          { label: 'Independence from the site', a: 'weak', b: 'strong' },
+          { label: 'Speed', a: 'strong', b: 'weak' },
+        ],
       },
     },
   ],

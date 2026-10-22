@@ -212,7 +212,30 @@ export const MotionChartBlockView: React.FC<{
         <p className="px-5 pb-3 text-sm text-slate-600 dark:text-slate-400">{data.caption}</p>
       )}
 
+      {/*
+        The annotations the chart carries, and the source each one rests
+        on. A chart is only as trustworthy as the notes on it.
+      */}
+      {data.chart.annotations && data.chart.annotations.length > 0 && (
+        <ul className="px-5 pb-3 space-y-1.5">
+          {data.chart.annotations.map((annotation, idx) => (
+            <li key={annotation.id} className="text-xs">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {idx + 1}. {annotation.label}
+              </span>
+              <span className="block text-slate-600 dark:text-slate-400">{annotation.body}</span>
+              {annotation.sourceId && (
+                <span className="block font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  {annotation.sourceId}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+        {data.chart.lastUpdated && <p className="font-mono">Updated {data.chart.lastUpdated}</p>}
         {shouldAnimate === false && (
           <p>The animation was skipped because the reader has asked for reduced motion.</p>
         )}

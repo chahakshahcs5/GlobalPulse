@@ -41,9 +41,9 @@ Zod definition — so an external agent can build a valid block without knowing 
 
 ### 2.1 Text & editorial (5)
 
-1. **`heading`**: Section heading (levels 1-4) with optional subtext.
+1. **`heading`**: Section heading (levels 1-4) with optional subtext. The style says how the heading is set — plain, underlined, boxed or numbered.
 2. **`paragraph`**: Body paragraph, plain text or Markdown. HTML is stripped at write time.
-3. **`summary`**: Key-takeaway / executive briefing block with bullet points.
+3. **`summary`**: Key-takeaway / executive briefing block with bullet points. Draws as a card, a numbered list, plain text, or a card a takeaway.
 4. **`quote`**: Pull quote with required attribution and optional portrait/source URL.
 5. **`callout`**: Informational, warning, tip, or critical editorial callout.
 
@@ -438,12 +438,12 @@ Two interactive blocks that need no authoring effort beyond their own data:
 ### 2.7 Evidence, source & context blocks (11)
 
 56. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
-57. **`source`**: Registered source citation card.
-58. **`entity`**: Person, organization, company, country, location, or product card.
-59. **`related_stories`**: Related story references resolved by the frontend.
+57. **`source`**: Registered source citation card. Carries the kind of document it is, the passage the story leans on, and its place in a reference list, so it draws as a card, a line, a badge, a quote or a reference.
+58. **`entity`**: Person, organization, company, country, location, or product card. Carries the organisation and the role, and links out, so it draws as a card, a line, a chip, a profile or a directory entry.
+59. **`related_stories`**: Related story references resolved by the frontend. Where the stories are named, they are drawn from the name rather than the id, and the block draws as a grid, a list, a carousel, a featured story or a compact run of titles.
 60. **`what_changed`**: Structured change summary between two story versions.
-61. **`comparison`**: Two-option comparison card.
-62. **`citation`**: A claim coupled to one or more registered source IDs.
+61. **`comparison`**: Two-option comparison card. Carries a score for each side, a verdict and the criteria both are judged against, so it draws as two columns, a table, a head-to-head, a scorecard, the verdict alone, or two bars.
+62. **`citation`**: A claim coupled to one or more registered source IDs. Carries its place in a reference list and the page it is taken from, so it draws inline, as a footnote, as a bibliography entry or as a bare marker.
 63. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
 64. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
 65. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.

@@ -71,6 +71,15 @@ in the block's own view under `libs/blocks-ui/src/blocks/`. A field the
 renderer never reads would be a promise the platform does not keep, so
 `pnpm audit:fields` fails the build if one is left.
 
+A block that has little to vary needs a little more to vary. A source used
+to carry a title, a publisher and a link, which is not enough to draw a
+source five ways; it now also carries the kind of document it is, the
+passage the story leans on, and its place in a reference list. A comparison
+used to be two lists of points; it now also carries a score for each side, a
+verdict, and the criteria both are judged against — which is what lets it
+be drawn as a scorecard, a verdict or two bars, rather than only as two
+columns of text.
+
 ## The generated form
 
 The inspector's **Form** tab is not hand-written. It is generated from the
@@ -315,6 +324,12 @@ destructuring (`const { level, text } = block.data`) and the programmatic
 renderers in `@ai-news/media`, so `chart.legend` counts as used only when
 `chartData.legend` is actually read — not when the file merely contains the
 word "legend".
+
+It reads nested fields too. A field inside a nested object or an array — a
+`sourceId` on a timeline milestone, a `sourceId` on a document — is checked
+the same way, because those are the fields that are easiest to declare and
+never draw. The audit found forty-one of them: fields the schema collected,
+the studio offered an editor for editing, and no renderer ever showed.
 
 The presentation options are audited too. They are read in one place — the
 wrapper around the renderers, in `BlockItem.tsx` — rather than in each

@@ -515,6 +515,11 @@ export const AudioBlockView: React.FC<{ data: AudioBlock['data']; theme?: 'dark'
                     {formatTime(cue.timeMs / 1000)}
                   </span>
                   <span>{cue.text}</span>
+                  {cue.blockRefId && (
+                    <span className="ml-1 font-mono text-[10px] text-slate-400">
+                      → {cue.blockRefId}
+                    </span>
+                  )}
                 </div>
               );
             })}

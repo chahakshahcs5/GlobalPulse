@@ -15,10 +15,11 @@ import type { StudioVariant } from '../types';
 export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
   citation: [
     {
-      id: 'claim-source',
-      label: 'Claim with sources',
-      description: 'A claim bound to registered source ids.',
+      id: 'inline',
+      label: 'Inline',
+      description: 'The claim with its sources, in the margin of the story.',
       data: {
+        layout: 'inline',
         claim: 'The programme saved 4.1 million tonnes of carbon in its first year.',
         sourceIds: ['src_annual_review', 'src_audit_2026'],
         quoteExcerpt:
@@ -26,46 +27,46 @@ export const EVIDENCE_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'claim-only',
-      label: 'Claim without an excerpt',
-      description: 'A claim and its sources, with nothing quoted back.',
+      id: 'footnote',
+      label: 'Footnote',
+      description: 'The claim as a numbered footnote.',
       data: {
+        layout: 'footnote',
         claim: 'The programme saved 4.1 million tonnes of carbon in its first year.',
         sourceIds: ['src_annual_review', 'src_audit_2026'],
-      },
-    },
-    {
-      id: 'three-sources',
-      label: 'Three sources',
-      description: 'One claim resting on three separate documents.',
-      data: {
-        claim:
-          'Three of the four reporting sites had no independent verification step at any point in the review period.',
-        sourceIds: ['src_review_report', 'src_review_data', 'src_regulator_directive'],
         quoteExcerpt:
-          '...three of the four sites operated without an independent verification step at any point in the review period...',
+          '...a measured reduction of 4.1 MtCO2e against the 2024 baseline, the largest single-year fall recorded...',
+        referenceNumber: 1,
+        page: 'p. 14',
+        accessedAt: '2026-10-02',
       },
     },
     {
-      id: 'short-claim',
-      label: 'Short claim',
-      description: 'A claim that is one line, with a single source.',
+      id: 'bibliography',
+      label: 'Bibliography',
+      description: 'The claim as an entry in a reference list.',
       data: {
-        claim: 'The median overstatement was 9.4 per cent.',
-        sourceIds: ['src_review_data'],
-        quoteExcerpt: '...the median gap between reported and verified values was 9.4 per cent...',
-      },
-    },
-    {
-      id: 'long-claim',
-      label: 'Long claim',
-      description: 'A claim with a condition in it, which is where claims usually go wrong.',
-      data: {
-        claim:
-          'Sites that carried a second sign-off throughout the review period reported figures a median of 2.8 per cent below the independently verified value, against 11.6 per cent for sites that did not.',
-        sourceIds: ['src_review_data', 'src_review_report'],
+        layout: 'bibliography',
+        claim: 'The programme saved 4.1 million tonnes of carbon in its first year.',
+        sourceIds: ['src_annual_review', 'src_audit_2026'],
         quoteExcerpt:
-          '...sites operating with a second sign-off showed a median gap of -2.8 per cent; sites operating without one showed 11.6 per cent...',
+          '...a measured reduction of 4.1 MtCO2e against the 2024 baseline, the largest single-year fall recorded...',
+        referenceNumber: 1,
+        page: 'p. 14',
+        accessedAt: '2026-10-02',
+      },
+    },
+    {
+      id: 'marker',
+      label: 'Marker',
+      description: 'A bare marker, pointing at the source.',
+      data: {
+        layout: 'marker',
+        claim: 'The programme saved 4.1 million tonnes of carbon in its first year.',
+        sourceIds: ['src_annual_review', 'src_audit_2026'],
+        quoteExcerpt:
+          '...a measured reduction of 4.1 MtCO2e against the 2024 baseline, the largest single-year fall recorded...',
+        referenceNumber: 1,
       },
     },
   ],
