@@ -70,6 +70,13 @@ export interface StudioVariant {
   description?: string;
   /** The full `data` payload for the block. */
   data: Record<string, unknown>;
+  /**
+   * True when the variant was saved rather than shipped.
+   *
+   * A shipped variant belongs to the repository and cannot be removed; a
+   * saved one belongs to the newsroom and can.
+   */
+  saved?: boolean;
 }
 
 export interface StudioBlock {

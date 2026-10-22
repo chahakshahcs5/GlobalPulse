@@ -63,9 +63,17 @@ export function getStudioVariant(type: string, variantId: string): StudioVariant
   return block.variants.find((variant) => variant.id === variantId) ?? block.variants[0];
 }
 
-/** The blocks grouped by category, in the order the sidebar lists them. */
-export function listStudioCategories(): StudioCategoryGroup[] {
-  const blocks = listStudioBlocks();
+/**
+ * The blocks grouped by category, in the order the sidebar lists them.
+ *
+ * The newsroom's own variants can be merged in, so that a host showing the
+ * catalog — the studio, or the newsroom's block picker — offers the same
+ * treatments to everybody.
+ */
+export function listStudioCategories(
+  extras?: Record<string, StudioVariant[]>
+): StudioCategoryGroup[] {
+  const blocks = extras ? withExtraVariants(listStudioBlocks(), extras) : listStudioBlocks();
   const groups: StudioCategoryGroup[] = [];
 
   for (const category of CATEGORY_ORDER) {
@@ -120,8 +128,13 @@ export function countStudioVariants(): number {
  * Add extra variants to the catalog.
  *
  * The studio lets an editor save the payload they are working on as a new
- * variant. Those are kept on the editor's own machine, so they are merged in
- * here rather than written into the shipped samples.
+ * variant. Those are kept on the newsroom's server — or, when the server
+ * cannot be reached, in the editor's own browser — and merged in here
+ * rather than written into the shipped samples.
+ *
+ * A merged variant is marked as saved, so the studio can tell the two
+ * apart: a shipped variant belongs to the repository and cannot be
+ * removed; a saved one belongs to the newsroom and can.
  */
 export function withExtraVariants(
   blocks: StudioBlock[],
@@ -135,7 +148,9 @@ export function withExtraVariants(
     if (!extra || extra.length === 0) return block;
 
     const existingIds = new Set(block.variants.map((variant) => variant.id));
-    const additions = extra.filter((variant) => !existingIds.has(variant.id));
+    const additions = extra
+      .filter((variant) => !existingIds.has(variant.id))
+      .map((variant) => ({ ...variant, saved: true }));
 
     return additions.length === 0
       ? block

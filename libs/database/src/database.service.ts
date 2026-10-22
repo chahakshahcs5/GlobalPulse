@@ -25,6 +25,7 @@ import type {
   IIngestionRepository,
   ISourceCorrectionRepository,
   ILiveFeedRepository,
+  IBlockVariantRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -53,6 +54,7 @@ import {
   MemoryIngestionRepository,
   MemorySourceCorrectionRepository,
   MemoryLiveFeedRepository,
+  MemoryBlockVariantRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -81,6 +83,7 @@ import {
   PrismaIngestionRepository,
   PrismaSourceCorrectionRepository,
   PrismaLiveFeedRepository,
+  PrismaBlockVariantRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -119,6 +122,7 @@ export class DatabaseService {
   public ingestion: IIngestionRepository;
   public sourceCorrections: ISourceCorrectionRepository;
   public liveFeeds: ILiveFeedRepository;
+  public blockVariants: IBlockVariantRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -146,6 +150,7 @@ export class DatabaseService {
   private memoryIngestion = new MemoryIngestionRepository();
   private memorySourceCorrections = new MemorySourceCorrectionRepository();
   private memoryLiveFeeds = new MemoryLiveFeedRepository();
+  private memoryBlockVariants = new MemoryBlockVariantRepository();
 
   private isPrismaActive = false;
 
@@ -206,6 +211,7 @@ export class DatabaseService {
     this.ingestion = this.memoryIngestion;
     this.sourceCorrections = this.memorySourceCorrections;
     this.liveFeeds = this.memoryLiveFeeds;
+    this.blockVariants = this.memoryBlockVariants;
   }
 
   /**
@@ -261,6 +267,7 @@ export class DatabaseService {
         this.ingestion = new PrismaIngestionRepository(getPrisma);
         this.sourceCorrections = new PrismaSourceCorrectionRepository(getPrisma);
         this.liveFeeds = new PrismaLiveFeedRepository(getPrisma);
+        this.blockVariants = new PrismaBlockVariantRepository(getPrisma);
         this.isPrismaActive = true;
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 25 domains).');
         return true;
@@ -331,6 +338,7 @@ export class DatabaseService {
     const ingestionSnap = this.memoryIngestion.snapshot();
     const correctionSnap = this.memorySourceCorrections.snapshot();
     const liveFeedSnap = this.memoryLiveFeeds.snapshot();
+    const blockVariantSnap = this.memoryBlockVariants.snapshot();
 
     try {
       const result = await work(null);
@@ -362,6 +370,7 @@ export class DatabaseService {
       this.memoryIngestion.restore(ingestionSnap);
       this.memorySourceCorrections.restore(correctionSnap);
       this.memoryLiveFeeds.restore(liveFeedSnap);
+      this.memoryBlockVariants.restore(blockVariantSnap);
       throw err;
     } finally {
       this.releaseTransactionLock();

@@ -24,3 +24,4 @@ export * from './knowledge-graph.memory';
 export * from './ingestion.memory';
 export * from './source-correction.memory';
 export * from './live-feed.memory';
+export * from './block-variant.memory';

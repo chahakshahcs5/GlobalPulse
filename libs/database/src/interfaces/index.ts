@@ -24,3 +24,4 @@ export * from './knowledge-graph.repository';
 export * from './ingestion.repository';
 export * from './source-correction.repository';
 export * from './live-feed.repository';
+export * from './block-variant.repository';

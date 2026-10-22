@@ -243,9 +243,19 @@ to write to.
 ## Saving a variant
 
 **Save as variant** keeps the payload as it stands now, under a name of your
-choosing. Saved variants live in your own browser, so a variant you are
-working on does not become everyone's default; the samples in the repository
-are untouched. A saved variant can be removed again from the variant bar.
+choosing. The variant goes to the **newsroom's server**, so a treatment one
+editor agreed on is offered to everybody: the studio and the newsroom
+composer read the same list. The samples in the repository are untouched.
+A saved variant can be removed again from the variant bar.
+
+A variant's payload is checked against the block type's own schema before it
+is stored, so a variant can never preview a block the platform would refuse
+to publish.
+
+When the newsroom cannot be reached — no session, no network, an API that
+is down — the studio falls back to the variants kept in that browser and
+says so, rather than pretending the newsroom's variants are empty. The
+banner above the variant bar says which list you are looking at.
 
 A variant is a _treatment of the content_. What the block says about itself
 — its accessibility text, its provenance, its citations — belongs to the
@@ -334,6 +344,31 @@ Inside `libs/block-studio/src`:
 | `validation.ts`  | The validator, for the content alone and for the whole payload.     |
 | `payload.ts`     | Reading a payload off a block, and building a block from a payload. |
 | `components/`    | The editing components: `FormEditor`, `BlockForm`, `JsonEditor`.    |
+
+## The newsroom's variants
+
+The samples in `samples.ts` are the variants that ship with the platform.
+The newsroom's own live in the database, and the API exposes them:
+
+```text
+GET    /api/block-variants?blockType=chart   The variants, or one type's
+POST   /api/block-variants                    Save a variant
+PUT    /api/block-variants/:id                Rename it, or change the payload
+DELETE /api/block-variants/:id                Remove it
+```
+
+They are stored in `block_variants`, with the payload in a `data` column and
+the block type beside it. A variant that is not shared belongs to the
+organisation that made it; the ones everybody shares are offered to every
+organisation.
+
+The service behind the endpoints — `libs/stories/src/block-variant.service.ts`
+— checks every payload against the block type's own schema before it is
+stored, using the same schema the studio's form is generated from. That is
+what stops a variant from previewing a block the platform would reject.
+
+The studio and the newsroom's block picker both read this list, so a
+treatment agreed in one is offered in the other.
 
 ### The same form in the newsroom CMS
 

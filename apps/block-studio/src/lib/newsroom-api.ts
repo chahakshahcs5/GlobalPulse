@@ -36,6 +36,15 @@ export { ApiError, getAuthToken, setAuthToken };
 export { getCurrentUser, loginUser, logoutUser, registerUser };
 /** The shared client's block operations, under the names the studio uses. */
 export { addStoryBlock, updateStoryBlock, reorderBlocks };
+/** The newsroom's saved block variants. */
+export {
+  createBlockVariant,
+  deleteBlockVariant,
+  getBlockVariant,
+  listBlockVariants,
+  updateBlockVariant,
+} from '@ai-news/api-client';
+export type { BlockVariant, BlockVariantInput } from '@ai-news/api-client';
 
 /** Search the newsroom's stories. */
 export async function searchStories(

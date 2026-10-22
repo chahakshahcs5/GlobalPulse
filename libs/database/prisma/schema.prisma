@@ -653,6 +653,32 @@ model StoryShare {
   @@map("story_shares")
 }
 
+/// A saved variant of a block type — a named, ready-made payload.
+///
+/// Variants live outside the story payload so a newsroom can keep a set of
+/// treatments for a block type — a chart as a line, as a stacked bar, as a
+/// sparkline — and share them. The Block Studio and the composer read the
+/// same list, so a treatment agreed in one is available in the other.
+model BlockVariant {
+  id             String   @id
+  blockType      String
+  label          String
+  description    String?
+  /// The block's content: the `data` payload.
+  data           Json     @default("{}")
+  /// Whether the variant is offered to everyone, or only to the
+  /// organisation that made it.
+  shared         Boolean  @default(true)
+  organizationId String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([blockType])
+  @@index([organizationId])
+  @@map("block_variants")
+}
+
 /// A live feed backing `live_data` and `live_ticker` story blocks.
 ///
 /// Feeds are stored outside the story payload so a published story can pick

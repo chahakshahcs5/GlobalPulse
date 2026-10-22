@@ -37,8 +37,10 @@ interface PreviewCanvasProps {
   onViewportChange: (viewport: StudioViewport) => void;
   onSelectVariant: (variantId: string) => void;
   onOpenLoader: () => void;
-  onSaveVariant: (label: string) => void;
+  onSaveVariant: (label: string) => void | Promise<void>;
   onDeleteVariant: (variantId: string) => void;
+  /** Where the saved variants came from — the newsroom, or this browser. */
+  variantSource?: 'server' | 'local';
   /** The story the studio is working in, when it was opened from one. */
   storyContext: StoryContext | null;
   /** True when the studio was opened by the story composer. */
@@ -77,6 +79,7 @@ export function PreviewCanvas({
   onOpenLoader,
   onSaveVariant,
   onDeleteVariant,
+  variantSource = 'server',
   storyContext,
   connectedToComposer,
   onSendToComposer,
@@ -294,7 +297,11 @@ export function PreviewCanvas({
         >
           {block.variants.map((candidate) => {
             const isActive = candidate.id === variant?.id;
-            const isLocal = candidate.id.startsWith('local_');
+            /*
+             * A shipped variant belongs to the repository and cannot be
+             * removed; a saved one belongs to the newsroom and can.
+             */
+            const isSaved = Boolean(candidate.saved);
             return (
               <span key={candidate.id} className="group relative flex shrink-0 items-center">
                 <button
@@ -309,7 +316,7 @@ export function PreviewCanvas({
                 >
                   {candidate.label}
                 </button>
-                {isLocal && (
+                {isSaved && (
                   <button
                     type="button"
                     onClick={() => onDeleteVariant(candidate.id)}
@@ -356,6 +363,17 @@ export function PreviewCanvas({
               </select>
             </div>
           )}
+        </div>
+      )}
+
+      {/*
+        Where the saved variants came from. A studio reading the browser's
+        own variants is not the same as one reading the newsroom's, and an
+        editor should not have to guess which they are looking at.
+      */}
+      {block && variantSource === 'local' && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-[11px] font-medium text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+          Saved variants are being read from this browser only — the newsroom could not be reached.
         </div>
       )}
 

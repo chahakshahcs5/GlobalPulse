@@ -3,7 +3,8 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Plus, Search, X } from 'lucide-react';
 import { BlockItem } from '@ai-news/blocks-ui';
-import { listStudioCategories, type StudioBlock } from '@ai-news/block-studio';
+import { listStudioCategories, type StudioBlock, type StudioVariant } from '@ai-news/block-studio';
+import { listBlockVariants } from '@ai-news/api-client';
 import type { StoryBlock } from '@ai-news/schemas';
 
 /**
@@ -46,7 +47,57 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
   const [query, setQuery] = React.useState('');
   const [openCategories, setOpenCategories] = React.useState<Record<string, boolean>>({});
 
-  const categories = React.useMemo(() => listStudioCategories(), []);
+  /**
+   * The newsroom's own variants.
+   *
+   * A treatment one editor agreed on is offered to everybody, so the
+   * composer and the Block Studio read the same list. When the newsroom
+   * cannot be reached the picker still works — it just offers the samples
+   * that ship with the platform.
+   */
+  const [savedVariants, setSavedVariants] = React.useState<Record<string, StudioVariant[]>>({});
+
+  /**
+   * The variant chosen for each block type.
+   *
+   * The first variant is the default; the editor can choose another before
+   * the block is added.
+   */
+  const [chosenVariant, setChosenVariant] = React.useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const variants = await listBlockVariants();
+        if (cancelled) return;
+
+        const grouped: Record<string, StudioVariant[]> = {};
+        for (const variant of variants) {
+          const existing = grouped[variant.blockType] ?? [];
+          existing.push({
+            id: variant.id,
+            label: variant.label,
+            description: variant.description,
+            data: variant.data,
+          });
+          grouped[variant.blockType] = existing;
+        }
+        setSavedVariants(grouped);
+      } catch {
+        // The newsroom could not be reached. The shipped samples are still
+        // there, so the picker still works.
+        if (!cancelled) setSavedVariants({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const categories = React.useMemo(() => listStudioCategories(savedVariants), [savedVariants]);
 
   /*
    * The first category starts open — it is the one an editor is usually
@@ -79,7 +130,8 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
     setOpenCategories((previous) => ({ ...previous, [category]: !previous[category] }));
 
   const choose = (block: StudioBlock) => {
-    const sample = block.variants.find((variant) => variant.id === block.defaultVariantId);
+    const variantId = chosenVariant[block.type] ?? block.defaultVariantId;
+    const variant = block.variants.find((candidate) => candidate.id === variantId);
     /*
      * The platform's block type is a strict union of every type it knows,
      * which is right for a stored block and awkward for one whose type is
@@ -89,7 +141,7 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
       id: `blk_${block.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
       blockType: block.type,
       sortOrder: 0,
-      data: (sample?.data ?? {}) as StoryBlock['data'],
+      data: (variant?.data ?? {}) as StoryBlock['data'],
     } as unknown as StoryBlock);
   };
 
@@ -179,7 +231,18 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
                 {isOpen && (
                   <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {group.blocks.map((block) => (
-                      <BlockCard key={block.type} block={block} onChoose={choose} />
+                      <BlockCard
+                        key={block.type}
+                        block={block}
+                        chosenVariant={chosenVariant[block.type] ?? block.defaultVariantId}
+                        onChooseVariant={(variantId) =>
+                          setChosenVariant((previous) => ({
+                            ...previous,
+                            [block.type]: variantId,
+                          }))
+                        }
+                        onChoose={choose}
+                      />
                     ))}
                   </div>
                 )}
@@ -198,50 +261,86 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
  *
  * The card shows the block rendered — the same renderer the article uses —
  * so the choice is made by looking rather than by guessing from a name.
+ *
+ * A block the newsroom has kept variants for offers them: the editor picks
+ * the treatment before the block is added, so the story starts from the
+ * house style rather than from a blank one.
  */
 function BlockCard({
   block,
+  chosenVariant,
+  onChooseVariant,
   onChoose,
 }: {
   block: StudioBlock;
+  /** The variant the editor has chosen for this block type. */
+  chosenVariant: string;
+  onChooseVariant: (variantId: string) => void;
   onChoose: (block: StudioBlock) => void;
 }) {
-  const sample = block.variants.find((variant) => variant.id === block.defaultVariantId);
+  const variant =
+    block.variants.find((candidate) => candidate.id === chosenVariant) ??
+    block.variants.find((candidate) => candidate.id === block.defaultVariantId);
+
   const preview = {
     id: `preview_${block.type}`,
     blockType: block.type,
     sortOrder: 0,
-    data: (sample?.data ?? {}) as StoryBlock['data'],
+    data: (variant?.data ?? {}) as StoryBlock['data'],
   } as unknown as StoryBlock;
 
   return (
-    <button
-      type="button"
-      onClick={() => onChoose(block)}
-      className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-blue-500"
-    >
-      <div className="relative h-28 w-full overflow-hidden border-b border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700/60 dark:bg-slate-950/50">
-        {/*
-          The block is drawn at its natural size and cropped, so the card
-          shows its shape without pretending to be the whole thing.
-        */}
-        <div className="pointer-events-none origin-top-left scale-[0.72] [&_*]:!pointer-events-none">
-          <BlockItem block={preview} theme="light" storyId="story-picker" />
+    <div className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-blue-500">
+      <button
+        type="button"
+        onClick={() => onChoose(block)}
+        className="flex cursor-pointer flex-col text-left focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+      >
+        <div className="relative h-28 w-full overflow-hidden border-b border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700/60 dark:bg-slate-950/50">
+          {/*
+            The block is drawn at its natural size and cropped, so the card
+            shows its shape without pretending to be the whole thing.
+          */}
+          <div className="pointer-events-none origin-top-left scale-[0.72] [&_*]:!pointer-events-none">
+            <BlockItem block={preview} theme="light" storyId="story-picker" />
+          </div>
+          <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <Plus className="h-3.5 w-3.5" />
+          </span>
         </div>
-        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-          <Plus className="h-3.5 w-3.5" />
-        </span>
-      </div>
 
-      <div className="flex-1 p-3">
-        <p className="text-[13px] font-bold text-slate-900 dark:text-white">
-          {humanise(block.type)}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
-          {block.description}
-        </p>
-        <p className="mt-1.5 font-mono text-[10px] text-slate-400">{block.type}</p>
-      </div>
-    </button>
+        <div className="flex-1 p-3">
+          <p className="text-[13px] font-bold text-slate-900 dark:text-white">
+            {humanise(block.type)}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+            {block.description}
+          </p>
+          <p className="mt-1.5 font-mono text-[10px] text-slate-400">{block.type}</p>
+        </div>
+      </button>
+
+      {block.variants.length > 1 && (
+        <div className="border-t border-slate-100 px-3 py-2 dark:border-slate-700/60">
+          <label className="sr-only" htmlFor={`variant_${block.type}`}>
+            Variant of {humanise(block.type)}
+          </label>
+          <select
+            id={`variant_${block.type}`}
+            value={chosenVariant}
+            onChange={(event) => onChooseVariant(event.target.value)}
+            onClick={(event) => event.stopPropagation()}
+            className="w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-medium text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+          >
+            {block.variants.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.label}
+                {candidate.saved ? ' · newsroom' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
   );
 }

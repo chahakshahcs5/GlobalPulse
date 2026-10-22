@@ -54,8 +54,8 @@ export function VariantNameDialog({
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Save as a variant</h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              The payload as it stands now, kept in this browser. The samples in the repository are
-              untouched.
+              The payload as it stands now, saved to the newsroom so that everybody editing a story
+              is offered the same treatment. The samples in the repository are untouched.
             </p>
           </div>
           <button

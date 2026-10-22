@@ -1,4 +1,5 @@
 export * from './blocks';
+export * from './block-variant';
 export * from './live-feed';
 export * from './story';
 export * from './event';

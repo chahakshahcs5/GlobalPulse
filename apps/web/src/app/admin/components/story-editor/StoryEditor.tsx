@@ -47,9 +47,26 @@ import type { BlockChange } from './types';
  * Two lists with the same fingerprint hold the same blocks, in the same
  * order, with the same payloads. It is how the editor tells its own edits
  * from the platform's.
+ *
+ * It covers the whole block, not just its content: a block's presentation,
+ * its accessibility text and its provenance are as editable as its words
+ * are, and an edit to any of them is an edit the editor must not throw
+ * away.
  */
 function fingerprint(blocks: StoryBlock[]): string {
-  return JSON.stringify(blocks.map((block) => [block.id, block.sortOrder, block.data]));
+  return JSON.stringify(
+    blocks.map((block) => [
+      block.id,
+      block.sortOrder,
+      block.data,
+      block.presentation,
+      block.accessibility,
+      block.provenance,
+      block.citationIds,
+      block.sourceIds,
+      block.metadata,
+    ])
+  );
 }
 
 export interface StoryEditorProps {
@@ -191,7 +208,7 @@ export function StoryEditor({ story, onSaved, onCancel }: StoryEditorProps) {
             id,
             blockType: handed.blockType,
             sortOrder: without.length,
-            data: handed.data,
+            ...handed.payload,
           } as StoryBlock,
         ];
       });

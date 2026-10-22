@@ -21,7 +21,7 @@ import { getStory, reorderBlocks } from '../lib/newsroom-api';
 import { StoryBlockLoader, type BlockSource } from './StoryBlockLoader';
 import { SaveToStoryDialog } from './SaveToStoryDialog';
 import type { StoryContext } from './story-context';
-import { useLocalVariants } from './useLocalVariants';
+import { useBlockVariants } from './useBlockVariants';
 
 export type StudioTheme = 'light' | 'dark';
 export type StudioViewport = 'mobile' | 'tablet' | 'desktop';
@@ -247,12 +247,32 @@ export function StudioShell() {
   /** The class the chrome panels carry so their `dark:` utilities apply. */
   const chromeDarkClass = chromeTheme === 'dark' ? 'dark' : '';
 
-  // Variants the editor saved on their own machine, merged into the catalog.
-  const { variants: localVariants, saveVariant, removeVariant } = useLocalVariants();
+  // The newsroom's saved variants, merged into the catalog.
+  const {
+    variants: savedVariants,
+    saveVariant,
+    removeVariant,
+    source: variantSource,
+    error: variantError,
+  } = useBlockVariants();
   const studioBlocks = React.useMemo(
-    () => withExtraVariants(listStudioBlocks(), localVariants),
-    [localVariants]
+    () => withExtraVariants(listStudioBlocks(), savedVariants),
+    [savedVariants]
   );
+
+  /*
+   * Say where the variants came from.
+   *
+   * A studio reading the browser's own variants is not the same as one
+   * reading the newsroom's, and an editor should not have to guess which
+   * one they are looking at.
+   */
+  React.useEffect(() => {
+    if (!variantError) return;
+    setNotice(variantError);
+    const timer = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(timer);
+  }, [variantError]);
 
   const block = studioBlocks.find((candidate) => candidate.type === selectedType);
   const variant =
@@ -285,26 +305,41 @@ export function StudioShell() {
     [block]
   );
 
-  /** Keep the payload as it stands now, under a name of the editor's choosing. */
+  /**
+   * Keep the payload as it stands now, under a name of the editor's choosing.
+   *
+   * The variant goes to the newsroom, so that everybody editing a story is
+   * offered the same treatment. When the newsroom cannot take it, the
+   * studio says so rather than pretending it was shared.
+   */
   const saveCurrentAsVariant = React.useCallback(
-    (label: string) => {
+    async (label: string) => {
       const name = label.trim();
       if (!name) return;
       const id = `local_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
-      saveVariant(selectedType, {
+
+      const saved = await saveVariant(selectedType, {
         id,
         label: name,
-        description: 'Saved in this browser.',
+        description: 'Saved from the Block Studio.',
         data: cloneData(payload.data),
       });
-      setVariantId(id);
+
+      setVariantId(saved.id);
+
+      if (!saved.shared) {
+        setNotice(
+          'The variant could not be saved to the newsroom, so it is only kept in this browser.'
+        );
+        setTimeout(() => setNotice(null), 8000);
+      }
     },
     [payload, saveVariant, selectedType]
   );
 
-  const deleteLocalVariant = React.useCallback(
+  const deleteSavedVariant = React.useCallback(
     (id: string) => {
-      removeVariant(selectedType, id);
+      void removeVariant(selectedType, id);
       const fallback = block?.variants.find((candidate) => candidate.id !== id);
       if (fallback) {
         setVariantId(fallback.id);
@@ -422,15 +457,15 @@ export function StudioShell() {
   );
 
   const categories = React.useMemo(() => {
-    if (query.trim().length === 0) return listStudioCategories();
+    if (query.trim().length === 0) return listStudioCategories(savedVariants);
     const matches = new Set(searchStudioBlocks(query).map((candidate) => candidate.type));
-    return listStudioCategories()
+    return listStudioCategories(savedVariants)
       .map((group) => ({
         ...group,
         blocks: group.blocks.filter((candidate) => matches.has(candidate.type)),
       }))
       .filter((group) => group.blocks.length > 0);
-  }, [query]);
+  }, [query, savedVariants]);
 
   return (
     <div
@@ -479,7 +514,8 @@ export function StudioShell() {
         onSelectVariant={selectVariant}
         onOpenLoader={() => setLoaderOpen(true)}
         onSaveVariant={saveCurrentAsVariant}
-        onDeleteVariant={deleteLocalVariant}
+        onDeleteVariant={deleteSavedVariant}
+        variantSource={variantSource}
         storyContext={storyContext}
         connectedToComposer={Boolean(composerSession)}
         onSendToComposer={sendToComposer}
