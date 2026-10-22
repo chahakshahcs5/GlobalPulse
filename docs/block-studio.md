@@ -182,7 +182,7 @@ presentation existed — the options apply around the block, and a block that
 asks for nothing gets nothing.
 
 They are applied around the block, in one place, so they work for all
-sixty-five block types without each of them having to know about them.
+sixty-six block types without each of them having to know about them.
 
 Two things are deliberately _not_ offered:
 

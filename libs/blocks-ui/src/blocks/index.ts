@@ -22,5 +22,8 @@ export * from './ScrollyBlockView';
 export * from './MotionChartBlockView';
 export * from './SandboxBlockView';
 export * from './Scene3DBlockView';
+export * from './MapCanvas';
+export * from './MapBlockView';
+export * from './Map3DBlockView';
 export * from './BlockItem';
 export * from './presentation';

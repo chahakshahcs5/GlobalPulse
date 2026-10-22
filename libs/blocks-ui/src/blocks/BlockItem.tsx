@@ -2,7 +2,9 @@
 
 import React from 'react';
 import type { StoryBlock } from '@ai-news/schemas';
-import { MapRenderer, VisualDiffRenderer } from '@ai-news/media';
+import { VisualDiffRenderer } from '@ai-news/media';
+import { MapBlockView } from './MapBlockView';
+import { Map3DBlockView } from './Map3DBlockView';
 import { renderInlineMarkdown } from './inline-markdown';
 import { presentationClass } from './presentation';
 import { TableBlockView } from './TableBlockView';
@@ -346,25 +348,11 @@ function renderBlock(
     }
 
     case 'map': {
-      const svg = MapRenderer.renderSvgFallback(block.data, 800, 420, theme);
-      return (
-        <figure className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-          <div className="p-3">
-            <div dangerouslySetInnerHTML={{ __html: svg }} />
-          </div>
-          {(block.data.sourceAttribution || block.data.methodology || block.data.lastUpdated) && (
-            <figcaption className="px-5 py-2.5 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-              <p className="flex flex-wrap gap-x-4 gap-y-0.5">
-                {block.data.sourceAttribution && (
-                  <span>Source: {block.data.sourceAttribution}</span>
-                )}
-                {block.data.lastUpdated && <span>Updated: {block.data.lastUpdated}</span>}
-              </p>
-              {block.data.methodology && <p>Methodology: {block.data.methodology}</p>}
-            </figcaption>
-          )}
-        </figure>
-      );
+      return <MapBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'map_3d': {
+      return <Map3DBlockView data={block.data} theme={theme} />;
     }
 
     case 'timeline': {

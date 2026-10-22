@@ -10,6 +10,7 @@
     "@ai-news/schemas": "workspace:*",
     "@ai-news/shared": "workspace:*",
     "lucide-react": "^1.48.0",
+    "maplibre-gl": "^5.24.0",
     "mermaid": "^12.0.0",
     "three": "^0.186.1"
   },

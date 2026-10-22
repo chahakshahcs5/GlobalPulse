@@ -467,22 +467,74 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
   // 9. add_map_block (§38)
   server.tool(
     'add_map_block',
-    '[WRITE] Add an interactive MapLibre map block with geographic coordinates.',
+    '[WRITE] Add an interactive map block with geographic coordinates. The map is drawn on real tiles and the reader can move, zoom, turn and tilt it. Use `style` for the basemap, `projection` for a globe, and `pitch` for a tilted view.',
     {
       storyId: z.string().min(1),
       center: z.tuple([z.number(), z.number()]).describe('[longitude, latitude]'),
       zoom: z.number().min(0).max(22).default(4),
-      style: z.enum(['dark', 'light', 'satellite', 'streets']).default('dark'),
+      style: z
+        .enum(['streets', 'light', 'bright', 'dark', 'fiord', 'satellite'])
+        .default('dark')
+        .describe(
+          'The basemap underneath: streets, a light map, a bright map, a dark map, a muted map, or satellite imagery'
+        ),
+      projection: z
+        .enum(['mercator', 'globe'])
+        .optional()
+        .describe('A globe is the right shape for a story about distance'),
+      pitch: z.number().min(0).max(85).optional().describe('How far the camera is tilted'),
+      bearing: z.number().min(-180).max(180).optional().describe('Which way the map is turned'),
+      fitToMarkers: z
+        .boolean()
+        .optional()
+        .describe('Frame the map around what it shows rather than around a stated centre'),
+      interactive: z.boolean().optional(),
+      cluster: z.boolean().optional().describe('Gather the marks together when they are close'),
+      showControls: z.boolean().optional(),
       markers: z
         .array(
           z.object({
             coordinates: z.tuple([z.number(), z.number()]),
             title: z.string(),
             description: z.string().optional(),
+            icon: z.string().optional(),
+            severity: z
+              .enum(['critical', 'severe', 'high', 'medium', 'low', 'resolved', 'info'])
+              .optional()
+              .describe('The colour the mark is drawn in'),
+            entityIds: z.array(z.string()).optional(),
+            sourceIds: z.array(z.string()).optional(),
+          })
+        )
+        .optional(),
+      layers: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
+            geojson: z.record(z.unknown()).describe('The GeoJSON the layer is drawn from'),
+            property: z
+              .string()
+              .optional()
+              .describe('The property the colour and size are read from'),
+            colorScale: z.array(z.string()).optional(),
+          })
+        )
+        .optional()
+        .describe('The story’s own layers, drawn over the basemap'),
+      routes: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            name: z.string().min(1),
+            coordinates: z.array(z.tuple([z.number(), z.number()])).min(2),
+            description: z.string().optional(),
           })
         )
         .optional(),
       title: z.string().optional(),
+      sourceAttribution: z.string().optional(),
+      methodology: z.string().max(4000).optional(),
     },
     async ({ storyId, ...mapData }) =>
       helperAdd(storyId, {
@@ -490,6 +542,87 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
         blockType: 'map',
         sortOrder: 0,
         data: mapData,
+      })
+  );
+
+  // add_map_3d_block
+  server.tool(
+    'add_map_3d_block',
+    '[WRITE] Add a map in three dimensions: the land raised and shaded, the story’s own shapes lifted off the map, or the round earth. Use it for a story about terrain, about a skyline, or about distance.',
+    {
+      storyId: z.string().min(1).describe('Target story ID'),
+      title: z.string().optional(),
+      subtitle: z.string().optional(),
+      caption: z.string().optional(),
+      scene: z
+        .enum(['terrain', 'extruded', 'globe'])
+        .optional()
+        .describe(
+          'Terrain is the land raised, extruded lifts the story’s own shapes off it, and a globe is the round earth'
+        ),
+      style: z
+        .enum(['streets', 'light', 'bright', 'dark', 'fiord', 'satellite'])
+        .default('dark')
+        .describe('The basemap underneath'),
+      center: z.tuple([z.number(), z.number()]).optional().describe('[longitude, latitude]'),
+      zoom: z.number().min(0).max(22).optional(),
+      pitch: z.number().min(0).max(85).optional().describe('How far the camera is tilted'),
+      bearing: z.number().min(-180).max(180).optional(),
+      terrainExaggeration: z
+        .number()
+        .min(0)
+        .max(10)
+        .optional()
+        .describe('How much the land is raised. One is the real world'),
+      extrusions: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            geojson: z.record(z.unknown()).describe('The GeoJSON the shapes are drawn from'),
+            heightKey: z.string().optional().describe('The property holding the height'),
+            baseKey: z
+              .string()
+              .optional()
+              .describe('The property holding the height the shape starts at'),
+            color: z.string().optional(),
+            colorScale: z.array(z.string()).optional(),
+          })
+        )
+        .optional()
+        .describe('The shapes lifted off the map'),
+      layers: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
+            geojson: z.record(z.unknown()),
+            property: z.string().optional(),
+            colorScale: z.array(z.string()).optional(),
+          })
+        )
+        .optional(),
+      markers: z
+        .array(
+          z.object({
+            coordinates: z.tuple([z.number(), z.number()]),
+            title: z.string().min(1),
+            description: z.string().optional(),
+            icon: z.string().optional(),
+            severity: z.string().optional(),
+          })
+        )
+        .optional(),
+      interactive: z.boolean().optional(),
+      showControls: z.boolean().optional(),
+      sourceAttribution: z.string().optional(),
+      methodology: z.string().max(4000).optional(),
+    },
+    async ({ storyId, ...data }) =>
+      helperAdd(storyId, {
+        id: generateId('blk_map3d'),
+        blockType: 'map_3d',
+        sortOrder: 0,
+        data,
       })
   );
 

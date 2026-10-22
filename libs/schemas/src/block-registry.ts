@@ -65,6 +65,7 @@ import {
   MotionChartBlockSchema,
   SandboxBlockSchema,
   Scene3DBlockSchema,
+  Map3DBlockSchema,
 } from './blocks';
 
 export type BlockCategory =
@@ -755,6 +756,12 @@ define('scene_3d', Scene3DBlockSchema, {
   category: 'immersive',
   description:
     'A three-dimensional scene — a globe, a point cloud, a bar chart or a model — drawn in WebGL and explorable.',
+  recommendedFor: ['geography', 'climate', 'infrastructure'],
+});
+define('map_3d', Map3DBlockSchema, {
+  category: 'immersive',
+  description:
+    'A map in three dimensions: the land raised and shaded, the story’s own shapes lifted off it, or the round earth.',
   recommendedFor: ['geography', 'climate', 'infrastructure'],
 });
 

@@ -264,6 +264,29 @@ export function extractTextContent(blocks: StoryBlock[]): string {
         if (block.data.caption) fragments.push(block.data.caption);
         if (block.data.alt) fragments.push(block.data.alt);
         break;
+      case 'map':
+        if (block.data.title) fragments.push(block.data.title);
+        for (const marker of block.data.markers ?? []) {
+          fragments.push(marker.title);
+          if (marker.description) fragments.push(marker.description);
+        }
+        for (const route of block.data.routes ?? []) {
+          fragments.push(route.name);
+          if (route.description) fragments.push(route.description);
+        }
+        for (const region of block.data.comparisonRegionIds ?? []) {
+          fragments.push(region);
+        }
+        break;
+      case 'map_3d':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        for (const marker of block.data.markers ?? []) {
+          fragments.push(marker.title);
+          if (marker.description) fragments.push(marker.description);
+        }
+        break;
       default:
         break;
     }

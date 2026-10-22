@@ -4,6 +4,7 @@ import type {
   ChartBlock,
   TimelineBlock,
   MapBlock,
+  Map3DBlock,
   StatisticBlock,
   TableBlock,
   UncertaintyBlock,
@@ -132,6 +133,48 @@ export function MapBlockItem({ block }: { block: MapBlock }) {
           ))}
         </View>
       )}
+    </View>
+  );
+}
+
+/**
+ * A map in three dimensions.
+ *
+ * A phone has no WebGL, so the scene is not drawn. What the reader gets is
+ * what the scene is of and where it is, which is the part that matters in
+ * words.
+ */
+export function Map3DBlockItem({ block }: { block: Map3DBlock }) {
+  const data = block.data || {};
+  const markers = data.markers || [];
+  const scene = data.scene || 'terrain';
+
+  return (
+    <View style={styles.mediaCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTypeBadge}>3D MAP</Text>
+        <Text style={styles.cardMetaText}>
+          {scene === 'terrain' ? 'Terrain' : scene === 'globe' ? 'Globe' : 'Extruded'}
+        </Text>
+      </View>
+      <Text style={styles.cardTitle}>{data.title || 'Three-dimensional map'}</Text>
+      {data.subtitle ? <Text style={styles.cardSubtitle}>{data.subtitle}</Text> : null}
+      {data.center && (
+        <Text style={styles.cardSubtitle}>
+          Coordinates: {Number(data.center[1]).toFixed(2)}°N, {Number(data.center[0]).toFixed(2)}°E
+        </Text>
+      )}
+      {markers.length > 0 && (
+        <View style={styles.markerContainer}>
+          {markers.map((m: { title?: string }, idx: number) => (
+            <View key={idx} style={styles.markerRow}>
+              <Text style={styles.markerPin}>◉</Text>
+              <Text style={styles.markerTitle}>{m.title || ''}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {data.caption ? <Text style={styles.intelText}>{data.caption}</Text> : null}
     </View>
   );
 }

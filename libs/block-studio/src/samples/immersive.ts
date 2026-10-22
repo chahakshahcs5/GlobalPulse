@@ -680,4 +680,151 @@ values.forEach(function (entry, index) {
       },
     },
   ],
+
+  map_3d: [
+    {
+      id: 'terrain',
+      label: 'The land, raised',
+      description: 'The terrain itself, tilted so the height of it is obvious.',
+      data: {
+        title: 'The valley the line runs through',
+        subtitle: 'The camera is tilted, and the land is raised',
+        caption:
+          'The river valley the transmission line follows, at one and a half times its height.',
+        scene: 'terrain',
+        style: 'streets',
+        center: [34.5, 41.2],
+        zoom: 11,
+        pitch: 60,
+        bearing: -25,
+        terrainExaggeration: 1.5,
+        markers: [
+          { coordinates: [34.1, 41.4], title: 'Northfield substation', severity: 'low' },
+          { coordinates: [35.2, 40.8], title: 'Harbour East substation', severity: 'critical' },
+        ],
+        sourceAttribution: 'GlobalPulse investigations',
+        methodology: 'Terrain © JAXA.',
+      },
+    },
+    {
+      id: 'extruded',
+      label: 'Shapes lifted off the map',
+      description: "The story's own buildings, raised by a number in the data.",
+      data: {
+        title: 'How tall the sites are',
+        subtitle: 'Each block is one site, raised by its height in metres',
+        caption: 'The six reviewed sites, each raised by the height of its main structure.',
+        scene: 'extruded',
+        style: 'dark',
+        center: [34.5, 41.2],
+        zoom: 13,
+        pitch: 55,
+        extrusions: [
+          {
+            id: 'sites',
+            geojson: {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  properties: { name: 'Northfield', height: 42, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [34.08, 41.38],
+                        [34.12, 41.38],
+                        [34.12, 41.42],
+                        [34.08, 41.42],
+                        [34.08, 41.38],
+                      ],
+                    ],
+                  },
+                },
+                {
+                  type: 'Feature',
+                  properties: { name: 'Harbour East', height: 96, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [35.18, 40.78],
+                        [35.22, 40.78],
+                        [35.22, 40.82],
+                        [35.18, 40.82],
+                        [35.18, 40.78],
+                      ],
+                    ],
+                  },
+                },
+                {
+                  type: 'Feature',
+                  properties: { name: 'Ridgeway', height: 18, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [33.38, 39.58],
+                        [33.42, 39.58],
+                        [33.42, 39.62],
+                        [33.38, 39.62],
+                        [33.38, 39.58],
+                      ],
+                    ],
+                  },
+                },
+              ],
+            },
+            heightKey: 'height',
+            baseKey: 'base',
+            colorScale: ['#3b82f6', '#f59e0b', '#ef4444'],
+          },
+        ],
+        sourceAttribution: 'GlobalPulse investigations',
+        methodology: 'Heights taken from the operating register.',
+      },
+    },
+    {
+      id: 'globe',
+      label: 'The round earth',
+      description: 'The globe, which is the right shape for a story about distance.',
+      data: {
+        title: 'Where the sites are, in the world',
+        subtitle: 'The round earth, with the reviewed sites marked',
+        caption: 'A globe, for a story about how far apart the sites are.',
+        scene: 'globe',
+        style: 'dark',
+        center: [34.5, 41.2],
+        zoom: 2,
+        markers: [
+          { coordinates: [34.1, 41.4], title: 'Northfield', severity: 'low' },
+          { coordinates: [35.2, 40.8], title: 'Harbour East', severity: 'critical' },
+          { coordinates: [33.4, 39.6], title: 'Ridgeway', severity: 'low' },
+          { coordinates: [32.4, 38.7], title: 'Coastal', severity: 'high' },
+        ],
+        sourceAttribution: 'GlobalPulse investigations',
+      },
+    },
+    {
+      id: 'satellite',
+      label: 'Satellite, tilted',
+      description: 'Imagery underneath, with the camera tilted above it.',
+      data: {
+        title: 'The reviewed network, from the air',
+        subtitle: 'Imagery underneath, the camera tilted above it',
+        caption: 'The transmission network the review covered, seen from the air.',
+        scene: 'extruded',
+        style: 'satellite',
+        center: [34.5, 41.2],
+        zoom: 10,
+        pitch: 55,
+        bearing: 30,
+        markers: [
+          { coordinates: [34.1, 41.4], title: 'Northfield', severity: 'low' },
+          { coordinates: [35.2, 40.8], title: 'Harbour East', severity: 'critical' },
+        ],
+        sourceAttribution: 'GlobalPulse investigations',
+      },
+    },
+  ],
 };
