@@ -42,9 +42,10 @@ has a "line" variant and a "stacked bar" variant, or a callout has "info",
 "warning", "tip" and "critical" variants. Switching variants swaps the whole
 payload at once, which makes it easy to compare treatments side by side.
 
-Variants live in `libs/block-studio/src/samples.ts` and are deliberately
-realistic. A chart that says "cases" and "year" tells an editor far more about
-how a block reads in a story than "Category 1 / 42" does.
+Variants live in `libs/block-studio/src/samples/` — one file per category, the
+same categories the block registry uses — and are deliberately realistic. A
+chart that says "cases" and "year" tells an editor far more about how a block
+reads in a story than "Category 1 / 42" does.
 
 ## The generated form
 
@@ -303,7 +304,8 @@ When you add a new block type to the platform, add a sample for it:
 1. **`libs/schemas/src/blocks.ts`** — the Zod schema and the union entry.
 2. **`libs/schemas/src/block-registry.ts`** — a `define(...)` entry.
 3. **`libs/blocks-ui/src/blocks/BlockItem.tsx`** — a `case` and a view component.
-4. **`libs/block-studio/src/samples.ts`** — a sample payload, and any variants.
+4. **`libs/block-studio/src/samples/<category>.ts`** — a sample payload, and
+   any variants, in the file for its category.
 
 Step 4 is the only one specific to the studio, and a block type with no
 sample still appears in the catalog with an empty payload.
@@ -338,7 +340,7 @@ Inside `libs/block-studio/src`:
 | File             | What it holds                                                       |
 | ---------------- | ------------------------------------------------------------------- |
 | `registry.ts`    | The catalog: every block type, with its variants.                   |
-| `samples.ts`     | The sample payloads the studio previews.                            |
+| `samples/`       | The sample payloads the studio previews, one file per category.     |
 | `form-schema.ts` | The Zod → form converter, and the block's sections and groups.      |
 | `hints.ts`       | How each field is edited: its group, its guidance, its control.     |
 | `validation.ts`  | The validator, for the content alone and for the whole payload.     |
@@ -347,7 +349,7 @@ Inside `libs/block-studio/src`:
 
 ## The newsroom's variants
 
-The samples in `samples.ts` are the variants that ship with the platform.
+The samples in `samples/` are the variants that ship with the platform.
 The newsroom's own live in the database, and the API exposes them:
 
 ```text

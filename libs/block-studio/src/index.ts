@@ -14,7 +14,7 @@ export * from './handoff';
 export * from './path';
 export * from './payload';
 export * from './registry';
-export * from './samples';
+export * from './samples/index';
 export * from './validation';
 export * from './components/BlockForm';
 export * from './components/FormEditor';
