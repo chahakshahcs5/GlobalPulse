@@ -48,6 +48,16 @@ export const ScrollyBlockView: React.FC<{
 
   const activeStep = steps[activeIndex] ?? steps[0];
 
+  /*
+   * Two ways of arranging the steps against the picture.
+   *
+   * `sticky` keeps the picture in place while the steps go past it, which is
+   * how a scrollytelling piece is read. `stacked` gives every step its own
+   * picture instead, which is how it reads on a phone and how it reads for
+   * a reader who would rather just scroll.
+   */
+  const stacked = (data.layout ?? 'sticky') === 'stacked';
+
   return (
     <section
       aria-label={data.title ?? 'Scrollytelling'}
@@ -59,11 +69,13 @@ export const ScrollyBlockView: React.FC<{
         </header>
       )}
 
-      <div className="md:grid md:grid-cols-[1.1fr_1fr] md:gap-0">
+      <div className={stacked ? '' : 'md:grid md:grid-cols-[1.1fr_1fr] md:gap-0'}>
         {/* The picture, which stays put while the steps go past it. */}
-        <div className="md:sticky md:top-0 md:h-[560px] flex items-center justify-center p-4 bg-slate-50/60 dark:bg-slate-950/30 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
-          <ScrollyVisualView visual={activeStep?.visual} theme={theme} />
-        </div>
+        {!stacked && (
+          <div className="md:sticky md:top-0 md:h-[560px] flex items-center justify-center p-4 bg-slate-50/60 dark:bg-slate-950/30 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
+            <ScrollyVisualView visual={activeStep?.visual} theme={theme} />
+          </div>
+        )}
 
         {/* The steps. */}
         <ol className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -88,8 +100,9 @@ export const ScrollyBlockView: React.FC<{
                   {step.body}
                 </p>
               )}
-              {/* On a narrow screen the picture travels with its step. */}
-              <div className="md:hidden mt-4">
+              {/* The picture travels with its step: on a narrow screen, and
+                  in the stacked layout, that is the only way it can go. */}
+              <div className={stacked ? 'mt-4' : 'md:hidden mt-4'}>
                 <ScrollyVisualView visual={step.visual} theme={theme} />
               </div>
             </li>

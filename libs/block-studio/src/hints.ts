@@ -226,6 +226,11 @@ export const BLOCK_HINTS: HintsRegistry = {
     'data.title': { group: 'Headline', order: 1 },
     'data.subtitle': { group: 'Headline', order: 2 },
     'data.caption': { group: 'Headline', order: 3 },
+    'data.style': {
+      group: 'Look',
+      order: 1,
+      help: 'How the flow is drawn. The same numbers read very differently as ribbons, as a vertical flow, as hairlines or as curves.',
+    },
     'data.nodes': {
       group: 'Flow',
       order: 1,
@@ -251,6 +256,11 @@ export const BLOCK_HINTS: HintsRegistry = {
     'data.title': { group: 'Headline', order: 1 },
     'data.subtitle': { group: 'Headline', order: 2 },
     'data.caption': { group: 'Headline', order: 3 },
+    'data.layout': {
+      group: 'Look',
+      order: 1,
+      help: 'How the rectangles are tiled. Squarified keeps them square; slicing and dicing cut the space into strips and a grid.',
+    },
     'data.nodes': {
       group: 'Hierarchy',
       order: 1,
@@ -273,7 +283,12 @@ export const BLOCK_HINTS: HintsRegistry = {
       help: 'The people, organisations and things. A group is a category they are coloured by.',
     },
     'data.links': { group: 'Graph', order: 2, help: 'The connections between them.' },
-    'data.layout': { group: 'Behaviour', order: 1 },
+    'data.style': {
+      group: 'Look',
+      order: 1,
+      help: 'How the nodes are drawn. Outline reads better when the graph is dense; bubble makes the hubs obvious.',
+    },
+    'data.layout': { group: 'Look', order: 2 },
     'data.showLabels': { group: 'Behaviour', order: 2 },
     'data.interactive': {
       group: 'Behaviour',
@@ -346,6 +361,11 @@ export const BLOCK_HINTS: HintsRegistry = {
       order: 1,
       help: 'The question the respondents were asked.',
     },
+    'data.style': {
+      group: 'Look',
+      order: 1,
+      help: 'How the answers are drawn. Bars show the numbers, a stack shows the split, a waffle counts squares and a donut turns it into a ring.',
+    },
     'data.responses': { group: 'Results', order: 2, help: 'The answers, and how many gave each.' },
     'data.segments': {
       group: 'Results',
@@ -367,6 +387,11 @@ export const BLOCK_HINTS: HintsRegistry = {
       group: 'Steps',
       order: 1,
       help: 'The steps of the narrative, in the order the reader meets them. Each step shows one picture.',
+    },
+    'data.layout': {
+      group: 'Look',
+      order: 1,
+      help: 'Sticky keeps the picture in place while the steps go past it. Stacked gives every step its own picture.',
     },
     'data.showProgress': {
       group: 'Behaviour',

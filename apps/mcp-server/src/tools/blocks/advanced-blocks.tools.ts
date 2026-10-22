@@ -40,6 +40,12 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
         )
         .min(1)
         .describe('How much moves from one stage to another'),
+      style: z
+        .enum(['classic', 'vertical', 'minimal', 'organic'])
+        .optional()
+        .describe(
+          'How the flow is drawn: wide ribbons, a vertical flow top-to-bottom, hairlines only, or curved links'
+        ),
       unit: z.string().optional().describe('The unit the flow is measured in, e.g. cases or £m'),
       showValues: z.boolean().optional().describe('Draw the value on each ribbon'),
       sourceAttribution: z.string().optional(),
@@ -74,6 +80,12 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
         )
         .min(1)
         .describe('The parts of the hierarchy, as a flat list'),
+      layout: z
+        .enum(['squarify', 'slice', 'dice', 'binary'])
+        .optional()
+        .describe(
+          'How the rectangles are tiled: as squares, in strips, in a grid, or halved at each step'
+        ),
       unit: z.string().optional(),
       showValues: z.boolean().optional(),
       sourceAttribution: z.string().optional(),
@@ -119,6 +131,12 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
         )
         .min(1)
         .describe('The connections between them'),
+      style: z
+        .enum(['filled', 'outline', 'bubble'])
+        .optional()
+        .describe(
+          'How the nodes are drawn: filled, as hollow rings, or as bubbles sized by connection'
+        ),
       layout: z.enum(['force', 'radial', 'circular']).optional(),
       showLabels: z.boolean().optional(),
       interactive: z.boolean().optional(),
@@ -217,6 +235,12 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
       subtitle: z.string().optional(),
       caption: z.string().optional(),
       question: z.string().min(1).describe('The question the respondents were asked'),
+      style: z
+        .enum(['bars', 'stack', 'waffle', 'donut'])
+        .optional()
+        .describe(
+          'How the answers are drawn: as bars, as one split bar, as a hundred squares, or as a ring'
+        ),
       responses: z
         .array(
           z.object({
@@ -311,6 +335,12 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
         )
         .min(1)
         .describe('The steps of the narrative, in the order the reader meets them'),
+      layout: z
+        .enum(['sticky', 'stacked'])
+        .optional()
+        .describe(
+          'Sticky keeps the picture in place while the steps go past it; stacked gives every step its own'
+        ),
       showProgress: z.boolean().optional(),
       caption: z.string().optional(),
       sourceAttribution: z.string().optional(),

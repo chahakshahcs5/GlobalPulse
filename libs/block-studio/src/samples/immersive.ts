@@ -18,6 +18,7 @@ export const IMMERSIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A stepped explainer',
       description: 'A picture that changes as the reader moves through the steps.',
       data: {
+        layout: 'sticky',
         title: 'How the overstatement happened',
         steps: [
           {
@@ -108,6 +109,7 @@ export const IMMERSIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A story told in figures',
       description: 'Every step shows a number, with the text beside it.',
       data: {
+        layout: 'sticky',
         title: 'The programme, in four numbers',
         steps: [
           {
@@ -164,6 +166,7 @@ export const IMMERSIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A story told in pictures',
       description: 'Each step shows a photograph and the words that go with it.',
       data: {
+        layout: 'stacked',
         title: 'The day the meters were read by hand',
         steps: [
           {
@@ -201,6 +204,68 @@ export const IMMERSIVE_SAMPLES: Record<string, StudioVariant[]> = {
           },
         ],
         showProgress: true,
+        sourceAttribution: 'GlobalPulse investigations',
+      },
+    },
+    {
+      id: 'stacked',
+      label: 'Stacked, not sticky',
+      description: 'The same narrative, with every step carrying its own picture.',
+      data: {
+        title: 'How the overstatement happened',
+        steps: [
+          {
+            id: 'step-1',
+            heading: 'It started with a single site',
+            body: 'Harbour East reported figures that did not match the meters. The gap was small at first.',
+            visual: {
+              kind: 'chart',
+              chart: {
+                chartType: 'line',
+                title: 'Reported against verified, 2024–2026',
+                xAxis: { key: 'quarter', label: 'Quarter', type: 'time' },
+                yAxis: { label: 'GWh', unit: 'GWh' },
+                series: [
+                  { name: 'Reported', key: 'reported' },
+                  { name: 'Verified', key: 'verified' },
+                ],
+                values: [
+                  { quarter: '2024 Q1', reported: 9.4, verified: 9.1 },
+                  { quarter: '2024 Q2', reported: 9.8, verified: 9.3 },
+                  { quarter: '2024 Q3', reported: 10.2, verified: 9.4 },
+                  { quarter: '2024 Q4', reported: 10.9, verified: 9.5 },
+                  { quarter: '2025 Q1', reported: 11.6, verified: 9.6 },
+                  { quarter: '2025 Q2', reported: 12.9, verified: 9.7 },
+                  { quarter: '2025 Q3', reported: 14.8, verified: 9.8 },
+                  { quarter: '2025 Q4', reported: 17.4, verified: 9.9 },
+                ],
+              },
+            },
+          },
+          {
+            id: 'step-2',
+            heading: 'Nobody checked the meters',
+            body: 'Verification had been happening, but only every third quarter, and never at this site.',
+            visual: {
+              kind: 'stat',
+              value: '1 in 4',
+              label: 'sites were checked each quarter',
+              delta: 'down from 1 in 3 the year before',
+            },
+          },
+          {
+            id: 'step-3',
+            heading: 'What the review concluded',
+            body: 'The overstatement was not deliberate, but it was not accidental either: nobody was required to check.',
+            visual: {
+              kind: 'text',
+              text: 'The review found a reporting process that allowed a single site to diverge for two years without a single reading being independently checked. It recommended that verification become continuous rather than periodic.',
+            },
+          },
+        ],
+        layout: 'stacked',
+        showProgress: true,
+        caption: 'Every step carries its own picture, so the narrative reads the same on a phone.',
         sourceAttribution: 'GlobalPulse investigations',
       },
     },

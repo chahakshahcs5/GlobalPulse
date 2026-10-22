@@ -1,6 +1,14 @@
 import type { TreemapBlock } from '@ai-news/schemas';
 import { escapeXml } from '@ai-news/shared';
-import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3';
+import {
+  hierarchy,
+  treemap,
+  treemapBinary,
+  treemapDice,
+  treemapSlice,
+  treemapSquarify,
+  type HierarchyRectangularNode,
+} from 'd3';
 
 /**
  * Treemap renderer.
@@ -77,13 +85,6 @@ function buildTree(nodes: TreemapBlock['data']['nodes']): TreeNode | null {
 
   if (roots.length === 0) return null;
 
-  // A node that carries a value of its own is drawn at that size, so it is a
-  // leaf: anything nested inside it is not drawn inside it. A node without a
-  // value groups its children and is sized by them.
-  for (const treeNode of byId.values()) {
-    if (treeNode.value !== undefined) treeNode.children = [];
-  }
-
   // More than one root is fine — they are gathered under a parent that is
   // never drawn, so the layout has somewhere to start.
   if (roots.length === 1) return roots[0];
@@ -91,6 +92,32 @@ function buildTree(nodes: TreemapBlock['data']['nodes']): TreeNode | null {
   const container: TreeNode = { id: '__root__', label: '', children: roots };
   for (const root of roots) root.parent = container;
   return container;
+}
+
+/**
+ * The size of a node.
+ *
+ * A node that names a value is that size. A node that does not is sized by
+ * what it contains, so a branch with no total of its own is still drawn in
+ * proportion to its parts.
+ */
+function effectiveValue(node: TreeNode): number {
+  if (node.value !== undefined) return node.value;
+  return node.children.reduce((sum, child) => sum + effectiveValue(child), 0);
+}
+
+/**
+ * The adjustment d3's own summing needs.
+ *
+ * d3 adds a node's value to the sum of its children's, so a node that names
+ * a total *and* has children would be counted twice. Subtracting the
+ * children back out leaves the node at the total it was given, and leaves a
+ * node with no total at the sum of its parts.
+ */
+function sumAdjustment(node: TreeNode): number {
+  if (node.children.length === 0) return node.value ?? 0;
+  const children = node.children.reduce((sum, child) => sum + effectiveValue(child), 0);
+  return (node.value ?? children) - children;
 }
 
 export class TreemapRenderer {
@@ -115,13 +142,33 @@ export class TreemapRenderer {
     const captionHeight = blockData.caption ? 26 : 0;
     const plotHeight = height - titleHeight - captionHeight;
 
-    const rootNode = hierarchy<TreeNode>(root, (node) => node.children).sum(
-      (node) => node.value ?? 0
+    const rootNode = hierarchy<TreeNode>(root, (node) => node.children).sum((node) =>
+      sumAdjustment(node)
     );
 
-    treemap<TreeNode>().size([width, plotHeight]).paddingInner(2).paddingOuter(4).round(false)(
-      rootNode
-    );
+    /*
+     * The same parts, laid out four ways.
+     *
+     * Squarified keeps the rectangles as close to squares as it can, which
+     * is the easiest to read; slicing and dicing cut the space into strips
+     * and a grid; and the binary layout halves the space at each step, which
+     * makes the depth of the hierarchy visible.
+     */
+    const tilings = {
+      squarify: treemapSquarify,
+      slice: treemapSlice,
+      dice: treemapDice,
+      binary: treemapBinary,
+    } as const;
+    const tiling =
+      tilings[(blockData.layout ?? 'squarify') as keyof typeof tilings] ?? treemapSquarify;
+
+    treemap<TreeNode>()
+      .tile(tiling)
+      .size([width, plotHeight])
+      .paddingInner(2)
+      .paddingOuter(4)
+      .round(false)(rootNode);
 
     const leaves = rootNode.leaves();
     const groups = Array.from(

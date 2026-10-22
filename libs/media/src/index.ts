@@ -5,6 +5,7 @@ export * from './charts/sankey-renderer';
 export * from './charts/treemap-renderer';
 export * from './charts/regression-renderer';
 export * from './charts/anomaly-renderer';
+export * from './charts/survey-results-renderer';
 export * from './predictions/prediction-scorer';
 export * from './predictions/calibration-renderer';
 export * from './scenarios/what-if-model';

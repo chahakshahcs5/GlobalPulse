@@ -1660,6 +1660,14 @@ export const SankeyBlockSchema = BaseBlockSchema.extend({
     title: z.string().optional(),
     subtitle: z.string().optional(),
     caption: z.string().optional(),
+    /**
+     * How the flow is drawn.
+     *
+     * The same numbers read very differently depending on how they are
+     * dressed: a wide ribbon says "most of this", a hairline says "there is
+     * a connection", and a vertical flow reads top to bottom like a list.
+     */
+    style: z.enum(['classic', 'vertical', 'minimal', 'organic']).optional(),
     nodes: z.array(SankeyNodeSchema).min(2).max(60),
     links: z.array(SankeyLinkSchema).min(1).max(200),
     /** The unit the flow is measured in, e.g. `£m` or `tonnes`. */
@@ -1698,6 +1706,15 @@ export const TreemapBlockSchema = BaseBlockSchema.extend({
      * from `parentId` when the tree is drawn.
      */
     nodes: z.array(TreemapNodeSchema).min(1).max(500),
+    /**
+     * How the rectangles are tiled.
+     *
+     * The same parts laid out four ways: squarified keeps the rectangles as
+     * close to squares as it can, slicing and dicing cut the space into
+     * strips and grids, and the binary layout halves the space at each step.
+     * The numbers are the same; the picture is not.
+     */
+    layout: z.enum(['squarify', 'slice', 'dice', 'binary']).optional(),
     unit: z.string().optional(),
     /** Draw the value on each rectangle. */
     showValues: z.boolean().optional(),
@@ -1739,6 +1756,14 @@ export const NetworkGraphBlockSchema = BaseBlockSchema.extend({
     caption: z.string().optional(),
     nodes: z.array(NetworkNodeSchema).min(2).max(300),
     links: z.array(NetworkLinkSchema).min(1).max(1000),
+    /**
+     * How the nodes are drawn.
+     *
+     * Filled nodes are the plainest; outline nodes are hollow rings, which
+     * reads better when the graph is dense; and bubble nodes grow with the
+     * number of connections, so the hubs are obvious at a glance.
+     */
+    style: z.enum(['filled', 'outline', 'bubble']).optional(),
     /** How the nodes are arranged. */
     layout: z.enum(['force', 'radial', 'circular']).optional(),
     /** Draw the name next to each node. */
@@ -1840,6 +1865,13 @@ export const SurveyResultsBlockSchema = BaseBlockSchema.extend({
     caption: z.string().optional(),
     /** The question the respondents were asked. */
     question: z.string().min(1),
+    /**
+     * How the answers are drawn.
+     *
+     * Bars are the plainest read, a stack shows the split in one bar, a
+     * waffle counts squares and a donut turns the whole thing into a ring.
+     */
+    style: z.enum(['bars', 'stack', 'waffle', 'donut']).optional(),
     responses: z.array(SurveyResponseSchema).min(1).max(30),
     /** A breakdown of the same question by a subgroup. */
     segments: z.array(SurveySegmentSchema).max(20).optional(),
@@ -1909,6 +1941,14 @@ export const ScrollyBlockSchema = BaseBlockSchema.extend({
     title: z.string().optional(),
     /** The steps of the narrative, in the order the reader meets them. */
     steps: z.array(ScrollyStepSchema).min(1).max(20),
+    /**
+     * How the steps are arranged against the picture.
+     *
+     * `sticky` keeps the picture in place while the steps go past it, which
+     * is how a scrollytelling piece is read. `stacked` gives every step its
+     * own picture, which is how it reads on a phone.
+     */
+    layout: z.enum(['sticky', 'stacked']).optional(),
     /** Show a marker of how far through the steps the reader is. */
     showProgress: z.boolean().optional(),
     caption: z.string().optional(),

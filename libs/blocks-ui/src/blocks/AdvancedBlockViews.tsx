@@ -16,6 +16,7 @@ import {
   networkGroupColor,
   networkGroups,
   SankeyRenderer,
+  SurveyResultsRenderer,
   TreemapRenderer,
 } from '@ai-news/media';
 import { AnomalyRenderer } from '@ai-news/media';
@@ -237,11 +238,25 @@ export const SurveyResultsBlockView: React.FC<{
   const total =
     responses.reduce((sum, response) => sum + response.count, 0) || data.totalRespondents || 1;
 
-  const chartData = surveyChartData(data.question, responses);
-  const svg = React.useMemo(
-    () => D3ChartRenderer.renderToSvg(chartData, { theme, width: 800, height: 400 }),
-    [chartData, theme]
-  );
+  /*
+   * The bar style borrows the ordinary chart renderer, so a survey drawn as
+   * bars looks exactly like every other bar chart in the platform. The other
+   * three styles are drawn by the survey renderer, which owns their look.
+   */
+  const style = data.style ?? 'bars';
+  const svg = React.useMemo(() => {
+    if (style === 'bars') {
+      return D3ChartRenderer.renderToSvg(surveyChartData(data.question, responses), {
+        theme,
+        width: 800,
+        height: 400,
+      });
+    }
+    return SurveyResultsRenderer.renderToSvg(
+      { ...data, responses, style },
+      { theme, width: 800, height: 400 }
+    );
+  }, [data, responses, style, theme]);
 
   return (
     <section
@@ -378,6 +393,7 @@ export const NetworkGraphBlockView: React.FC<{
 
   const textColor = theme === 'light' ? '#0f172a' : '#f8fafc';
   const linkColor = theme === 'light' ? '#94a3b8' : '#475569';
+  const style = data.style ?? 'filled';
 
   const maxDegree = Math.max(1, ...Object.values(layout.degrees));
 
@@ -431,6 +447,103 @@ export const NetworkGraphBlockView: React.FC<{
             const degree = layout.degrees[node.id] ?? 0;
             const radius = 7 + (degree / maxDegree) * 12 + (node.size ?? 0);
             const color = networkGroupColor(groups, node.group);
+            const ring = theme === 'light' ? '#ffffff' : '#0f172a';
+
+            /*
+             * Three ways of drawing the same node.
+             *
+             * Filled is the plainest; outline is a hollow ring, which reads
+             * better when the graph is dense; and bubble grows the node with
+             * the number of connections and gives it a halo, so the hubs are
+             * obvious without reading the labels.
+             */
+            if (style === 'outline') {
+              return (
+                <g
+                  key={node.id}
+                  transform={`translate(${position.x}, ${position.y})`}
+                  style={{ cursor: interactive ? 'grab' : 'default' }}
+                  onPointerDown={
+                    interactive
+                      ? (event) => {
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                        }
+                      : undefined
+                  }
+                  onPointerMove={
+                    interactive ? (event) => handlePointerMove(event, node.id) : undefined
+                  }
+                >
+                  <circle
+                    r={radius}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={2.5}
+                    strokeOpacity={0.9}
+                  >
+                    <title>{node.label}</title>
+                  </circle>
+                  {(data.showLabels ?? true) && (
+                    <text
+                      x={radius + 6}
+                      y={4}
+                      fontSize={11}
+                      fontWeight={600}
+                      fill={textColor}
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      {node.label}
+                    </text>
+                  )}
+                </g>
+              );
+            }
+
+            if (style === 'bubble') {
+              return (
+                <g
+                  key={node.id}
+                  transform={`translate(${position.x}, ${position.y})`}
+                  style={{ cursor: interactive ? 'grab' : 'default' }}
+                  onPointerDown={
+                    interactive
+                      ? (event) => {
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                        }
+                      : undefined
+                  }
+                  onPointerMove={
+                    interactive ? (event) => handlePointerMove(event, node.id) : undefined
+                  }
+                >
+                  <circle r={radius * 1.9} fill={color} fillOpacity={0.16}>
+                    <title>{`${node.label} — ${degree} connections`}</title>
+                  </circle>
+                  <circle
+                    r={radius}
+                    fill={color}
+                    fillOpacity={0.85}
+                    stroke={ring}
+                    strokeWidth={1.5}
+                  >
+                    <title>{node.label}</title>
+                  </circle>
+                  {(data.showLabels ?? true) && (
+                    <text
+                      x={radius * 1.9 + 6}
+                      y={4}
+                      fontSize={11}
+                      fontWeight={600}
+                      fill={textColor}
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      {node.label}
+                    </text>
+                  )}
+                </g>
+              );
+            }
+
             return (
               <g
                 key={node.id}
@@ -447,13 +560,7 @@ export const NetworkGraphBlockView: React.FC<{
                   interactive ? (event) => handlePointerMove(event, node.id) : undefined
                 }
               >
-                <circle
-                  r={radius}
-                  fill={color}
-                  fillOpacity={0.9}
-                  stroke={theme === 'light' ? '#ffffff' : '#0f172a'}
-                  strokeWidth={2}
-                >
+                <circle r={radius} fill={color} fillOpacity={0.9} stroke={ring} strokeWidth={2}>
                   <title>{node.label}</title>
                 </circle>
                 {(data.showLabels ?? true) && (

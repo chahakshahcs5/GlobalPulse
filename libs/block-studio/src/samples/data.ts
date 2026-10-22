@@ -3001,6 +3001,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'From a complaint to a corrected record',
         subtitle: 'Cases opened in the twelve months to March',
+        style: 'classic',
         caption: 'Each ribbon is as wide as the number of cases that took that path.',
         nodes: [
           { id: 'received', label: 'Received', color: '#3b82f6' },
@@ -3032,6 +3033,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'How the improvement fund was spent',
         subtitle: '£ millions, from allocation to completion',
+        style: 'vertical',
         nodes: [
           { id: 'fund', label: 'Improvement fund' },
           { id: 'grid', label: 'Grid upgrades' },
@@ -3058,6 +3060,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'How a turbine reaches the site',
         subtitle: 'Components, by weight, at each stage of the journey',
+        style: 'organic',
         nodes: [
           { id: 'raw', label: 'Raw materials', color: '#64748b' },
           { id: 'forged', label: 'Forged', color: '#3b82f6' },
@@ -3088,6 +3091,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       description: 'Flows in both directions, which is what a Sankey is for.',
       data: {
         title: 'Where the money came from, and where it went',
+        style: 'minimal',
         nodes: [
           { id: 'public', label: 'Public funding' },
           { id: 'private', label: 'Private investment' },
@@ -3118,17 +3122,18 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'The programme budget, in proportion',
         subtitle: '£ millions',
+        layout: 'squarify',
         nodes: [
-          { id: 'core', label: 'Core delivery' },
-          { id: 'upgrades', label: 'Upgrades', parentId: 'core' },
-          { id: 'metering', label: 'Metering', parentId: 'core' },
-          { id: 'digital', label: 'Digital', parentId: 'core' },
-          { id: 'field', label: 'Field equipment', parentId: 'upgrades' },
-          { id: 'substations', label: 'Substations', parentId: 'upgrades' },
-          { id: 'smart', label: 'Smart meters', parentId: 'metering' },
-          { id: 'manual', label: 'Manual reads', parentId: 'metering' },
-          { id: 'platform', label: 'Platform', parentId: 'digital' },
-          { id: 'training', label: 'Training', parentId: 'digital' },
+          { id: 'core', label: 'Core delivery', value: 79.5 },
+          { id: 'upgrades', label: 'Upgrades', parentId: 'core', value: 42.5 },
+          { id: 'metering', label: 'Metering', parentId: 'core', value: 18.2 },
+          { id: 'digital', label: 'Digital', parentId: 'core', value: 9.6 },
+          { id: 'field', label: 'Field equipment', parentId: 'upgrades', value: 28.4 },
+          { id: 'stations', label: 'Substations', parentId: 'upgrades', value: 14.1 },
+          { id: 'smart', label: 'Smart meters', parentId: 'metering', value: 12.8 },
+          { id: 'manual', label: 'Manual reads', parentId: 'metering', value: 5.4 },
+          { id: 'platform', label: 'Platform', parentId: 'digital', value: 6.1 },
+          { id: 'training', label: 'Training', parentId: 'digital', value: 3.5 },
         ],
         unit: '£m',
         showValues: true,
@@ -3142,16 +3147,17 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'The reviewed area, by region',
         subtitle: 'Square kilometres covered by the review',
+        layout: 'slice',
         nodes: [
-          { id: 'north', label: 'Northern region' },
-          { id: 'midlands', label: 'Midlands' },
-          { id: 'south', label: 'Southern region' },
-          { id: 'north-a', label: 'Northfield', parentId: 'north' },
-          { id: 'north-b', label: 'Harbour East', parentId: 'north' },
-          { id: 'mid-a', label: 'Ridgeway', parentId: 'midlands' },
-          { id: 'mid-b', label: 'Draycott', parentId: 'midlands' },
-          { id: 'south-a', label: 'Coastal', parentId: 'south' },
-          { id: 'south-b', label: 'Westmarsh', parentId: 'south' },
+          { id: 'north', label: 'Northern region', value: 4820 },
+          { id: 'midlands', label: 'Midlands', value: 3140 },
+          { id: 'south', label: 'Southern region', value: 2760 },
+          { id: 'north-a', label: 'Northfield', parentId: 'north', value: 2640 },
+          { id: 'north-b', label: 'Harbour East', parentId: 'north', value: 2180 },
+          { id: 'mid-a', label: 'Ridgeway', parentId: 'midlands', value: 1910 },
+          { id: 'mid-b', label: 'Draycott', parentId: 'midlands', value: 1230 },
+          { id: 'south-a', label: 'Coastal', parentId: 'south', value: 1540 },
+          { id: 'south-b', label: 'Westmarsh', parentId: 'south', value: 1220 },
         ],
         showValues: true,
         sourceAttribution: 'GlobalPulse investigations',
@@ -3164,6 +3170,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         title: 'Where the complaints came from',
         subtitle: 'Cases by reporting site',
+        layout: 'dice',
         nodes: [
           { id: 'northfield', label: 'Northfield', value: 412 },
           { id: 'harbour', label: 'Harbour East', value: 388 },
@@ -3182,8 +3189,9 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       description: 'Each part in the colour the newsroom wants it in.',
       data: {
         title: 'The programme budget, in proportion',
+        layout: 'binary',
         nodes: [
-          { id: 'core', label: 'Core delivery', color: '#3b82f6' },
+          { id: 'core', label: 'Core delivery', value: 79.5, color: '#3b82f6' },
           { id: 'upgrades', label: 'Upgrades', parentId: 'core', value: 42.5, color: '#10b981' },
           { id: 'metering', label: 'Metering', parentId: 'core', value: 18.2, color: '#f59e0b' },
           { id: 'digital', label: 'Digital', parentId: 'core', value: 9.6, color: '#ec4899' },
@@ -3229,6 +3237,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Companies and directors',
       description: 'Who is connected to whom, and how strongly.',
       data: {
+        style: 'filled',
         title: 'The network around the operator',
         subtitle: 'Ownership and directorship links found in the filings',
         nodes: [
@@ -3262,6 +3271,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Circular layout',
       description: 'The same graph, arranged on a circle.',
       data: {
+        style: 'filled',
         title: 'Who reports to whom',
         nodes: [
           { id: 'chief', label: 'Chief executive' },
@@ -3286,6 +3296,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A radial layout',
       description: 'The same graph, arranged in rings around a centre.',
       data: {
+        style: 'outline',
         title: 'The network around the operator',
         nodes: [
           { id: 'operator', label: 'Meridian Grid Ltd', group: 'Operator' },
@@ -3316,6 +3327,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Without labels',
       description: 'The shape of the graph on its own, with no names on it.',
       data: {
+        style: 'bubble',
         title: 'Connections between suppliers and sites',
         nodes: [
           { id: 'operator', label: 'Meridian Grid Ltd', group: 'Operator' },
@@ -3609,6 +3621,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A headline result',
       description: 'The answers, the share of each, and how thin the sample was.',
       data: {
+        style: 'bars',
         title: 'Do you trust the figures your council publishes?',
         subtitle: 'A survey of 1,204 adults in the region',
         question: 'Do you trust the figures your council publishes?',
@@ -3630,6 +3643,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'With a breakdown',
       description: 'The same question, split by who answered it.',
       data: {
+        style: 'bars',
         title: 'Trust, by age group',
         question: 'Do you trust the figures your council publishes?',
         responses: [
@@ -3678,6 +3692,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'A single question',
       description: 'A yes-or-no result, with the margin of error.',
       data: {
+        style: 'stack',
         title: 'Should the programme be published?',
         question: 'Should the raw data behind the grid review be published?',
         responses: [
@@ -3697,6 +3712,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Just the question',
       description: 'The result on its own, with no title above it.',
       data: {
+        style: 'waffle',
         question: 'Have you had a bill you thought was wrong?',
         responses: [
           { option: 'Yes', count: 311 },
@@ -3714,6 +3730,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Four groups',
       description: 'The same question, split four ways.',
       data: {
+        style: 'donut',
         title: 'Trust in the figures, by how people get them',
         question: 'Do you trust the figures your council publishes?',
         responses: [

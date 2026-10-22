@@ -15,6 +15,7 @@ import {
   RegressionModel,
   RegressionRenderer,
   SankeyRenderer,
+  SurveyResultsRenderer,
   TreemapRenderer,
   computeNetworkLayout,
   networkGroupColor,
@@ -390,5 +391,104 @@ describe('The new blocks are registered', () => {
       expect(definition!.description.length).toBeGreaterThan(10);
       expect(definition!.schemaVersion).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+/**
+ * A variant is a different way of drawing the same thing, not just different
+ * numbers. These tests check that each style really does draw a different
+ * picture — a variant that only changed the data would be a lie about what
+ * the studio is offering.
+ */
+describe('The style variants really are different pictures', () => {
+  it('draws the sankey in four different ways', () => {
+    const styles = ['classic', 'vertical', 'minimal', 'organic'] as const;
+    const drawings = styles.map((style) =>
+      SankeyRenderer.renderToSvg({ ...sankeyData, style }, { width: 800, height: 400 })
+    );
+
+    // Every style draws something.
+    for (const drawing of drawings) {
+      expect(drawing).toContain('<svg');
+      expect(drawing.length).toBeGreaterThan(200);
+    }
+
+    // And no two of them draw the same thing.
+    expect(new Set(drawings).size).toBe(styles.length);
+
+    // A minimal flow is hairlines, not ribbons.
+    expect(drawings[2]).toContain('stroke-width="1.5"');
+    // An organic flow curves.
+    expect(drawings[3]).toContain(' Q');
+    // A classic flow is a band.
+    expect(drawings[0]).toContain('linearGradient');
+    // A vertical flow puts the name above the bar.
+    expect(drawings[1]).toContain('text-anchor="middle"');
+  });
+
+  it('keeps every label of every sankey style on the page', () => {
+    const styles = ['classic', 'vertical', 'minimal', 'organic'] as const;
+
+    for (const style of styles) {
+      const svg = SankeyRenderer.renderToSvg({ ...sankeyData, style }, { width: 800, height: 400 });
+
+      for (const match of svg.matchAll(/<text x="(-?[\d.]+)" y="(-?[\d.]+)"/g)) {
+        const x = Number(match[1]);
+        const y = Number(match[2]);
+        // A label that hangs off the edge of the picture is a label the
+        // reader cannot read.
+        expect(x, `${style} label x`).toBeGreaterThanOrEqual(0);
+        expect(x, `${style} label x`).toBeLessThanOrEqual(800);
+        expect(y, `${style} label y`).toBeGreaterThanOrEqual(0);
+        expect(y, `${style} label y`).toBeLessThanOrEqual(400);
+      }
+    }
+  });
+
+  it('tiles the treemap four different ways', () => {
+    /*
+     * A tree with enough parts in it for the tilings to tell each other
+     * apart. Two leaves laid side by side look the same however they are
+     * cut, so the tree has to be deep enough to show the difference.
+     */
+    const tree = {
+      title: 'The budget',
+      nodes: [
+        { id: 'core', label: 'Core' },
+        { id: 'upgrades', label: 'Upgrades', parentId: 'core', value: 40 },
+        { id: 'metering', label: 'Metering', parentId: 'core', value: 20 },
+        { id: 'training', label: 'Training', parentId: 'core', value: 12 },
+        { id: 'audit', label: 'Audit', parentId: 'core', value: 8 },
+        { id: 'field', label: 'Field equipment', parentId: 'upgrades', value: 25 },
+        { id: 'stations', label: 'Substations', parentId: 'upgrades', value: 15 },
+        { id: 'smart', label: 'Smart meters', parentId: 'metering', value: 14 },
+        { id: 'manual', label: 'Manual reads', parentId: 'metering', value: 6 },
+      ],
+    };
+    const layouts = ['squarify', 'slice', 'dice', 'binary'] as const;
+    const drawings = layouts.map((layout) =>
+      TreemapRenderer.renderToSvg({ ...tree, layout }, { width: 800, height: 400 })
+    );
+
+    for (const drawing of drawings) {
+      expect(drawing).toContain('<svg');
+    }
+    // Four different tilings of the same parts.
+    expect(new Set(drawings).size).toBe(layouts.length);
+  });
+
+  it('draws the survey in four different ways', () => {
+    const styles = ['bars', 'stack', 'waffle', 'donut'] as const;
+    const drawings = styles.map((style) =>
+      SurveyResultsRenderer.renderToSvg({ ...surveyData, style }, { width: 800, height: 400 })
+    );
+
+    for (const drawing of drawings) {
+      expect(drawing).toContain('<svg');
+    }
+    expect(new Set(drawings).size).toBe(styles.length);
+    // A waffle is a grid of squares; a donut is a ring of paths.
+    expect(drawings[2]).toContain('<rect');
+    expect(drawings[3]).toContain('<path');
   });
 });
