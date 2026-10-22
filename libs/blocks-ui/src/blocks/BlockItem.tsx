@@ -552,27 +552,61 @@ function renderBlock(
               : block.data.aspectRatio === '21:9'
                 ? 'aspect-[21/9]'
                 : 'aspect-video';
+      /*
+       * How the picture is drawn.
+       *
+       * Bare, in a frame with a shadow, or full-bleed with no rounding at
+       * all. The picture is the same; only the treatment changes.
+       */
+      const layout = block.data.layout ?? 'plain';
+
+      const picture = (
+        <img
+          src={block.data.url}
+          alt={block.data.altText}
+          className={`w-full object-cover border-slate-200 dark:border-slate-800 max-h-[500px] ${aspectClass} ${
+            layout === 'framed'
+              ? 'rounded-xl border shadow-md'
+              : layout === 'full-bleed'
+                ? 'rounded-none border-0'
+                : 'rounded-xl border'
+          }`}
+          loading="lazy"
+        />
+      );
+
+      const caption = (block.data.caption || block.data.credit || block.data.sourceAttribution) && (
+        <figcaption className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap justify-between gap-2 px-1">
+          <span className="min-w-0">{block.data.caption}</span>
+          <span className="flex flex-wrap items-center gap-3">
+            {block.data.sourceAttribution && <span>Source: {block.data.sourceAttribution}</span>}
+            {block.data.credit && <span className="font-mono">Credit: {block.data.credit}</span>}
+          </span>
+        </figcaption>
+      );
+
+      if (layout === 'full-bleed') {
+        return (
+          <figure className="my-8 -mx-4 sm:-mx-8">
+            {picture}
+            {caption}
+          </figure>
+        );
+      }
+
+      if (layout === 'framed') {
+        return (
+          <figure className="my-6 rounded-2xl bg-slate-100 dark:bg-slate-800/40 p-3 sm:p-4 shadow-sm">
+            {picture}
+            {caption}
+          </figure>
+        );
+      }
+
       return (
         <figure className="my-6">
-          <img
-            src={block.data.url}
-            alt={block.data.altText}
-            className={`w-full rounded-xl object-cover border border-slate-200 dark:border-slate-800 max-h-[500px] ${aspectClass}`}
-            loading="lazy"
-          />
-          {(block.data.caption || block.data.credit || block.data.sourceAttribution) && (
-            <figcaption className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap justify-between gap-2 px-1">
-              <span className="min-w-0">{block.data.caption}</span>
-              <span className="flex flex-wrap items-center gap-3">
-                {block.data.sourceAttribution && (
-                  <span>Source: {block.data.sourceAttribution}</span>
-                )}
-                {block.data.credit && (
-                  <span className="font-mono">Credit: {block.data.credit}</span>
-                )}
-              </span>
-            </figcaption>
-          )}
+          {picture}
+          {caption}
         </figure>
       );
     }

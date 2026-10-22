@@ -26,55 +26,78 @@ export const AnnotatedImageBlockView: React.FC<{ data: AnnotatedImageBlock['data
 }) => {
   const [active, setActive] = useState<string | undefined>(undefined);
 
+  /*
+   * How the annotations are drawn.
+   *
+   * As dots on the picture that open when they are clicked, as numbered
+   * markers, or as callouts whose text is always shown. The annotations
+   * are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'markers';
+  const alwaysOpen = layout === 'callouts';
+
   return (
     <figure className="my-8">
       <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
         <img src={data.url} alt={data.altText} className="w-full" loading="lazy" />
-        {data.annotations.map((annotation) => {
-          const isActive = active === annotation.id;
+        {data.annotations.map((annotation, index) => {
+          const isActive = alwaysOpen || active === annotation.id;
           return (
             <button
               key={annotation.id}
               type="button"
               onClick={() => setActive(isActive ? undefined : annotation.id)}
               aria-label={annotation.label}
-              className={`absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-all ${
-                isActive
-                  ? 'bg-indigo-500 border-white scale-125'
-                  : 'bg-white/80 border-indigo-500 hover:scale-110'
+              className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all ${
+                layout === 'numbered'
+                  ? `flex h-6 w-6 items-center justify-center rounded-full border-2 text-[11px] font-bold ${
+                      isActive
+                        ? 'bg-indigo-600 border-white text-white'
+                        : 'bg-white/90 border-indigo-500 text-indigo-700'
+                    }`
+                  : `h-4 w-4 rounded-full border-2 ${
+                      isActive
+                        ? 'bg-indigo-500 border-white scale-125'
+                        : 'bg-white/80 border-indigo-500 hover:scale-110'
+                    }`
               }`}
               style={{ left: `${annotation.xPercent}%`, top: `${annotation.yPercent}%` }}
-            />
+            >
+              {layout === 'numbered' ? index + 1 : null}
+            </button>
           );
         })}
       </div>
 
       {data.annotations.length > 0 && (
         <ul className="mt-3 space-y-1.5">
-          {data.annotations.map((annotation) => (
-            <li
-              key={annotation.id}
-              className={`text-sm rounded-lg px-2 py-1.5 ${
-                active === annotation.id
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-900 dark:text-indigo-200'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => setActive(annotation.id)}
-                className="text-left font-semibold"
+          {data.annotations.map((annotation, index) => {
+            const isActive = alwaysOpen || active === annotation.id;
+            return (
+              <li
+                key={annotation.id}
+                className={`text-sm rounded-lg px-2 py-1.5 ${
+                  isActive
+                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-900 dark:text-indigo-200'
+                    : 'text-slate-600 dark:text-slate-400'
+                }`}
               >
-                {annotation.label}
-              </button>
-              {annotation.description && (
-                <span className="block text-xs">{annotation.description}</span>
-              )}
-            </li>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => setActive(annotation.id)}
+                  className="text-left font-semibold"
+                >
+                  {layout === 'numbered' ? `${index + 1}. ` : ''}
+                  {annotation.label}
+                </button>
+                {annotation.description && (
+                  <span className="block text-xs">{annotation.description}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
-
       {(data.caption || data.credit) && (
         <figcaption className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           {data.caption}
@@ -86,6 +109,146 @@ export const AnnotatedImageBlockView: React.FC<{ data: AnnotatedImageBlock['data
 };
 
 export const VideoGalleryBlockView: React.FC<{ data: VideoGalleryBlock['data'] }> = ({ data }) => {
+  /*
+   * How the gallery is drawn.
+   *
+   * A grid of films, a list of them, or the first one large with the
+   * rest in a row beneath it. The films are the same; only the treatment
+   * changes.
+   */
+  const layout = data.layout ?? 'grid';
+
+  const player = (video: (typeof data.videos)[number], className: string) => (
+    <div className={`relative aspect-video bg-slate-900 ${className}`}>
+      <video
+        controls
+        preload="none"
+        poster={video.posterUrl}
+        className="h-full w-full"
+        aria-label={video.title}
+      >
+        <source src={video.url} />
+        <track kind="captions" />
+      </video>
+    </div>
+  );
+
+  const details = (video: (typeof data.videos)[number]) => (
+    <>
+      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{video.title}</div>
+      <div className="mt-0.5 flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+        {video.durationSeconds !== undefined && (
+          <span>{formatTimestamp(video.durationSeconds)}</span>
+        )}
+        {video.credit && <span>Credit: {video.credit}</span>}
+      </div>
+      {video.caption && (
+        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">{video.caption}</p>
+      )}
+      {video.chapters && video.chapters.length > 0 && (
+        <ol className="mt-2 space-y-0.5">
+          {video.chapters.map((chapter) => (
+            <li key={chapter.startSeconds} className="text-[11px] text-slate-500">
+              <span className="font-mono">{formatTimestamp(chapter.startSeconds)}</span>{' '}
+              {chapter.title}
+            </li>
+          ))}
+        </ol>
+      )}
+      {video.transcriptSegments && video.transcriptSegments.length > 0 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-[11px] font-semibold text-indigo-700 dark:text-indigo-400">
+            Transcript ({video.transcriptSegments.length} segments)
+          </summary>
+          <ol className="mt-1.5 space-y-1">
+            {video.transcriptSegments.map((segment, idx) => (
+              <li key={idx} className="text-[11px] text-slate-600 dark:text-slate-400">
+                <span className="font-mono">{formatTimestamp(segment.startSeconds)}</span>{' '}
+                {segment.speaker ? <b>{segment.speaker}: </b> : null}
+                {segment.text}
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </>
+  );
+
+  if (layout === 'list') {
+    return (
+      <section aria-label={data.title || 'Video gallery'} className="my-8">
+        {data.title && (
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+            {data.title}
+          </h3>
+        )}
+        {data.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{data.description}</p>
+        )}
+        <ul className="divide-y divide-slate-200 dark:divide-slate-800 border-y border-slate-200 dark:border-slate-800">
+          {data.videos.map((video) => (
+            <li key={video.id} className="py-4 flex flex-col sm:flex-row gap-4">
+              <div className="sm:w-64 shrink-0">{player(video, 'rounded-lg overflow-hidden')}</div>
+              <div className="flex-1 min-w-0">{details(video)}</div>
+            </li>
+          ))}
+        </ul>
+        {data.sourceAttribution && (
+          <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+            Source: {data.sourceAttribution}
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  if (layout === 'featured') {
+    const [first, ...rest] = data.videos;
+    return (
+      <section aria-label={data.title || 'Video gallery'} className="my-8">
+        {data.title && (
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+            {data.title}
+          </h3>
+        )}
+        {data.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{data.description}</p>
+        )}
+
+        {first && (
+          <figure className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm">
+            {player(first, '')}
+            <figcaption className="p-4">{details(first)}</figcaption>
+          </figure>
+        )}
+
+        {rest.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {rest.map((video) => (
+              <figure
+                key={video.id}
+                className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm"
+              >
+                {player(video, '')}
+                <figcaption className="p-2.5">
+                  <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                    {video.title}
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
+
+        {data.sourceAttribution && (
+          <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+            Source: {data.sourceAttribution}
+          </p>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section aria-label={data.title || 'Video gallery'} className="my-8">
       {data.title && (
@@ -167,6 +330,126 @@ export const VideoGalleryBlockView: React.FC<{ data: VideoGalleryBlock['data'] }
 };
 
 export const PodcastBlockView: React.FC<{ data: PodcastBlock['data'] }> = ({ data }) => {
+  /*
+   * How the show is drawn.
+   *
+   * A card an episode, a list of them, or the latest one large with the
+   * back catalogue beneath it. The episodes are the same; only the
+   * treatment changes.
+   */
+  const layout = data.layout ?? 'card';
+
+  if (layout === 'featured') {
+    const [first, ...rest] = data.episodes;
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.description && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.description}</p>
+          )}
+        </header>
+
+        {first && (
+          <div className="flex flex-col sm:flex-row gap-5 p-5">
+            {first.artworkUrl && (
+              <img
+                src={first.artworkUrl}
+                alt=""
+                aria-hidden="true"
+                className="w-full sm:w-48 rounded-xl object-cover border border-slate-200 dark:border-slate-800"
+                loading="lazy"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {first.showTitle}
+                {first.seasonNumber !== undefined ? ` · S${first.seasonNumber}` : ''}
+                {first.episodeNumber !== undefined ? ` E${first.episodeNumber}` : ''}
+              </div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {first.episodeTitle}
+              </div>
+              {first.description && (
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  {first.description}
+                </p>
+              )}
+              <audio
+                controls
+                preload="none"
+                className="mt-3 w-full"
+                aria-label={first.episodeTitle}
+              >
+                <source src={first.audioUrl} />
+              </audio>
+            </div>
+          </div>
+        )}
+
+        {rest.length > 0 && (
+          <ul className="divide-y divide-slate-200 dark:border-slate-800 border-t border-slate-200 dark:border-slate-800">
+            {rest.map((episode, idx) => (
+              <li key={`${episode.showTitle}-${idx}`} className="px-5 py-3">
+                <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {episode.showTitle}
+                  {episode.episodeNumber !== undefined ? ` E${episode.episodeNumber}` : ''}
+                </div>
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {episode.episodeTitle}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {data.sourceAttribution && (
+          <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            Source: {data.sourceAttribution}
+          </footer>
+        )}
+      </section>
+    );
+  }
+
+  if (layout === 'list') {
+    return (
+      <section aria-label={data.title} className="my-8">
+        {data.title && (
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        )}
+        {data.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">{data.description}</p>
+        )}
+        <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800 border-y border-slate-200 dark:border-slate-800">
+          {data.episodes.map((episode, idx) => (
+            <li key={`${episode.showTitle}-${idx}`} className="py-3 flex items-baseline gap-3">
+              <span className="font-mono text-[11px] text-slate-400 shrink-0 w-16">
+                {episode.episodeNumber !== undefined ? `E${episode.episodeNumber}` : ''}
+              </span>
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex-1">
+                {episode.episodeTitle}
+              </span>
+              {episode.durationSeconds !== undefined && (
+                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                  {formatTimestamp(episode.durationSeconds)}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+        {data.sourceAttribution && (
+          <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+            Source: {data.sourceAttribution}
+          </p>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}
@@ -271,6 +554,7 @@ export const PodcastBlockView: React.FC<{ data: PodcastBlock['data'] }> = ({ dat
 
 export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ data }) => {
   const peaks = data.peaks;
+  const layout = data.layout ?? 'bars';
 
   return (
     <figure aria-label={data.title || 'Audio waveform'} className="my-6">
@@ -281,19 +565,52 @@ export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ d
       )}
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-4">
-        <div
-          className="flex h-20 items-center gap-[2px]"
-          role="img"
-          aria-label={`Waveform with ${peaks.length} amplitude samples${data.durationSeconds ? ` over ${formatTimestamp(data.durationSeconds)}` : ''}`}
-        >
-          {peaks.map((peak, idx) => (
-            <span
-              key={idx}
-              className="flex-1 rounded-sm bg-indigo-500/70"
-              style={{ height: `${Math.max(4, peak * 100)}%` }}
-            />
-          ))}
-        </div>
+        {/*
+          How the sound is drawn.
+
+          A waveform mirrored about its centre, bars rising from the
+          baseline, or the markers alone with no amplitude at all. The
+          audio is the same; only the treatment changes.
+        */}
+        {layout === 'markers' ? (
+          <div className="relative h-8" role="img" aria-label="Segment markers">
+            <span className="absolute left-0 right-0 top-1/2 h-px bg-slate-300 dark:bg-slate-700" />
+            {data.segments.map((segment) => (
+              <span
+                key={`${segment.startSeconds}-${segment.label}`}
+                className="absolute -top-1 h-3 w-1 rounded-full bg-indigo-500"
+                style={{
+                  left: `${data.durationSeconds ? (segment.startSeconds / data.durationSeconds) * 100 : 0}%`,
+                }}
+                title={segment.label}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            className={`flex items-center gap-[2px] ${layout === 'waveform' ? 'h-20' : 'h-20'}`}
+            role="img"
+            aria-label={`Waveform with ${peaks.length} amplitude samples${data.durationSeconds ? ` over ${formatTimestamp(data.durationSeconds)}` : ''}`}
+          >
+            {peaks.map((peak, idx) => (
+              <span
+                key={idx}
+                className={`flex-1 rounded-sm bg-indigo-500/70 ${
+                  layout === 'waveform' ? 'self-center' : ''
+                }`}
+                style={{
+                  height:
+                    layout === 'waveform'
+                      ? `${Math.max(4, peak * 100)}%`
+                      : `${Math.max(4, peak * 100)}%`,
+                  ...(layout === 'waveform'
+                    ? { position: 'relative', top: `${50 - Math.max(2, peak * 50)}%` }
+                    : {}),
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {data.mediaType === 'audio' && (
           <audio controls preload="none" className="mt-3 w-full" aria-label="Waveform audio">
@@ -330,6 +647,108 @@ export const WaveformBlockView: React.FC<{ data: WaveformBlock['data'] }> = ({ d
 };
 
 export const TranscriptBlockView: React.FC<{ data: TranscriptBlock['data'] }> = ({ data }) => {
+  /*
+   * How the transcript is drawn.
+   *
+   * A line at a time with a timestamp, grouped under the speaker who
+   * said it, or run together into paragraphs to read. The transcript is
+   * the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'lines';
+
+  if (layout === 'speaker') {
+    const speakers: Array<{ name: string; lines: typeof data.segments }> = [];
+    for (const segment of data.segments) {
+      const name = segment.speaker ?? 'Unknown';
+      const last = speakers[speakers.length - 1];
+      if (last && last.name === name) last.lines.push(segment);
+      else speakers.push({ name, lines: [segment] });
+    }
+
+    return (
+      <section
+        aria-label={data.title || 'Transcript'}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {data.title || 'Transcript'}
+            </h3>
+            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+              {data.mediaType} · {data.language}
+            </p>
+          </div>
+        </header>
+
+        <div className="px-5 py-4 space-y-5">
+          {speakers.map((group, idx) => (
+            <div key={`${group.name}-${idx}`}>
+              <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-400">
+                {group.name}
+              </h4>
+              <div className="mt-1 space-y-1.5">
+                {group.lines.map((segment, lineIdx) => (
+                  <p
+                    key={lineIdx}
+                    className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                  >
+                    {segment.text}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {(data.methodology || data.sourceAttribution) && (
+          <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+            {data.sourceAttribution && <p>Source: {data.sourceAttribution}</p>}
+            {data.methodology && <p>Methodology: {data.methodology}</p>}
+          </footer>
+        )}
+      </section>
+    );
+  }
+
+  if (layout === 'paragraphs') {
+    return (
+      <section
+        aria-label={data.title || 'Transcript'}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            {data.title || 'Transcript'}
+          </h3>
+          <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            {data.mediaType} · {data.language}
+          </p>
+        </header>
+
+        <div className="px-5 py-5 space-y-4">
+          {data.segments.map((segment, idx) => (
+            <p key={idx} className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+              {segment.speaker && (
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {segment.speaker}:{' '}
+                </span>
+              )}
+              {segment.text}
+            </p>
+          ))}
+        </div>
+
+        {(data.methodology || data.sourceAttribution) && (
+          <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+            {data.sourceAttribution && <p>Source: {data.sourceAttribution}</p>}
+            {data.methodology && <p>Methodology: {data.methodology}</p>}
+          </footer>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title || 'Transcript'}

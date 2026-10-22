@@ -132,6 +132,104 @@ export const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({
   const slide = data.slides[currentSlide] || data.slides[0];
   if (!slide) return null;
 
+  /*
+   * How the deck is drawn.
+   *
+   * One slide at a time with arrows, every slide stacked so the reader
+   * scrolls through them, or every slide as a card in a grid. The slides
+   * are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'carousel';
+
+  const slideBody = (content: (typeof data.slides)[number], showImage: boolean) => (
+    <>
+      {showImage && content.imageUrl && (
+        <img
+          src={content.imageUrl}
+          alt={content.title}
+          className="w-full h-56 sm:h-72 object-cover rounded-lg mb-4 border border-slate-200 dark:border-slate-800"
+          loading="lazy"
+        />
+      )}
+      <h5 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">{content.title}</h5>
+      {content.body && (
+        <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-3">
+          {content.body}
+        </p>
+      )}
+      {content.bullets && content.bullets.length > 0 && (
+        <ul className="space-y-1.5 mb-4">
+          {content.bullets.map((b, idx) => (
+            <li
+              key={idx}
+              className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+            >
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold">•</span>
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {content.sourceAttribution && (
+        <div className="text-xs text-slate-500 italic mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60">
+          Source: {content.sourceAttribution}
+        </div>
+      )}
+    </>
+  );
+
+  if (layout === 'scroll') {
+    return (
+      <div className="my-8">
+        <div className="mb-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Interactive Slide Deck
+          </span>
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h4>
+        </div>
+        <div className="space-y-4">
+          {data.slides.map((content) => (
+            <section
+              key={content.slideNumber}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 shadow-sm"
+            >
+              <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                {content.slideNumber}
+              </span>
+              {slideBody(content, true)}
+            </section>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'grid') {
+    return (
+      <div className="my-8">
+        <div className="mb-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Interactive Slide Deck
+          </span>
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {data.slides.map((content) => (
+            <section
+              key={content.slideNumber}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 shadow-sm"
+            >
+              <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                {content.slideNumber}
+              </span>
+              {slideBody(content, true)}
+            </section>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 backdrop-blur-md shadow-md">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
@@ -163,44 +261,63 @@ export const SlideDeckBlockView: React.FC<{ data: SlideDeckBlock['data'] }> = ({
           </button>
         </div>
       </div>
-      {slide.imageUrl && (
-        <img
-          src={slide.imageUrl}
-          alt={slide.title}
-          className="w-full h-56 sm:h-72 object-cover rounded-lg mb-4 border border-slate-200 dark:border-slate-800"
-          loading="lazy"
-        />
-      )}
-      <h5 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">{slide.title}</h5>
-      {slide.body && (
-        <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-3">
-          {slide.body}
-        </p>
-      )}
-      {slide.bullets && slide.bullets.length > 0 && (
-        <ul className="space-y-1.5 mb-4">
-          {slide.bullets.map((b, idx) => (
-            <li
-              key={idx}
-              className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
-            >
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold">•</span>
-              <span>{b}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {slide.sourceAttribution && (
-        <div className="text-xs text-slate-500 italic mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60">
-          Source: {slide.sourceAttribution}
-        </div>
-      )}
+      {slideBody(slide, true)}
     </div>
   );
 };
 
 export const ImageDiffBlockView: React.FC<{ data: ImageDiffBlock['data'] }> = ({ data }) => {
   const [sliderPos, setSliderPos] = React.useState(data.defaultSplitPercent ?? 50);
+
+  /*
+   * How the two pictures are drawn.
+   *
+   * One over the other with a draggable split, side by side, or stacked.
+   * The pictures are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'slider';
+
+  if (layout === 'side-by-side' || layout === 'stacked') {
+    const stacked = layout === 'stacked';
+    return (
+      <figure className="my-8">
+        <div className={`grid gap-3 ${stacked ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+          <div>
+            <img
+              src={data.beforeUrl}
+              alt={data.beforeLabel || 'Before'}
+              className="w-full object-cover rounded-xl border border-slate-200 dark:border-slate-800"
+              loading="lazy"
+            />
+            {data.beforeLabel && (
+              <p className="mt-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                {data.beforeLabel}
+              </p>
+            )}
+          </div>
+          <div>
+            <img
+              src={data.afterUrl}
+              alt={data.afterLabel || 'After'}
+              className="w-full object-cover rounded-xl border border-slate-200 dark:border-slate-800"
+              loading="lazy"
+            />
+            {data.afterLabel && (
+              <p className="mt-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                {data.afterLabel}
+              </p>
+            )}
+          </div>
+        </div>
+        {(data.caption || data.credit) && (
+          <figcaption className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400">
+            {data.caption && <span>{data.caption}</span>}
+            {data.credit && <span className="font-mono text-slate-500">Credit: {data.credit}</span>}
+          </figcaption>
+        )}
+      </figure>
+    );
+  }
 
   return (
     <figure className="my-8 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl">
@@ -283,6 +400,53 @@ export const ImageDiffBlockView: React.FC<{ data: ImageDiffBlock['data'] }> = ({
 };
 
 export const EmbedBlockView: React.FC<{ data: EmbedBlock['data'] }> = ({ data }) => {
+  /*
+   * How the embed is drawn.
+   *
+   * As a player, as a card that links out, or as a bare link. The embed
+   * is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'card';
+
+  if (layout === 'link') {
+    return (
+      <p className="my-4 text-sm">
+        <a
+          href={data.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 font-semibold text-indigo-700 dark:text-indigo-400 hover:underline"
+        >
+          {data.title || 'Embedded content'}
+          <span aria-hidden="true">↗</span>
+        </a>
+        <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          {data.provider}
+        </span>
+      </p>
+    );
+  }
+
+  if (layout === 'iframe') {
+    return (
+      <figure className="my-6">
+        <div className="aspect-video w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950">
+          <iframe
+            src={data.url}
+            title={data.title || `${data.provider} embed`}
+            className="w-full h-full"
+            allowFullScreen
+          />
+        </div>
+        {data.title && (
+          <figcaption className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {data.title}
+          </figcaption>
+        )}
+      </figure>
+    );
+  }
+
   return (
     <div className="my-6 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
       <div className="flex items-center justify-between mb-3">

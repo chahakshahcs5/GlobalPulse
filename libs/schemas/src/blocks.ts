@@ -147,6 +147,13 @@ export const QuoteBlockSchema = BaseBlockSchema.extend({
 export const ImageBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('image'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['plain', 'framed', 'full-bleed']).optional(),
     url: z.string().url(),
     altText: z.string().min(1),
     caption: z.string().optional(),
@@ -177,6 +184,13 @@ export const GalleryBlockSchema = BaseBlockSchema.extend({
 export const AnnotatedImageBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('annotated_image'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['markers', 'numbered', 'callouts']).optional(),
     url: z.string().url(),
     altText: z.string().min(1),
     caption: z.string().optional(),
@@ -435,6 +449,13 @@ export const FlowBlockSchema = BaseBlockSchema.extend({
 export const VideoBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('video'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['player', 'cinematic', 'inline']).optional(),
     url: z.string().url().or(z.string().startsWith('/')),
     posterUrl: z.string().url().or(z.string().startsWith('/')).optional(),
     aspectRatio: z.enum(['16:9', '9:16', '1:1']).default('16:9'),
@@ -480,6 +501,13 @@ export type AudioChapter = z.infer<typeof AudioChapterSchema>;
 export const AudioBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('audio'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['player', 'inline', 'transcript-first']).optional(),
     url: z.string().url().or(z.string().startsWith('/')),
     title: z.string().min(1),
     narrator: z.string().optional(),
@@ -503,6 +531,13 @@ export const AudioBlockSchema = BaseBlockSchema.extend({
 export const SlideDeckBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('slide_deck'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['carousel', 'scroll', 'grid']).optional(),
     title: z.string().min(1),
     slides: z
       .array(
@@ -662,6 +697,13 @@ export const RelatedStoriesBlockSchema = BaseBlockSchema.extend({
 export const EmbedBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('embed'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['iframe', 'card', 'link']).optional(),
     provider: z.enum(['youtube', 'twitter', 'bluesky', 'github', 'generic']),
     url: z.string().url(),
     title: z.string().optional(),
@@ -671,6 +713,13 @@ export const EmbedBlockSchema = BaseBlockSchema.extend({
 export const ImageDiffBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('image_diff'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['slider', 'side-by-side', 'stacked']).optional(),
     beforeUrl: z.string().url(),
     afterUrl: z.string().url(),
     beforeLabel: z.string().default('Before'),
@@ -1608,6 +1657,13 @@ export type VideoGalleryItem = z.infer<typeof VideoGalleryItemSchema>;
 export const VideoGalleryBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('video_gallery'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['grid', 'list', 'featured']).optional(),
     title: z.string().min(1).max(300).optional(),
     description: z.string().max(2000).optional(),
     videos: z.array(VideoGalleryItemSchema).min(1).max(24),
@@ -1637,6 +1693,13 @@ export type PodcastEpisode = z.infer<typeof PodcastEpisodeSchema>;
 export const PodcastBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('podcast'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['card', 'list', 'featured']).optional(),
     title: z.string().min(1).max(300),
     description: z.string().max(5000).optional(),
     episodes: z.array(PodcastEpisodeSchema).min(1).max(50),
@@ -1655,6 +1718,13 @@ export type WaveformSegment = z.infer<typeof WaveformSegmentSchema>;
 export const WaveformBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('waveform'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['waveform', 'bars', 'markers']).optional(),
     title: z.string().min(1).max(300).optional(),
     mediaUrl: z.string().url().or(z.string().startsWith('/')),
     mediaType: z.enum(['audio', 'video']).default('audio'),
@@ -1679,6 +1749,13 @@ export type TranscriptSegment = z.infer<typeof TranscriptSegmentSchema>;
 export const TranscriptBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('transcript'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['lines', 'speaker', 'paragraphs']).optional(),
     title: z.string().min(1).max(300).optional(),
     mediaType: z.enum(['audio', 'video']).default('audio'),
     /** Reference to the media the transcript belongs to (video/audio URL). */

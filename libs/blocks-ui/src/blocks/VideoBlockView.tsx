@@ -73,10 +73,31 @@ export const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data })
         ? 'aspect-square max-w-lg mx-auto'
         : 'aspect-video w-full';
 
+  /*
+   * How the video is drawn.
+   *
+   * A card with its chapters and transcript under it, a cinematic frame
+   * with no card around it, or an inline player for a mention in the
+   * text. The video is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'player';
+  const isCinematic = layout === 'cinematic';
+  const isInline = layout === 'inline';
+
   return (
-    <div className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-md transition-all">
+    <div
+      className={
+        isCinematic
+          ? 'my-8 -mx-4 sm:-mx-8 transition-all'
+          : isInline
+            ? 'my-4 flex items-start gap-4 transition-all'
+            : 'my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-md transition-all'
+      }
+    >
       <div
-        className={`relative ${aspectClass} bg-slate-950 group select-none overflow-hidden flex items-center justify-center`}
+        className={`relative ${aspectClass} ${
+          isCinematic ? '' : isInline ? 'w-40 sm:w-64 shrink-0 rounded-lg overflow-hidden' : ''
+        } bg-slate-950 group select-none overflow-hidden flex items-center justify-center`}
       >
         {hasError ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-300 bg-slate-900/90 z-20">
@@ -143,13 +164,23 @@ export const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data })
       </div>
 
       {data.caption && (
-        <div className="px-5 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800/80 flex items-start gap-2.5">
-          <span className="inline-block mt-0.5 w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+        <div
+          className={`text-xs sm:text-sm text-slate-600 dark:text-slate-300 ${
+            isCinematic
+              ? 'px-4 sm:px-6 pt-3'
+              : isInline
+                ? 'py-1'
+                : 'px-5 py-3 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800/80 flex items-start gap-2.5'
+          }`}
+        >
+          {!isInline && (
+            <span className="inline-block mt-0.5 w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+          )}
           <p className="leading-relaxed">{data.caption}</p>
         </div>
       )}
 
-      {(data.chapters?.length ?? 0) > 0 && (
+      {!isInline && (data.chapters?.length ?? 0) > 0 && (
         <div className="border-t border-slate-200 dark:border-slate-800/80 px-5 py-3">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
             Chapters
@@ -184,7 +215,7 @@ export const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data })
         </div>
       )}
 
-      {(data.transcriptSegments?.length ?? 0) > 0 && (
+      {!isInline && (data.transcriptSegments?.length ?? 0) > 0 && (
         <details className="border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 transition-colors group">
           <summary className="px-5 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-between transition-colors">
             <span className="flex items-center gap-2">
@@ -223,7 +254,7 @@ export const VideoBlockView: React.FC<{ data: VideoBlock['data'] }> = ({ data })
         </details>
       )}
 
-      {data.transcription && (
+      {!isInline && data.transcription && (
         <details className="border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 transition-colors group">
           <summary className="px-5 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-between transition-colors">
             <span className="flex items-center gap-2">
