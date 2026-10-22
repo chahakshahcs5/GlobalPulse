@@ -24,10 +24,15 @@ stories, and the number in the corner has to say so. Counting the stories
 that happened to be fetched answered a different question from the one the
 number asks.
 
-The same goes for the filters. **All**, **Review Queue**, **Published**,
-**Scheduled** and **Drafts** are counted by the API, and narrowing the list
-is the API's work rather than the browser's — so a status the newsroom holds
-but the browser has not loaded yet is still counted.
+The same goes for the filters, the search and the order. **All**, **Review
+Queue**, **Published**, **Scheduled** and **Drafts** are counted by the
+API, narrowing the list is the API's work rather than the browser's, the
+search looks through the titles and summaries on the server, and the order
+— recently edited, newest, oldest, title, status — is the database's.
+
+A newsroom of two hundred stories cannot be searched in the browser without
+fetching all two hundred, and the counts would then be the counts of a page
+rather than of the newsroom.
 
 A refetch — the newsroom's event stream keeps the list fresh — keeps the
 depth it had. It does not collapse the list back to its first page, so
@@ -71,6 +76,13 @@ own:
 
 Both use the same editor, so there is only one set of rules about what a
 story is.
+
+### How the story is saved
+
+One choice and one action: the outcome — a draft, for review, scheduled,
+published — is chosen, and then the story is saved. Four buttons that each
+save the story differently is a lot to read and more to decide between, and
+the one that gets pressed is the one that matters.
 
 ## The Block Studio, from the newsroom
 

@@ -16,8 +16,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
-import { BlockItem } from '@ai-news/blocks-ui';
 import type { StudioBlock, StudioVariant } from '@ai-news/block-studio';
+import { BlockPreviewFrame } from './BlockPreviewFrame';
 import { VariantNameDialog } from './VariantNameDialog';
 import { SessionBadge } from './SessionBadge';
 import { storyUrl, type StoryContext } from './story-context';
@@ -29,7 +29,6 @@ interface PreviewCanvasProps {
   previewBlock: StoryBlock;
   theme: StudioTheme;
   viewport: StudioViewport;
-  viewportWidth: string;
   isValid: boolean;
   /** The class that turns on the chrome's dark utilities. */
   darkClass: string;
@@ -48,6 +47,17 @@ interface PreviewCanvasProps {
   onSendToComposer: () => void;
   onImportToStory: () => void;
 }
+
+/**
+ * The widths the presets stand for.
+ *
+ * These are the widths of the devices themselves, so a block drawn in them
+ * is laid out the way it would be on that device.
+ */
+const VIEWPORT_WIDTH: Record<Exclude<StudioViewport, 'desktop'>, number> = {
+  mobile: 390,
+  tablet: 768,
+};
 
 const VIEWPORTS: { id: StudioViewport; label: string; icon: React.ReactNode }[] = [
   { id: 'mobile', label: 'Mobile (390px)', icon: <Smartphone className="h-3.5 w-3.5" /> },
@@ -70,7 +80,6 @@ export function PreviewCanvas({
   previewBlock,
   theme,
   viewport,
-  viewportWidth,
   isValid,
   darkClass,
   onThemeChange,
@@ -90,12 +99,71 @@ export function PreviewCanvas({
   const [compareWith, setCompareWith] = React.useState<string>('');
   /** Whether the "name this variant" dialog is open. */
   const [namingVariant, setNamingVariant] = React.useState(false);
+  /** The scroller, so the width available to the preview can be measured. */
+  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+  /** How wide the canvas is, once its own padding is taken off. */
+  const [availableWidth, setAvailableWidth] = React.useState(640);
+
+  /*
+   * The canvas is as wide as the window allows, so the width the preview
+   * can take is only known once the window has been laid out.
+   */
+  React.useEffect(() => {
+    const node = scrollerRef.current;
+    if (!node) return;
+
+    const measure = () => {
+      const styles = getComputedStyle(node);
+      const padding =
+        parseFloat(styles.paddingLeft || '0') + parseFloat(styles.paddingRight || '0');
+      setAvailableWidth(Math.max(240, Math.floor(node.clientWidth - padding)));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  /*
+   * The width the block is drawn at.
+   *
+   * A fixed preset is the width of the device. "Full width" is whatever the
+   * canvas can give, which is the widest the block can be shown.
+   */
+  const previewWidth = viewport === 'desktop' ? availableWidth : VIEWPORT_WIDTH[viewport];
+
+  /*
+   * When two variants are compared, they share the canvas, so each is drawn
+   * at half of it — and because they are drawn at that width, their own
+   * breakpoints answer to it rather than to the studio's window.
+   */
+  const compareWidth = Math.max(240, Math.floor((availableWidth - 16) / 2));
+  const sideBySide = availableWidth >= compareWidth * 2 + 16;
 
   const compareVariant = React.useMemo(
     () => block?.variants.find((candidate) => candidate.id === compareWith) ?? null,
     [block, compareWith]
   );
   const isComparing = Boolean(compareVariant) && compareVariant?.id !== variant?.id;
+
+  /*
+   * The block being compared is a new object every render unless it is
+   * held still, and the frame treats a changed block as a reason to send
+   * the payload again.
+   */
+  const compareBlock = React.useMemo(
+    () =>
+      compareVariant
+        ? ({
+            id: 'studio_compare',
+            blockType: previewBlock.blockType,
+            sortOrder: 0,
+            data: compareVariant.data,
+          } as StoryBlock)
+        : null,
+    [compareVariant, previewBlock.blockType]
+  );
 
   const copy = React.useCallback(
     async (what: 'json' | 'block') => {
@@ -131,7 +199,7 @@ export function PreviewCanvas({
       }`}
     >
       <header
-        className={`flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-[#0d1220] ${darkClass}`}
+        className={`flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-2.5 dark:border-slate-800 dark:bg-[#0d1220] ${darkClass}`}
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -150,7 +218,7 @@ export function PreviewCanvas({
             )}
           </div>
           {block && (
-            <p className="mt-0.5 max-w-xl truncate text-[12px] text-slate-500">
+            <p className="mt-0.5 max-w-xl truncate text-[12px] text-slate-500 dark:text-slate-400">
               {block.description}
             </p>
           )}
@@ -164,8 +232,9 @@ export function PreviewCanvas({
                 type="button"
                 title={option.label}
                 aria-label={option.label}
+                aria-pressed={viewport === option.id}
                 onClick={() => onViewportChange(option.id)}
-                className={`rounded-md p-1.5 transition-colors ${
+                className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
                   viewport === option.id
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
@@ -175,6 +244,18 @@ export function PreviewCanvas({
               </button>
             ))}
           </div>
+
+          {/*
+            The width the block is actually drawn at, so the preset is never
+            a guess: "full width" is whatever the canvas can give, and the
+            canvas is only as wide as the window allows.
+          */}
+          <span
+            title={`The block is drawn at ${previewWidth} pixels wide`}
+            className="whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 font-mono text-[12px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+          >
+            {previewWidth}px
+          </span>
 
           <button
             type="button"
@@ -293,76 +374,85 @@ export function PreviewCanvas({
 
       {block && block.variants.length > 0 && (
         <div
-          className={`flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-[#0b101c] ${darkClass}`}
+          className={`flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-6 py-2 dark:border-slate-800 dark:bg-[#0b101c] ${darkClass}`}
         >
-          {block.variants.map((candidate) => {
-            const isActive = candidate.id === variant?.id;
-            /*
-             * A shipped variant belongs to the repository and cannot be
-             * removed; a saved one belongs to the newsroom and can.
-             */
-            const isSaved = Boolean(candidate.saved);
-            return (
-              <span key={candidate.id} className="group relative flex shrink-0 items-center">
-                <button
-                  type="button"
-                  onClick={() => onSelectVariant(candidate.id)}
-                  title={candidate.description}
-                  className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/70 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {candidate.label}
-                </button>
-                {isSaved && (
+          {/*
+            The variants scroll on their own, so a block with a dozen of
+            them cannot push the controls beside them off the end of the bar.
+          */}
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+            {block.variants.map((candidate) => {
+              const isActive = candidate.id === variant?.id;
+              /*
+               * A shipped variant belongs to the repository and cannot be
+               * removed; a saved one belongs to the newsroom and can.
+               */
+              const isSaved = Boolean(candidate.saved);
+              return (
+                <span key={candidate.id} className="group relative flex shrink-0 items-center">
                   <button
                     type="button"
-                    onClick={() => onDeleteVariant(candidate.id)}
-                    title="Remove this saved variant"
-                    aria-label={`Remove the ${candidate.label} variant`}
-                    className="ml-1 rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-rose-500 focus:opacity-100 group-hover:opacity-100"
+                    onClick={() => onSelectVariant(candidate.id)}
+                    title={candidate.description}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/70 dark:hover:text-slate-200'
+                    }`}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    {candidate.label}
                   </button>
-                )}
-              </span>
-            );
-          })}
+                  {isSaved && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteVariant(candidate.id)}
+                      title="Remove this saved variant"
+                      aria-label={`Remove the ${candidate.label} variant`}
+                      className="ml-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 opacity-0 transition-opacity hover:text-rose-500 focus:opacity-100 group-hover:opacity-100 dark:text-slate-400"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setNamingVariant(true)}
-            title="Save the payload as it stands now as a new variant"
-            className="ml-1 flex shrink-0 items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-300"
-          >
-            <Plus className="h-3 w-3" />
-            Save as variant
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setNamingVariant(true)}
+              title="Save the payload as it stands now as a new variant"
+              className="flex min-h-7 items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-300"
+            >
+              <Plus className="h-3 w-3" />
+              Save as variant
+            </button>
 
-          {block && block.variants.length > 1 && (
-            <div className="ml-auto flex shrink-0 items-center gap-1.5 pl-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Compare
-              </span>
-              <select
-                value={compareWith}
-                onChange={(event) => setCompareWith(event.target.value)}
-                aria-label="Compare with another variant"
-                className="rounded-md border border-slate-300 bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
-              >
-                <option value="">Off</option>
-                {block.variants
-                  .filter((candidate) => candidate.id !== variant?.id)
-                  .map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.label}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          )}
+            {block && block.variants.length > 1 && (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Compare
+                </span>
+                <select
+                  value={compareWith}
+                  onChange={(event) => setCompareWith(event.target.value)}
+                  aria-label="Compare with another variant"
+                  className="min-h-7 rounded-md border border-slate-300 bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+                >
+                  <option value="">Off</option>
+                  {block.variants
+                    .filter((candidate) => candidate.id !== variant?.id)
+                    .map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>
+                        {candidate.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -387,76 +477,55 @@ export function PreviewCanvas({
         />
       )}
 
-      <div className="@container flex-1 overflow-auto p-6">
+      <div ref={scrollerRef} className="@container flex-1 overflow-auto p-6">
         {/*
-          The preview is sized to the chosen viewport. When that is wider
-          than the canvas, the canvas scrolls rather than shrinking the
-          preview — otherwise a laptop viewport would be indistinguishable
-          from a tablet one.
+          The preview is drawn in a frame, so the block is laid out for the
+          width that was chosen rather than for the studio's own window.
 
-          A comparison splits into two columns when the canvas has room for
-          them, not when the window does. The window is mostly taken by the
-          catalog and the inspector, so a window-sized breakpoint would
-          almost never fire and the comparison would always stack.
+          A comparison puts two blocks side by side when the canvas has room
+          for them, and stacks them when it does not. The window is mostly
+          taken by the catalog and the inspector, so a window-sized rule
+          would almost never fire and the comparison would always stack.
         */}
         <div
-          className={`preview-surface mx-auto transition-[max-width] duration-200 ${
-            isComparing ? 'max-w-none grid grid-cols-1 gap-4 @min-[34rem]:grid-cols-2' : ''
+          className={`preview-surface mx-auto ${
+            isComparing ? (sideBySide ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4') : ''
           }`}
-          style={
-            isComparing
-              ? undefined
-              : {
-                  maxWidth: viewportWidth,
-                  width: viewportWidth === '100%' ? '100%' : viewportWidth,
-                }
-          }
         >
           <div>
-            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {isComparing ? 'Editing' : (variant?.label ?? 'Preview')}
             </p>
-            <div
-              className={`min-h-[320px] rounded-xl border border-slate-200 ${
-                theme === 'dark' ? 'dark bg-slate-900' : 'bg-white'
-              } dark:border-slate-800`}
-            >
-              <div className="px-6 py-5 sm:px-8">
-                <BlockItem block={previewBlock} theme={theme} storyId="studio-preview" />
-              </div>
+            <div className="mx-auto flex w-fit min-w-full justify-center">
+              <BlockPreviewFrame
+                block={previewBlock}
+                theme={theme}
+                width={isComparing ? compareWidth : previewWidth}
+                label={`${block?.type ?? 'block'} preview`}
+              />
             </div>
 
             {variant?.description && (
-              <p className="mt-3 text-center text-[12px] text-slate-500">{variant.description}</p>
+              <p className="mt-3 text-center text-[12px] text-slate-500 dark:text-slate-400">
+                {variant.description}
+              </p>
             )}
           </div>
 
-          {isComparing && compareVariant && (
+          {isComparing && compareVariant && compareBlock && (
             <div>
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {compareVariant.label}
               </p>
-              <div
-                className={`min-h-[320px] rounded-xl border border-dashed border-slate-300 ${
-                  theme === 'dark' ? 'dark bg-slate-900/60' : 'bg-slate-50'
-                } dark:border-slate-700`}
-              >
-                <div className="px-6 py-5 sm:px-8">
-                  <BlockItem
-                    block={
-                      {
-                        id: 'studio_compare',
-                        blockType: previewBlock.blockType,
-                        sortOrder: 0,
-                        data: compareVariant.data,
-                      } as StoryBlock
-                    }
-                    theme={theme}
-                    storyId="studio-preview"
-                  />
-                </div>
+              <div className="mx-auto flex w-fit min-w-full justify-center">
+                <BlockPreviewFrame
+                  block={compareBlock}
+                  theme={theme}
+                  width={compareWidth}
+                  label={`${block?.type ?? 'block'} preview, ${compareVariant.label}`}
+                />
               </div>
-              <p className="mt-3 text-center text-[12px] text-slate-500">
+              <p className="mt-3 text-center text-[12px] text-slate-500 dark:text-slate-400">
                 {compareVariant.description ? `— ${compareVariant.description}` : '—'}
               </p>
             </div>

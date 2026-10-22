@@ -11,12 +11,20 @@ import { KnowledgeGraphRenderer } from '@ai-news/media';
  * the same data as text, so the relationships stay readable when the graph is
  * dense or the reader cannot use the image.
  */
-export const KnowledgeGraphBlockView: React.FC<{ data: KnowledgeGraphBlock['data'] }> = ({
-  data,
-}) => {
+export const KnowledgeGraphBlockView: React.FC<{
+  data: KnowledgeGraphBlock['data'];
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
   const svg = React.useMemo(
-    () => KnowledgeGraphRenderer.renderToSvg(data, { theme: 'light', width: 800, height: 620 }),
-    [data]
+    () =>
+      KnowledgeGraphRenderer.renderToSvg(data, {
+        theme,
+        width: 800,
+        height: 620,
+        // The heading below already says this, so the graph does not repeat it.
+        showTitle: false,
+      }),
+    [data, theme]
   );
 
   const nodeIds = new Set(data.nodes.map((n) => n.id));

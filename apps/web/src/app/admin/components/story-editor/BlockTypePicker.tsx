@@ -3,7 +3,12 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Plus, Search, X } from 'lucide-react';
 import { BlockItem } from '@ai-news/blocks-ui';
-import { listStudioCategories, type StudioBlock, type StudioVariant } from '@ai-news/block-studio';
+import {
+  blockOf,
+  listStudioCategories,
+  type StudioBlock,
+  type StudioVariant,
+} from '@ai-news/block-studio';
 import { listBlockVariants } from '@ai-news/api-client';
 import type { StoryBlock } from '@ai-news/schemas';
 
@@ -135,14 +140,16 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
     /*
      * The platform's block type is a strict union of every type it knows,
      * which is right for a stored block and awkward for one whose type is
-     * chosen at runtime. The cast is the same one the Block Studio makes.
+     * chosen at runtime. `blockOf` is the same helper the Block Studio uses.
      */
-    onPick({
-      id: `blk_${block.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      blockType: block.type,
-      sortOrder: 0,
-      data: (variant?.data ?? {}) as StoryBlock['data'],
-    } as unknown as StoryBlock);
+    onPick(
+      blockOf(
+        block.type,
+        `blk_${block.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+        0,
+        { data: (variant?.data ?? {}) as Record<string, unknown> }
+      )
+    );
   };
 
   return (
@@ -288,7 +295,6 @@ function BlockCard({
     sortOrder: 0,
     data: (variant?.data ?? {}) as StoryBlock['data'],
   } as unknown as StoryBlock;
-
   return (
     <div className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-blue-500">
       <button

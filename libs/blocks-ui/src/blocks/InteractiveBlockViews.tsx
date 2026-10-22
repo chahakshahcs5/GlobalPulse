@@ -4,6 +4,7 @@ import React from 'react';
 import type { PollBlock, LiveTickerBlock, ComparisonBlock, PollTally } from '@ai-news/schemas';
 import { useBlockRuntime } from './runtime';
 import { useLiveFeed } from './useLiveFeed';
+import { formatUtcDate } from '../date-utils';
 
 /**
  * Reader poll.
@@ -149,7 +150,7 @@ export const PollBlockView: React.FC<{
           )}
           {data.expiresAt && !data.closed && (
             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
-              Closes {new Date(data.expiresAt).toLocaleDateString()}
+              Closes {formatUtcDate(data.expiresAt)}
             </span>
           )}
           <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400">

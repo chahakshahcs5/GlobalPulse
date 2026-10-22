@@ -19,6 +19,8 @@ export interface ListStoriesParams {
   limit?: number;
   /** How many stories to skip — the page to ask for. */
   offset?: number;
+  /** The order the stories come back in. */
+  sort?: string;
 }
 
 /**
@@ -47,6 +49,7 @@ export async function listStoriesPage(params?: ListStoriesParams): Promise<Story
   if (params?.query) searchParams.set('query', params.query);
   if (params?.limit) searchParams.set('limit', String(Math.min(params.limit, 500)));
   if (params?.offset) searchParams.set('offset', String(params.offset));
+  if (params?.sort) searchParams.set('sort', params.sort);
 
   const qs = searchParams.toString();
   const response = await request<{

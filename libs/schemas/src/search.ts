@@ -1,6 +1,23 @@
 import { z } from 'zod';
 import { StoryStatusSchema, ArticleTypeSchema } from './story';
 
+/**
+ * How a list of stories is ordered.
+ *
+ * The newsroom asks for different orders at different moments: the story
+ * that was just edited, the story that is due to be reviewed, the alphabet.
+ */
+export const StorySortOrderSchema = z.enum([
+  'updated_desc',
+  'updated_asc',
+  'created_desc',
+  'created_asc',
+  'title_asc',
+  'title_desc',
+  'status_asc',
+]);
+export type StorySortOrder = z.infer<typeof StorySortOrderSchema>;
+
 export const SearchStoriesInputSchema = z.object({
   query: z.string().optional(),
   status: StoryStatusSchema.optional(),
@@ -13,6 +30,7 @@ export const SearchStoriesInputSchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(20),
   offset: z.coerce.number().int().min(0).optional(),
   cursor: z.string().optional(),
+  sort: StorySortOrderSchema.optional(),
 });
 export type SearchStoriesInput = z.input<typeof SearchStoriesInputSchema>;
 

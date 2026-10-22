@@ -11,8 +11,17 @@ import { UncertaintyRenderer } from '@ai-news/media';
  * its interval. The interval label, the sample size and the methodology stay
  * visible as text — the number is never the only thing on screen.
  */
-export const UncertaintyBlockView: React.FC<{ data: UncertaintyBlock['data'] }> = ({ data }) => {
-  const svg = UncertaintyRenderer.renderToSvg(data, { theme: 'light', width: 800, height: 460 });
+export const UncertaintyBlockView: React.FC<{
+  data: UncertaintyBlock['data'];
+  theme?: 'dark' | 'light';
+}> = ({ data, theme = 'light' }) => {
+  const svg = UncertaintyRenderer.renderToSvg(data, {
+    theme,
+    width: 800,
+    height: 460,
+    // The heading below already says this, so the chart does not repeat it.
+    showTitle: false,
+  });
 
   return (
     <section

@@ -82,12 +82,12 @@ export function DataInspector({
           onClick={onToggleOpen}
           title="Show the inspector"
           aria-label="Show the inspector"
-          className="rounded-md border border-slate-300 p-1.5 text-slate-500 transition-colors hover:text-slate-800 dark:border-slate-700 dark:text-slate-400"
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-500 transition-colors hover:text-slate-800 dark:border-slate-700 dark:text-slate-400"
         >
           <PanelRight className="h-3.5 w-3.5" />
         </button>{' '}
         <span
-          className="text-[11px] font-bold uppercase tracking-wider text-slate-400"
+          className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
           style={{ writingMode: 'vertical-rl' }}
         >
           Inspector
@@ -107,7 +107,7 @@ export function DataInspector({
             onClick={onToggleOpen}
             title="Hide the inspector"
             aria-label="Hide the inspector"
-            className="rounded-md border border-slate-300 p-1.5 text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:text-slate-100"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:text-slate-100"
           >
             <PanelRight className="h-3.5 w-3.5" />
           </button>
@@ -117,10 +117,10 @@ export function DataInspector({
                 key={option}
                 type="button"
                 onClick={() => onTabChange(option)}
-                className={`rounded-md px-2.5 py-1 text-[12px] font-bold uppercase tracking-wider transition-colors ${
+                className={`rounded-md px-2.5 py-1.5 text-[12px] font-bold uppercase tracking-wider transition-colors ${
                   tab === option
                     ? 'bg-blue-600 text-white'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
                 {option}
@@ -179,7 +179,7 @@ export function DataInspector({
               issues={issueMap}
             />
           ) : (
-            <p className="text-[13px] text-slate-500">
+            <p className="text-[13px] text-slate-500 dark:text-slate-400">
               No schema is registered for this block type.
             </p>
           )}

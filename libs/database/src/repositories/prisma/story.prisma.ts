@@ -13,6 +13,33 @@ import type {
   PaginatedStories,
 } from '../../interfaces/story.repository';
 
+/**
+ * The order the stories come back in.
+ *
+ * Every order ends with the id, so the order is total: two stories
+ * edited at the same instant still have a fixed order, and a page never
+ * shows the same story twice or skips one.
+ */
+function storyOrderBy(sort?: string): unknown[] {
+  switch (sort) {
+    case 'updated_asc':
+      return [{ updatedAt: 'asc' }, { id: 'asc' }];
+    case 'created_desc':
+      return [{ createdAt: 'desc' }, { id: 'desc' }];
+    case 'created_asc':
+      return [{ createdAt: 'asc' }, { id: 'asc' }];
+    case 'title_asc':
+      return [{ title: 'asc' }, { id: 'asc' }];
+    case 'title_desc':
+      return [{ title: 'desc' }, { id: 'desc' }];
+    case 'status_asc':
+      return [{ status: 'asc' }, { updatedAt: 'desc' }, { id: 'desc' }];
+    case 'updated_desc':
+    default:
+      return [{ updatedAt: 'desc' }, { id: 'desc' }];
+  }
+}
+
 interface PrismaStoryBlockRow {
   id: string;
   storyId: string;
@@ -292,7 +319,7 @@ export class PrismaStoryRepository implements IStoryRepository {
     } = {
       where,
       take: limit + 1,
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy: storyOrderBy(filter?.sort),
       include: {
         blocks: { orderBy: { sortOrder: 'asc' } },
       },

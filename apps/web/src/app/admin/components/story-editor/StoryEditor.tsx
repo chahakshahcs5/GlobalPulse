@@ -19,7 +19,7 @@ import {
 } from '@ai-news/api-client';
 import { StoryRenderer } from '../../../../components/StoryRenderer';
 import { studioUrl } from '../../../../lib/studio-url';
-import { takeBlockFromComposer } from '@ai-news/block-studio';
+import { takeBlockFromComposer, blockOf } from '@ai-news/block-studio';
 import { StoryMetadataSection } from './StoryMetadataSection';
 import { StoryBlockList } from './StoryBlockList';
 import { StoryPublishActions } from './StoryPublishActions';
@@ -204,12 +204,12 @@ export function StoryEditor({ story, onSaved, onCancel }: StoryEditorProps) {
         const without = previous.filter((block) => block.id !== id);
         return [
           ...without,
-          {
-            id,
-            blockType: handed.blockType,
-            sortOrder: without.length,
-            ...handed.payload,
-          } as StoryBlock,
+          /*
+           * The whole block travels back, not just its content — the
+           * presentation, the accessibility text, the provenance and the
+           * citations keep it from losing them on the way.
+           */
+          blockOf(handed.blockType, id, without.length, handed.payload),
         ];
       });
     };

@@ -698,8 +698,10 @@ function FieldControl({
 
     if (field.kind === 'number') {
       return (
-        <>
+        <div>
+          {label}
           <input
+            id={`field_${path}`}
             type="number"
             value={
               typeof value === 'number' && Number.isFinite(value)
@@ -728,7 +730,7 @@ function FieldControl({
               {field.min ?? '−∞'} … {field.max ?? '∞'}
             </p>
           )}
-        </>
+        </div>
       );
     }
 

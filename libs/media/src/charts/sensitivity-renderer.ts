@@ -5,6 +5,13 @@ export interface RenderSensitivityOptions {
   width?: number;
   height?: number;
   theme?: 'dark' | 'light';
+  /**
+   * Whether to draw the title inside the SVG.
+   *
+   * A block that already shows the title as a real heading turns this off,
+   * so the reader is not shown the same title twice.
+   */
+  showTitle?: boolean;
 }
 
 /**
@@ -162,14 +169,21 @@ export class SensitivityRenderer {
     const computedBase = evaluateExpression(blockData.expression, baseValues);
     const baseOutput = computedBase ?? blockData.baseOutput;
 
-    const padding = { top: 78, right: 92, bottom: 60, left: 210 };
+    const padding = {
+      top: options.showTitle === false ? 42 : 78,
+      right: 92,
+      bottom: 60,
+      left: 210,
+    };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
     let elements = '';
-    elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
-    if (blockData.subtitle) {
-      elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+    if (options.showTitle !== false) {
+      elements += `<text x="${padding.left}" y="30" font-size="17" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.title)}</text>`;
+      if (blockData.subtitle) {
+        elements += `<text x="${padding.left}" y="50" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(blockData.subtitle)}</text>`;
+      }
     }
 
     if (swings.length === 0) {

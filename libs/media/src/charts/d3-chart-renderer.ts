@@ -47,6 +47,10 @@ export class D3ChartRenderer {
       return this.renderDonut(chartData, width, height, isDark);
     }
 
+    if (chartData.chartType === 'pie') {
+      return this.renderPie(chartData, width, height, isDark);
+    }
+
     if (chartData.chartType === 'kpi') {
       return this.renderKpi(chartData, width, height, isDark);
     }
@@ -468,6 +472,81 @@ export class D3ChartRenderer {
         ${paths}
         <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="24" font-weight="800" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${total.toLocaleString()}</text>
         <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">Total Volume</text>
+        ${legend}
+      </svg>
+    `;
+  }
+
+  /**
+   * A pie chart.
+   *
+   * The same slices as the donut, drawn to the centre rather than around a
+   * hole. A pie says "one of these is the whole"; a donut says "this part
+   * of the whole".
+   */
+  private static renderPie(
+    chartData: ChartBlock['data'],
+    width: number,
+    height: number,
+    isDark: boolean
+  ): string {
+    const bgColor = isDark ? '#0f172a' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+    const cx = width / 2;
+    const cy = height / 2 + 10;
+    const outerRadius = Math.min(width, height) * 0.32;
+
+    const values = chartData.values.map((v) => ({
+      name: String(v[chartData.xAxis.key] ?? 'Category'),
+      val: Number(v[chartData.series[0]?.key || 'value'] ?? 1),
+    }));
+    const total = values.reduce((acc, curr) => acc + curr.val, 0);
+
+    let startAngle = 0;
+    let paths = '';
+    let legend = '';
+
+    values.forEach((v, idx) => {
+      const sliceAngle = (v.val / total) * 2 * Math.PI;
+      const endAngle = startAngle + sliceAngle;
+      const color = DEFAULT_PALETTE[idx % DEFAULT_PALETTE.length];
+
+      const x1 = cx + outerRadius * Math.cos(startAngle);
+      const y1 = cy + outerRadius * Math.sin(startAngle);
+      const x2 = cx + outerRadius * Math.cos(endAngle);
+      const y2 = cy + outerRadius * Math.sin(endAngle);
+
+      const largeArc = sliceAngle > Math.PI ? 1 : 0;
+      const d = `M ${cx} ${cy} L ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+      paths += `<path d="${d}" fill="${color}" stroke="${bgColor}" stroke-width="2" />`;
+
+      // The share is printed on the slice, so the reader does not have to
+      // measure the angle or cross-reference the legend.
+      const midAngle = startAngle + sliceAngle / 2;
+      const labelRadius = outerRadius * 0.62;
+      const lx = cx + labelRadius * Math.cos(midAngle);
+      const ly = cy + labelRadius * Math.sin(midAngle);
+      if (sliceAngle > 0.22) {
+        paths += `<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${((v.val / total) * 100).toFixed(0)}%</text>`;
+      }
+
+      const legY = 70 + idx * 24;
+      legend += `
+        <g transform="translate(${width - 180}, ${legY})">
+          <circle cx="6" cy="6" r="5" fill="${color}" />
+          <text x="18" y="10" font-size="12" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(v.name)} (${((v.val / total) * 100).toFixed(0)}%)</text>
+        </g>
+      `;
+
+      startAngle = endAngle;
+    });
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">
+        <text x="40" y="36" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>
+        ${paths}
         ${legend}
       </svg>
     `;

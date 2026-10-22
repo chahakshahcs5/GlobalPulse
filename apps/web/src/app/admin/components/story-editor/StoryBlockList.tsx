@@ -86,16 +86,23 @@ export function StoryBlockList({ blocks, onChange, onOpenInStudio }: StoryBlockL
     );
   };
 
+  /**
+   * A block was edited.
+   *
+   * The whole block is rebuilt from the payload, so the presentation, the
+   * accessibility text, the provenance and the citations travel with it — a
+   * block that is edited in the composer keeps everything it had.
+   */
   const update = (id: string, payload: StudioPayload) => {
     const changed = blocks.find((block) => block.id === id);
     if (!changed) return;
-    // The whole block is replaced, so the presentation, the accessibility
-    // text, the provenance and the citations travel with the content.
-    const updated = blockOf(changed.blockType, changed.id, changed.sortOrder, payload);
-    onChange(blocks.map((block) => (block.id === id ? updated : block)) as StoryBlock[], {
-      kind: 'edited',
-      block: updated,
-    });
+
+    const rebuilt = blockOf(changed.blockType, changed.id, changed.sortOrder, payload);
+
+    onChange(
+      blocks.map((block) => (block.id === id ? rebuilt : block)),
+      { kind: 'edited', block: rebuilt }
+    );
   };
 
   const addBlock = (block: StoryBlock) => {

@@ -496,11 +496,11 @@ function renderBlock(
     }
 
     case 'sensitivity': {
-      return <SensitivityBlockView data={block.data} />;
+      return <SensitivityBlockView data={block.data} theme={theme} />;
     }
 
     case 'correlation': {
-      return <CorrelationBlockView data={block.data} />;
+      return <CorrelationBlockView data={block.data} theme={theme} />;
     }
 
     case 'quiz': {
@@ -508,15 +508,15 @@ function renderBlock(
     }
 
     case 'knowledge_graph': {
-      return <KnowledgeGraphBlockView data={block.data} />;
+      return <KnowledgeGraphBlockView data={block.data} theme={theme} />;
     }
 
     case 'animated_map': {
-      return <AnimatedMapBlockView data={block.data} />;
+      return <AnimatedMapBlockView data={block.data} theme={theme} />;
     }
 
     case 'prediction_leaderboard': {
-      return <PredictionLeaderboardBlockView data={block.data} />;
+      return <PredictionLeaderboardBlockView data={block.data} theme={theme} />;
     }
 
     case 'what_if': {
@@ -528,7 +528,7 @@ function renderBlock(
     }
 
     case 'uncertainty': {
-      return <UncertaintyBlockView data={block.data} />;
+      return <UncertaintyBlockView data={block.data} theme={theme} />;
     }
 
     case 'evidence': {

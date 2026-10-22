@@ -162,7 +162,7 @@ export function SessionBadge({ darkClass }: SessionBadgeProps) {
                   {user.name}
                 </p>
                 <p className="truncate text-[11px] text-slate-500">{user.email}</p>
-                <p className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <p className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   {user.role}
                 </p>
               </div>

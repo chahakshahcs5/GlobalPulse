@@ -3,8 +3,8 @@
 import React from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 import type { Story, StoryBlock } from '@ai-news/schemas';
-import { getCurrentUser, payloadOf, searchStories } from '../lib/newsroom-api';
-import type { StudioPayload } from '../lib/newsroom-api';
+import { getCurrentUser, payloadOf, searchStories, type StudioPayload } from '../lib/newsroom-api';
+import { useFocusTrap } from './useFocusTrap';
 
 /** Where a loaded block came from, so it can be saved back. */
 export interface BlockSource {
@@ -39,6 +39,8 @@ export function StoryBlockLoader({
   const [error, setError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
   const [searching, setSearching] = React.useState(false);
+  /** Keeps the keyboard inside the dialog and gives the focus back after. */
+  const dialogRef = useFocusTrap<HTMLDivElement>(true);
   const [offset, setOffset] = React.useState(0);
   const [total, setTotal] = React.useState(0);
   const [hasMore, setHasMore] = React.useState(false);
@@ -131,6 +133,10 @@ export function StoryBlockLoader({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Load a block from a live story"
         className={`mt-10 flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0d1220] ${darkClass}`}
         onClick={(event) => event.stopPropagation()}
       >
@@ -158,6 +164,7 @@ export function StoryBlockLoader({
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
+              data-autofocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search stories by title or summary…"
@@ -214,12 +221,12 @@ export function StoryBlockLoader({
                       <span className="block truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">
                         {story.title}
                       </span>
-                      <span className="block font-mono text-[10px] text-slate-400">
+                      <span className="block font-mono text-[11px] text-slate-400">
                         {story.status} · {blocks.length} block{blocks.length === 1 ? '' : 's'} ·{' '}
                         {story.slug}
                       </span>
                     </span>
-                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       {isOpen ? 'Hide' : 'Show'}
                     </span>
                   </button>
