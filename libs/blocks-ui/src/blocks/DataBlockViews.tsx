@@ -83,6 +83,58 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
     URL.revokeObjectURL(url);
   };
 
+  /*
+   * How the explorer is drawn.
+   *
+   * With the controls above the figures, with the figures as a table, or
+   * with each group as a card. The data is the same; only the treatment
+   * changes.
+   */
+  const layout = data.layout ?? 'controls';
+
+  if (layout === 'cards') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.subtitle && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+          )}
+        </header>
+
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {grouped.map(([key, value]) => (
+            <div
+              key={key}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3"
+            >
+              <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">
+                {key}
+              </div>
+              <div className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
+                {value.toLocaleString()}
+                {metric.unit ? (
+                  <span className="ml-1 text-xs font-normal text-slate-500">{metric.unit}</span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="px-5 pb-4">
+          <ProvenanceFooter
+            source={data.dataset.sourceAttribution}
+            methodology={data.dataset.methodology}
+            lastUpdated={data.dataset.lastUpdated}
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}
@@ -196,7 +248,7 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
           ))}
         </ul>
 
-        <details className="mt-4">
+        <details className="mt-4" open={layout === 'table'}>
           <summary className="cursor-pointer text-xs font-semibold text-slate-600 dark:text-slate-400">
             Inspect values ({rows.length} rows)
           </summary>
@@ -476,6 +528,14 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
  * and the known input identifiers are accepted.
  */
 export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = ({ data }) => {
+  /*
+   * How the calculator is drawn.
+   *
+   * As a panel, inline in the text, or as a numbered set of steps. The
+   * arithmetic is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'panel';
+
   const [values, setValues] = useState<Record<string, number | string>>(() =>
     Object.fromEntries(
       data.inputs.map((input) => [input.id, input.defaultValue as number | string])
@@ -494,7 +554,12 @@ export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = 
   return (
     <section
       aria-label={data.title}
-      className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm p-5"
+      className={[
+        layout === 'inline' ? 'my-4' : 'my-8',
+        layout === 'inline' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm',
+        layout === 'inline' ? 'px-4 py-3' : 'p-5',
+      ].join(' ')}
     >
       <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
       {data.description && (
@@ -587,6 +652,82 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
     ? Math.max(...data.series.map((point) => Math.abs(point.value)))
     : 0;
 
+  /*
+   * How the figures are drawn.
+   *
+   * As cards, as a table, or as one line of text. The figures are the
+   * same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'cards';
+
+  if (layout === 'inline') {
+    return (
+      <p className="my-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+        <span className="font-bold text-slate-900 dark:text-slate-100">{data.title}</span>
+        {data.metrics.map((metric) => (
+          <span key={metric.label} className="text-slate-700 dark:text-slate-300">
+            <span className="text-slate-500 dark:text-slate-400">{metric.label}</span>{' '}
+            <span className="font-mono font-bold">
+              {metric.value.toLocaleString()} {metric.unit ?? data.currency}
+            </span>
+          </span>
+        ))}
+      </p>
+    );
+  }
+
+  if (layout === 'table') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            {data.currency} · as of {data.asOf}
+          </p>
+        </header>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-100 dark:bg-slate-800/60 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <tr>
+                <th className="px-4 py-2.5 font-semibold">Metric</th>
+                <th className="px-4 py-2.5 font-semibold">Value</th>
+                <th className="px-4 py-2.5 font-semibold">Change</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              {data.metrics.map((metric) => (
+                <tr key={metric.label}>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{metric.label}</td>
+                  <td className="px-4 py-2.5 font-mono text-slate-900 dark:text-slate-100">
+                    {metric.value.toLocaleString()} {metric.unit ?? data.currency}
+                  </td>
+                  <td
+                    className={`px-4 py-2.5 font-mono text-xs font-bold ${
+                      (metric.change ?? 0) > 0
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : (metric.change ?? 0) < 0
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    {metric.change !== undefined
+                      ? `${metric.change > 0 ? '↑' : metric.change < 0 ? '↓' : '→'} ${Math.abs(metric.change)}${
+                          metric.changePeriod ? ` ${metric.changePeriod}` : ''
+                        }`
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}
@@ -674,6 +815,102 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
 };
 
 export const ElectionBlockView: React.FC<{ data: ElectionBlock['data'] }> = ({ data }) => {
+  /*
+   * How the result is drawn.
+   *
+   * As a table, as bars scaled to the vote, or as the seats won. The
+   * result is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'table';
+  const maxVotes = Math.max(...data.results.map((result) => result.votes ?? 0), 1);
+
+  if (layout === 'bars') {
+    return (
+      <section aria-label={data.title} className="my-8">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {data.electionType} · {data.region} · {data.electionDate}
+          {data.turnout !== undefined ? ` · turnout ${data.turnout}%` : ''}
+        </p>
+        <ul className="mt-4 space-y-2.5">
+          {data.results.map((result) => (
+            <li key={result.party} className="flex items-center gap-3">
+              <span className="w-40 shrink-0 text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                {result.party}
+              </span>
+              <span
+                className="h-3 rounded-full bg-indigo-500/70"
+                style={{ width: `${((result.votes ?? 0) / maxVotes) * 100}%` }}
+              />
+              <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
+                {result.voteShare !== undefined ? `${result.voteShare}%` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
+
+  if (layout === 'seats') {
+    const totalSeats =
+      data.totalSeats ?? data.results.reduce((sum, result) => sum + (result.seats ?? 0), 0);
+    return (
+      <section aria-label={data.title} className="my-8">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {data.electionType} · {data.region} · {data.electionDate}
+          {data.turnout !== undefined ? ` · turnout ${data.turnout}%` : ''}
+        </p>
+        <div className="mt-4 flex h-24 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+          {data.results.map((result, idx) => {
+            const seats = result.seats ?? 0;
+            const share = totalSeats > 0 ? (seats / totalSeats) * 100 : 0;
+            const palette = [
+              'bg-indigo-500',
+              'bg-purple-500',
+              'bg-teal-500',
+              'bg-amber-500',
+              'bg-rose-400',
+            ];
+            return (
+              <div
+                key={result.party}
+                className={`${palette[idx % palette.length]} flex flex-col items-center justify-center text-white overflow-hidden`}
+                style={{ width: `${share}%` }}
+                title={`${result.party}: ${seats} seats`}
+              >
+                {share > 6 && (
+                  <>
+                    <span className="font-mono text-sm font-bold">{seats}</span>
+                    <span className="text-[9px] uppercase leading-tight px-1 text-center">
+                      {result.party}
+                    </span>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <ul className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-400">
+          {data.results.map((result, idx) => (
+            <li key={result.party} className="flex items-center gap-1.5">
+              <span
+                className={`h-2.5 w-2.5 rounded-sm ${
+                  ['bg-indigo-500', 'bg-purple-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-400'][
+                    idx % 5
+                  ]
+                }`}
+              />
+              {result.party}
+              <span className="font-mono">{result.seats ?? 0}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
+
   return (
     <section aria-label={data.title} className="my-8">
       <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
@@ -764,6 +1001,59 @@ export const DisasterBlockView: React.FC<{ data: DisasterBlock['data'] }> = ({ d
       'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20',
   };
 
+  /*
+   * How the incident is drawn.
+   *
+   * A banner across the story, a panel with everything in it, or a single
+   * line for a mention in the text. The incident is the same; only the
+   * treatment changes.
+   */
+  const layout = data.layout ?? 'panel';
+
+  if (layout === 'banner') {
+    return (
+      <div className="my-4 rounded-xl border border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/5 px-4 py-3">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="font-bold text-rose-900 dark:text-rose-200">{data.title}</span>
+          <span
+            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${statusStyles[data.status] ?? statusStyles.ACTIVE}`}
+          >
+            {data.status}
+          </span>
+          {data.severity && (
+            <span className="text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-400">
+              {data.severity}
+            </span>
+          )}
+          {data.location && (
+            <span className="text-xs text-rose-700 dark:text-rose-300/80">{data.location}</span>
+          )}
+        </div>
+        {data.updates[0]?.description && (
+          <p className="mt-1.5 text-sm text-rose-900/90 dark:text-rose-200/90">
+            {data.updates[0].description}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (layout === 'inline') {
+    return (
+      <p className="my-3 flex flex-wrap items-baseline gap-2 text-xs">
+        <span className="font-bold text-slate-900 dark:text-slate-100">{data.title}</span>
+        <span
+          className={`px-1.5 py-0.5 rounded font-bold uppercase border ${statusStyles[data.status] ?? statusStyles.ACTIVE}`}
+        >
+          {data.status}
+        </span>
+        {data.location && (
+          <span className="text-slate-500 dark:text-slate-400">{data.location}</span>
+        )}
+      </p>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}
@@ -849,6 +1139,46 @@ export const DisasterBlockView: React.FC<{ data: DisasterBlock['data'] }> = ({ d
 };
 
 export const ScienceBlockView: React.FC<{ data: ScienceBlock['data'] }> = ({ data }) => {
+  /*
+   * How the finding is drawn.
+   *
+   * As a paper, with the measurements set out beneath it; as cards; or as
+   * plain running text. The finding is the same; only the treatment
+   * changes.
+   */
+  const layout = data.layout ?? 'paper';
+
+  if (layout === 'plain') {
+    return (
+      <section aria-label={data.title} className="my-6">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.field && <p className="text-sm text-slate-600 dark:text-slate-400">{data.field}</p>}
+        <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          {data.findings.join(' ')}
+        </p>
+      </section>
+    );
+  }
+
+  if (layout === 'cards') {
+    return (
+      <section aria-label={data.title} className="my-8">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.field && <p className="text-sm text-slate-600 dark:text-slate-400">{data.field}</p>}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {data.findings.map((finding, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 p-4 shadow-sm"
+            >
+              <p className="text-sm text-slate-700 dark:text-slate-300">{finding}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}

@@ -33,6 +33,89 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
   const componentTotal = scenario.components.reduce((sum, c) => sum + c.value, 0);
   const hasBreakdown = scenario.components.length > 0 && componentTotal !== 0;
 
+  /*
+   * How the scenario is drawn.
+   *
+   * As sliders beside the outcome, as a card per input, or as one line
+   * with the outcome in it. The scenario is the same; only the treatment
+   * changes.
+   */
+  const layout = data.layout ?? 'sliders';
+
+  if (layout === 'inline') {
+    return (
+      <p className="my-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+        <span className="font-semibold text-slate-800 dark:text-slate-200">{data.title}</span>
+        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+          {format(scenario.outcome)} {data.outcomeUnit}
+        </span>
+        {scenario.components.map((component) => (
+          <span key={component.label} className="text-xs text-slate-500 dark:text-slate-400">
+            {component.label} {format(component.value)}
+          </span>
+        ))}
+      </p>
+    );
+  }
+
+  if (layout === 'cards') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.description && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.description}</p>
+          )}
+        </header>
+
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {data.inputs.map((input) => {
+            const current = values[input.id] ?? input.defaultValue;
+            return (
+              <div
+                key={input.id}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 p-4"
+              >
+                <label
+                  htmlFor={`what_if_card_${input.id}`}
+                  className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  {input.label}
+                </label>
+                <input
+                  id={`what_if_card_${input.id}`}
+                  type="range"
+                  min={input.min}
+                  max={input.max}
+                  step={input.step}
+                  value={current}
+                  onChange={(e) => setInput(input, Number(e.target.value))}
+                  className="mt-2 w-full"
+                />
+                <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
+                  {current}
+                  {input.unit}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="px-5 pb-4 rounded-b-2xl bg-slate-50 dark:bg-slate-900/60 px-5 py-3">
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {data.outcomeLabel}
+          </span>{' '}
+          <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
+            {format(scenario.outcome)} {data.outcomeUnit}
+          </span>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}

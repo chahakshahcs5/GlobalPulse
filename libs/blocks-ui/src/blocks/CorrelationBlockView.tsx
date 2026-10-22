@@ -31,6 +31,72 @@ export const CorrelationBlockView: React.FC<{
 
   const strongest = matrix.strongest;
 
+  /*
+   * How the correlations are drawn.
+   *
+   * As a matrix, as a list of pairings, or as bars scaled to the
+   * coefficient. The correlations are the same; only the treatment
+   * changes.
+   */
+  const layout = data.layout ?? 'matrix';
+
+  if (layout === 'list' || layout === 'bars') {
+    const pairs = matrix.variables.flatMap((rowVariable, row) =>
+      matrix.variables.slice(row + 1).map((columnVariable, offset) => ({
+        cell: matrix.cells[row][row + 1 + offset],
+        label: `${rowVariable.label} & ${columnVariable.label}`,
+      }))
+    );
+    const maxAbs = Math.max(...pairs.map((pair) => Math.abs(pair.cell.coefficient ?? 0)), 0.01);
+
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.subtitle && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+          )}
+        </header>
+
+        <ul className="px-5 py-4 space-y-2.5">
+          {pairs.map((pair) => (
+            <li key={pair.label} className="flex items-center gap-3">
+              <span className="w-48 shrink-0 text-xs text-slate-700 dark:text-slate-300 truncate">
+                {pair.label}
+              </span>
+              {layout === 'bars' ? (
+                <span
+                  className={`h-3 rounded-full ${
+                    (pair.cell.coefficient ?? 0) < 0 ? 'bg-rose-400/70' : 'bg-indigo-500/70'
+                  }`}
+                  style={{
+                    width: `${(Math.abs(pair.cell.coefficient ?? 0) / maxAbs) * 100}%`,
+                  }}
+                />
+              ) : (
+                <span className="font-mono text-xs text-slate-700 dark:text-slate-300">
+                  r = {pair.cell.coefficient === null ? '—' : pair.cell.coefficient.toFixed(3)}
+                </span>
+              )}
+              <span className="ml-auto font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                n = {pair.cell.n}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {summary && (
+          <div className="px-5 pb-3">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{summary}</p>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}

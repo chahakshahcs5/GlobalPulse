@@ -335,6 +335,13 @@ export const TableBlockSchema = BaseBlockSchema.extend({
 export const TimelineBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('timeline'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['vertical', 'horizontal', 'compact']).optional(),
     title: z.string().optional(),
     description: z.string().optional(),
     items: z
@@ -419,6 +426,13 @@ export const DiagramBlockSchema = BaseBlockSchema.extend({
 export const FlowBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('flow'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['steps', 'timeline', 'cards']).optional(),
     title: z.string().optional(),
     description: z.string().optional(),
     steps: z
@@ -745,6 +759,13 @@ export type LiveTickerItem = z.infer<typeof LiveTickerItemSchema>;
 export const LiveTickerBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('live_ticker'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['row', 'grid', 'cards']).optional(),
     title: z.string().optional(),
     refreshIntervalSeconds: z.number().int().min(5).max(3600).default(30),
     items: z.array(LiveTickerItemSchema).min(1),
@@ -824,6 +845,13 @@ export type DocumentHighlight = z.infer<typeof DocumentHighlightSchema>;
 export const DocumentViewerBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('document_viewer'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['reader', 'gallery', 'list']).optional(),
     documentUrl: z.string().url(),
     title: z.string().min(1),
     pageCount: z.number().int().positive(),
@@ -850,6 +878,13 @@ export const DocumentViewerBlockSchema = BaseBlockSchema.extend({
 export const DataExplorerBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('data_explorer'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['controls', 'table', 'cards']).optional(),
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().optional(),
@@ -919,6 +954,13 @@ export type CalculatorInput = z.infer<typeof CalculatorInputSchema>;
 export const CalculatorBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('calculator'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['panel', 'inline', 'steps']).optional(),
     title: z.string().min(1),
     description: z.string().optional(),
     inputs: z.array(CalculatorInputSchema).min(1),
@@ -959,6 +1001,13 @@ export type SensitivityInput = z.infer<typeof SensitivityInputSchema>;
 export const SensitivityBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('sensitivity'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['tornado', 'bars', 'table']).optional(),
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().max(4000).optional(),
@@ -1006,6 +1055,13 @@ export type Prediction = z.infer<typeof PredictionSchema>;
 export const PredictionLeaderboardBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('prediction_leaderboard'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['table', 'cards', 'bars']).optional(),
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().max(4000).optional(),
@@ -1056,6 +1112,13 @@ export type WhatIfBreakdown = z.infer<typeof WhatIfBreakdownSchema>;
 export const WhatIfBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('what_if'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['sliders', 'cards', 'inline']).optional(),
     title: z.string().min(1),
     description: z.string().max(4000).optional(),
     inputs: z.array(WhatIfInputSchema).min(1).max(8),
@@ -1106,6 +1169,13 @@ export type CorrelationVariable = z.infer<typeof CorrelationVariableSchema>;
 export const CorrelationBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('correlation'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['matrix', 'list', 'bars']).optional(),
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().max(4000).optional(),
@@ -1151,6 +1221,13 @@ export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 export const QuizBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('quiz'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['cards', 'list', 'inline']).optional(),
     title: z.string().min(1),
     description: z.string().max(4000).optional(),
     questions: z.array(QuizQuestionSchema).min(1).max(20),
@@ -1233,6 +1310,13 @@ export type AnimatedMapFrame = z.infer<typeof AnimatedMapFrameSchema>;
 export const AnimatedMapBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('animated_map'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['scrubber', 'slideshow', 'static']).optional(),
     title: z.string().min(1),
     description: z.string().max(4000).optional(),
     /** The frames, in chronological order. */
@@ -1282,6 +1366,13 @@ export const RankingBlockSchema = BaseBlockSchema.extend({
 export const FinancialBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('financial'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['cards', 'table', 'inline']).optional(),
     title: z.string().min(1),
     entityId: z.string().optional(),
     currency: z.string().min(1),
@@ -1315,6 +1406,13 @@ export const FinancialBlockSchema = BaseBlockSchema.extend({
 export const ElectionBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('election'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['table', 'bars', 'seats']).optional(),
     title: z.string().min(1),
     electionType: z.string().min(1),
     region: z.string().min(1),
@@ -1361,6 +1459,13 @@ export type DisasterMetric = z.infer<typeof DisasterMetricSchema>;
 export const DisasterBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('disaster'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['banner', 'panel', 'inline']).optional(),
     title: z.string().min(1),
     disasterType: z.enum(['earthquake', 'storm', 'flood', 'fire', 'drought', 'other']),
     status: z.enum(['ACTIVE', 'RESOLVED', 'MONITORING']).default('ACTIVE'),
@@ -1388,6 +1493,13 @@ export const DisasterBlockSchema = BaseBlockSchema.extend({
 export const ScienceBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('science'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['paper', 'cards', 'plain']).optional(),
     title: z.string().min(1),
     field: z.string().optional(),
     findings: z.array(z.string()).min(1),
@@ -1466,6 +1578,13 @@ export type LiveDataItem = z.infer<typeof LiveDataItemSchema>;
 export const LiveDataBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('live_data'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['cards', 'table', 'inline']).optional(),
     title: z.string().optional(),
     refreshIntervalSeconds: z.number().int().min(5).max(3600).default(60),
     items: z.array(LiveDataItemSchema).min(1),
@@ -1500,6 +1619,13 @@ export type UncertaintyPoint = z.infer<typeof UncertaintyPointSchema>;
 export const UncertaintyBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('uncertainty'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['intervals', 'forest', 'table']).optional(),
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().max(4000).optional(),
@@ -1778,6 +1904,13 @@ export type DatasetColumn = z.infer<typeof DatasetColumnSchema>;
 export const DatasetBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('dataset'),
   data: z.object({
+    /**
+     * How this block is drawn.
+     *
+     * The treatments of a block are the ways of showing it, so this is
+     * what a variant changes: the same content, drawn differently.
+     */
+    layout: z.enum(['table', 'cards', 'download']).optional(),
     title: z.string().min(1).max(300),
     description: z.string().max(4000).optional(),
     downloadUrl: z.string().url().optional(),

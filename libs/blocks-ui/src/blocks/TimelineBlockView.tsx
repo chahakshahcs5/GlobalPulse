@@ -5,6 +5,14 @@ import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { TimelineBlock } from '@ai-news/schemas';
 
 export const TimelineBlockView: React.FC<{ data: TimelineBlock['data'] }> = ({ data }) => {
+  /*
+   * How the timeline is drawn.
+   *
+   * Down the page, across the page, or as a compact list. The events
+   * are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'vertical';
+
   const items = data.items || [];
   const [layoutMode, setLayoutMode] = useState<'flow' | 'chronology'>(
     items.length <= 4 ? 'flow' : 'chronology'
@@ -55,7 +63,13 @@ export const TimelineBlockView: React.FC<{ data: TimelineBlock['data'] }> = ({ d
   };
 
   return (
-    <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-sm overflow-hidden transition-all hover:shadow-md">
+    <div
+      className={[
+        layout === 'compact' ? 'my-6' : 'my-8',
+        layout === 'compact' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-sm overflow-hidden transition-all hover:shadow-md',
+      ].join(' ')}
+    >
       {/* Header Bar */}
       <div className="px-5 py-4 bg-slate-50/80 dark:bg-slate-950/40 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">

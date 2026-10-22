@@ -38,6 +38,59 @@ export const SensitivityBlockView: React.FC<{
     return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
   };
 
+  /*
+   * How the swings are drawn.
+   *
+   * As a tornado chart, as bars scaled to the swing, or as a table of
+   * the numbers. The swings are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'tornado';
+
+  if (layout === 'bars' || layout === 'table') {
+    const maxSwing = Math.max(...swings.map((swing) => Math.abs(swing.swing)), 0.0001);
+
+    if (layout === 'bars') {
+      return (
+        <section
+          aria-label={data.title}
+          className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+        >
+          <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+            {data.subtitle && (
+              <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+            )}
+          </header>
+
+          <ul className="px-5 py-4 space-y-2.5">
+            {swings.map((swing) => (
+              <li key={swing.id} className="flex items-center gap-3">
+                <span className="w-40 shrink-0 text-xs text-slate-700 dark:text-slate-300 truncate">
+                  {swing.label}
+                </span>
+                <span
+                  className="h-3 rounded-full bg-indigo-500/70"
+                  style={{ width: `${(Math.abs(swing.swing) / maxSwing) * 100}%` }}
+                />
+                <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
+                  {format(swing.swing)}
+                  {data.outputUnit ? ` ${data.outputUnit}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            <p>
+              Base case: {format(data.baseOutput)}
+              {data.outputUnit ? ` ${data.outputUnit}` : ''} {data.outputLabel}
+            </p>
+          </footer>
+        </section>
+      );
+    }
+  }
+
   return (
     <section
       aria-label={data.title}

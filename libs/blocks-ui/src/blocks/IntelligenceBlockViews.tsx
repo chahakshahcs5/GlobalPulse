@@ -482,6 +482,14 @@ export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({
 };
 
 export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ data }) => {
+  /*
+   * How the values are drawn.
+   *
+   * As cards, as a table, or inline in the text. The values are the
+   * same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'cards';
+
   const live = useLiveFeed(data.liveKey, data.refreshIntervalSeconds ?? 60);
 
   // Prefer the live feed when the block is bound to one; otherwise show the
@@ -505,7 +513,12 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
   return (
     <section
       aria-label={data.title || 'Live data'}
-      className="my-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-4"
+      className={[
+        layout === 'inline' ? 'my-3' : 'my-6',
+        layout === 'inline' ? 'rounded-lg' : 'rounded-xl',
+        'border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50',
+        layout === 'inline' ? 'px-3 py-2' : 'p-4',
+      ].join(' ')}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         {data.title && (

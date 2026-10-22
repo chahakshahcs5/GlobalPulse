@@ -812,6 +812,15 @@ export const TranscriptBlockView: React.FC<{ data: TranscriptBlock['data'] }> = 
 };
 
 export const DatasetBlockView: React.FC<{ data: DatasetBlock['data'] }> = ({ data }) => {
+  /*
+   * How the dataset is drawn.
+   *
+   * As a table of the preview rows, as a card a row, or as a download
+   * with the columns described. The dataset is the same; only the
+   * treatment changes.
+   */
+  const layout = data.layout ?? 'table';
+
   const columns =
     data.columns.length > 0
       ? data.columns
@@ -824,7 +833,11 @@ export const DatasetBlockView: React.FC<{ data: DatasetBlock['data'] }> = ({ dat
   return (
     <section
       aria-label={data.title}
-      className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      className={[
+        layout === 'download' ? 'my-6' : 'my-8',
+        layout === 'download' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden',
+      ].join(' ')}
     >
       <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-start gap-3">
         <div className="flex-1">

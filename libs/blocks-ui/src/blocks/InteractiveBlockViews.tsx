@@ -363,6 +363,14 @@ export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = 
       }))
     : data.items;
 
+  /*
+   * How the ticker is drawn.
+   *
+   * As a row of figures, as a grid, or as a card each. The figures are
+   * the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'grid';
+
   return (
     <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-4">
@@ -387,7 +395,15 @@ export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = 
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div
+        className={
+          layout === 'row'
+            ? 'flex flex-wrap gap-6'
+            : layout === 'cards'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5'
+              : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5'
+        }
+      >
         {items.map((item, idx) => {
           const isPositive = item.delta >= 0;
           const isSelected = selectedSymbol === item.symbol;

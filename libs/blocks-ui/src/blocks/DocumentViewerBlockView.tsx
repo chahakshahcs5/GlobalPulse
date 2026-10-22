@@ -6,6 +6,14 @@ import type { DocumentViewerBlock } from '@ai-news/schemas';
 export const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data'] }> = ({
   data,
 }) => {
+  /*
+   * How the document is drawn.
+   *
+   * As a reader, as a gallery of its highlights, or as a list of them.
+   * The document is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'reader';
+
   const [activeHighlightIndex, setActiveHighlightIndex] = React.useState<number>(0);
   const [copiedExcerpt, setCopiedExcerpt] = React.useState<boolean>(false);
 
@@ -56,7 +64,13 @@ export const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data
   };
 
   return (
-    <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden">
+    <div
+      className={[
+        layout === 'list' ? 'my-6' : 'my-8',
+        layout === 'list' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden',
+      ].join(' ')}
+    >
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
         <div className="flex items-center gap-2">

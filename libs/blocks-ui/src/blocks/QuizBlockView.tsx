@@ -66,10 +66,22 @@ export const QuizBlockView: React.FC<{ data: QuizBlock['data'] }> = ({ data }) =
     }
   };
 
+  /*
+   * How the quiz is drawn.
+   *
+   * As cards, as a plain list, or inline in the text. The questions are
+   * the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'cards';
+
   return (
     <section
       aria-label={data.title}
-      className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      className={[
+        layout === 'inline' ? 'my-6' : 'my-8',
+        layout === 'inline' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden',
+      ].join(' ')}
     >
       <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
         <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
@@ -78,13 +90,24 @@ export const QuizBlockView: React.FC<{ data: QuizBlock['data'] }> = ({ data }) =
         )}
       </header>
 
-      <div className="divide-y divide-slate-100 dark:divide-slate-800">
+      <div
+        className={
+          layout === 'list' ? 'px-5 py-2' : 'divide-y divide-slate-100 dark:divide-slate-800'
+        }
+      >
         {data.questions.map((question, questionIndex) => {
           const chosen = answers[question.id];
           const isAnswered = chosen !== undefined;
 
           return (
-            <div key={question.id} className="px-5 py-4">
+            <div
+              key={question.id}
+              className={
+                layout === 'list'
+                  ? 'py-3 border-b border-slate-100 dark:border-slate-800 last:border-b-0'
+                  : 'px-5 py-4'
+              }
+            >
               <div className="flex items-start gap-2.5">
                 <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300">
                   {questionIndex + 1}

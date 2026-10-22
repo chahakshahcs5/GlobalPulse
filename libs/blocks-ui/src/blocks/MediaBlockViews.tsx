@@ -68,6 +68,14 @@ export const GalleryBlockView: React.FC<{ data: GalleryBlock['data'] }> = ({ dat
 };
 
 export const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) => {
+  /*
+   * How the process is drawn.
+   *
+   * As numbered steps, as a timeline, or as a card a step. The steps
+   * are the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'steps';
+
   const statusBadge = (status?: string) => {
     switch (status) {
       case 'completed':
@@ -100,7 +108,12 @@ export const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) =
   };
 
   return (
-    <div className="my-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm">
+    <div
+      className={[
+        layout === 'cards' ? 'rounded-2xl' : 'rounded-xl',
+        'my-8 border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm',
+      ].join(' ')}
+    >
       {data.title && (
         <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">{data.title}</h4>
       )}
