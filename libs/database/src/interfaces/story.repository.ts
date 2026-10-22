@@ -20,6 +20,8 @@ export interface StoryFilter {
   query?: string;
   fromDate?: string;
   toDate?: string;
+  /** The order the stories come back in. */
+  sort?: string;
 }
 
 export interface PaginatedStories {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
@@ -35,15 +35,36 @@ export default function EditorialCMSPage() {
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
+  const [searchInput, setSearchInput] = useState('');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState('updated_desc');
 
   /*
-   * The list is narrowed by the API rather than in the browser, so a status
-   * the API knows about and the browser has not loaded yet is still counted,
-   * and the counts are the newsroom's rather than the page's.
+   * The search waits for a pause in the typing.
+   *
+   * Every keystroke would otherwise be a request to the API, and a search
+   * that asks for a list of stories on each letter is a search that feels
+   * broken.
    */
-  const { stories, isApiConnected, total, hasMore, isLoadingMore, loadMore } = useAllStories(
-    filterStatus === 'ALL' ? undefined : filterStatus
-  );
+  useEffect(() => {
+    const handle = setTimeout(() => setQuery(searchInput.trim()), 300);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
+
+  /*
+   * The list is narrowed, searched and ordered by the API rather than in
+   * the browser, so a status the API knows about and the browser has not
+   * loaded yet is still counted, and the counts are the newsroom's rather
+   * than the page's.
+   *
+   * The search is the API's too: a newsroom of two hundred stories cannot
+   * be searched in the browser without fetching all two hundred.
+   */
+  const { stories, isApiConnected, total, hasMore, isLoadingMore, loadMore } = useAllStories({
+    status: filterStatus === 'ALL' ? undefined : filterStatus,
+    query: query.trim() || undefined,
+    sort,
+  });
   const { metrics } = useNewsroomMetrics();
   const { trending } = useTrendingStories(10);
   const { staff } = useNewsroomStaff();
@@ -125,6 +146,10 @@ export default function EditorialCMSPage() {
               metrics={metrics}
               displayedCount={stories.length}
               displayedTotal={total}
+              query={searchInput}
+              onQueryChange={setSearchInput}
+              sort={sort}
+              onSortChange={setSort}
             />
             <StoryTable
               stories={stories}

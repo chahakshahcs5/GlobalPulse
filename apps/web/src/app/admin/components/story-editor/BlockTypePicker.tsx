@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Plus, Search, X } from 'lucide-react';
 import { BlockItem } from '@ai-news/blocks-ui';
-import { listStudioCategories, type StudioBlock } from '@ai-news/block-studio';
+import { blockOf, listStudioCategories, type StudioBlock } from '@ai-news/block-studio';
 import type { StoryBlock } from '@ai-news/schemas';
 
 /**
@@ -85,12 +85,14 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
      * which is right for a stored block and awkward for one whose type is
      * chosen at runtime. The cast is the same one the Block Studio makes.
      */
-    onPick({
-      id: `blk_${block.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      blockType: block.type,
-      sortOrder: 0,
-      data: (sample?.data ?? {}) as StoryBlock['data'],
-    } as unknown as StoryBlock);
+    onPick(
+      blockOf(
+        block.type,
+        `blk_${block.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+        0,
+        { data: (sample?.data ?? {}) as Record<string, unknown> }
+      )
+    );
   };
 
   return (
@@ -213,7 +215,6 @@ function BlockCard({
     sortOrder: 0,
     data: (sample?.data ?? {}) as StoryBlock['data'],
   } as unknown as StoryBlock;
-
   return (
     <button
       type="button"

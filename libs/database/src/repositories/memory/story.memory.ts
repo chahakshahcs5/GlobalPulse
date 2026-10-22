@@ -123,12 +123,34 @@ export class MemoryStoryRepository implements IStoryRepository {
       }
     }
 
-    // Stable sort by publication date or updated date descending, then id descending
+    // The order the newsroom asked for, with the id as the tie-break so the
+    // order is total and a page never shows a story twice.
     result.sort((a, b) => {
-      const dateA = new Date(a.publishedAt || a.updatedAt).getTime();
-      const dateB = new Date(b.publishedAt || b.updatedAt).getTime();
-      if (dateB !== dateA) return dateB - dateA;
-      return b.id.localeCompare(a.id);
+      switch (filter?.sort) {
+        case 'updated_asc':
+          return a.updatedAt.localeCompare(b.updatedAt) || a.id.localeCompare(b.id);
+        case 'created_desc':
+          return b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id);
+        case 'created_asc':
+          return a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+        case 'title_asc':
+          return a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
+        case 'title_desc':
+          return b.title.localeCompare(a.title) || a.id.localeCompare(b.id);
+        case 'status_asc':
+          return (
+            a.status.localeCompare(b.status) ||
+            b.updatedAt.localeCompare(a.updatedAt) ||
+            a.id.localeCompare(b.id)
+          );
+        case 'updated_desc':
+        default: {
+          const dateA = new Date(a.publishedAt || a.updatedAt).getTime();
+          const dateB = new Date(b.publishedAt || b.updatedAt).getTime();
+          if (dateB !== dateA) return dateB - dateA;
+          return b.id.localeCompare(a.id);
+        }
+      }
     });
 
     const total = result.length;

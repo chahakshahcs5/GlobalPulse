@@ -14,18 +14,32 @@ export function notifyStoryMutation() {
 const STORY_PAGE_SIZE = 10;
 
 /**
+ * What the newsroom is looking at.
+ *
+ * The narrowing, the searching and the ordering are the API's work, not the
+ * browser's: a newsroom with two hundred stories cannot be searched in the
+ * browser without fetching all two hundred, and the counts would be the
+ * counts of a page rather than the counts of the newsroom.
+ */
+export interface StoryListQuery {
+  /** One workflow state, or nothing for all of them. */
+  status?: string;
+  /** Words to look for in the title and the summary. */
+  query?: string;
+  /** The order the stories come back in. */
+  sort?: string;
+}
+
+/**
  * The newsroom's stories.
  *
  * The stories are fetched a page at a time, and the rest are fetched when
  * the editor asks for them. The counts are the API's counts, so they say
  * how many stories the newsroom holds rather than how many happen to be
  * on screen.
- *
- * `status` narrows the list to one workflow state. The narrowing is done by
- * the API rather than in the browser, so a status the API knows about and
- * the browser has not loaded yet is still counted.
  */
-export function useAllStories(status?: string) {
+export function useAllStories(filters: StoryListQuery = {}) {
+  const { status, query, sort } = filters;
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isApiConnected, setIsApiConnected] = useState(false);
@@ -90,6 +104,8 @@ export function useAllStories(status?: string) {
         const page = await api.listStoriesPage({
           limit: Math.max(STORY_PAGE_SIZE, loadedCount.current),
           ...(status ? { status } : {}),
+          ...(query ? { query } : {}),
+          ...(sort ? { sort } : {}),
         });
         // API is reachable — use its data (even if empty)
         setStories(page.items);
@@ -115,16 +131,17 @@ export function useAllStories(status?: string) {
     } finally {
       if (fetchInProgress.current === run) fetchInProgress.current = null;
     }
-  }, [scheduleRetry, status]);
+  }, [query, scheduleRetry, sort, status]);
 
   fetchStoriesRef.current = fetchStories;
 
   /*
-   * A new filter is a new list, so the depth starts again at one page.
+   * A new search, filter or order is a new list, so the depth starts again
+   * at one page.
    */
   useEffect(() => {
     loadedCount.current = 0;
-  }, [status]);
+  }, [query, sort, status]);
 
   useEffect(() => {
     fetchStories();
@@ -191,6 +208,8 @@ export function useAllStories(status?: string) {
         limit: STORY_PAGE_SIZE,
         offset: stories.length,
         ...(status ? { status } : {}),
+        ...(query ? { query } : {}),
+        ...(sort ? { sort } : {}),
       });
       setStories((previous) => {
         const seen = new Set(previous.map((story) => story.id));
@@ -206,7 +225,7 @@ export function useAllStories(status?: string) {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, status, stories.length]);
+  }, [isLoadingMore, query, sort, status, stories.length]);
 
   return {
     stories,
@@ -233,7 +252,7 @@ export function usePublishedStories() {
     hasMore,
     loadMore,
     isLoadingMore,
-  } = useAllStories('PUBLISHED');
+  } = useAllStories({ status: 'PUBLISHED' });
   return {
     stories,
     isLoading,
