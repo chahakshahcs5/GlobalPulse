@@ -137,6 +137,11 @@ export const EvidenceBlockView: React.FC<{ data: EvidenceBlock['data'] }> = ({ d
               “{item.excerpt}”
             </p>
           )}
+          {item.sourceId && (
+            <p className="mt-1 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+              {item.sourceId}
+            </p>
+          )}
         </li>
       ))}
     </ul>
@@ -376,6 +381,11 @@ export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {data.interviewee.name}
           {data.interviewee.role ? ` — ${data.interviewee.role}` : ''}
+          {data.interviewee.entityId && (
+            <span className="ml-2 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+              {data.interviewee.entityId}
+            </span>
+          )}
         </p>
         {data.mediaUrl && (
           <a
@@ -400,6 +410,11 @@ export const InterviewBlockView: React.FC<{ data: InterviewBlock['data'] }> = ({
               {segment.speaker && (
                 <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                   {segment.speaker}
+                </p>
+              )}
+              {segment.sourceId && (
+                <p className="mt-0.5 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  {segment.sourceId}
                 </p>
               )}
             </div>
@@ -504,6 +519,9 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
         change: item.change,
         unit: item.unit,
         asOf: item.asOf ?? live.asOf ?? new Date().toISOString(),
+        sourceUrl: (item as { sourceUrl?: string }).sourceUrl,
+        license: (item as { license?: string }).license,
+        methodology: (item as { methodology?: string }).methodology,
       }))
     : data.items;
 
@@ -570,6 +588,21 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
                       {item.asOf.slice(0, 16).replace('T', ' ')} UTC
                     </span>
                   )}
+                </div>
+              )}
+              {(item.sourceUrl || item.license) && (
+                <div className="mt-0.5 text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  {item.sourceUrl && (
+                    <a
+                      href={item.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                    >
+                      Source ↗
+                    </a>
+                  )}
+                  {item.license && <span className="ml-2">{item.license}</span>}
                 </div>
               )}
               {item.unit && (

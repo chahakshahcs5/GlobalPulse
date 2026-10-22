@@ -58,7 +58,14 @@ export const UncertaintyBlockView: React.FC<{
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {data.points.map((point) => (
                 <tr key={point.id ?? point.label}>
-                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{point.label}</td>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                    {point.label}
+                    {point.sourceId && (
+                      <span className="block font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                        {point.sourceId}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 font-mono text-slate-900 dark:text-slate-100">
                     {point.value.toLocaleString()} {data.unit}
                   </td>
@@ -107,6 +114,11 @@ export const UncertaintyBlockView: React.FC<{
               <div className="flex items-baseline justify-between gap-3 text-xs">
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
                   {point.label}
+                  {point.sourceId && (
+                    <span className="ml-2 font-mono text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                      {point.sourceId}
+                    </span>
+                  )}
                 </span>
                 <span className="font-mono text-slate-500 dark:text-slate-400">
                   {point.value.toLocaleString()} {data.unit}

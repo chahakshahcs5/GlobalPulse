@@ -109,8 +109,13 @@ export class MapRenderer {
     `;
 
     // Safely collect valid markers from diverse coordinate formats
-    const validMarkers: Array<{ coords: [number, number]; title: string; description?: string }> =
-      [];
+    const validMarkers: Array<{
+      coords: [number, number];
+      title: string;
+      description?: string;
+      severity?: string;
+      icon?: string;
+    }> = [];
 
     if (Array.isArray(mapData.markers)) {
       mapData.markers.forEach((m) => {
@@ -127,6 +132,8 @@ export class MapRenderer {
               (m as unknown as { name?: string }).name ||
               'Location',
             description: m.description,
+            severity: m.severity,
+            icon: m.icon,
           });
         }
       });
@@ -151,6 +158,26 @@ export class MapRenderer {
     validMarkers.forEach((m) => {
       const [x, y] = project(m.coords[0], m.coords[1]);
       const titleSafe = escapeXml(m.title);
+      /*
+       * A marker's severity is what the reader scans for first, so it
+       * decides the colour of the pin.
+       */
+      const severityColor =
+        m.severity === 'high'
+          ? '#ef4444'
+          : m.severity === 'medium'
+            ? '#f59e0b'
+            : m.severity === 'low'
+              ? '#22c55e'
+              : pinColor;
+      const severityGlow =
+        m.severity === 'high'
+          ? 'rgba(239, 68, 68, 0.25)'
+          : m.severity === 'medium'
+            ? 'rgba(245, 158, 11, 0.25)'
+            : m.severity === 'low'
+              ? 'rgba(34, 197, 94, 0.25)'
+              : pinGlow;
       const textWidth = Math.max(70, titleSafe.length * 7 + 16);
       const textOffsetLeft = x > width - 180;
       const labelX = textOffsetLeft ? x - textWidth - 12 : x + 14;
@@ -159,9 +186,14 @@ export class MapRenderer {
       markerSvgs += `
         <g transform="translate(${x}, ${y})">
           <!-- Ping Waves -->
-          <circle cx="0" cy="0" r="18" fill="${pinGlow}" />
-          <circle cx="0" cy="0" r="9" fill="${pinColor}" fill-opacity="0.4" />
-          <circle cx="0" cy="0" r="5" fill="${pinColor}" stroke="#ffffff" stroke-width="1.5" />
+          <circle cx="0" cy="0" r="18" fill="${severityGlow}" />
+          <circle cx="0" cy="0" r="9" fill="${severityColor}" fill-opacity="0.4" />
+          <circle cx="0" cy="0" r="5" fill="${severityColor}" stroke="#ffffff" stroke-width="1.5" />
+          ${
+            m.icon
+              ? `<text x="0" y="-11" font-size="11" text-anchor="middle" fill="${severityColor}" font-family="system-ui, sans-serif">${escapeXml(m.icon)}</text>`
+              : ''
+          }
           <!-- Pill Backdrop -->
           <rect x="${labelRectX - x}" y="-13" width="${textWidth}" height="24" rx="6" fill="${pillBg}" stroke="${pillBorder}" stroke-width="1" />
           <text x="${labelX - x}" y="3" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${titleSafe}</text>
@@ -191,6 +223,89 @@ export class MapRenderer {
           <polyline points="${points}" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.35" stroke-dasharray="1,7" stroke-linecap="round" />
           <text x="${project(route.coordinates[0][0], route.coordinates[0][1])[0] + 10}" y="${project(route.coordinates[0][0], route.coordinates[0][1])[1] - 8}" font-size="11" font-weight="700" fill="${color}" font-family="system-ui, sans-serif">${escapeXml(route.name || 'Route')}</text>
         `;
+      });
+    }
+
+    /*
+     * The layers.
+     *
+     * A choropleth shades the regions by their value, a heatmap blurs the
+     * intensity, a circle layer marks a point and a line layer draws a
+     * path. Without this the map is a picture of pins whatever the data
+     * says, and a choropleth looks exactly like a points map.
+     */
+    let layerSvgs = '';
+    if (mapData.layers && mapData.layers.length > 0) {
+      mapData.layers.forEach((layer) => {
+        const features = geoJsonFeatures(layer.geojson);
+        if (features.length === 0) return;
+
+        const values = features
+          .map((feature) => Number((feature.properties ?? {})[layer.property ?? '']))
+          .filter((value) => Number.isFinite(value));
+        const min = values.length ? Math.min(...values) : 0;
+        const max = values.length ? Math.max(...values) : 1;
+        const span = max - min || 1;
+        const scale = layer.colorScale ?? [];
+
+        const colourFor = (value: number): string => {
+          if (scale.length === 0) return '#3b82f6';
+          const position = (value - min) / span;
+          const index = Math.min(
+            scale.length - 1,
+            Math.max(0, Math.round(position * (scale.length - 1)))
+          );
+          return scale[index];
+        };
+
+        features.forEach((feature) => {
+          const raw = (feature.properties ?? {})[layer.property ?? ''];
+          const value = Number(raw);
+          const shade = Number.isFinite(value) ? colourFor(value) : '#94a3b8';
+          const rings = polygonRings(feature);
+          if (rings.length === 0) return;
+
+          if (layer.type === 'line') {
+            rings.forEach((ring) => {
+              const points = ring
+                .map((coord) => {
+                  const [px, py] = project(coord[0], coord[1]);
+                  return `${px.toFixed(1)},${py.toFixed(1)}`;
+                })
+                .join(' ');
+              layerSvgs += `<polyline points="${points}" fill="none" stroke="${shade}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.9" />`;
+            });
+            return;
+          }
+
+          if (layer.type === 'circle') {
+            const centre = ringCentre(rings[0]);
+            const [cx, cy] = project(centre[0], centre[1]);
+            const intensity = Number.isFinite(value) ? (value - min) / span : 0;
+            const radius = 6 + intensity * 22;
+            layerSvgs += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${radius.toFixed(1)}" fill="${shade}" fill-opacity="0.7" stroke="#ffffff" stroke-width="1" />`;
+            return;
+          }
+
+          if (layer.type === 'heatmap') {
+            const centre = ringCentre(rings[0]);
+            const [cx, cy] = project(centre[0], centre[1]);
+            const intensity = Number.isFinite(value) ? (value - min) / span : 0;
+            const radius = 14 + intensity * 46;
+            layerSvgs += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${radius.toFixed(1)}" fill="${shade}" fill-opacity="${(0.18 + intensity * 0.5).toFixed(2)}" />`;
+            return;
+          }
+
+          rings.forEach((ring) => {
+            const points = ring
+              .map((coord) => {
+                const [px, py] = project(coord[0], coord[1]);
+                return `${px.toFixed(1)},${py.toFixed(1)}`;
+              })
+              .join(' ');
+            layerSvgs += `<polygon points="${points}" fill="${shade}" fill-opacity="0.6" stroke="${shade}" stroke-width="1.2" stroke-linejoin="round" />`;
+          });
+        });
       });
     }
 
@@ -281,6 +396,9 @@ export class MapRenderer {
           <circle cx="0" cy="0" r="2.5" fill="#3b82f6" />
         </g>
 
+        <!-- Data Layers -->
+        ${layerSvgs}
+
         <!-- Interactive Marker Points -->
         ${markerSvgs}
 
@@ -306,6 +424,91 @@ export class MapRenderer {
       </svg>
     `;
   }
+}
+
+/**
+ * A GeoJSON feature, as far as the layers use it.
+ *
+ * The layers carry whatever the editor supplied, so a FeatureCollection, a
+ * bare Feature and a plain geometry are all accepted.
+ */
+interface GeoFeature {
+  type?: string;
+  properties?: Record<string, unknown>;
+  geometry?: {
+    type?: string;
+    coordinates?: unknown;
+  };
+}
+
+/** The features of a GeoJSON object. */
+function geoJsonFeatures(geojson: unknown): GeoFeature[] {
+  if (!geojson || typeof geojson !== 'object') return [];
+  const source = geojson as GeoFeature;
+  if (source.type === 'FeatureCollection') {
+    const features = (source as { features?: unknown }).features;
+    return Array.isArray(features) ? (features as GeoFeature[]) : [];
+  }
+  if (source.type === 'Feature') return [source];
+  if (source.type) {
+    return [{ type: 'Feature', properties: {}, geometry: source as GeoFeature['geometry'] }];
+  }
+  return [];
+}
+
+/**
+ * The rings of a feature, as arrays of coordinates.
+ *
+ * A polygon is a list of rings, the first of which is the outside; a
+ * multi-polygon is a list of polygons. A line is a single ring.
+ */
+function polygonRings(feature: GeoFeature): Array<Array<[number, number]>> {
+  const geometry = feature?.geometry;
+  if (!geometry || typeof geometry !== 'object') return [];
+
+  const asRing = (ring: unknown): Array<[number, number]> =>
+    Array.isArray(ring)
+      ? ring
+          .map((coord) => parseCoordinates(coord))
+          .filter((coord): coord is [number, number] => coord !== null)
+      : [];
+
+  if (geometry.type === 'Polygon' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates
+      .map(asRing)
+      .filter((ring: Array<[number, number]>) => ring.length > 1);
+  }
+  if (geometry.type === 'MultiPolygon' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates.flatMap((polygon: unknown) =>
+      Array.isArray(polygon)
+        ? polygon.map(asRing).filter((ring: Array<[number, number]>) => ring.length > 1)
+        : []
+    );
+  }
+  if (geometry.type === 'LineString') {
+    const ring = asRing(geometry.coordinates);
+    return ring.length > 1 ? [ring] : [];
+  }
+  if (geometry.type === 'MultiLineString' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates
+      .map(asRing)
+      .filter((ring: Array<[number, number]>) => ring.length > 1);
+  }
+  if (geometry.type === 'Point') {
+    const point = parseCoordinates(geometry.coordinates);
+    return point ? [[point]] : [];
+  }
+  return [];
+}
+
+/** The middle of a ring, used to place a circle or a heat spot. */
+function ringCentre(ring: Array<[number, number]>): [number, number] {
+  if (ring.length === 0) return [0, 0];
+  const sum = ring.reduce(
+    (total, coord) => [total[0] + coord[0], total[1] + coord[1]] as [number, number],
+    [0, 0] as [number, number]
+  );
+  return [sum[0] / ring.length, sum[1] / ring.length];
 }
 
 function parseCoordinates(input: unknown): [number, number] | null {

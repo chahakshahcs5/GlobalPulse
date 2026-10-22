@@ -507,6 +507,14 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
               {item.note && (
                 <span className="text-[11px] text-slate-500 dark:text-slate-400">{item.note}</span>
               )}
+              {item.storyId && (
+                <a
+                  href={`/stories/${item.storyId}`}
+                  className="shrink-0 text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 hover:underline"
+                >
+                  Read ↗
+                </a>
+              )}
             </li>
           );
         })}
@@ -757,6 +765,11 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
                   {metric.unit ?? data.currency}
                 </span>
               </div>
+              {metric.sourceId && (
+                <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  {metric.sourceId}
+                </div>
+              )}
               {metric.change !== undefined && (
                 <div
                   className={`text-[11px] font-mono font-bold ${
@@ -1100,6 +1113,9 @@ export const DisasterBlockView: React.FC<{ data: DisasterBlock['data'] }> = ({ d
               {metric.timestamp && (
                 <div className="text-[10px] font-mono text-slate-400">{metric.timestamp}</div>
               )}
+              {metric.sourceId && (
+                <div className="text-[10px] font-mono text-slate-400">{metric.sourceId}</div>
+              )}
             </li>
           ))}
         </ul>
@@ -1124,6 +1140,9 @@ export const DisasterBlockView: React.FC<{ data: DisasterBlock['data'] }> = ({ d
                   <div className="text-sm text-slate-600 dark:text-slate-400">
                     {update.description}
                   </div>
+                )}
+                {update.sourceId && (
+                  <div className="text-[10px] font-mono text-slate-400">{update.sourceId}</div>
                 )}
               </li>
             ))}

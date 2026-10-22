@@ -455,6 +455,12 @@ export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = 
                 {item.label}
               </div>
 
+              {item.lastUpdated && (
+                <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  {formatUtcDate(item.lastUpdated)}
+                </div>
+              )}
+
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
                   {item.unit && item.unit !== '%' ? item.unit : ''}
@@ -495,16 +501,165 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
   /*
    * How the comparison is drawn.
    *
-   * The two sides can sit side by side, be set against each other as a
-   * table of matching points, or be set against each other as a head-to-
-   * head with a rule down the middle. The comparison is the same; only
-   * the treatment changes.
+   * The two sides side by side, as a table of matching points, as a
+   * head-to-head with a rule down the middle, as a scorecard of shared
+   * criteria, as the verdict alone, or as two bars. The comparison is the
+   * same; only the treatment changes.
    */
   const layout = data.layout ?? 'split';
 
   const pointsA = data.subjectA.points;
   const pointsB = data.subjectB.points;
   const rowCount = Math.max(pointsA.length, pointsB.length);
+
+  const ratingClass = (rating: string) =>
+    rating === 'strong'
+      ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300'
+      : rating === 'weak'
+        ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-300'
+        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+
+  if (layout === 'scorecard' && data.criteria && data.criteria.length > 0) {
+    return (
+      <div className="my-8">
+        {data.title && (
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            {data.title}
+          </h4>
+        )}
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-100 dark:bg-slate-800/60">
+              <tr>
+                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">
+                  Criterion
+                </th>
+                <th className="px-4 py-3 font-semibold text-blue-700 dark:text-blue-400">
+                  {data.subjectA.name}
+                  {data.subjectA.subtitle && (
+                    <span className="block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                      {data.subjectA.subtitle}
+                    </span>
+                  )}
+                </th>
+                <th className="px-4 py-3 font-semibold text-purple-700 dark:text-purple-400">
+                  {data.subjectB.name}
+                  {data.subjectB.subtitle && (
+                    <span className="block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                      {data.subjectB.subtitle}
+                    </span>
+                  )}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              {data.criteria.map((criterion) => (
+                <tr key={criterion.label}>
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
+                    {criterion.label}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${ratingClass(
+                        criterion.a
+                      )}`}
+                    >
+                      {criterion.a}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${ratingClass(
+                        criterion.b
+                      )}`}
+                    >
+                      {criterion.b}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'verdict') {
+    return (
+      <div className="my-8 text-center">
+        {data.title && (
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            {data.title}
+          </h4>
+        )}
+        {data.verdict && (
+          <p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-slate-800 dark:text-slate-200">
+            {data.verdict}
+          </p>
+        )}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm">
+          <span className="font-semibold text-blue-700 dark:text-blue-400">
+            {data.subjectA.name}
+          </span>
+          <span className="text-slate-300 dark:text-slate-600">vs</span>
+          <span className="font-semibold text-purple-700 dark:text-purple-400">
+            {data.subjectB.name}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'bars') {
+    const maxScore = Math.max(
+      Math.abs(data.subjectA.score ?? 0),
+      Math.abs(data.subjectB.score ?? 0),
+      1
+    );
+    const bar = (score: number | undefined, colour: string) => (
+      <span
+        className={`h-4 rounded-full ${colour}`}
+        style={{ width: `${((score ?? 0) / maxScore) * 100}%` }}
+      />
+    );
+    return (
+      <div className="my-8">
+        {data.title && (
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            {data.title}
+          </h4>
+        )}
+        <ul className="space-y-4">
+          <li>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {data.subjectA.name}
+              </span>
+              <span className="font-mono text-slate-600 dark:text-slate-400">
+                {data.subjectA.score ?? '—'}
+              </span>
+            </div>
+            <div className="mt-1.5">{bar(data.subjectA.score, 'bg-blue-500/80')}</div>
+          </li>
+          <li>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {data.subjectB.name}
+              </span>
+              <span className="font-mono text-slate-600 dark:text-slate-400">
+                {data.subjectB.score ?? '—'}
+              </span>
+            </div>
+            <div className="mt-1.5">{bar(data.subjectB.score, 'bg-purple-500/80')}</div>
+          </li>
+        </ul>
+        {data.verdict && (
+          <p className="mt-5 text-sm text-slate-600 dark:text-slate-400">{data.verdict}</p>
+        )}
+      </div>
+    );
+  }
 
   if (layout === 'table') {
     return (
@@ -520,9 +675,19 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
               <tr>
                 <th className="px-4 py-3 font-semibold text-blue-700 dark:text-blue-400">
                   {data.subjectA.name}
+                  {data.subjectA.subtitle && (
+                    <span className="block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                      {data.subjectA.subtitle}
+                    </span>
+                  )}
                 </th>
                 <th className="px-4 py-3 font-semibold text-purple-700 dark:text-purple-400">
                   {data.subjectB.name}
+                  {data.subjectB.subtitle && (
+                    <span className="block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                      {data.subjectB.subtitle}
+                    </span>
+                  )}
                 </th>
               </tr>
             </thead>
@@ -557,6 +722,11 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
             <h5 className="text-lg font-black text-blue-700 dark:text-blue-400">
               {data.subjectA.name}
             </h5>
+            {data.subjectA.subtitle && (
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                {data.subjectA.subtitle}
+              </p>
+            )}
             <ul className="mt-3 space-y-2">
               {pointsA.map((pt, idx) => (
                 <li key={idx} className="text-sm text-slate-700 dark:text-slate-300">
@@ -576,6 +746,11 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
             <h5 className="text-lg font-black text-purple-700 dark:text-purple-400">
               {data.subjectB.name}
             </h5>
+            {data.subjectB.subtitle && (
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                {data.subjectB.subtitle}
+              </p>
+            )}
             <ul className="mt-3 space-y-2">
               {pointsB.map((pt, idx) => (
                 <li key={idx} className="text-sm text-slate-700 dark:text-slate-300">
@@ -598,6 +773,11 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
         <div className="rounded-xl border border-blue-200 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-950/10 p-5">
           <h5 className="font-bold text-base text-blue-700 dark:text-blue-400 border-b border-blue-200 dark:border-blue-500/20 pb-2 mb-3">
             {data.subjectA.name}
+            {data.subjectA.subtitle && (
+              <span className="block mt-0.5 text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                {data.subjectA.subtitle}
+              </span>
+            )}
           </h5>
           <ul className="space-y-2">
             {data.subjectA.points.map((pt, idx) => (
@@ -614,6 +794,11 @@ export const ComparisonBlockView: React.FC<{ data: ComparisonBlock['data'] }> = 
         <div className="rounded-xl border border-purple-200 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-950/10 p-5">
           <h5 className="font-bold text-base text-purple-700 dark:text-purple-400 border-b border-purple-200 dark:border-purple-500/20 pb-2 mb-3">
             {data.subjectB.name}
+            {data.subjectB.subtitle && (
+              <span className="block mt-0.5 text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                {data.subjectB.subtitle}
+              </span>
+            )}
           </h5>
           <ul className="space-y-2">
             {data.subjectB.points.map((pt, idx) => (

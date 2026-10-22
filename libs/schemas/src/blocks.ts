@@ -107,6 +107,12 @@ export const HeadingBlockSchema = BaseBlockSchema.extend({
     level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     text: z.string().min(1),
     subtext: z.string().optional(),
+    /**
+     * How the heading is set.
+     *
+     * The level says how big it is; this says what kind of heading it is.
+     */
+    style: z.enum(['plain', 'underlined', 'boxed', 'numbered']).optional(),
   }),
 });
 
@@ -134,7 +140,7 @@ export const SummaryBlockSchema = BaseBlockSchema.extend({
      * The treatments of a block are the ways of showing it, so this is
      * what a variant changes: the same content, drawn differently.
      */
-    layout: z.enum(['card', 'numbered', 'plain']).optional(),
+    layout: z.enum(['card', 'numbered', 'plain', 'grid']).optional(),
     headline: z.string().min(1),
     bulletPoints: z.array(z.string()).min(1),
     sentiment: z.enum(['neutral', 'positive', 'cautious', 'critical']).optional(),
@@ -643,16 +649,39 @@ export const ComparisonBlockSchema = BaseBlockSchema.extend({
      * The treatments of a block are the ways of showing it, so this is
      * what a variant changes: the same content, drawn differently.
      */
-    layout: z.enum(['split', 'table', 'versus']).optional(),
+    layout: z.enum(['split', 'table', 'versus', 'scorecard', 'verdict', 'bars']).optional(),
     title: z.string().optional(),
     subjectA: z.object({
       name: z.string().min(1),
+      /** A line under the name saying what the option is. */
+      subtitle: z.string().optional(),
       points: z.array(z.string()).min(1),
+      /** A score for the option, when the two can be rated. */
+      score: z.number().optional(),
     }),
     subjectB: z.object({
       name: z.string().min(1),
+      subtitle: z.string().optional(),
       points: z.array(z.string()).min(1),
+      score: z.number().optional(),
     }),
+    /** The conclusion the comparison reaches, in one line. */
+    verdict: z.string().max(2000).optional(),
+    /**
+     * The criteria both options are judged against.
+     *
+     * Each criterion says how each side stands on it, so the comparison can
+     * be drawn as a scorecard rather than as two lists of points.
+     */
+    criteria: z
+      .array(
+        z.object({
+          label: z.string().min(1),
+          a: z.enum(['strong', 'weak', 'neutral']),
+          b: z.enum(['strong', 'weak', 'neutral']),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -668,9 +697,16 @@ export const CalloutBlockSchema = BaseBlockSchema.extend({
 export const CitationBlockSchema = BaseBlockSchema.extend({
   blockType: z.literal('citation'),
   data: z.object({
+    layout: z.enum(['inline', 'footnote', 'bibliography', 'marker']).optional(),
     claim: z.string().min(1),
     sourceIds: z.array(z.string()).min(1),
     quoteExcerpt: z.string().optional(),
+    /** Its place in a numbered reference list. */
+    referenceNumber: z.number().int().positive().optional(),
+    /** The page or paragraph the claim is taken from. */
+    page: z.string().optional(),
+    /** When the source was last read. */
+    accessedAt: z.string().optional(),
   }),
 });
 
@@ -683,12 +719,25 @@ export const SourceBlockSchema = BaseBlockSchema.extend({
      * The treatments of a block are the ways of showing it, so this is
      * what a variant changes: the same content, drawn differently.
      */
-    layout: z.enum(['card', 'compact', 'badge']).optional(),
+    layout: z.enum(['card', 'compact', 'badge', 'quote', 'reference']).optional(),
     sourceId: z.string().min(1),
     title: z.string().min(1),
     publisher: z.string().min(1),
     url: z.string().url(),
     publishedAt: z.string().optional(),
+    /**
+     * What kind of source this is.
+     *
+     * A reader deciding whether to trust a document wants to know what it
+     * is before they read it, so the kind is shown alongside it.
+     */
+    kind: z.enum(['report', 'dataset', 'testimony', 'filing', 'article', 'website']).optional(),
+    /** The passage from the source that the story leans on. */
+    excerpt: z.string().max(4000).optional(),
+    /** Its place in a numbered reference list. */
+    referenceNumber: z.number().int().positive().optional(),
+    /** When the source was last read, for a citation. */
+    accessedAt: z.string().optional(),
   }),
 });
 
@@ -701,12 +750,25 @@ export const EntityBlockSchema = BaseBlockSchema.extend({
      * The treatments of a block are the ways of showing it, so this is
      * what a variant changes: the same content, drawn differently.
      */
-    layout: z.enum(['card', 'compact', 'chip']).optional(),
+    layout: z.enum(['card', 'compact', 'chip', 'profile', 'directory']).optional(),
     entityId: z.string().min(1),
     name: z.string().min(1),
     type: z.string().min(1),
     description: z.string().optional(),
     avatarUrl: z.string().url().optional(),
+    /** The organisation the entity belongs to. */
+    organization: z.string().optional(),
+    /** What the entity does, where it is not the same as its kind. */
+    role: z.string().optional(),
+    /** Somewhere else the entity can be read about. */
+    links: z
+      .array(
+        z.object({
+          label: z.string().min(1),
+          url: z.string().url(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -743,9 +805,27 @@ export const RelatedStoriesBlockSchema = BaseBlockSchema.extend({
      * The treatments of a block are the ways of showing it, so this is
      * what a variant changes: the same content, drawn differently.
      */
-    layout: z.enum(['grid', 'list', 'carousel']).optional(),
+    layout: z.enum(['grid', 'list', 'carousel', 'featured', 'compact']).optional(),
     title: z.string().default('Related Stories'),
     storyIds: z.array(z.string()).min(1),
+    /**
+     * The stories themselves.
+     *
+     * A block that can only carry ids has to be drawn from the id, which
+     * tells a reader nothing. Where the story is named here, the block can
+     * show a title, a summary and a topic.
+     */
+    stories: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          title: z.string().min(1),
+          summary: z.string().max(2000).optional(),
+          topic: z.string().optional(),
+          publishedAt: z.string().optional(),
+        })
+      )
+      .optional(),
   }),
 });
 

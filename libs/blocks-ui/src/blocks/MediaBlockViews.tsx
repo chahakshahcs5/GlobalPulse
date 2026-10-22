@@ -133,6 +133,35 @@ export const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) =
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
               {s.description}
             </p>
+
+            {/*
+              A branch is the way a step can go differently, so it is drawn
+              as its own line rather than folded into the description.
+            */}
+            {s.branches && s.branches.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {s.branches.map((branch, branchIdx) => (
+                  <li
+                    key={`${branch.label}-${branchIdx}`}
+                    className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5"
+                  >
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      {branch.label}
+                    </span>
+                    {branch.description && <span>{branch.description}</span>}
+                    {branch.nextStep !== undefined && (
+                      <span className="font-mono text-slate-400">→ step {branch.nextStep}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {(s.sourceIds || s.citationIds) && (
+              <p className="mt-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                {[...(s.sourceIds ?? []), ...(s.citationIds ?? [])].join(', ')}
+              </p>
+            )}
           </div>
         ))}
       </div>

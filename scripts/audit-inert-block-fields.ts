@@ -29,13 +29,81 @@ function walk(dir: string): string[] {
   return out;
 }
 
-/** The data field names a block's schema declares. */
-function dataFieldsOf(schema: unknown): string[] {
+/**
+ * A field the schema declares, and where it sits.
+ *
+ * A field at the top of the data payload is read off the data object, so
+ * its name is enough to look for. A field inside a nested object is read
+ * off that object, so the path matters: `subjectA.subtitle` is a
+ * different promise from `subjectB.subtitle`, and only the first can be
+ * satisfied by reading `subjectA.subtitle`.
+ *
+ * A field inside an array is read off an element, and the element is
+ * whatever the renderer called it, so the name alone is all that can be
+ * checked.
+ */
+interface DeclaredField {
+  /** The path from the data payload, with array segments left out. */
+  path: string;
+  /** The field's own name. */
+  name: string;
+  /** Whether the path has to be matched in full. */
+  exact: boolean;
+}
+
+function unwrap(schema: unknown): unknown {
+  const def = (schema as { _def?: { typeName?: string; innerType?: unknown; type?: unknown } })
+    ?._def;
+  if (!def) return schema;
+  if (
+    def.typeName === 'ZodOptional' ||
+    def.typeName === 'ZodNullable' ||
+    def.typeName === 'ZodDefault'
+  ) {
+    return unwrap(def.innerType);
+  }
+  return schema;
+}
+
+function isObjectSchema(schema: unknown): boolean {
+  return (unwrap(schema) as { _def?: { typeName?: string } })?._def?.typeName === 'ZodObject';
+}
+
+function objectShape(schema: unknown): Record<string, unknown> {
+  const def = (unwrap(schema) as { _def?: { shape?: () => Record<string, unknown> } })?._def;
+  return def?.shape?.() ?? {};
+}
+
+function isArrayOfObjects(schema: unknown): boolean {
+  const def = (unwrap(schema) as { _def?: { typeName?: string; type?: unknown } })?._def;
+  return def?.typeName === 'ZodArray' && isObjectSchema(def.type);
+}
+
+/** Every field a block's schema declares, at every depth. */
+function dataFieldsOf(schema: unknown): DeclaredField[] {
   const shape =
     (schema as { _def?: { shape?: () => Record<string, unknown> } })?._def?.shape?.() ?? {};
   const dataDef = (shape.data as { _def?: { typeName?: string; shape?: () => object } })?._def;
   if (dataDef?.typeName !== 'ZodObject') return [];
-  return Object.keys(dataDef.shape?.() ?? {});
+
+  const fields: DeclaredField[] = [];
+
+  const walk = (objectSchema: unknown, prefix: string, exact: boolean, depth: number) => {
+    if (depth > 4) return;
+    for (const [key, value] of Object.entries(objectShape(objectSchema))) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      fields.push({ path, name: key, exact });
+      if (isObjectSchema(value)) {
+        walk(value, path, true, depth + 1);
+      } else if (isArrayOfObjects(value)) {
+        const arrayDef = (unwrap(value) as { _def?: { type?: unknown } })?._def;
+        walk(arrayDef?.type, path, false, depth + 1);
+      }
+    }
+  };
+
+  walk(shape.data, '', false, 0);
+  return fields;
 }
 
 /** Split the dispatcher into the source of each `case 'type':` branch. */
@@ -151,8 +219,23 @@ for (const definition of listBlockDefinitions()) {
     for (const property of readDataProperties(source)) read.add(property);
   }
 
+  /*
+   * A field at the top of the payload is read off the data object, so the
+   * name is enough. A field further in is read off whatever holds it —
+   * a nested object, an element of an array, or the whole payload handed
+   * to a programmatic renderer — and each of those names it differently.
+   * So a nested field is looked for as a property access, and the path is
+   * only there to say where it was found.
+   */
+  const joined = sources.join('\n');
+
   for (const field of fields) {
-    if (!read.has(field)) inert.push(`${definition.type} :: ${field}`);
+    if (!field.path.includes('.')) {
+      if (!read.has(field.name)) inert.push(`${definition.type} :: ${field.name}`);
+      continue;
+    }
+    const used = new RegExp(`\\.${field.name}\\b`).test(joined);
+    if (!used) inert.push(`${definition.type} :: ${field.path}`);
   }
 }
 

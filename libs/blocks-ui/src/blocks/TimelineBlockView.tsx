@@ -191,7 +191,46 @@ export const TimelineBlockView: React.FC<{ data: TimelineBlock['data'] }> = ({ d
                       <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {item.body}
                       </p>
+
+                      {/*
+                        Where it happened, what kind of event it was, and
+                        what it rests on. A timeline is only as
+                        trustworthy as the sources named on it.
+                      */}
+                      {(item.location ||
+                        item.eventType ||
+                        (item.entityIds?.length ?? 0) > 0 ||
+                        (item.sourceIds?.length ?? 0) > 0 ||
+                        (item.citationIds?.length ?? 0) > 0) && (
+                        <p className="mt-1.5 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                          {[
+                            item.location,
+                            item.eventType,
+                            (item.entityIds ?? []).join(', '),
+                            [...(item.sourceIds ?? []), ...(item.citationIds ?? [])].join(', '),
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
                     </div>
+
+                    {(item.location ||
+                      item.eventType ||
+                      (item.entityIds?.length ?? 0) > 0 ||
+                      (item.sourceIds?.length ?? 0) > 0 ||
+                      (item.citationIds?.length ?? 0) > 0) && (
+                      <p className="mt-1.5 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                        {[
+                          item.location,
+                          item.eventType,
+                          (item.entityIds ?? []).join(', '),
+                          [...(item.sourceIds ?? []), ...(item.citationIds ?? [])].join(', '),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    )}
 
                     {item.mediaUrl && (
                       <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800">

@@ -8,8 +8,29 @@ export interface FormattedTimelineItem {
   body: string;
   entityIds: string[];
   sourceIds: string[];
+  citationIds: string[];
+  eventType?: string;
+  location?: string;
   mediaUrl?: string;
   stepNumber: number;
+}
+
+/**
+ * The line under a milestone: where it happened, what kind of event it
+ * was, and what it rests on.
+ *
+ * A timeline is only as trustworthy as its sources, so the sources are
+ * named on the card rather than left in the payload.
+ */
+function metaLine(item: FormattedTimelineItem, x: number, y: number, colour: string): string {
+  const parts: string[] = [];
+  if (item.location) parts.push(item.location);
+  if (item.eventType) parts.push(item.eventType);
+  if (item.entityIds.length > 0) parts.push(item.entityIds.join(', '));
+  const sources = [...item.sourceIds, ...item.citationIds];
+  if (sources.length > 0) parts.push(sources.join(', '));
+  if (parts.length === 0) return '';
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="9" fill="${colour}" font-family="ui-monospace, monospace">${escapeXml(parts.join(' · '))}</text>`;
 }
 
 export class TimelineRenderer {
@@ -24,6 +45,9 @@ export class TimelineRenderer {
       body: item.body,
       entityIds: item.entityIds || [],
       sourceIds: item.sourceIds || [],
+      citationIds: item.citationIds || [],
+      eventType: item.eventType,
+      location: item.location,
       mediaUrl: item.mediaUrl,
       stepNumber: idx + 1,
     }));
@@ -141,6 +165,7 @@ export class TimelineRenderer {
             ${cardBox}
             ${headlineText}
             ${bodyText}
+            ${metaLine(item, cx, bodyStartY + bodyLines.length * 14 + 4, subtextColor)}
           </g>
         `;
       });
@@ -178,6 +203,7 @@ export class TimelineRenderer {
           <g class="timeline-vertical-node">
             <circle cx="${spineX}" cy="${cy}" r="12" fill="${bgColor}" stroke="${activeColor}" stroke-width="3" />
             <text x="${spineX}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${activeColor}" font-family="system-ui, sans-serif">${item.stepNumber}</text>
+      ${metaLine(item, 172, cy + 26, subtextColor)}
             
             <!-- Date Badge -->
             <rect x="72" y="${cy - 22}" width="86" height="20" rx="10" fill="${isDark ? 'rgba(59,130,246,0.18)' : 'rgba(59,130,246,0.1)'}" />
