@@ -15,6 +15,15 @@ export const AnimatedMapBlockView: React.FC<{
   data: AnimatedMapBlock['data'];
   theme?: 'dark' | 'light';
 }> = ({ data, theme = 'light' }) => {
+  /*
+   * How the map is drawn.
+   *
+   * As a scrubber the reader drags, as a slideshow that plays on its
+   * own, or as a single static frame. The frames are the same; only the
+   * treatment changes.
+   */
+  const layout = data.layout ?? 'scrubber';
+
   const [frameIndex, setFrameIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(false);
 
@@ -59,7 +68,11 @@ export const AnimatedMapBlockView: React.FC<{
   return (
     <section
       aria-label={data.title}
-      className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      className={[
+        layout === 'static' ? 'my-6' : 'my-8',
+        layout === 'static' ? 'rounded-xl' : 'rounded-2xl',
+        'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden',
+      ].join(' ')}
     >
       <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
         <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>

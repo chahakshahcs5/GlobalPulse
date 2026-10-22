@@ -47,6 +47,30 @@ same categories the block registry uses — and are deliberately realistic. A
 chart that says "cases" and "year" tells an editor far more about how a block
 reads in a story than "Category 1 / 42" does.
 
+### A variant is a way of showing a block
+
+A variant changes the _look_ of a block, not only what it says. A gallery
+has grid, carousel and masonry: the same pictures, three ways of showing
+them. A table has striped, bordered and cards. A quote has pull, inline and
+card.
+
+Every block type declares a `layout` for this, and every block type's
+variants are one per layout — carrying the same content each time, so two
+variants can be compared as two treatments of the same thing rather than as
+two unrelated pieces.
+
+```ts
+// The same estimate, drawn three ways.
+{ layout: 'intervals', ... }   // as intervals on a chart
+{ layout: 'forest', ... }      // as a forest plot
+{ layout: 'table', ... }       // as a table of numbers
+```
+
+The `layout` values are declared in `libs/schemas/src/blocks.ts` and drawn
+in the block's own view under `libs/blocks-ui/src/blocks/`. A field the
+renderer never reads would be a promise the platform does not keep, so
+`pnpm audit:fields` fails the build if one is left.
+
 ## The generated form
 
 The inspector's **Form** tab is not hand-written. It is generated from the

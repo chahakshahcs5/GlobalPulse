@@ -29,6 +29,74 @@ export const PredictionLeaderboardBlockView: React.FC<{
   const formatPercent = (value: number | null) =>
     value === null ? '—' : `${Math.round(value * 100)}%`;
 
+  /*
+   * How the board is drawn.
+   *
+   * As a table of scores, as a card a forecaster, or as bars scaled to
+   * the score. The board is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'table';
+
+  if (layout === 'cards' || layout === 'bars') {
+    const best = Math.min(
+      ...scores.map((score) => score.brierScore ?? Number.POSITIVE_INFINITY),
+      Number.POSITIVE_INFINITY
+    );
+    const worst = Math.max(...scores.map((score) => score.brierScore ?? 0), 0.0001);
+
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.subtitle && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+          )}
+          {data.scoringMethod && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{data.scoringMethod}</p>
+          )}
+        </header>
+
+        <ul className="px-5 py-4 space-y-3">
+          {scores.map((score) => (
+            <li
+              key={score.forecaster}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {score.forecaster}
+                </span>
+                <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
+                  {formatScore(score.brierScore)}
+                </span>
+              </div>
+              {layout === 'bars' && (
+                <div className="mt-1.5 h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-indigo-500"
+                    style={{
+                      width: `${
+                        worst > best
+                          ? 100 - (((score.brierScore ?? 0) - best) / (worst - best)) * 100
+                          : 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              )}
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {score.resolved} resolved · accuracy {formatPercent(score.accuracy)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}

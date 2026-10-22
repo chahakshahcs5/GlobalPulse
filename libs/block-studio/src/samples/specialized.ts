@@ -15,10 +15,11 @@ import type { StudioVariant } from '../types';
 export const SPECIALIZED_SAMPLES: Record<string, StudioVariant[]> = {
   interview: [
     {
-      id: 'interview',
-      label: 'Interview',
-      description: 'Structured Q&A with a transcript.',
+      id: 'qa',
+      label: 'Question and answer',
+      description: 'The interview as a series of questions and answers.',
       data: {
+        layout: 'qa',
         title: 'An interview with the review director',
         interviewee: {
           name: 'Ada Okafor',
@@ -56,119 +57,11 @@ export const SPECIALIZED_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'audio',
-      label: 'An audio interview',
-      description: 'An interview published as audio, with the recording attached.',
+      id: 'article',
+      label: 'As an article',
+      description: 'The answers run together, with the questions as headings.',
       data: {
-        title: 'An interview with the review director',
-        interviewee: {
-          name: 'Ada Okafor',
-          role: 'Director, Independent Grid Review',
-          entityId: 'ent_ada_okafor',
-        },
-        format: 'audio',
-        mediaUrl: '/audio/sample-briefing.mp3',
-        transcript: 'A full transcript of the interview is available on request.',
-        segments: [
-          {
-            question: 'When did you first suspect the numbers were wrong?',
-            answer:
-              'A site analyst asked for a verification step and was told none existed. That was the moment.',
-            speaker: 'Interviewer',
-            timestampSeconds: 12,
-          },
-          {
-            question: 'What changes now?',
-            answer:
-              'A mandatory second sign-off, and quarterly publication so the public can check for themselves.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 91,
-          },
-        ],
-        sourceAttribution: 'GlobalPulse interviews',
-      },
-    },
-    {
-      id: 'video',
-      label: 'A video interview',
-      description: 'An interview published as video, with the film attached.',
-      data: {
-        title: 'An interview with the review director',
-        interviewee: {
-          name: 'Ada Okafor',
-          role: 'Director, Independent Grid Review',
-          entityId: 'ent_ada_okafor',
-        },
-        format: 'video',
-        mediaUrl: '/videos/sample-video.mp4',
-        transcript: 'A full transcript of the interview is available on request.',
-        segments: [
-          {
-            question: 'Was the overstatement deliberate?',
-            answer:
-              'We found no evidence of intent. What we found was a guidance document that made the check optional.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 48,
-            sourceId: 'src_review_report',
-          },
-          {
-            question: 'What changes now?',
-            answer:
-              'A mandatory second sign-off, and quarterly publication so the public can check for themselves.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 91,
-          },
-        ],
-        sourceAttribution: 'GlobalPulse interviews',
-      },
-    },
-    {
-      id: 'with-sources',
-      label: 'With sources on the answers',
-      description: 'Each answer that rests on a document names it.',
-      data: {
-        title: 'An interview with the review director',
-        interviewee: {
-          name: 'Ada Okafor',
-          role: 'Director, Independent Grid Review',
-          entityId: 'ent_ada_okafor',
-        },
-        format: 'text',
-        mediaUrl: '/audio/sample-briefing.mp3',
-        segments: [
-          {
-            question: 'When did you first suspect the numbers were wrong?',
-            answer:
-              'A site analyst asked for a verification step and was told none existed. That was the moment.',
-            speaker: 'Interviewer',
-            timestampSeconds: 12,
-            sourceId: 'src_review_report',
-          },
-          {
-            question: 'Was the overstatement deliberate?',
-            answer:
-              'We found no evidence of intent. What we found was a guidance document that made the check optional.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 48,
-            sourceId: 'src_review_report',
-          },
-          {
-            question: 'What changes now?',
-            answer:
-              'A mandatory second sign-off, and quarterly publication so the public can check for themselves.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 91,
-            sourceId: 'src_regulator_directive',
-          },
-        ],
-        sourceAttribution: 'GlobalPulse interviews',
-      },
-    },
-    {
-      id: 'many-segments',
-      label: 'Six questions',
-      description: 'A longer interview, with the questions and answers together.',
-      data: {
+        layout: 'article',
         title: 'An interview with the review director',
         interviewee: {
           name: 'Ada Okafor',
@@ -187,10 +80,46 @@ export const SPECIALIZED_SAMPLES: Record<string, StudioVariant[]> = {
             timestampSeconds: 12,
           },
           {
-            question: 'What did you expect to find?',
-            answer: 'Honestly, a smaller number than we found, and a cause we could name.',
+            question: 'Was the overstatement deliberate?',
+            answer:
+              'We found no evidence of intent. What we found was a guidance document that made the check optional.',
+            speaker: 'Ada Okafor',
+            timestampSeconds: 48,
+            sourceId: 'src_review_report',
+          },
+          {
+            question: 'What changes now?',
+            answer:
+              'A mandatory second sign-off, and quarterly publication so the public can check for themselves.',
+            speaker: 'Ada Okafor',
+            timestampSeconds: 91,
+          },
+        ],
+        sourceAttribution: 'GlobalPulse interviews',
+      },
+    },
+    {
+      id: 'timeline',
+      label: 'Timeline',
+      description: 'The interview as a timeline of what was said and when.',
+      data: {
+        layout: 'timeline',
+        title: 'An interview with the review director',
+        interviewee: {
+          name: 'Ada Okafor',
+          role: 'Director, Independent Grid Review',
+          entityId: 'ent_ada_okafor',
+        },
+        format: 'text',
+        mediaUrl: '/audio/sample-briefing.mp3',
+        transcript: 'A full transcript of the interview is available on request.',
+        segments: [
+          {
+            question: 'When did you first suspect the numbers were wrong?',
+            answer:
+              'A site analyst asked for a verification step and was told none existed. That was the moment.',
             speaker: 'Interviewer',
-            timestampSeconds: 30,
+            timestampSeconds: 12,
           },
           {
             question: 'Was the overstatement deliberate?',
@@ -201,26 +130,11 @@ export const SPECIALIZED_SAMPLES: Record<string, StudioVariant[]> = {
             sourceId: 'src_review_report',
           },
           {
-            question: 'Which site surprised you most?',
-            answer:
-              'The one that signed every filing and still ran nearly twelve per cent high. Signing is not the same as reading.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 71,
-          },
-          {
-            question: 'What did the operators say?',
-            answer:
-              'That the guidance was ambiguous. Looking back at paragraph 3.2, they were right.',
-            speaker: 'Ada Okafor',
-            timestampSeconds: 104,
-            sourceId: 'src_operator_statement',
-          },
-          {
             question: 'What changes now?',
             answer:
               'A mandatory second sign-off, and quarterly publication so the public can check for themselves.',
             speaker: 'Ada Okafor',
-            timestampSeconds: 131,
+            timestampSeconds: 91,
           },
         ],
         sourceAttribution: 'GlobalPulse interviews',

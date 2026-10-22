@@ -52,11 +52,11 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'standfirst',
-      label: 'Long standfirst',
-      description: 'A level-two heading whose standfirst carries the argument.',
+      id: 'title-and-deck',
+      label: 'Title and deck',
+      description: 'A level-one heading with a standfirst under it.',
       data: {
-        level: 2,
+        level: 1,
         text: 'The gap was never a rounding error',
         subtext:
           'Across 1,240 filings the reported figures ran a median of 9.4 per cent above the independently verified ones — and at three of the four sites, no second person had ever looked at the numbers before they were published.',
@@ -67,37 +67,31 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
   paragraph: [
     {
       id: 'body',
-      label: 'Body paragraph',
-      description: 'Ordinary body copy in Markdown.',
+      label: 'Body',
+      description: 'Ordinary body copy.',
       data: {
+        layout: 'body',
         text: 'The revised figures landed on a Tuesday, and with them a question the ministry had spent four months hoping would not be asked: how much of the reported decline was real, and how much was a change in how the cases were counted?',
         format: 'markdown',
-      },
-    },
-    {
-      id: 'plain',
-      label: 'Plain paragraph',
-      description: 'Body copy shown exactly as typed, with no emphasis.',
-      data: {
-        text: 'The revised figures landed on a Tuesday, and with them a question the ministry had spent four months hoping would not be asked: how much of the reported decline was real, and how much was a change in how the cases were counted?',
-        format: 'plain',
       },
     },
     {
       id: 'lede',
       label: 'Lede',
-      description: 'A short opening paragraph that sets up the story.',
+      description: 'Set larger, to lead the story.',
       data: {
-        text: 'Three of the four sites that report the country’s grid figures have never had a second person check them.',
+        layout: 'lede',
+        text: 'The revised figures landed on a Tuesday, and with them a question the ministry had spent four months hoping would not be asked: how much of the reported decline was real, and how much was a change in how the cases were counted?',
         format: 'markdown',
       },
     },
     {
-      id: 'emphasised',
-      label: 'With emphasis',
-      description: 'Markdown bold, italic, code and a link in one paragraph.',
+      id: 'note',
+      label: 'Note',
+      description: 'Set smaller and marked off from the text around it.',
       data: {
-        text: 'The review team re-checked every filing against **meter data**, and found a median gap of *9.4 per cent*. The finding is not in dispute: the [full dataset](https://example.org/datasets/grid-review-2026) is published, and each site can run the same comparison against its own records. Where the `overstatement` field is absent from a filing, the site is counted as unreported rather than as accurate.',
+        layout: 'note',
+        text: 'The revised figures landed on a Tuesday, and with them a question the ministry had spent four months hoping would not be asked: how much of the reported decline was real, and how much was a change in how the cases were counted?',
         format: 'markdown',
       },
     },
@@ -105,10 +99,11 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
 
   summary: [
     {
-      id: 'briefing',
-      label: 'Executive briefing',
-      description: 'Key takeaways with a sentiment cue.',
+      id: 'card',
+      label: 'Card',
+      description: 'A briefing in a card, with a sentiment chip.',
       data: {
+        layout: 'card',
         headline: 'The grid is holding, but the margin is thin',
         bulletPoints: [
           'Demand stayed within forecast for a fourth consecutive month.',
@@ -119,70 +114,44 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'neutral',
-      label: 'Neutral summary',
-      description: 'Key takeaways with no sentiment cue at all.',
+      id: 'numbered',
+      label: 'Numbered',
+      description: 'The takeaways as a numbered list, with no card around them.',
       data: {
-        headline: 'What the review covered',
+        layout: 'numbered',
+        headline: 'The grid is holding, but the margin is thin',
         bulletPoints: [
-          'Four reporting sites and two years of filings.',
-          'Every filing re-checked against meter data by two analysts.',
-          'One site carried a verification step for the whole period.',
-        ],
-      },
-    },
-    {
-      id: 'positive',
-      label: 'Positive summary',
-      description: 'Key takeaways that read as good news.',
-      data: {
-        headline: 'The published gap closed faster than forecast',
-        bulletPoints: [
-          'Overstatement fell from 19 to 3.9 percentage points in two years.',
+          'Demand stayed within forecast for a fourth consecutive month.',
+          'Reserve margins fell to their lowest level since the programme began.',
           'Two of the three delayed sites are back online.',
-          'Quarterly public reporting begins in January.',
         ],
-        sentiment: 'positive',
+        sentiment: 'cautious',
       },
     },
     {
-      id: 'critical',
-      label: 'Critical summary',
-      description: 'Key takeaways that flag a serious problem.',
+      id: 'plain',
+      label: 'Plain',
+      description: 'The takeaways in plain text, with nothing but a heading.',
       data: {
-        headline: 'One site is still publishing unverified figures',
+        layout: 'plain',
+        headline: 'The grid is holding, but the margin is thin',
         bulletPoints: [
-          'Coastal has not filed a verification step since 2023.',
-          'Its figures are the only ones the review could not confirm.',
-          'The authority says it cannot compel a change before the deadline.',
+          'Demand stayed within forecast for a fourth consecutive month.',
+          'Reserve margins fell to their lowest level since the programme began.',
+          'Two of the three delayed sites are back online.',
         ],
-        sentiment: 'critical',
-      },
-    },
-    {
-      id: 'five-points',
-      label: 'Five takeaways',
-      description: 'A longer briefing with five points.',
-      data: {
-        headline: 'Five things the review establishes',
-        bulletPoints: [
-          'The gap is real: the median overstatement is 9.4 per cent.',
-          'The gap is systematic: it grew every year of the review period.',
-          'The gap is not deliberate: no document evidences intent.',
-          'The cause is procedural: an optional check, issued as if it were mandatory.',
-          'The fix is published: a mandatory second sign-off, reported quarterly.',
-        ],
-        sentiment: 'neutral',
+        sentiment: 'cautious',
       },
     },
   ],
 
   quote: [
     {
-      id: 'pull-quote',
+      id: 'pull',
       label: 'Pull quote',
-      description: 'A quote with attribution and a role.',
+      description: 'A quote with a rule down the side.',
       data: {
+        layout: 'pull',
         quote:
           'We were told the problem was technical. It was never technical. It was a decision about who was allowed to build what.',
         attribution: 'Dr. Amara Okafor',
@@ -190,45 +159,28 @@ export const TEXT_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'attribution-only',
-      label: 'Attribution only',
-      description: 'A quote with a name and nothing else.',
+      id: 'inline',
+      label: 'Inline',
+      description: 'A quote that sits in the text, with no furniture.',
       data: {
-        quote: 'We followed the guidance as it was written at the time.',
-        attribution: 'Harbour East reporting desk',
+        layout: 'inline',
+        quote:
+          'We were told the problem was technical. It was never technical. It was a decision about who was allowed to build what.',
+        attribution: 'Dr. Amara Okafor',
+        title: 'Director, Independent Grid Review',
       },
     },
     {
-      id: 'with-avatar',
-      label: 'With portrait and link',
-      description: 'A quote with a portrait and a link to the source.',
+      id: 'card',
+      label: 'Card',
+      description: 'A quote in a bordered card, with a portrait.',
       data: {
+        layout: 'card',
         quote:
-          'An optional step is not a step. Until someone is required to do the work, it will not be done.',
+          'We were told the problem was technical. It was never technical. It was a decision about who was allowed to build what.',
         attribution: 'Dr. Amara Okafor',
         title: 'Director, Independent Grid Review',
         avatarUrl: 'https://i.pravatar.cc/300?img=47',
-        sourceUrl: 'https://example.org/independent-grid-review-2026',
-      },
-    },
-    {
-      id: 'long',
-      label: 'Long pull quote',
-      description: 'A long pull quote, as it would run across a page.',
-      data: {
-        quote:
-          'We spent two years rebuilding a dataset that already existed. Every number the public was shown could have been checked against the meters underneath it, and for three of the four sites, nobody did. That is not a sophisticated failure. It is a failure to write down the smallest rule and then enforce it.',
-        attribution: 'Ravi Menon',
-        title: 'Data editor, GlobalPulse investigations',
-      },
-    },
-    {
-      id: 'short',
-      label: 'Short quote',
-      description: 'A short quote, for a narrow column or a mobile card.',
-      data: {
-        quote: 'Nobody was hiding anything. That was never the problem.',
-        attribution: 'Dr. Amara Okafor',
       },
     },
   ],

@@ -30,7 +30,7 @@ export const AudioBlockView: React.FC<{ data: AudioBlock['data']; theme?: 'dark'
   const [isMuted, setIsMuted] = React.useState(false);
   const [hasAudioError, setHasAudioError] = React.useState(false);
   const [isSpeechMode, setIsSpeechMode] = React.useState(false);
-  const [showTranscript, setShowTranscript] = React.useState(false);
+  const [showTranscript, setShowTranscript] = React.useState(data.layout === 'transcript-first');
   const [copiedTranscript, setCopiedTranscript] = React.useState(false);
   const [readAlongMode, setReadAlongMode] = React.useState(
     Boolean(data.cuePoints && data.cuePoints.length > 0)
@@ -195,8 +195,24 @@ export const AudioBlockView: React.FC<{ data: AudioBlock['data']; theme?: 'dark'
   const currentTimeMs = currentTimeSec * 1000;
   const progressPercent = durationSec > 0 ? (currentTimeSec / durationSec) * 100 : 0;
 
+  /*
+   * How the audio is drawn.
+   *
+   * A card with the chapters and speakers under it, a compact bar for a
+   * mention in the text, or the recording with its transcript open beside
+   * it. The audio is the same; only the treatment changes.
+   */
+  const layout = data.layout ?? 'player';
+  const isInline = layout === 'inline';
+
   return (
-    <div className="my-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-slate-900 dark:via-slate-900/95 dark:to-indigo-950/40 p-5 sm:p-6 shadow-md dark:shadow-xl transition-all">
+    <div
+      className={
+        isInline
+          ? 'my-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 px-4 py-3 transition-all'
+          : 'my-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-slate-900 dark:via-slate-900/95 dark:to-indigo-950/40 p-5 sm:p-6 shadow-md dark:shadow-xl transition-all'
+      }
+    >
       {/* Hidden HTML5 Audio Element */}
       <audio
         ref={audioRef}
@@ -304,7 +320,7 @@ export const AudioBlockView: React.FC<{ data: AudioBlock['data']; theme?: 'dark'
             </span>
           </p>
         )}
-        {(data.speakers?.length ?? 0) > 0 && (
+        {!isInline && (data.speakers?.length ?? 0) > 0 && (
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {data.speakers?.map((speaker) => (
               <li
@@ -323,7 +339,7 @@ export const AudioBlockView: React.FC<{ data: AudioBlock['data']; theme?: 'dark'
         )}
       </div>
 
-      {(data.chapters?.length ?? 0) > 0 && (
+      {!isInline && (data.chapters?.length ?? 0) > 0 && (
         <div className="mb-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/50 p-3">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
             Chapters

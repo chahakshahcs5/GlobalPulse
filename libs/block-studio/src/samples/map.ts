@@ -277,9 +277,9 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
 
   animated_map: [
     {
-      id: 'spread',
-      label: 'Time scrubber',
-      description: 'Frames the reader scrubs through.',
+      id: 'scrubber',
+      label: 'Scrubber',
+      description: 'The frames with a scrubber the reader drags.',
       data: {
         title: 'How the outbreak spread',
         description: 'Confirmed cases by reporting date.',
@@ -321,9 +321,9 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'autoplay',
-      label: 'Autoplay',
-      description: 'The frames play on their own when the block is first seen.',
+      id: 'slideshow',
+      label: 'Slideshow',
+      description: 'The frames playing on their own.',
       data: {
         title: 'How the outbreak spread',
         description: 'Confirmed cases by reporting date.',
@@ -360,111 +360,61 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             ],
           },
         ],
-        autoplay: true,
+        autoplay: false,
         methodology: 'Case counts by the date each report was published.',
       },
     },
     {
-      id: 'many-frames',
-      label: 'Six frames',
-      description: 'A longer sequence, with a point in every frame.',
+      id: 'static',
+      label: 'Static',
+      description: 'One frame, with no scrubber.',
       data: {
-        title: 'How the reporting gap grew',
-        description: 'Median overstatement at each site, year by year.',
-        valueLabel: 'Median overstatement',
-        unit: '%',
+        title: 'How the outbreak spread',
+        description: 'Confirmed cases by reporting date.',
+        valueLabel: 'Confirmed cases',
+        unit: 'cases',
         frames: [
           {
-            at: '2022-01-01',
-            label: '2022',
+            at: '2026-03-01',
+            label: '1 March',
+            points: [{ id: 'p1', label: 'Northern coast', lng: 34.5, lat: 41.2, value: 12 }],
+          },
+          {
+            at: '2026-03-08',
+            label: '8 March',
             points: [
-              { id: 'northfield', label: 'Northfield', lng: 34.1, lat: 41.4, value: 4.1 },
-              { id: 'harbour', label: 'Harbour East', lng: 35.2, lat: 40.8, value: 6.2 },
-              { id: 'ridgeway', label: 'Ridgeway', lng: 33.4, lat: 39.6, value: 2.8 },
-              { id: 'coastal', label: 'Coastal', lng: 32.4, lat: 38.7, value: 5.4 },
+              { id: 'p1', label: 'Northern coast', lng: 34.5, lat: 41.2, value: 180 },
+              { id: 'p2', label: 'Inland', lng: 33.2, lat: 39.9, value: 64 },
             ],
           },
           {
-            at: '2023-01-01',
-            label: '2023',
-            points: [
-              { id: 'northfield', label: 'Northfield', lng: 34.1, lat: 41.4, value: 5.8 },
-              { id: 'harbour', label: 'Harbour East', lng: 35.2, lat: 40.8, value: 8.9 },
-              { id: 'ridgeway', label: 'Ridgeway', lng: 33.4, lat: 39.6, value: 3.1 },
-              { id: 'coastal', label: 'Coastal', lng: 32.4, lat: 38.7, value: 7.2 },
-            ],
-          },
-          {
-            at: '2024-01-01',
-            label: '2024',
-            points: [
-              { id: 'northfield', label: 'Northfield', lng: 34.1, lat: 41.4, value: 7.2 },
-              { id: 'harbour', label: 'Harbour East', lng: 35.2, lat: 40.8, value: 11.4 },
-              { id: 'ridgeway', label: 'Ridgeway', lng: 33.4, lat: 39.6, value: 3.9 },
-              { id: 'coastal', label: 'Coastal', lng: 32.4, lat: 38.7, value: 9.1 },
-            ],
-          },
-          {
-            at: '2025-01-01',
-            label: '2025',
-            points: [
-              { id: 'northfield', label: 'Northfield', lng: 34.1, lat: 41.4, value: 8.6 },
-              { id: 'harbour', label: 'Harbour East', lng: 35.2, lat: 40.8, value: 13.1 },
-              { id: 'ridgeway', label: 'Ridgeway', lng: 33.4, lat: 39.6, value: 4.6 },
-              { id: 'coastal', label: 'Coastal', lng: 32.4, lat: 38.7, value: 10.4 },
-            ],
-          },
-          {
-            at: '2026-01-01',
-            label: '2026',
+            at: '2026-03-15',
+            label: '15 March',
             points: [
               {
-                id: 'northfield',
-                label: 'Northfield',
-                lng: 34.1,
-                lat: 41.4,
-                value: 9.4,
+                id: 'p1',
+                label: 'Northern coast',
+                lng: 34.5,
+                lat: 41.2,
+                value: 410,
                 highlight: true,
               },
-              { id: 'harbour', label: 'Harbour East', lng: 35.2, lat: 40.8, value: 14.2 },
-              { id: 'ridgeway', label: 'Ridgeway', lng: 33.4, lat: 39.6, value: 5.1 },
-              { id: 'coastal', label: 'Coastal', lng: 32.4, lat: 38.7, value: 11.8 },
+              { id: 'p2', label: 'Inland', lng: 33.2, lat: 39.9, value: 220 },
+              { id: 'p3', label: 'Southern valley', lng: 32.4, lat: 38.7, value: 95 },
             ],
           },
         ],
         autoplay: false,
-        methodology:
-          'Each frame is the median overstatement at each site for that year, from the independently verified filings.',
-        sourceAttribution: 'GlobalPulse data desk',
-      },
-    },
-    {
-      id: 'minimal',
-      label: 'Two frames',
-      description: 'The smallest an animated map can be.',
-      data: {
-        title: 'The eastern spur, before and after',
-        frames: [
-          {
-            at: '2024-01-01',
-            label: '2024',
-            points: [{ id: 'p1', label: 'Eastern spur', lng: 34.8, lat: 40.9, value: 2 }],
-          },
-          {
-            at: '2026-01-01',
-            label: '2026',
-            points: [{ id: 'p1', label: 'Eastern spur', lng: 34.8, lat: 40.9, value: 7 }],
-          },
-        ],
+        methodology: 'Case counts by the date each report was published.',
       },
     },
   ],
 
   timeline: [
     {
-      id: 'timeline',
-      label: 'Timeline',
-      description: 'Milestones with sources and media.',
+      id: 'vertical',
+      label: 'Vertical',
+      description: 'The events down the page.',
       data: {
         title: 'How the review unfolded',
         description: 'From the first complaint to the published findings.',
@@ -500,9 +450,9 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'with-media',
-      label: 'With media and places',
-      description: 'Milestones that carry a picture and a location.',
+      id: 'horizontal',
+      label: 'Horizontal',
+      description: 'The events across the page.',
       data: {
         title: 'How the review unfolded',
         description: 'From the first complaint to the published findings.',
@@ -512,8 +462,6 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             headline: 'A site challenges its own figure',
             body: 'An analyst at Harbour East asks for a verification step and is told none exists.',
             eventType: 'Origin',
-            location: 'Harbour East',
-            entityIds: ['ent_harbour_east'],
             sourceIds: ['src_review_report'],
           },
           {
@@ -521,8 +469,6 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             headline: 'The newsroom opens an inquiry',
             body: 'Two analysts and a data editor begin re-checking a full year of filings.',
             eventType: 'Investigation',
-            location: 'GlobalPulse, North Province',
-            mediaUrl: 'https://i.pravatar.cc/300?img=12',
           },
           {
             date: '22 Jun 2026',
@@ -536,48 +482,19 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             headline: 'Findings published',
             body: 'The authority publishes a mandatory second sign-off and quarterly public reporting.',
             eventType: 'Outcome',
-            location: 'Grid Authority',
-            entityIds: ['ent_grid_authority'],
           },
         ],
         sourceAttribution: 'GlobalPulse investigations',
       },
     },
     {
-      id: 'two-events',
-      label: 'Two events',
-      description: 'The shortest a timeline can be.',
+      id: 'compact',
+      label: 'Compact',
+      description: 'The events as a compact list.',
       data: {
-        title: 'The two dates that matter',
+        title: 'How the review unfolded',
+        description: 'From the first complaint to the published findings.',
         items: [
-          {
-            date: '12 Mar 2026',
-            headline: 'A site challenges its own figure',
-            body: 'An analyst at Harbour East asks for a verification step and is told none exists.',
-          },
-          {
-            date: '01 Oct 2026',
-            headline: 'Findings published',
-            body: 'The authority publishes a mandatory second sign-off and quarterly public reporting.',
-          },
-        ],
-      },
-    },
-    {
-      id: 'many-events',
-      label: 'Seven events',
-      description: 'A longer timeline, with a source on every entry.',
-      data: {
-        title: 'From an optional step to a mandatory one',
-        description: 'Four years, seven moments, and what each one changed.',
-        items: [
-          {
-            date: '11 Apr 2022',
-            headline: 'The 2022 instructions are issued',
-            body: 'Paragraph 3.2 describes the verification step as a recommended practice.',
-            eventType: 'Official statement',
-            sourceIds: ['src_site_guidance_2022'],
-          },
           {
             date: '12 Mar 2026',
             headline: 'A site challenges its own figure',
@@ -592,13 +509,6 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             eventType: 'Investigation',
           },
           {
-            date: '19 May 2026',
-            headline: 'The draft instructions surface',
-            body: 'The review team obtains the 2022 draft, which was never marked as issued.',
-            eventType: 'Development',
-            sourceIds: ['src_review_report'],
-          },
-          {
             date: '22 Jun 2026',
             headline: '1,240 filings re-checked',
             body: 'The sample is complete. The median overstatement is 9.4 per cent.',
@@ -606,46 +516,13 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             sourceIds: ['src_review_report'],
           },
           {
-            date: '02 Oct 2026',
-            headline: 'The operator responds',
-            body: 'Northwind Energy publishes its statement, and disputes the characterisation of the guidance.',
-            eventType: 'Official statement',
-            sourceIds: ['src_operator_statement'],
-          },
-          {
-            date: '01 Jan 2027',
-            headline: 'The second sign-off becomes mandatory',
-            body: 'Every reporting site must sign every value twice, and publish the result quarterly.',
+            date: '01 Oct 2026',
+            headline: 'Findings published',
+            body: 'The authority publishes a mandatory second sign-off and quarterly public reporting.',
             eventType: 'Outcome',
           },
         ],
         sourceAttribution: 'GlobalPulse investigations',
-        methodology: 'Dates are taken from the published documents, not from interviews.',
-      },
-    },
-    {
-      id: 'no-sources',
-      label: 'Without sources',
-      description: 'Milestones, with nothing attached to them.',
-      data: {
-        title: 'How the review unfolded',
-        items: [
-          {
-            date: '12 Mar 2026',
-            headline: 'A site challenges its own figure',
-            body: 'An analyst at Harbour East asks for a verification step and is told none exists.',
-          },
-          {
-            date: '22 Jun 2026',
-            headline: '1,240 filings re-checked',
-            body: 'The sample is complete. The median overstatement is 9.4 per cent.',
-          },
-          {
-            date: '01 Oct 2026',
-            headline: 'Findings published',
-            body: 'The authority publishes a mandatory second sign-off and quarterly public reporting.',
-          },
-        ],
       },
     },
   ],
@@ -731,9 +608,9 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
 
   flow: [
     {
-      id: 'flow',
-      label: 'Process steps',
-      description: 'Numbered steps with optional branches.',
+      id: 'steps',
+      label: 'Steps',
+      description: 'The steps as numbered steps.',
       data: {
         title: 'How a value gets published',
         description: 'The path from a site measurement to a published figure.',
@@ -771,124 +648,9 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       },
     },
     {
-      id: 'linear',
-      label: 'Linear steps',
-      description: 'A straight path, with no branches.',
-      data: {
-        title: 'How a value gets published',
-        description: 'The path from a site measurement to a published figure.',
-        steps: [
-          {
-            stepNumber: 1,
-            title: 'Site measures',
-            description: 'The value is captured at the site.',
-          },
-          {
-            stepNumber: 2,
-            title: 'Second sign-off',
-            description: 'A second analyst signs off.',
-          },
-          {
-            stepNumber: 3,
-            title: 'Publication',
-            description: 'The signed value is published with its methodology.',
-          },
-        ],
-      },
-    },
-    {
-      id: 'with-status',
-      label: 'With every status',
-      description: 'Steps marked complete, active, blocked and pending.',
-      data: {
-        title: 'Where the programme has got to',
-        description: 'The state of each part of the review, at the point of publication.',
-        steps: [
-          {
-            stepNumber: 1,
-            title: 'Sample selected',
-            description: 'A full year of filings from all four sites.',
-            status: 'completed',
-            sourceIds: ['src_review_report'],
-          },
-          {
-            stepNumber: 2,
-            title: 'Filings re-checked',
-            description: '1,240 filings checked against meter data by two analysts.',
-            status: 'completed',
-          },
-          {
-            stepNumber: 3,
-            title: 'Guidance distribution resolved',
-            description: 'Whether the 2022 instructions reached every site.',
-            status: 'blocked',
-            branches: [
-              {
-                label: 'Disputed',
-                description: 'The authority has not produced a distribution log.',
-                nextStep: 4,
-              },
-            ],
-          },
-          {
-            stepNumber: 4,
-            title: 'Second sign-off in force',
-            description: 'Every site signs every value twice.',
-            status: 'active',
-          },
-          {
-            stepNumber: 5,
-            title: 'Quarterly publication',
-            description: 'The first published quarter is due on 31 January 2027.',
-            status: 'pending',
-          },
-        ],
-        sourceAttribution: 'GlobalPulse investigations',
-      },
-    },
-    {
-      id: 'with-image',
-      label: 'With a picture',
-      description: 'A step that carries an image.',
-      data: {
-        title: 'The four sites',
-        description: 'Each of the four reporting sites, and where it stands.',
-        steps: [
-          {
-            stepNumber: 1,
-            title: 'Northfield',
-            description: 'A second sign-off throughout. Median gap 9.4 per cent.',
-            imageUrl: 'https://i.pravatar.cc/300?img=12',
-            status: 'completed',
-          },
-          {
-            stepNumber: 2,
-            title: 'Harbour East',
-            description: 'Partial verification from Q3 2025. Median gap 14.2 per cent.',
-            imageUrl: 'https://i.pravatar.cc/300?img=33',
-            status: 'active',
-          },
-          {
-            stepNumber: 3,
-            title: 'Ridgeway',
-            description: 'A second sign-off throughout. Median gap 5.1 per cent.',
-            imageUrl: 'https://i.pravatar.cc/300?img=52',
-            status: 'completed',
-          },
-          {
-            stepNumber: 4,
-            title: 'Coastal',
-            description: 'No verification step at all. Median gap 11.8 per cent.',
-            imageUrl: 'https://i.pravatar.cc/300?img=68',
-            status: 'pending',
-          },
-        ],
-      },
-    },
-    {
-      id: 'with-citations',
-      label: 'With citations',
-      description: 'Steps that cite the sources behind them.',
+      id: 'timeline',
+      label: 'Timeline',
+      description: 'The steps as a timeline.',
       data: {
         title: 'How a value gets published',
         description: 'The path from a site measurement to a published figure.',
@@ -899,7 +661,6 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             description: 'The value is captured at the site and submitted.',
             status: 'completed',
             sourceIds: ['src_review_report'],
-            citationIds: ['src_review_data'],
           },
           {
             stepNumber: 2,
@@ -907,11 +668,58 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
             description:
               'A second analyst signs off. This step was missing at three of four sites.',
             status: 'active',
-            sourceIds: ['src_site_guidance_2022'],
-            citationIds: ['src_review_report'],
+            branches: [
+              { label: 'Missing', description: 'The value is flagged for review.', nextStep: 3 },
+            ],
           },
           {
             stepNumber: 3,
+            title: 'Third-party check',
+            description: 'A meter check confirms or corrects the value.',
+            status: 'pending',
+          },
+          {
+            stepNumber: 4,
+            title: 'Publication',
+            description: 'The confirmed value is published with its methodology.',
+            status: 'pending',
+          },
+        ],
+      },
+    },
+    {
+      id: 'cards',
+      label: 'Cards',
+      description: 'The steps as a card each.',
+      data: {
+        title: 'How a value gets published',
+        description: 'The path from a site measurement to a published figure.',
+        steps: [
+          {
+            stepNumber: 1,
+            title: 'Site measures',
+            description: 'The value is captured at the site and submitted.',
+            status: 'completed',
+            sourceIds: ['src_review_report'],
+          },
+          {
+            stepNumber: 2,
+            title: 'Second sign-off',
+            description:
+              'A second analyst signs off. This step was missing at three of four sites.',
+            status: 'active',
+            branches: [
+              { label: 'Missing', description: 'The value is flagged for review.', nextStep: 3 },
+            ],
+          },
+          {
+            stepNumber: 3,
+            title: 'Third-party check',
+            description: 'A meter check confirms or corrects the value.',
+            status: 'pending',
+          },
+          {
+            stepNumber: 4,
             title: 'Publication',
             description: 'The confirmed value is published with its methodology.',
             status: 'pending',
