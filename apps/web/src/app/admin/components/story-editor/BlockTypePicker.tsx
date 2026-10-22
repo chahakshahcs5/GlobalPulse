@@ -48,6 +48,22 @@ export interface BlockTypePickerProps {
   onPick: (block: StoryBlock) => void;
   onClose: () => void;
 }
+
+/**
+ * The variant a card is showing.
+ *
+ * A newsroom variant can be deleted while the picker is open, so a chosen
+ * id that no longer resolves falls back to the block's default — and then
+ * to whatever the block does have. A block is never added with nothing in
+ * it, because an empty block is one the editor has to fix by hand.
+ */
+function resolveVariant(block: StudioBlock, variantId?: string): StudioVariant | undefined {
+  return (
+    (variantId ? block.variants.find((candidate) => candidate.id === variantId) : undefined) ??
+    block.variants.find((candidate) => candidate.id === block.defaultVariantId) ??
+    block.variants[0]
+  );
+}
 export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
   const [query, setQuery] = React.useState('');
   const [openCategories, setOpenCategories] = React.useState<Record<string, boolean>>({});
@@ -135,8 +151,7 @@ export function BlockTypePicker({ onPick, onClose }: BlockTypePickerProps) {
     setOpenCategories((previous) => ({ ...previous, [category]: !previous[category] }));
 
   const choose = (block: StudioBlock) => {
-    const variantId = chosenVariant[block.type] ?? block.defaultVariantId;
-    const variant = block.variants.find((candidate) => candidate.id === variantId);
+    const variant = resolveVariant(block, chosenVariant[block.type]);
     /*
      * The platform's block type is a strict union of every type it knows,
      * which is right for a stored block and awkward for one whose type is
@@ -285,9 +300,7 @@ function BlockCard({
   onChooseVariant: (variantId: string) => void;
   onChoose: (block: StudioBlock) => void;
 }) {
-  const variant =
-    block.variants.find((candidate) => candidate.id === chosenVariant) ??
-    block.variants.find((candidate) => candidate.id === block.defaultVariantId);
+  const variant = resolveVariant(block, chosenVariant);
 
   const preview = {
     id: `preview_${block.type}`,
@@ -333,7 +346,7 @@ function BlockCard({
           </label>
           <select
             id={`variant_${block.type}`}
-            value={chosenVariant}
+            value={variant?.id ?? ''}
             onChange={(event) => onChooseVariant(event.target.value)}
             onClick={(event) => event.stopPropagation()}
             className="w-full rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-medium text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
@@ -345,6 +358,16 @@ function BlockCard({
               </option>
             ))}
           </select>
+          {/*
+            The name of a variant says what it is called; the description
+            says what it is. With a treatment for every branch of a block,
+            that line is what tells two of them apart.
+          */}
+          {variant?.description && (
+            <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-slate-400">
+              {variant.description}
+            </p>
+          )}
         </div>
       )}
     </div>

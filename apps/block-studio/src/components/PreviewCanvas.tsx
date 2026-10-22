@@ -374,85 +374,98 @@ export function PreviewCanvas({
 
       {block && block.variants.length > 0 && (
         <div
-          className={`flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-6 py-2 dark:border-slate-800 dark:bg-[#0b101c] ${darkClass}`}
+          className={`border-b border-slate-200 bg-slate-50 px-6 py-2 dark:border-slate-800 dark:bg-[#0b101c] ${darkClass}`}
         >
-          {/*
-            The variants scroll on their own, so a block with a dozen of
-            them cannot push the controls beside them off the end of the bar.
-          */}
-          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-            {block.variants.map((candidate) => {
-              const isActive = candidate.id === variant?.id;
-              /*
-               * A shipped variant belongs to the repository and cannot be
-               * removed; a saved one belongs to the newsroom and can.
-               */
-              const isSaved = Boolean(candidate.saved);
-              return (
-                <span key={candidate.id} className="group relative flex shrink-0 items-center">
-                  <button
-                    type="button"
-                    onClick={() => onSelectVariant(candidate.id)}
-                    title={candidate.description}
-                    aria-current={isActive ? 'true' : undefined}
-                    className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/70 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    {candidate.label}
-                  </button>
-                  {isSaved && (
+          <div className="flex items-center gap-2">
+            {/*
+              The variants scroll on their own, so a block with a dozen of
+              them cannot push the controls beside them off the end of the bar.
+            */}
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+              {block.variants.map((candidate) => {
+                const isActive = candidate.id === variant?.id;
+                /*
+                 * A shipped variant belongs to the repository and cannot be
+                 * removed; a saved one belongs to the newsroom and can.
+                 */
+                const isSaved = Boolean(candidate.saved);
+                return (
+                  <span key={candidate.id} className="group relative flex shrink-0 items-center">
                     <button
                       type="button"
-                      onClick={() => onDeleteVariant(candidate.id)}
-                      title="Remove this saved variant"
-                      aria-label={`Remove the ${candidate.label} variant`}
-                      className="ml-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 opacity-0 transition-opacity hover:text-rose-500 focus:opacity-100 group-hover:opacity-100 dark:text-slate-400"
+                      onClick={() => onSelectVariant(candidate.id)}
+                      title={candidate.description}
+                      aria-current={isActive ? 'true' : undefined}
+                      className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+                        isActive
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/70 dark:hover:text-slate-200'
+                      }`}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {candidate.label}
                     </button>
-                  )}
-                </span>
-              );
-            })}
+                    {isSaved && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteVariant(candidate.id)}
+                        title="Remove this saved variant"
+                        aria-label={`Remove the ${candidate.label} variant`}
+                        className="ml-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 opacity-0 transition-opacity hover:text-rose-500 focus:opacity-100 group-hover:opacity-100 dark:text-slate-400"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setNamingVariant(true)}
+                title="Save the payload as it stands now as a new variant"
+                className="flex min-h-7 items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-300"
+              >
+                <Plus className="h-3 w-3" />
+                Save as variant
+              </button>
+
+              {block && block.variants.length > 1 && (
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Compare
+                  </span>
+                  <select
+                    value={compareWith}
+                    onChange={(event) => setCompareWith(event.target.value)}
+                    aria-label="Compare with another variant"
+                    className="min-h-7 rounded-md border border-slate-300 bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+                  >
+                    <option value="">Off</option>
+                    {block.variants
+                      .filter((candidate) => candidate.id !== variant?.id)
+                      .map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setNamingVariant(true)}
-              title="Save the payload as it stands now as a new variant"
-              className="flex min-h-7 items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-300"
-            >
-              <Plus className="h-3 w-3" />
-              Save as variant
-            </button>
-
-            {block && block.variants.length > 1 && (
-              <div className="flex shrink-0 items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Compare
-                </span>
-                <select
-                  value={compareWith}
-                  onChange={(event) => setCompareWith(event.target.value)}
-                  aria-label="Compare with another variant"
-                  className="min-h-7 rounded-md border border-slate-300 bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
-                >
-                  <option value="">Off</option>
-                  {block.variants
-                    .filter((candidate) => candidate.id !== variant?.id)
-                    .map((candidate) => (
-                      <option key={candidate.id} value={candidate.id}>
-                        {candidate.label}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            )}
-          </div>
+          {/*
+            A label says what a variant is called; the description says what
+            it is. With a treatment for every branch of a block, that line
+            is what tells two of them apart.
+          */}
+          {variant?.description && (
+            <p className="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+              {variant.description}
+            </p>
+          )}
         </div>
       )}
 
