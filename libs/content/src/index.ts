@@ -184,6 +184,86 @@ export function extractTextContent(blocks: StoryBlock[]): string {
           if (hl.note) fragments.push(hl.note);
         }
         break;
+      case 'sankey':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        for (const node of block.data.nodes) {
+          fragments.push(node.label);
+        }
+        break;
+      case 'treemap':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        for (const node of block.data.nodes) {
+          fragments.push(node.label);
+        }
+        break;
+      case 'network_graph':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        for (const node of block.data.nodes) {
+          fragments.push(node.label);
+          if (node.group) fragments.push(node.group);
+        }
+        break;
+      case 'regression':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        if (block.data.xLabel) fragments.push(block.data.xLabel);
+        if (block.data.yLabel) fragments.push(block.data.yLabel);
+        break;
+      case 'anomaly':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        break;
+      case 'survey_results':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        fragments.push(block.data.question);
+        for (const response of block.data.responses) {
+          fragments.push(response.option);
+        }
+        for (const segment of block.data.segments ?? []) {
+          fragments.push(segment.label);
+        }
+        break;
+      case 'scrolly':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.caption) fragments.push(block.data.caption);
+        for (const step of block.data.steps) {
+          if (step.heading) fragments.push(step.heading);
+          if (step.body) fragments.push(step.body);
+          if (step.visual.kind === 'stat') {
+            fragments.push(step.visual.value, step.visual.label);
+            if (step.visual.delta) fragments.push(step.visual.delta);
+          }
+          if (step.visual.kind === 'text') fragments.push(step.visual.text);
+          if (step.visual.kind === 'chart') fragments.push(step.visual.chart.title);
+        }
+        break;
+      case 'motion_chart':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        fragments.push(block.data.chart.title);
+        break;
+      case 'sandbox':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.caption) fragments.push(block.data.caption);
+        if (block.data.accessibilityText) fragments.push(block.data.accessibilityText);
+        break;
+      case 'scene_3d':
+        if (block.data.title) fragments.push(block.data.title);
+        if (block.data.subtitle) fragments.push(block.data.subtitle);
+        if (block.data.caption) fragments.push(block.data.caption);
+        if (block.data.alt) fragments.push(block.data.alt);
+        break;
       default:
         break;
     }

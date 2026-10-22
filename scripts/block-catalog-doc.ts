@@ -34,6 +34,7 @@ export const CATALOG_SECTIONS: CatalogSectionConfig[] = [
   { categories: ['data'], title: 'Data & quantitative blocks' },
   { categories: ['map'], title: 'Map, timeline & diagram blocks' },
   { categories: ['interactive'], title: 'Interactive blocks' },
+  { categories: ['immersive'], title: 'Immersive & motion blocks' },
   {
     categories: ['context', 'evidence', 'specialized'],
     title: 'Evidence, source & context blocks',

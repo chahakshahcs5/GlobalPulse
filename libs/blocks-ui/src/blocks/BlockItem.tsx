@@ -58,6 +58,18 @@ import {
   TranscriptBlockView,
   DatasetBlockView,
 } from './MediaExpansionViews';
+import {
+  SankeyBlockView,
+  TreemapBlockView,
+  NetworkGraphBlockView,
+  RegressionBlockView,
+  AnomalyBlockView,
+  SurveyResultsBlockView,
+} from './AdvancedBlockViews';
+import { ScrollyBlockView } from './ScrollyBlockView';
+import { MotionChartBlockView } from './MotionChartBlockView';
+import { SandboxBlockView } from './SandboxBlockView';
+import { Scene3DBlockView } from './Scene3DBlockView';
 
 /**
  * Draw the block itself.
@@ -549,6 +561,46 @@ function renderBlock(
 
     case 'fact_check': {
       return <FactCheckBlockView data={block.data} />;
+    }
+
+    case 'sankey': {
+      return <SankeyBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'treemap': {
+      return <TreemapBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'network_graph': {
+      return <NetworkGraphBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'regression': {
+      return <RegressionBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'anomaly': {
+      return <AnomalyBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'survey_results': {
+      return <SurveyResultsBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'scrolly': {
+      return <ScrollyBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'motion_chart': {
+      return <MotionChartBlockView data={block.data} theme={theme} />;
+    }
+
+    case 'sandbox': {
+      return <SandboxBlockView data={block.data} />;
+    }
+
+    case 'scene_3d': {
+      return <Scene3DBlockView data={block.data} theme={theme} />;
     }
 
     default:

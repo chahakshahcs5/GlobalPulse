@@ -33,6 +33,15 @@ const CHART_TYPES = [
   'radar',
   'small_multiples',
   'sparkline',
+  'streamgraph',
+  'calendar_heatmap',
+  'parallel_coordinates',
+  'box_plot',
+  'funnel',
+  'waffle',
+  'ridge',
+  'chord',
+  'voronoi',
 ] as const;
 
 function baseChart(chartType: (typeof CHART_TYPES)[number]): ChartBlock['data'] {
@@ -42,14 +51,47 @@ function baseChart(chartType: (typeof CHART_TYPES)[number]): ChartBlock['data'] 
     subtitle: 'Rendered by the D3 engine',
     xAxis: { key: 'period', label: 'Period', type: 'category' },
     yAxis: { label: 'Value', unit: 'units' },
+    // The grouping keys the newer chart types read their matrix from.
+    groupKey: 'group',
+    secondaryKey: 'secondary',
     series: [
       { name: 'Series A', key: 'a', color: '#3b82f6' },
       { name: 'Series B', key: 'b', color: '#10b981' },
     ],
     values: [
-      { period: '2024', a: 10, b: 6, rank: 3, revenue: 120, cost: 90, north: 40 },
-      { period: '2025', a: 18, b: 11, rank: 2, revenue: 160, cost: 118, north: 62 },
-      { period: '2026', a: 26, b: 14, rank: 1, revenue: 210, cost: 150, north: 88 },
+      {
+        period: '2024',
+        a: 10,
+        b: 6,
+        rank: 3,
+        revenue: 120,
+        cost: 90,
+        north: 40,
+        group: 'North',
+        secondary: 4,
+      },
+      {
+        period: '2025',
+        a: 18,
+        b: 11,
+        rank: 2,
+        revenue: 160,
+        cost: 118,
+        north: 62,
+        group: 'North',
+        secondary: 6,
+      },
+      {
+        period: '2026',
+        a: 26,
+        b: 14,
+        rank: 1,
+        revenue: 210,
+        cost: 150,
+        north: 88,
+        group: 'South',
+        secondary: 8,
+      },
     ],
     facetField: 'north',
     sourceAttribution: 'GlobalPulse Analytics',
@@ -80,6 +122,13 @@ describe('Chart type coverage', () => {
     sparkline: 2,
     donut: 2,
     pie: 2,
+    // A theme river draws one band per series, and a ridgeline one hill per
+    // group, so two is all two series or two groups can produce. A box plot
+    // draws one box per group, and its whiskers are lines rather than shapes.
+    streamgraph: 2,
+    ridge: 2,
+    chord: 2,
+    box_plot: 2,
   };
 
   it.each(CHART_TYPES)('renders a %s chart with visible data marks', (chartType) => {

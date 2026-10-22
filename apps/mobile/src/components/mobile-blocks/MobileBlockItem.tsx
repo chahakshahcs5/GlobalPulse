@@ -65,6 +65,18 @@ import {
   DocumentViewerBlockItem,
   LiveCommentsBlockItem,
 } from './MobileContextBlocks';
+import {
+  SankeyBlockItem,
+  TreemapBlockItem,
+  NetworkGraphBlockItem,
+  RegressionBlockItem,
+  AnomalyBlockItem,
+  SurveyResultsBlockItem,
+  ScrollyBlockItem,
+  MotionChartBlockItem,
+  SandboxBlockItem,
+  Scene3DBlockItem,
+} from './MobileAdvancedBlocks';
 
 export interface MobileBlockItemProps {
   block: StoryBlock;
@@ -184,6 +196,26 @@ export function MobileBlockItem({ block, storyId }: MobileBlockItemProps) {
       return <DocumentViewerBlockItem block={block} />;
     case 'live_comments':
       return <LiveCommentsBlockItem block={block} storyId={storyId} />;
+    case 'sankey':
+      return <SankeyBlockItem block={block} />;
+    case 'treemap':
+      return <TreemapBlockItem block={block} />;
+    case 'network_graph':
+      return <NetworkGraphBlockItem block={block} />;
+    case 'regression':
+      return <RegressionBlockItem block={block} />;
+    case 'anomaly':
+      return <AnomalyBlockItem block={block} />;
+    case 'survey_results':
+      return <SurveyResultsBlockItem block={block} />;
+    case 'scrolly':
+      return <ScrollyBlockItem block={block} />;
+    case 'motion_chart':
+      return <MotionChartBlockItem block={block} />;
+    case 'sandbox':
+      return <SandboxBlockItem block={block} />;
+    case 'scene_3d':
+      return <Scene3DBlockItem block={block} />;
     default:
       return null;
   }

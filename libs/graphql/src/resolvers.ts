@@ -1,4 +1,5 @@
 import { DatabaseService, db } from '@ai-news/database';
+import type { IResolvers } from 'mercurius';
 import {
   StoryService,
   StoryIntelligenceService,
@@ -133,7 +134,15 @@ function withGraphQLErrors<T extends object>(service: T): T {
   });
 }
 
-export function createResolvers(database: DatabaseService = db) {
+/**
+ * The resolver map.
+ *
+ * The return type is stated rather than inferred: the resolvers reach the
+ * whole `StoryBlock` union, which grows with every block type the platform
+ * adds, and the compiler cannot write out a type that large. The shape the
+ * map has is the one mercurius expects.
+ */
+export function createResolvers(database: DatabaseService = db): IResolvers {
   const storyService = new StoryService(database);
   const searchService = new SearchService(database);
   const topicService = new TopicService(database);
