@@ -55,10 +55,28 @@ import {
   WaveformBlockSchema,
   TranscriptBlockSchema,
   DatasetBlockSchema,
+  SankeyBlockSchema,
+  TreemapBlockSchema,
+  NetworkGraphBlockSchema,
+  RegressionBlockSchema,
+  AnomalyBlockSchema,
+  SurveyResultsBlockSchema,
+  ScrollyBlockSchema,
+  MotionChartBlockSchema,
+  SandboxBlockSchema,
+  Scene3DBlockSchema,
 } from './blocks';
 
 export type BlockCategory =
-  'text' | 'media' | 'data' | 'map' | 'interactive' | 'context' | 'evidence' | 'specialized';
+  | 'text'
+  | 'media'
+  | 'data'
+  | 'map'
+  | 'interactive'
+  | 'context'
+  | 'evidence'
+  | 'specialized'
+  | 'immersive';
 
 export interface BlockCapabilities {
   web: boolean;
@@ -672,6 +690,72 @@ define('dataset', DatasetBlockSchema, {
   description:
     'Published dataset with column definitions, a preview table, download formats, license, and methodology.',
   recommendedFor: ['data journalism', 'investigations', 'transparency'],
+});
+
+// --- Flow, hierarchy & structure --------------------------------------------
+define('sankey', SankeyBlockSchema, {
+  category: 'data',
+  description:
+    'Flow diagram showing how a quantity moves between stages or sources, with the size of each flow drawn to scale.',
+  recommendedFor: ['investigations', 'budgets', 'supply chains'],
+});
+define('treemap', TreemapBlockSchema, {
+  category: 'data',
+  description:
+    'Nested rectangles whose area shows the size of each part of a hierarchy, from the whole down to the leaves.',
+  recommendedFor: ['budgets', 'market shares', 'spending'],
+});
+define('network_graph', NetworkGraphBlockSchema, {
+  category: 'data',
+  description:
+    'Force-directed graph of people, organisations and things, showing who is connected to whom and how strongly.',
+  recommendedFor: ['investigations', 'explainers', 'entity stories'],
+});
+
+// --- Analysis ---------------------------------------------------------------
+define('regression', RegressionBlockSchema, {
+  category: 'data',
+  description:
+    'A fitted curve through scattered measurements, with the fit, its confidence band, the residuals and the equation.',
+  recommendedFor: ['economics', 'science', 'methodology'],
+});
+define('anomaly', AnomalyBlockSchema, {
+  category: 'data',
+  description:
+    'A series over time with the unusual readings marked out, and the method used to decide what counts as unusual.',
+  recommendedFor: ['monitoring', 'climate', 'markets'],
+});
+define('survey_results', SurveyResultsBlockSchema, {
+  category: 'data',
+  description:
+    'The results of a poll or survey, with the breakdown by subgroup, the sample size and the margin of error.',
+  recommendedFor: ['politics', 'research', 'explainers'],
+});
+
+// --- Immersive & motion -----------------------------------------------------
+define('scrolly', ScrollyBlockSchema, {
+  category: 'immersive',
+  description:
+    'A scroll-driven narrative: a sticky scene that changes as the reader moves through each step of the story.',
+  recommendedFor: ['long reads', 'features', 'explainers'],
+});
+define('motion_chart', MotionChartBlockSchema, {
+  category: 'immersive',
+  description:
+    'A chart that draws itself in — bars growing, lines drawing on, figures counting up — honouring reduced-motion.',
+  recommendedFor: ['explainers', 'social', 'data journalism'],
+});
+define('sandbox', SandboxBlockSchema, {
+  category: 'immersive',
+  description:
+    'Custom HTML, CSS and JavaScript drawn in a sandboxed frame, with the block’s own data handed to it.',
+  recommendedFor: ['bespoke visuals', 'embeds', 'experiments'],
+});
+define('scene_3d', Scene3DBlockSchema, {
+  category: 'immersive',
+  description:
+    'A three-dimensional scene — a globe, a point cloud, a bar chart or a model — drawn in WebGL and explorable.',
+  recommendedFor: ['geography', 'climate', 'infrastructure'],
 });
 
 // Remove internal placeholder before exposing the registry.

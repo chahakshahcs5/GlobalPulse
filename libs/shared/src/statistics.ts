@@ -174,3 +174,65 @@ export function describeCorrelation(r: number | null): string {
   if (magnitude < 0.9) return 'A strong relationship';
   return 'A very strong relationship';
 }
+
+/**
+ * The two-tailed critical value of Student's t distribution.
+ *
+ * The value `t` for which the probability of a t statistic exceeding it is
+ * `1 - confidence`. A confidence band drawn at this value contains the fitted
+ * curve for that proportion of the observations it was fitted to.
+ *
+ * The distribution is inverted by bisection on the cumulative function, which
+ * is `1 - I_{df/(df+t^2)}(df/2, 1/2)`. The incomplete beta function is the
+ * one already used for the correlation p-value, so no new maths is needed.
+ */
+export function studentTCritical(df: number, confidence: number): number {
+  if (!Number.isFinite(df) || df <= 0) return 0;
+  const level = Math.min(1, Math.max(0, confidence));
+  if (level <= 0 || level >= 1) return 0;
+
+  const target = 1 - (1 - level) / 2;
+  const cdf = (t: number): number => {
+    const squared = t * t;
+    const x = df / (df + squared);
+    return 1 - 0.5 * incompleteBeta(df / 2, 0.5, x);
+  };
+
+  let low = 0;
+  let high = 200;
+  for (let i = 0; i < 200; i++) {
+    const mid = (low + high) / 2;
+    if (cdf(mid) < target) low = mid;
+    else high = mid;
+  }
+  return (low + high) / 2;
+}
+
+/**
+ * A quantile of a sample, by linear interpolation between the two closest
+ * order statistics.
+ *
+ * `p` is the fraction of the sample below the result: `0.5` is the median,
+ * `0.25` the lower quartile.
+ */
+export function quantile(values: Array<number | null | undefined>, p: number): number {
+  const sorted = values
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .slice()
+    .sort((a, b) => a - b);
+
+  if (sorted.length === 0) return Number.NaN;
+  if (sorted.length === 1) return sorted[0];
+
+  const fraction = Math.min(1, Math.max(0, p));
+  const position = (sorted.length - 1) * fraction;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower];
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+/** The median of a sample. */
+export function median(values: Array<number | null | undefined>): number {
+  return quantile(values, 0.5);
+}

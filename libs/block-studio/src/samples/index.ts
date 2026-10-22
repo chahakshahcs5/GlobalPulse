@@ -7,6 +7,7 @@ import { INTERACTIVE_SAMPLES } from './interactive';
 import { CONTEXT_SAMPLES } from './context';
 import { MAP_SAMPLES } from './map';
 import { SPECIALIZED_SAMPLES } from './specialized';
+import { IMMERSIVE_SAMPLES } from './immersive';
 
 /**
  * Sample payloads for every block type.
@@ -29,4 +30,5 @@ export const BLOCK_SAMPLES: Record<string, StudioVariant[]> = {
   ...CONTEXT_SAMPLES,
   ...MAP_SAMPLES,
   ...SPECIALIZED_SAMPLES,
+  ...IMMERSIVE_SAMPLES,
 };

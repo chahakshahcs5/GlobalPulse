@@ -3,6 +3,21 @@ import { ClaimStatusSchema, PerspectiveStanceSchema } from './intelligence';
 import { CommentAuthorRoleSchema } from './engagement';
 
 /**
+ * The colours a block may be drawn in.
+ *
+ * A colour is interpolated into an SVG `fill` or `stroke` attribute, so a
+ * free-form string could break out of the attribute and inject arbitrary
+ * markup. Only hex, `rgb()`/`rgba()`/`hsl()`/`hsla()` and plain CSS colour
+ * keywords are accepted; anything else is rejected by the schema rather than
+ * silently mangled at render time.
+ */
+export const BLOCK_COLOR_PATTERN =
+  /^(#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgba?|hsla?)\(\s*[\d.%\s,/]+\)|[a-z]+)$/i;
+
+/** A colour a block may be drawn in. */
+export const BlockColorSchema = z.string().regex(BLOCK_COLOR_PATTERN);
+
+/**
  * Provenance attached to any externally sourced block. AI agents and humans
  * both use this shape; renderers surface it and API clients can audit it.
  */
@@ -218,6 +233,15 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
       'radar',
       'small_multiples',
       'sparkline',
+      'streamgraph',
+      'calendar_heatmap',
+      'parallel_coordinates',
+      'box_plot',
+      'funnel',
+      'waffle',
+      'ridge',
+      'chord',
+      'voronoi',
     ]),
     title: z.string().min(1),
     subtitle: z.string().optional(),
@@ -260,6 +284,23 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
       .min(1),
     values: z.array(z.record(z.unknown())).min(1),
     facetField: z.string().optional(),
+    /**
+     * The key in each row that names the group the row belongs to.
+     *
+     * A box plot groups its rows into boxes; a chord diagram reads its rows
+     * as a matrix of source and target. Both need a second, categorical key
+     * alongside the one the value is read from, and neither can be inferred
+     * from the axis.
+     */
+    groupKey: z.string().optional(),
+    /**
+     * The key in each row that holds a second measurement.
+     *
+     * A voronoi diagram places each row at the point its two measurements
+     * describe; a chord diagram reads the second measurement as the column of
+     * its matrix.
+     */
+    secondaryKey: z.string().optional(),
     /**
      * Click-to-reveal annotations anchored to specific data points — the
      * explainer treatment used to walk a reader through a chart.
@@ -1590,6 +1631,407 @@ export const DatasetBlockSchema = BaseBlockSchema.extend({
   }),
 });
 
+/* ------------------------------------------------------------------------- *
+ * Flow, hierarchy and structure blocks
+ * ------------------------------------------------------------------------- */
+
+export const SankeyNodeSchema = z.object({
+  /** A stable identifier, referenced by the links that point at this node. */
+  id: z.string().min(1),
+  label: z.string().min(1),
+  color: BlockColorSchema.optional(),
+});
+export type SankeyNode = z.infer<typeof SankeyNodeSchema>;
+
+export const SankeyLinkSchema = z.object({
+  /** The id of the node the flow leaves. */
+  source: z.string().min(1),
+  /** The id of the node the flow arrives at. */
+  target: z.string().min(1),
+  /** How much flows along this link. */
+  value: z.number().nonnegative(),
+  label: z.string().optional(),
+});
+export type SankeyLink = z.infer<typeof SankeyLinkSchema>;
+
+export const SankeyBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('sankey'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    nodes: z.array(SankeyNodeSchema).min(2).max(60),
+    links: z.array(SankeyLinkSchema).min(1).max(200),
+    /** The unit the flow is measured in, e.g. `£m` or `tonnes`. */
+    unit: z.string().optional(),
+    /** Draw the value on each link. */
+    showValues: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type SankeyBlock = z.infer<typeof SankeyBlockSchema>;
+
+export const TreemapNodeSchema = z.object({
+  id: z.string().min(1),
+  /** The id of the node this one sits inside. Absent for a root. */
+  parentId: z.string().optional(),
+  label: z.string().min(1),
+  /** The size of this node. Absent for a node that only groups its children. */
+  value: z.number().nonnegative().optional(),
+  color: BlockColorSchema.optional(),
+});
+export type TreemapNode = z.infer<typeof TreemapNodeSchema>;
+
+export const TreemapBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('treemap'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    /**
+     * The hierarchy, as a flat list.
+     *
+     * A flat list rather than a nested tree: it is far easier to edit, to
+     * validate and for an agent to author, and the hierarchy is recovered
+     * from `parentId` when the tree is drawn.
+     */
+    nodes: z.array(TreemapNodeSchema).min(1).max(500),
+    unit: z.string().optional(),
+    /** Draw the value on each rectangle. */
+    showValues: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type TreemapBlock = z.infer<typeof TreemapBlockSchema>;
+
+export const NetworkNodeSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** A category the node belongs to, used to colour it. */
+  group: z.string().optional(),
+  /** How prominent the node is, relative to the others. */
+  size: z.number().nonnegative().optional(),
+  /** A link the node points at, e.g. the story it appears in. */
+  url: z.string().url().optional(),
+});
+export type NetworkNode = z.infer<typeof NetworkNodeSchema>;
+
+export const NetworkLinkSchema = z.object({
+  /** The id of the node the connection leaves. */
+  source: z.string().min(1),
+  /** The id of the node the connection arrives at. */
+  target: z.string().min(1),
+  /** How strong the connection is, relative to the others. */
+  weight: z.number().nonnegative().optional(),
+  label: z.string().optional(),
+});
+export type NetworkLink = z.infer<typeof NetworkLinkSchema>;
+
+export const NetworkGraphBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('network_graph'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    nodes: z.array(NetworkNodeSchema).min(2).max(300),
+    links: z.array(NetworkLinkSchema).min(1).max(1000),
+    /** How the nodes are arranged. */
+    layout: z.enum(['force', 'radial', 'circular']).optional(),
+    /** Draw the name next to each node. */
+    showLabels: z.boolean().optional(),
+    /** Let the reader drag the nodes around and filter the graph. */
+    interactive: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type NetworkGraphBlock = z.infer<typeof NetworkGraphBlockSchema>;
+
+/* ------------------------------------------------------------------------- *
+ * Analysis blocks
+ * ------------------------------------------------------------------------- */
+
+export const RegressionPointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  label: z.string().optional(),
+});
+export type RegressionPoint = z.infer<typeof RegressionPointSchema>;
+
+export const RegressionBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('regression'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    xLabel: z.string().optional(),
+    yLabel: z.string().optional(),
+    points: z.array(RegressionPointSchema).min(2).max(2000),
+    /** The curve fitted through the points. */
+    model: z.enum(['linear', 'quadratic', 'logarithmic', 'exponential']).optional(),
+    /** How confident the band around the fit is, as a fraction. */
+    confidenceLevel: z.number().min(0.5).max(0.999).optional(),
+    /** Draw the band around the fitted curve. */
+    showConfidenceBand: z.boolean().optional(),
+    /** Draw the residuals beneath the fit. */
+    showResiduals: z.boolean().optional(),
+    /** Write the fitted equation out. */
+    showEquation: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type RegressionBlock = z.infer<typeof RegressionBlockSchema>;
+
+export const AnomalyPointSchema = z.object({
+  /** The label or date the measurement belongs to. */
+  x: z.string().min(1),
+  y: z.number(),
+});
+export type AnomalyPoint = z.infer<typeof AnomalyPointSchema>;
+
+export const AnomalyBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('anomaly'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    points: z.array(AnomalyPointSchema).min(3).max(2000),
+    /** How an unusual measurement is recognised. */
+    method: z.enum(['zscore', 'mad', 'iqr', 'percentile']).optional(),
+    /** How far from normal a measurement has to be to count as an anomaly. */
+    threshold: z.number().positive().optional(),
+    /** How many neighbouring measurements the rolling methods look at. */
+    window: z.number().int().min(3).max(200).optional(),
+    /** Which direction counts as unusual. */
+    direction: z.enum(['both', 'up', 'down']).optional(),
+    unit: z.string().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type AnomalyBlock = z.infer<typeof AnomalyBlockSchema>;
+
+export const SurveyResponseSchema = z.object({
+  option: z.string().min(1),
+  count: z.number().int().nonnegative(),
+  color: BlockColorSchema.optional(),
+});
+export type SurveyResponse = z.infer<typeof SurveyResponseSchema>;
+
+export const SurveySegmentSchema = z.object({
+  label: z.string().min(1),
+  responses: z.array(SurveyResponseSchema).min(1).max(30),
+});
+export type SurveySegment = z.infer<typeof SurveySegmentSchema>;
+
+export const SurveyResultsBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('survey_results'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    /** The question the respondents were asked. */
+    question: z.string().min(1),
+    responses: z.array(SurveyResponseSchema).min(1).max(30),
+    /** A breakdown of the same question by a subgroup. */
+    segments: z.array(SurveySegmentSchema).max(20).optional(),
+    /** How many people answered. */
+    totalRespondents: z.number().int().nonnegative().optional(),
+    /** The margin of error, as a percentage. */
+    marginOfError: z.number().nonnegative().max(100).optional(),
+    /** When the respondents were asked. */
+    fieldDates: z.string().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+    lastUpdated: z.string().optional(),
+  }),
+});
+export type SurveyResultsBlock = z.infer<typeof SurveyResultsBlockSchema>;
+
+/* ------------------------------------------------------------------------- *
+ * Immersive blocks
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The picture a scrollytelling step shows.
+ *
+ * A union rather than one loose payload because the steps of a scrollytelling
+ * piece are the one place a reader is walked through a sequence, and each step
+ * is allowed to show a different kind of thing. The editor picks which kind
+ * each step is; the renderer draws it.
+ */
+export const ScrollyVisualSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('chart'),
+    /** A complete chart payload, drawn exactly as a chart block draws it. */
+    chart: ChartBlockSchema.shape.data,
+  }),
+  z.object({
+    kind: z.literal('image'),
+    url: z.string().url(),
+    alt: z.string().min(1),
+    caption: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('stat'),
+    value: z.string().min(1),
+    label: z.string().min(1),
+    /** How the figure has moved, e.g. `+4.2% since 2023`. */
+    delta: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('text'),
+    /** The words shown beside the picture. Never interpreted as markup. */
+    text: z.string().max(5000),
+  }),
+]);
+export type ScrollyVisual = z.infer<typeof ScrollyVisualSchema>;
+
+export const ScrollyStepSchema = z.object({
+  id: z.string().min(1),
+  heading: z.string().optional(),
+  body: z.string().optional(),
+  visual: ScrollyVisualSchema,
+});
+export type ScrollyStep = z.infer<typeof ScrollyStepSchema>;
+
+export const ScrollyBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('scrolly'),
+  data: z.object({
+    title: z.string().optional(),
+    /** The steps of the narrative, in the order the reader meets them. */
+    steps: z.array(ScrollyStepSchema).min(1).max(20),
+    /** Show a marker of how far through the steps the reader is. */
+    showProgress: z.boolean().optional(),
+    caption: z.string().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+  }),
+});
+export type ScrollyBlock = z.infer<typeof ScrollyBlockSchema>;
+
+export const MotionChartBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('motion_chart'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    caption: z.string().optional(),
+    /** The chart that is drawn, and then animated. */
+    chart: ChartBlockSchema.shape.data,
+    /** How the chart animates itself in. */
+    animation: z.enum(['grow', 'draw', 'sweep', 'count', 'fade']).optional(),
+    /** How long the animation takes, in milliseconds. */
+    durationMs: z.number().int().min(100).max(20000).optional(),
+    /** How long after each other the marks start, in milliseconds. */
+    staggerMs: z.number().int().min(0).max(2000).optional(),
+    /** Start again when the animation ends. */
+    loop: z.boolean().optional(),
+    /**
+     * Honour the reader's system preference for reduced motion.
+     *
+     * On by default. A reader who has asked their operating system for less
+     * movement gets the finished chart, not an animation.
+     */
+    respectReducedMotion: z.boolean().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+  }),
+});
+export type MotionChartBlock = z.infer<typeof MotionChartBlockSchema>;
+
+/**
+ * A block that draws whatever the newsroom tells it to draw.
+ *
+ * The payload is HTML, CSS and JavaScript, run inside an iframe that is
+ * sandboxed without `allow-same-origin`. That puts the frame on an opaque
+ * origin: it cannot read the page, the reader's cookies or their storage, and
+ * it cannot navigate the story out from under them. The block's own data is
+ * handed to the frame over `postMessage` and nothing is read back except
+ * messages the frame sends itself.
+ *
+ * This is the one block in the catalogue whose payload is code. It is
+ * deliberately *not* run through the text sanitiser — the frame's sandbox is
+ * the security boundary, and sanitising the code would defeat the purpose of
+ * the block — so it may only be used by principals who are allowed to publish
+ * code into a story.
+ */
+export const SandboxBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('sandbox'),
+  data: z.object({
+    title: z.string().optional(),
+    /** The markup and styles the frame is given. */
+    html: z.string().max(200000),
+    /** The script the frame runs, if any. */
+    script: z.string().max(200000).optional(),
+    /** The data handed to the frame once it has loaded. */
+    data: z.record(z.unknown()).optional(),
+    /** How tall the frame is, in pixels. */
+    height: z.number().int().min(80).max(2000).optional(),
+    /** Let the frame run its script. */
+    allowScripts: z.boolean().optional(),
+    caption: z.string().optional(),
+    /** The block in words, for anyone who cannot see what it drew. */
+    accessibilityText: z.string().max(5000).optional(),
+    sourceAttribution: z.string().optional(),
+  }),
+});
+export type SandboxBlock = z.infer<typeof SandboxBlockSchema>;
+
+export const Scene3DPointSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lon: z.number().min(-180).max(180),
+  value: z.number().optional(),
+  label: z.string().optional(),
+  color: BlockColorSchema.optional(),
+});
+export type Scene3DPoint = z.infer<typeof Scene3DPointSchema>;
+
+export const Scene3DBarSchema = z.object({
+  label: z.string().min(1),
+  value: z.number(),
+  color: BlockColorSchema.optional(),
+});
+export type Scene3DBar = z.infer<typeof Scene3DBarSchema>;
+
+export const Scene3DBlockSchema = BaseBlockSchema.extend({
+  blockType: z.literal('scene_3d'),
+  data: z.object({
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    /** What kind of scene is drawn. */
+    scene: z.enum(['globe', 'points', 'bars', 'model']).optional(),
+    /** The places marked on a globe, or the points of a point cloud. */
+    points: z.array(Scene3DPointSchema).max(2000).optional(),
+    /** The columns of a three-dimensional bar chart. */
+    bars: z.array(Scene3DBarSchema).max(200).optional(),
+    /** The model to show, as a `.glb` file. */
+    modelUrl: z.string().url().optional(),
+    /** Turn the scene slowly on its own. */
+    autoRotate: z.boolean().optional(),
+    /** How far away the camera stands. */
+    cameraDistance: z.number().min(0.5).max(200).optional(),
+    /** How tall the scene is, in pixels. */
+    height: z.number().int().min(120).max(1200).optional(),
+    background: BlockColorSchema.optional(),
+    /** The picture shown where the scene cannot be drawn, e.g. on a phone. */
+    posterUrl: z.string().url().optional(),
+    /** The scene in words, for anyone who cannot see it. */
+    alt: z.string().max(1000).optional(),
+    caption: z.string().optional(),
+    sourceAttribution: z.string().optional(),
+    methodology: z.string().max(4000).optional(),
+  }),
+});
+export type Scene3DBlock = z.infer<typeof Scene3DBlockSchema>;
+
 export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   HeadingBlockSchema,
   ParagraphBlockSchema,
@@ -1646,6 +2088,16 @@ export const StoryBlockSchema = z.discriminatedUnion('blockType', [
   WaveformBlockSchema,
   TranscriptBlockSchema,
   DatasetBlockSchema,
+  SankeyBlockSchema,
+  TreemapBlockSchema,
+  NetworkGraphBlockSchema,
+  RegressionBlockSchema,
+  AnomalyBlockSchema,
+  SurveyResultsBlockSchema,
+  ScrollyBlockSchema,
+  MotionChartBlockSchema,
+  SandboxBlockSchema,
+  Scene3DBlockSchema,
 ]);
 
 export type StoryBlock = z.infer<typeof StoryBlockSchema>;
@@ -1743,3 +2195,13 @@ export type PodcastBlock = z.infer<typeof PodcastBlockSchema>;
 export type WaveformBlock = z.infer<typeof WaveformBlockSchema>;
 export type TranscriptBlock = z.infer<typeof TranscriptBlockSchema>;
 export type DatasetBlock = z.infer<typeof DatasetBlockSchema>;
+export type SankeyBlockDataInput = BlockDataInput<typeof SankeyBlockSchema>;
+export type TreemapBlockDataInput = BlockDataInput<typeof TreemapBlockSchema>;
+export type NetworkGraphBlockDataInput = BlockDataInput<typeof NetworkGraphBlockSchema>;
+export type RegressionBlockDataInput = BlockDataInput<typeof RegressionBlockSchema>;
+export type AnomalyBlockDataInput = BlockDataInput<typeof AnomalyBlockSchema>;
+export type SurveyResultsBlockDataInput = BlockDataInput<typeof SurveyResultsBlockSchema>;
+export type ScrollyBlockDataInput = BlockDataInput<typeof ScrollyBlockSchema>;
+export type MotionChartBlockDataInput = BlockDataInput<typeof MotionChartBlockSchema>;
+export type SandboxBlockDataInput = BlockDataInput<typeof SandboxBlockSchema>;
+export type Scene3DBlockDataInput = BlockDataInput<typeof Scene3DBlockSchema>;

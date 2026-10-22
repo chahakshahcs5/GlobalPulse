@@ -1,6 +1,6 @@
 # Structured Content Model & Block System
 
-This document outlines the structured block content model, discriminant union architecture, and full catalog of all 55 supported block types in **GlobalPulse**.
+This document outlines the structured block content model, discriminant union architecture, and full catalog of all 65 supported block types in **GlobalPulse**.
 
 ---
 
@@ -16,7 +16,7 @@ Traditional CMS platforms store monolithic HTML or raw Markdown blobs. In contra
 
 ---
 
-## 2. Complete Catalog of 55 Supported Block Types
+## 2. Complete Catalog of 65 Supported Block Types
 
 Every block contains common envelope metadata:
 
@@ -70,7 +70,7 @@ Zod definition — so an external agent can build a valid block without knowing 
 
 <!-- BEGIN GENERATED BLOCK CATALOG: data -->
 
-### 2.3 Data & quantitative blocks (14)
+### 2.3 Data & quantitative blocks (20)
 
 18. **`chart`**: Programmatic D3 visualization. 21 chart types: line, area, bar, stacked_bar, grouped_bar, scatter, heatmap, histogram, waterfall, donut, pie, kpi, comparison, slope, dot_plot, lollipop, diverging_bar, sparkline, bump, radar and small_multiples. Supports click-to-reveal annotations anchored to specific data points.
 19. **`table`**: Data table with optional sorting, filtering, search, pagination, and CSV download.
@@ -86,6 +86,12 @@ Zod definition — so an external agent can build a valid block without knowing 
 29. **`disaster`**: Earthquake, storm, flood, or fire metrics with timestamps and affected areas.
 30. **`science`**: Findings, measurements, equations, paper metadata, and scientific diagrams.
 31. **`dataset`**: Published dataset with column definitions, a preview table, download formats, license, and methodology.
+32. **`sankey`**: Flow diagram showing how a quantity moves between stages or sources, with the size of each flow drawn to scale.
+33. **`treemap`**: Nested rectangles whose area shows the size of each part of a hierarchy, from the whole down to the leaves.
+34. **`network_graph`**: Force-directed graph of people, organisations and things, showing who is connected to whom and how strongly.
+35. **`regression`**: A fitted curve through scattered measurements, with the fit, its confidence band, the residuals and the equation.
+36. **`anomaly`**: A series over time with the unusual readings marked out, and the method used to decide what counts as unusual.
+37. **`survey_results`**: The results of a poll or survey, with the breakdown by subgroup, the sample size and the margin of error.
 
 <!-- END GENERATED BLOCK CATALOG: data -->
 
@@ -312,11 +318,11 @@ values rather than an image, the annotations travel with the values they refer t
 
 ### 2.4 Map, timeline & diagram blocks (5)
 
-32. **`animated_map`**: Map that moves through time. The reader scrubs through the frames, so the story shows how a situation spread rather than only its end state. Marker size and colour follow the value, on a scale fixed across every frame so the markers do not jump as the reader scrubs.
-33. **`map`**: Map with point, choropleth, heatmap, route, or comparison layers. Markers and GeoJSON layers are structured data, not screenshots.
-34. **`timeline`**: Chronological milestones; each item can carry entities, sources, and media.
-35. **`diagram`**: Mermaid, declarative SVG, flowchart, or sequence diagram.
-36. **`flow`**: Process / explainer steps with optional branches and citations.
+38. **`animated_map`**: Map that moves through time. The reader scrubs through the frames, so the story shows how a situation spread rather than only its end state. Marker size and colour follow the value, on a scale fixed across every frame so the markers do not jump as the reader scrubs.
+39. **`map`**: Map with point, choropleth, heatmap, route, or comparison layers. Markers and GeoJSON layers are structured data, not screenshots.
+40. **`timeline`**: Chronological milestones; each item can carry entities, sources, and media.
+41. **`diagram`**: Mermaid, declarative SVG, flowchart, or sequence diagram.
+42. **`flow`**: Process / explainer steps with optional branches and citations.
 
 <!-- END GENERATED BLOCK CATALOG: map -->
 
@@ -324,16 +330,27 @@ values rather than an image, the annotations travel with the values they refer t
 
 ### 2.5 Interactive blocks (8)
 
-37. **`quiz`**: Knowledge check. Each question has options, one correct answer, and an explanation revealed once the reader has answered — so the block teaches rather than only scoring. The reader's answers stay in their own browser.
-38. **`what_if`**: Interactive scenario explorer. The reader moves sliders over a range for each input and the outcome recomputes live from the block's own expressions, with an optional breakdown of the outcome into components and a baseline for comparison.
-39. **`live_comments`**: Reader comments inside the article body. The thread is loaded on mount and kept live over the story's realtime channel, so a comment posted while the reader is mid-article appears without a refresh.
-40. **`live_ticker`**: Market and numerical ticker with per-item sparklines. Binds to a live feed key to refresh in place over the realtime channel.
-41. **`live_data`**: Named live datasets with provider, refresh interval, timestamp, license, and methodology. Binds to a live feed key to refresh in place over the realtime channel.
-42. **`calculator`**: Generic calculator with structured inputs, safe formula expressions, outputs, units, assumptions, and sources.
-43. **`poll`**: Reader poll. Votes are counted on the server — one vote per reader, shared live across everyone reading the story.
-44. **`document_viewer`**: Paginated document viewer with sourced highlights.
+43. **`quiz`**: Knowledge check. Each question has options, one correct answer, and an explanation revealed once the reader has answered — so the block teaches rather than only scoring. The reader's answers stay in their own browser.
+44. **`what_if`**: Interactive scenario explorer. The reader moves sliders over a range for each input and the outcome recomputes live from the block's own expressions, with an optional breakdown of the outcome into components and a baseline for comparison.
+45. **`live_comments`**: Reader comments inside the article body. The thread is loaded on mount and kept live over the story's realtime channel, so a comment posted while the reader is mid-article appears without a refresh.
+46. **`live_ticker`**: Market and numerical ticker with per-item sparklines. Binds to a live feed key to refresh in place over the realtime channel.
+47. **`live_data`**: Named live datasets with provider, refresh interval, timestamp, license, and methodology. Binds to a live feed key to refresh in place over the realtime channel.
+48. **`calculator`**: Generic calculator with structured inputs, safe formula expressions, outputs, units, assumptions, and sources.
+49. **`poll`**: Reader poll. Votes are counted on the server — one vote per reader, shared live across everyone reading the story.
+50. **`document_viewer`**: Paginated document viewer with sourced highlights.
 
 <!-- END GENERATED BLOCK CATALOG: interactive -->
+
+<!-- BEGIN GENERATED BLOCK CATALOG: immersive -->
+
+### 2.6 Immersive & motion blocks (4)
+
+51. **`scrolly`**: A scroll-driven narrative: a sticky scene that changes as the reader moves through each step of the story.
+52. **`motion_chart`**: A chart that draws itself in — bars growing, lines drawing on, figures counting up — honouring reduced-motion.
+53. **`sandbox`**: Custom HTML, CSS and JavaScript drawn in a sandboxed frame, with the block’s own data handed to it.
+54. **`scene_3d`**: A three-dimensional scene — a globe, a point cloud, a bar chart or a model — drawn in WebGL and explorable.
+
+<!-- END GENERATED BLOCK CATALOG: immersive -->
 
 #### Live blocks are actually live
 
@@ -417,19 +434,19 @@ Two interactive blocks that need no authoring effort beyond their own data:
 
 <!-- BEGIN GENERATED BLOCK CATALOG: context -->
 
-### 2.6 Evidence, source & context blocks (11)
+### 2.7 Evidence, source & context blocks (11)
 
-45. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
-46. **`source`**: Registered source citation card.
-47. **`entity`**: Person, organization, company, country, location, or product card.
-48. **`related_stories`**: Related story references resolved by the frontend.
-49. **`what_changed`**: Structured change summary between two story versions.
-50. **`comparison`**: Two-option comparison card.
-51. **`citation`**: A claim coupled to one or more registered source IDs.
-52. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
-53. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
-54. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.
-55. **`interview`**: Structured Q&A interview with optional audio/video media and per-segment sources.
+55. **`knowledge_graph`**: Knowledge graph over the entities, sources and events in a story. Nodes are typed, edges carry a named relationship, and the layout is a deterministic radial one — the focus node in the centre, its relationships in the first ring — so the picture does not shuffle between renders and two stories can be compared.
+56. **`source`**: Registered source citation card.
+57. **`entity`**: Person, organization, company, country, location, or product card.
+58. **`related_stories`**: Related story references resolved by the frontend.
+59. **`what_changed`**: Structured change summary between two story versions.
+60. **`comparison`**: Two-option comparison card.
+61. **`citation`**: A claim coupled to one or more registered source IDs.
+62. **`evidence`**: Claim/evidence summary: claims with status and methodology, plus supporting, contradicting, or contextual evidence.
+63. **`perspective`**: Documented perspectives anchored to their sources. Not a forced two-sides frame.
+64. **`fact_check`**: Claim-level fact-check result with confidence methodology and review metadata.
+65. **`interview`**: Structured Q&A interview with optional audio/video media and per-segment sources.
 
 <!-- END GENERATED BLOCK CATALOG: context -->
 
@@ -480,6 +497,19 @@ blocks are stored as JSONB. It does require touching nine places:
 8. **Tests** — schema validation, renderer output, and the registry entry.
 9. **Block Studio sample** — a sample payload and any variants for the new type in
    `libs/block-studio/src/samples.ts`, so the block is previewable in the studio.
+
+Two more files are worth touching, though neither is required:
+
+- **`libs/block-studio/src/hints.ts`** — a `BLOCK_HINTS` entry, so the studio's generated form
+  groups the fields the way an editor would expect, and hides the ones that do not apply to the
+  block being edited.
+- **`apps/mcp-server/src/tools/blocks/`** — the MCP tool, if the block is one an agent should
+  be able to author on its own.
+
+A **new category** costs three more touches: the `BlockCategory` union in
+`libs/schemas/src/block-registry.ts`, the `CATEGORY_ORDER` and `CATEGORY_LABELS` maps in
+`libs/block-studio/src/types.ts`, and the `CATALOG_SECTIONS` list in `scripts/block-catalog-doc.ts`
+— without which the generator reports the category as uncatalogued and the build fails.
 
 ```typescript
 // 1. In libs/schemas/src/blocks.ts

@@ -7,7 +7,7 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
   // 8. add_chart_block (§38)
   server.tool(
     'add_chart_block',
-    '[WRITE] Add a programmatic D3 chart directly to a story. Every chart type in the block catalog is supported (line, area, bar, stacked_bar, grouped_bar, scatter, heatmap, histogram, waterfall, donut, pie, kpi, comparison, slope, dot_plot, lollipop, diverging_bar, sparkline, bump, radar, small_multiples).',
+    '[WRITE] Add a programmatic D3 chart directly to a story. Every chart type in the block catalog is supported (line, area, bar, stacked_bar, grouped_bar, scatter, heatmap, histogram, waterfall, donut, pie, kpi, comparison, slope, dot_plot, lollipop, diverging_bar, sparkline, bump, radar, small_multiples, streamgraph, calendar_heatmap, parallel_coordinates, box_plot, funnel, waffle, ridge, chord, voronoi).',
     {
       storyId: z.string().min(1),
       chartType: z.enum([
@@ -32,6 +32,15 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
         'bump',
         'radar',
         'small_multiples',
+        'streamgraph',
+        'calendar_heatmap',
+        'parallel_coordinates',
+        'box_plot',
+        'funnel',
+        'waffle',
+        'ridge',
+        'chord',
+        'voronoi',
       ]),
       title: z.string().min(1),
       xAxis: z.object({

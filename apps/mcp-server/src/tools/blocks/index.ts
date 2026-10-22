@@ -11,6 +11,7 @@ import { registerDataStorytellingTools } from './data-storytelling.tools';
 import { registerInteractiveDocumentTools } from './interactive-document.tools';
 import { registerLiveFeedTools } from './live-feed.tools';
 import { registerBlockLifecycleTools } from './lifecycle.tools';
+import { registerAdvancedBlockTools } from './advanced-blocks.tools';
 
 export * from './block-tool-helpers';
 export * from './text-editorial.tools';
@@ -20,6 +21,7 @@ export * from './data-storytelling.tools';
 export * from './interactive-document.tools';
 export * from './live-feed.tools';
 export * from './lifecycle.tools';
+export * from './advanced-blocks.tools';
 
 export function registerBlockTools(
   server: McpServer,
@@ -37,4 +39,5 @@ export function registerBlockTools(
   registerInteractiveDocumentTools(server, storyService, getPrincipal, helperAdd);
   registerLiveFeedTools(server, liveFeedService, getPrincipal, helperAdd);
   registerBlockLifecycleTools(server, storyService, getPrincipal);
+  registerAdvancedBlockTools(server, helperAdd);
 }

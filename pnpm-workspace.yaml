@@ -8,3 +8,7 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
   nx: true
+minimumReleaseAgeExclude:
+  - framer-motion@14.5.0
+  - motion-dom@14.5.0
+  - motion@14.5.0
