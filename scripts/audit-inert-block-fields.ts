@@ -209,8 +209,12 @@ for (const definition of listBlockDefinitions()) {
     }
   }
 
-  // The programmatic renderers in `@ai-news/media`, when the view uses one.
-  if (sources.some((source) => /Renderer|Model|VisualDiff/.test(source))) {
+  /*
+   * The programmatic renderers in `@ai-news/media`, when the view uses
+   * one. A view that pulls helpers out of the package reads its data
+   * through them, so the whole package counts as its source.
+   */
+  if (sources.some((source) => /Renderer|Model|VisualDiff|from '@ai-news\/media'/.test(source))) {
     sources.push(...mediaSources);
   }
 
