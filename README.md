@@ -3,13 +3,13 @@
 > **Next-generation AI-operable multimedia news publishing platform powered by Model Context Protocol (MCP), Next.js, Fastify, GraphQL Mercurius, and real-time Server-Sent Events (SSE).**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.6-black.svg)](https://nextjs.org/)
 [![Fastify](https://img.shields.io/badge/Fastify-5.2-green.svg)](https://fastify.dev/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-Mercurius-e10098.svg)](https://mercurius.dev/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-orange.svg)](https://modelcontextprotocol.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%2B%20pgvector-336791.svg)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-505%20passing-brightgreen.svg)](<>)
+[![Tests](https://img.shields.io/badge/Tests-1264%2B%20passing-brightgreen.svg)](<>)
 
 A production-grade, modern, interactive, animated multimedia news publishing platform designed from the ground up as an **AI-operable application**. External AI agents—such as Google Gemini, Gemini Spark, ChatGPT / OpenAI agents, Claude, and enterprise MCP clients—operate the newsroom remotely through the **Model Context Protocol (MCP)** and **GraphQL Mercurius API**.
 
@@ -64,7 +64,7 @@ flowchart TD
     end
 
     subgraph PresentationTier["Multi-Device Delivery Surfaces"]
-        WebPortal["Next.js 15 Web Portal & CMS (apps/web)\nServer-Side Rendering & Glassmorphic UI"]
+        WebPortal["Next.js 16 Web Portal & CMS (apps/web)\nServer-Side Rendering & Glassmorphic UI"]
         DisplayWall["4K / Ultrawide Kiosk Display Wall\nAuto-cycling Breaking News Carousel"]
         MobileApp["Expo React Native (apps/mobile)\nDual-Pane Tablet & Offline SQLite Cache"]
     end
@@ -120,7 +120,7 @@ flowchart TD
 
 ### 3. External AI Operability via Model Context Protocol (MCP)
 
-- **40+ MCP Tools**: External AI models (Claude, ChatGPT, Gemini, or autonomous daemons) operate the newsroom via JSON-RPC 2.0 to report breaking news, create visual charts, link citations, and manage taxonomy.
+- **291 MCP Tools**: External AI models (Claude, ChatGPT, Gemini, or autonomous daemons) operate the newsroom via JSON-RPC 2.0 to report breaking news, create visual charts, link citations, and manage taxonomy.
 - **OAuth 2.1 & RFC 8414 Authorization Server**: Full PKCE S256 code challenge verification and `client_credentials` grant with standard Bearer JWT issuance.
 - **Token Context Optimization**: `includeBlocks: false` and `includeSummary: false` parameters allow external LLMs to list stories and inspect metadata without consuming excessive context window tokens.
 - **Cryptographic Provenance**: Every story published by an AI carries transparent provenance tags (`createdByClient`, `clientType`, `authorId`).
@@ -185,13 +185,13 @@ pnpm install
 #### Option A: Running with Native Node.js & pnpm
 
 ```bash
-# Start NestJS & GraphQL API Server (port 3000)
+# Start NestJS & GraphQL API Server (port 4001)
 pnpm dev:api
 
 # Start Remote MCP Server (port 3001)
 pnpm dev:mcp
 
-# Start Next.js 15 Web Portal, CMS & 4K Wall (port 3002)
+# Start Next.js 16 Web Portal, CMS & 4K Wall (port 3002)
 pnpm dev:web
 
 # Start the Block Studio (port 3003) — preview and edit every story block
@@ -278,7 +278,7 @@ All system aspects are thoroughly documented under [`docs/`](file:///c:/Users/ch
 | [**Development Workflow**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/development.md)                  | Monorepo conventions, code style, git hooks, and development scripts                         |
 | [**Deployment Guide**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/deployment.md)                       | Production Docker packaging, Kubernetes manifest guides, and 4K display wall signage         |
 | [**Database Architecture**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/database.md)                    | Dual-engine design: PostgreSQL with Prisma ORM, migrations, and high-speed in-memory engine  |
-| [**Content Model**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/content-model.md)                       | Structured block architecture, canonical schemas, and all 22 supported block types           |
+| [**Content Model**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/content-model.md)                       | Structured block architecture, canonical schemas, and all 66 supported block types           |
 | [**Block Studio**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/block-studio.md)                         | The Storybook-style workbench for previewing and editing every story block                   |
 | [**The Newsroom**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/newsroom.md)                             | The CMS: the story list, the counts, the composer, and the editor as a page                  |
 | [**Story Model & Versioning**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/story-model.md)              | Story lifecycle, revision snapshots, `WhatChanged` diffing, and audit trails                 |
@@ -287,7 +287,7 @@ All system aspects are thoroughly documented under [`docs/`](file:///c:/Users/ch
 | [**Search & Deduplication**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/search.md)                     | Full-text indexing, tokenization, Jaccard similarity, and vector embeddings                  |
 | [**Publishing & Idempotency**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/publishing.md)               | Atomic status transitions, idempotency key guarantees, and real-time SSE                     |
 | [**Model Context Protocol (MCP)**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp.md)                  | Model Context Protocol overview, Streamable HTTP transport, and JSON-RPC 2.0                 |
-| [**MCP Tools Catalog**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp-tools.md)                       | Complete reference for all 18 Section 38 tools with schemas and examples                     |
+| [**MCP Tools Catalog**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp-tools.md)                       | Complete reference for all 291 tools with schemas and examples                               |
 | [**MCP Resources**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp-resources.md)                       | URI schemes (`news://stories`, `news://events`, `news://entities`) and templates             |
 | [**MCP Prompts**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp-prompts.md)                           | Standardized editorial prompts (`story-creation`, `story-update`)                            |
 | [**MCP Authentication**](file:///c:/Users/chaha/Projects/ai-news-generator/docs/mcp-authentication.md)             | OAuth 2.1 protocol, RFC 8414 discovery, PKCE `S256`, and granular scopes                     |
