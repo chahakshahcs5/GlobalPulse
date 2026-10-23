@@ -14,8 +14,23 @@ export const TimelineBlockView: React.FC<{ data: TimelineBlock['data'] }> = ({ d
   const layout = data.layout ?? 'vertical';
 
   const items = data.items || [];
+
+  /*
+   * Which way the timeline runs.
+   *
+   * The block's own treatment decides it: a horizontal timeline is a rail
+   * the reader moves along, a vertical one is a chronology down the page.
+   * Without a stated treatment the shape of the story decides — a short
+   * story reads better as a rail, a long one as a chronology.
+   */
   const [layoutMode, setLayoutMode] = useState<'flow' | 'chronology'>(
-    items.length <= 4 ? 'flow' : 'chronology'
+    layout === 'horizontal'
+      ? 'flow'
+      : layout === 'vertical'
+        ? 'chronology'
+        : items.length <= 4
+          ? 'flow'
+          : 'chronology'
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -62,11 +77,67 @@ export const TimelineBlockView: React.FC<{ data: TimelineBlock['data'] }> = ({ d
     setTimeout(checkScroll, 300);
   };
 
+  /*
+   * The timeline as a compact list.
+   *
+   * One line an event, for a story whose chronology is a footnote rather
+   * than the shape of the piece. There is nothing to scroll and nothing
+   * to choose, so the list simply runs down the page.
+   */
+  if (layout === 'compact') {
+    return (
+      <div className="my-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-sm overflow-hidden">
+        {(data.title || data.description) && (
+          <header className="px-5 py-3 bg-slate-50/80 dark:bg-slate-950/40 border-b border-slate-200/80 dark:border-slate-800/80">
+            {data.title && (
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{data.title}</h4>
+            )}
+            {data.description && (
+              <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+                {data.description}
+              </p>
+            )}
+          </header>
+        )}
+
+        <ol className="divide-y divide-slate-100 dark:divide-slate-800">
+          {items.map((item, idx) => (
+            <li
+              key={idx}
+              className="flex items-baseline gap-3 px-5 py-2 text-xs text-slate-700 dark:text-slate-300"
+            >
+              <span className="w-4 shrink-0 font-mono font-bold text-slate-400 dark:text-slate-500">
+                {idx + 1}
+              </span>
+              <span className="shrink-0 font-mono text-slate-500 dark:text-slate-400">
+                {item.date}
+              </span>
+              <span className="min-w-0 font-semibold text-slate-800 dark:text-slate-200">
+                {item.headline}
+              </span>
+              {item.sourceIds && item.sourceIds.length > 0 && (
+                <span className="ml-auto shrink-0 font-mono text-[10px] text-slate-400">
+                  {item.sourceIds.join(', ')}
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+
+        {(data.sourceAttribution || data.methodology) && (
+          <div className="px-5 py-2.5 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
+            {data.sourceAttribution && <p>Source: {data.sourceAttribution}</p>}
+            {data.methodology && <p>Methodology: {data.methodology}</p>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
-        layout === 'compact' ? 'my-6' : 'my-8',
-        layout === 'compact' ? 'rounded-xl' : 'rounded-2xl',
+        'my-8 rounded-2xl',
         'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-sm overflow-hidden transition-all hover:shadow-md',
       ].join(' ')}
     >

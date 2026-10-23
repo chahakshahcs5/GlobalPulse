@@ -12,6 +12,62 @@
  */
 import type { StudioVariant } from '../types';
 
+/**
+ * The thread the live-comments variants show.
+ *
+ * The comments themselves live on the server, so a block that could only
+ * be drawn from the server could not be previewed. The samples carry the
+ * thread as it was published, and the live comments are merged over the
+ * top of it when the server answers.
+ *
+ * One of them answers another, so the thread treatment has something to
+ * indent.
+ */
+const SAMPLE_COMMENTS = [
+  {
+    id: 'comment_1',
+    storyId: 'story_review',
+    organizationId: 'org_globalpulse',
+    authorId: 'reader_1',
+    authorName: 'Marta Oyelaran',
+    authorRole: 'reader' as const,
+    content:
+      'The verification step is the missing piece here. A second pair of eyes before publication is not a luxury for a figure that ends up in a report.',
+    status: 'approved' as const,
+    likesCount: 24,
+    createdAt: '2026-10-20T09:12:00.000Z',
+    updatedAt: '2026-10-20T09:12:00.000Z',
+  },
+  {
+    id: 'comment_2',
+    storyId: 'story_review',
+    organizationId: 'org_globalpulse',
+    authorId: 'reader_2',
+    authorName: 'Tomás Bermúdez',
+    authorRole: 'reader' as const,
+    content: 'Was the overstatement checked against the meter data, or only against the filings?',
+    status: 'approved' as const,
+    likesCount: 11,
+    parentId: 'comment_1',
+    createdAt: '2026-10-20T10:04:00.000Z',
+    updatedAt: '2026-10-20T10:04:00.000Z',
+  },
+  {
+    id: 'comment_3',
+    storyId: 'story_review',
+    organizationId: 'org_globalpulse',
+    authorId: 'reader_3',
+    authorName: 'Priya Raghunathan',
+    authorRole: 'subscriber' as const,
+    content:
+      'Three of the four sites filed on a different calendar from the rest, which is worth a line of its own in the piece.',
+    status: 'approved' as const,
+    likesCount: 8,
+    createdAt: '2026-10-20T11:38:00.000Z',
+    updatedAt: '2026-10-20T11:38:00.000Z',
+  },
+];
+
 export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
   quiz: [
     {
@@ -19,6 +75,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The questions as cards.',
       data: {
+        layout: 'cards',
         title: 'Test your understanding',
         description: 'Two questions on what the review actually found.',
         questions: [
@@ -55,6 +112,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'List',
       description: 'The questions as a plain list.',
       data: {
+        layout: 'list',
         title: 'Test your understanding',
         description: 'Two questions on what the review actually found.',
         questions: [
@@ -91,6 +149,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The questions set inline, for a mention in the text.',
       data: {
+        layout: 'inline',
         title: 'Test your understanding',
         description: 'Two questions on what the review actually found.',
         questions: [
@@ -130,6 +189,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Sliders',
       description: 'The scenario with its sliders beside the outcome.',
       data: {
+        layout: 'sliders',
         title: 'What would it take to cut household energy bills by a fifth?',
         description: 'Move the sliders to see how a retrofit programme changes the average bill.',
         outcomeLabel: 'Average household bill',
@@ -179,6 +239,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The scenario as a card an input.',
       data: {
+        layout: 'cards',
         title: 'What would it take to cut household energy bills by a fifth?',
         description: 'Move the sliders to see how a retrofit programme changes the average bill.',
         outcomeLabel: 'Average household bill',
@@ -228,6 +289,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The scenario on one line, for a mention in the text.',
       data: {
+        layout: 'inline',
         title: 'What would it take to cut household energy bills by a fifth?',
         description: 'Move the sliders to see how a retrofit programme changes the average bill.',
         outcomeLabel: 'Average household bill',
@@ -285,6 +347,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
         description: 'The latest approved comments on this story.',
         maxComments: 10,
         showCta: true,
+        comments: SAMPLE_COMMENTS,
       },
     },
     {
@@ -297,6 +360,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
         description: 'The latest approved comments on this story.',
         maxComments: 10,
         showCta: true,
+        comments: SAMPLE_COMMENTS,
       },
     },
     {
@@ -309,6 +373,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
         description: 'The latest approved comments on this story.',
         maxComments: 10,
         showCta: true,
+        comments: SAMPLE_COMMENTS,
       },
     },
   ],
@@ -319,6 +384,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Panel',
       description: 'The calculator as a panel.',
       data: {
+        layout: 'panel',
         title: 'Fuel cost',
         description: 'Change the distance to see the cost move.',
         inputs: [
@@ -354,6 +420,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The calculator set inline, for a mention in the text.',
       data: {
+        layout: 'inline',
         title: 'Fuel cost',
         description: 'Change the distance to see the cost move.',
         inputs: [
@@ -389,6 +456,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Steps',
       description: 'The calculator as a numbered set of steps.',
       data: {
+        layout: 'steps',
         title: 'Fuel cost',
         description: 'Change the distance to see the cost move.',
         inputs: [
@@ -484,6 +552,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Row',
       description: 'The figures in a row.',
       data: {
+        layout: 'row',
         title: 'Markets',
         refreshIntervalSeconds: 30,
         items: [
@@ -530,6 +599,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Grid',
       description: 'The figures in a grid.',
       data: {
+        layout: 'grid',
         title: 'Markets',
         refreshIntervalSeconds: 30,
         items: [
@@ -576,6 +646,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The figures as a card each.',
       data: {
+        layout: 'cards',
         title: 'Markets',
         refreshIntervalSeconds: 30,
         items: [
@@ -625,6 +696,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The values as cards.',
       data: {
+        layout: 'cards',
         title: 'Grid stress monitor',
         refreshIntervalSeconds: 60,
         items: [
@@ -660,6 +732,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The values as a table.',
       data: {
+        layout: 'table',
         title: 'Grid stress monitor',
         refreshIntervalSeconds: 60,
         items: [
@@ -695,6 +768,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The values on one line.',
       data: {
+        layout: 'inline',
         title: 'Grid stress monitor',
         refreshIntervalSeconds: 60,
         items: [
@@ -733,6 +807,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Reader',
       description: 'The document as a reader.',
       data: {
+        layout: 'reader',
         documentUrl: 'https://example.org/documents/grid-review-2026.pdf',
         title: 'Independent Grid Review: Findings and Recommendations',
         pageCount: 84,
@@ -769,6 +844,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Gallery',
       description: 'The document as a gallery of its highlights.',
       data: {
+        layout: 'gallery',
         documentUrl: 'https://example.org/documents/grid-review-2026.pdf',
         title: 'Independent Grid Review: Findings and Recommendations',
         pageCount: 84,
@@ -805,6 +881,7 @@ export const INTERACTIVE_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'List',
       description: 'The document as a list of its highlights.',
       data: {
+        layout: 'list',
         documentUrl: 'https://example.org/documents/grid-review-2026.pdf',
         title: 'Independent Grid Review: Findings and Recommendations',
         pageCount: 84,

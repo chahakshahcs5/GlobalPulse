@@ -107,10 +107,132 @@ export const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) =
     }
   };
 
+  /*
+   * The branches a step can go.
+   *
+   * Drawn the same way in every treatment, so a branch reads the same
+   * whether the process is a track, a rail or a set of cards.
+   */
+  const branches = (step: FlowBlock['data']['steps'][number]) =>
+    step.branches &&
+    step.branches.length > 0 && (
+      <ul className="mt-2 space-y-1">
+        {step.branches.map((branch, branchIdx) => (
+          <li
+            key={`${branch.label}-${branchIdx}`}
+            className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5"
+          >
+            <span className="font-semibold text-amber-600 dark:text-amber-400">{branch.label}</span>
+            {branch.description && <span>{branch.description}</span>}
+            {branch.nextStep !== undefined && (
+              <span className="font-mono text-slate-400">→ step {branch.nextStep}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    );
+
+  const sources = (step: FlowBlock['data']['steps'][number]) =>
+    (step.sourceIds || step.citationIds) && (
+      <p className="mt-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+        {[...(step.sourceIds ?? []), ...(step.citationIds ?? [])].join(', ')}
+      </p>
+    );
+
+  const stepHeading = (step: FlowBlock['data']['steps'][number]) => (
+    <div className="flex items-center gap-3 mb-1">
+      <h5 className="font-bold text-base text-slate-900 dark:text-slate-100">{step.title}</h5>
+      {statusBadge(step.status)}
+    </div>
+  );
+
+  /*
+   * The process as a rail.
+   *
+   * The same steps read left to right, which is how a process that
+   * branches reads best: the reader sees the whole shape of it at once.
+   */
+  if (layout === 'timeline') {
+    return (
+      <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm">
+        {data.title && (
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+            {data.title}
+          </h4>
+        )}
+        {data.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{data.description}</p>
+        )}
+
+        <div className="flex items-stretch gap-4 overflow-x-auto pb-3">
+          {data.steps.map((step, idx) => (
+            <div key={idx} className="w-64 shrink-0 flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold text-xs flex items-center justify-center">
+                  {step.stepNumber}
+                </span>
+                <span className="h-0.5 flex-1 bg-indigo-500/30 rounded-full" />
+              </div>
+
+              <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-4 flex-1">
+                {stepHeading(step)}
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {step.description}
+                </p>
+                {branches(step)}
+                {sources(step)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * The process as a set of cards.
+   *
+   * One card a step, so a reader can take them one at a time rather than
+   * following a track.
+   */
+  if (layout === 'cards') {
+    return (
+      <div className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm">
+        {data.title && (
+          <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+            {data.title}
+          </h4>
+        )}
+        {data.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{data.description}</p>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.steps.map((step, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-4"
+            >
+              <span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-xs mb-2">
+                {step.stepNumber}
+              </span>
+              {stepHeading(step)}
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                {step.description}
+              </p>
+              {branches(step)}
+              {sources(step)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
-        layout === 'cards' ? 'rounded-2xl' : 'rounded-xl',
+        'rounded-xl',
         'my-8 border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-6 shadow-sm',
       ].join(' ')}
     >
@@ -126,42 +248,12 @@ export const FlowBlockView: React.FC<{ data: FlowBlock['data'] }> = ({ data }) =
             <div className="absolute -left-[31px] top-0.5 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold text-xs flex items-center justify-center shadow-xs">
               {s.stepNumber}
             </div>
-            <div className="flex items-center gap-3 mb-1">
-              <h5 className="font-bold text-base text-slate-900 dark:text-slate-100">{s.title}</h5>
-              {statusBadge(s.status)}
-            </div>
+            {stepHeading(s)}
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
               {s.description}
             </p>
-
-            {/*
-              A branch is the way a step can go differently, so it is drawn
-              as its own line rather than folded into the description.
-            */}
-            {s.branches && s.branches.length > 0 && (
-              <ul className="mt-2 space-y-1">
-                {s.branches.map((branch, branchIdx) => (
-                  <li
-                    key={`${branch.label}-${branchIdx}`}
-                    className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5"
-                  >
-                    <span className="font-semibold text-amber-600 dark:text-amber-400">
-                      {branch.label}
-                    </span>
-                    {branch.description && <span>{branch.description}</span>}
-                    {branch.nextStep !== undefined && (
-                      <span className="font-mono text-slate-400">→ step {branch.nextStep}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {(s.sourceIds || s.citationIds) && (
-              <p className="mt-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
-                {[...(s.sourceIds ?? []), ...(s.citationIds ?? [])].join(', ')}
-              </p>
-            )}
+            {branches(s)}
+            {sources(s)}
           </div>
         ))}
       </div>

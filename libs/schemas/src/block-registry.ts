@@ -135,7 +135,8 @@ function define(
 // --- Text & editorial -------------------------------------------------------
 define('heading', HeadingBlockSchema, {
   category: 'text',
-  description: 'Section heading (levels 1-4) with optional subtext.',
+  description:
+    'Section heading (levels 1-4) with optional subtext. The style says how the heading is set — plain, underlined, boxed or numbered.',
 });
 define('paragraph', ParagraphBlockSchema, {
   category: 'text',
@@ -143,7 +144,8 @@ define('paragraph', ParagraphBlockSchema, {
 });
 define('summary', SummaryBlockSchema, {
   category: 'text',
-  description: 'Key-takeaway / executive briefing block with bullet points.',
+  description:
+    'Key-takeaway / executive briefing block with bullet points. Draws as a card, a numbered list, plain text, or a card a takeaway.',
 });
 define('quote', QuoteBlockSchema, {
   category: 'text',
@@ -155,7 +157,8 @@ define('callout', CalloutBlockSchema, {
 });
 define('citation', CitationBlockSchema, {
   category: 'evidence',
-  description: 'A claim coupled to one or more registered source IDs.',
+  description:
+    'A claim coupled to one or more registered source IDs. Carries its place in a reference list and the page it is taken from, so it draws inline, as a footnote, as a bibliography entry or as a bare marker.',
 });
 
 // --- Media -----------------------------------------------------------------
@@ -623,15 +626,18 @@ define('document_viewer', DocumentViewerBlockSchema, {
 // --- Context & evidence -----------------------------------------------------
 define('source', SourceBlockSchema, {
   category: 'context',
-  description: 'Registered source citation card.',
+  description:
+    'Registered source citation card. Carries the kind of document it is, the passage the story leans on, and its place in a reference list, so it draws as a card, a line, a badge, a quote or a reference.',
 });
 define('entity', EntityBlockSchema, {
   category: 'context',
-  description: 'Person, organization, company, country, location, or product card.',
+  description:
+    'Person, organization, company, country, location, or product card. Carries the organisation and the role, and links out, so it draws as a card, a line, a chip, a profile or a directory entry.',
 });
 define('related_stories', RelatedStoriesBlockSchema, {
   category: 'context',
-  description: 'Related story references resolved by the frontend.',
+  description:
+    'Related story references resolved by the frontend. Where the stories are named, they are drawn from the name rather than the id, and the block draws as a grid, a list, a carousel, a featured story or a compact run of titles.',
 });
 define('what_changed', WhatChangedBlockSchema, {
   category: 'context',
@@ -653,7 +659,8 @@ define('fact_check', FactCheckBlockSchema, {
 });
 define('comparison', ComparisonBlockSchema, {
   category: 'context',
-  description: 'Two-option comparison card.',
+  description:
+    'Two-option comparison card. Carries a score for each side, a verdict and the criteria both are judged against, so it draws as two columns, a table, a head-to-head, a scorecard, the verdict alone, or two bars.',
 });
 define('interview', InterviewBlockSchema, {
   category: 'specialized',

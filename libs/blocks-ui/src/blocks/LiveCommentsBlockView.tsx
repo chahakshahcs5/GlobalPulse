@@ -20,6 +20,16 @@ export const LiveCommentsBlockView: React.FC<{
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [isLoading, setIsLoading] = React.useState(Boolean(storyId));
 
+  /*
+   * The thread the story was published with.
+   *
+   * It is the floor the block stands on: the server's comments are merged
+   * over the top of it when they arrive, and it is what the block shows
+   * when they never do — in the studio, and in a story republished away
+   * from its server.
+   */
+  const snapshot = React.useMemo(() => data.comments ?? [], [data.comments]);
+
   const roleFilter = data.roles;
 
   const applyComment = React.useCallback((comment: Comment) => {
@@ -43,7 +53,7 @@ export const LiveCommentsBlockView: React.FC<{
         if (!cancelled) setComments(loaded);
       })
       .catch(() => {
-        // Leave the block empty rather than showing an error in the article.
+        // The snapshot in the payload is what the reader sees instead.
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -69,17 +79,28 @@ export const LiveCommentsBlockView: React.FC<{
   }, [storyId, applyComment, runtime]);
 
   const visible = React.useMemo(() => {
+    /*
+     * The snapshot and the live thread are one thread.
+     *
+     * A comment that arrived while the reader was on the page is the same
+     * comment as one that was there when the story was published, so the
+     * two are merged rather than one replacing the other.
+     */
+    const merged = new Map<string, Comment>();
+    for (const comment of snapshot) merged.set(comment.id, comment);
+    for (const comment of comments) merged.set(comment.id, comment);
+
     const filtered = roleFilter?.length
-      ? comments.filter((c) => roleFilter.includes(c.authorRole))
-      : comments;
+      ? [...merged.values()].filter((c) => roleFilter.includes(c.authorRole))
+      : [...merged.values()];
     // Only approved comments are shown to readers.
     return filtered
       .filter((c) => c.status === 'approved')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, data.maxComments ?? 10);
-  }, [comments, roleFilter, data.maxComments]);
+  }, [snapshot, comments, roleFilter, data.maxComments]);
 
-  if (!storyId) return null;
+  if (!storyId && snapshot.length === 0) return null;
 
   /*
    * How the discussion is drawn.

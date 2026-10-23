@@ -63,11 +63,135 @@ export const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data
     }
   };
 
+  /*
+   * One highlight, drawn as a card.
+   *
+   * The gallery shows every highlight at once, so the card has to stand on
+   * its own; in the reader it shows the one that is selected.
+   */
+  const highlightCard = (highlight: NonNullable<typeof data.highlights>[number]) => (
+    <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 relative">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
+          Page {highlight.page}
+        </span>
+        {highlight.tag && (
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            {highlight.tag}
+          </span>
+        )}
+      </div>
+
+      <blockquote className="text-sm font-serif italic text-slate-800 dark:text-slate-200 pl-3 border-l-2 border-indigo-500 my-2 leading-relaxed">
+        "{highlight.excerpt}"
+      </blockquote>
+
+      {highlight.note && (
+        <div className="mt-3 pt-2 border-t border-indigo-200/60 dark:border-indigo-500/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
+          <span className="text-indigo-600 dark:text-indigo-400 font-bold">Annotation:</span>
+          <span>{highlight.note}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  /*
+   * The gallery and the list.
+   *
+   * The reader shows one highlight at a time, chosen from the tabs above.
+   * The gallery shows them all as a grid, and the list shows them all one
+   * after another — so a reader can either scan them or read them.
+   */
+  if (layout === 'gallery' || layout === 'list') {
+    return (
+      <div
+        className={[
+          layout === 'list' ? 'my-6' : 'my-8',
+          layout === 'list' ? 'rounded-xl' : 'rounded-2xl',
+          'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden',
+        ].join(' ')}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${config.badgeClass}`}
+            >
+              <span>{config.icon}</span>
+              <span>{config.label}</span>
+            </span>
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+              {data.pageCount} {data.pageCount === 1 ? 'Page' : 'Pages'}
+            </span>
+          </div>
+
+          <a
+            href={data.documentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-medium border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+          >
+            <span>View Source Document</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+        </div>
+
+        <div className="mt-4">
+          <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+            {data.title}
+          </h4>
+          {data.description && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {data.description}
+            </p>
+          )}
+          {data.sourceAttribution && (
+            <div className="mt-2 text-xs text-slate-500 font-mono">
+              Source Attribution: {data.sourceAttribution}
+            </div>
+          )}
+        </div>
+
+        {data.highlights && data.highlights.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-slate-200/80 dark:border-slate-800/60">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Verified Highlight Excerpts ({data.highlights.length})
+            </div>
+
+            {layout === 'gallery' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {data.highlights.map((highlight, idx) => (
+                  <div key={idx}>{highlightCard(highlight)}</div>
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {data.highlights.map((highlight, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="mt-1 w-6 h-6 shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-mono font-bold text-[11px] flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">{highlightCard(highlight)}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
-        layout === 'list' ? 'my-6' : 'my-8',
-        layout === 'list' ? 'rounded-xl' : 'rounded-2xl',
+        'my-8 rounded-2xl',
         'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden',
       ].join(' ')}
     >
@@ -155,33 +279,7 @@ export const DocumentViewerBlockView: React.FC<{ data: DocumentViewerBlock['data
           </div>
 
           {/* Active Highlight Excerpt Card */}
-          {activeHighlight && (
-            <div className="mt-4 p-4 rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 relative">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
-                  Page {activeHighlight.page}
-                </span>
-                {activeHighlight.tag && (
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {activeHighlight.tag}
-                  </span>
-                )}
-              </div>
-
-              <blockquote className="text-sm font-serif italic text-slate-800 dark:text-slate-200 pl-3 border-l-2 border-indigo-500 my-2 leading-relaxed">
-                "{activeHighlight.excerpt}"
-              </blockquote>
-
-              {activeHighlight.note && (
-                <div className="mt-3 pt-2 border-t border-indigo-200/60 dark:border-indigo-500/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
-                  <span className="text-indigo-600 dark:text-indigo-400 font-bold">
-                    Annotation:
-                  </span>
-                  <span>{activeHighlight.note}</span>
-                </div>
-              )}
-            </div>
-          )}
+          {activeHighlight && <div className="mt-4">{highlightCard(activeHighlight)}</div>}
         </div>
       )}
     </div>

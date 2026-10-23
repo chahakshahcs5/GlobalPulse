@@ -560,14 +560,214 @@ export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = 
     return out;
   }, [values]);
 
+  /*
+   * The input a reader fills in.
+   *
+   * Drawn the same way wherever it appears, so the panel and the steps
+   * differ in their arrangement rather than in how the number is entered.
+   */
+  const inputField = (input: CalculatorBlock['data']['inputs'][number]) => (
+    <label key={input.id} className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+      {input.label}
+      {input.unit ? ` (${input.unit})` : ''}
+      {input.type === 'select' ? (
+        <select
+          value={String(values[input.id] ?? '')}
+          onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
+          className="mt-1 block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200"
+        >
+          {(input.options ?? []).map((option) => (
+            <option key={String(option.value)} value={String(option.value)}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="number"
+          value={String(values[input.id] ?? '')}
+          min={input.min}
+          max={input.max}
+          step={input.step}
+          onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
+          className="mt-1 block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200"
+        />
+      )}
+    </label>
+  );
+
+  /*
+   * One computed output, with its value.
+   */
+  const outputRow = (output: CalculatorBlock['data']['outputs'][number]) => {
+    const computed = evaluateExpression(output.expression, numericValues);
+    const display =
+      computed === null
+        ? '—'
+        : computed.toLocaleString(NUMBER_LOCALE, {
+            maximumFractionDigits: output.precision ?? 2,
+          });
+    return (
+      <div
+        key={output.id}
+        className="flex items-baseline justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 px-3 py-2"
+      >
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {output.label}
+          {output.description && (
+            <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
+              {output.description}
+            </span>
+          )}
+        </span>
+        <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
+          {display}
+          {output.unit ? ` ${output.unit}` : ''}
+        </span>
+      </div>
+    );
+  };
+
+  /*
+   * The calculator as a set of numbered steps.
+   *
+   * The reader sets the inputs and reads the outputs, so the steps are
+   * the inputs in order and then the outputs that follow from them.
+   */
+  if (layout === 'steps') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm p-5"
+      >
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.description && (
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{data.description}</p>
+        )}
+
+        <ol className="mt-4 space-y-3">
+          {data.inputs.map((input, index) => (
+            <li key={input.id} className="flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 shrink-0 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                {index + 1}
+              </span>
+              <div className="flex-1 min-w-0">{inputField(input)}</div>
+            </li>
+          ))}
+          {data.outputs.map((output, index) => (
+            <li key={output.id} className="flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 shrink-0 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
+                {data.inputs.length + index + 1}
+              </span>
+              <div className="flex-1 min-w-0">{outputRow(output)}</div>
+            </li>
+          ))}
+        </ol>
+
+        {data.explanation && (
+          <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">{data.explanation}</p>
+        )}
+        {data.assumptions.length > 0 && (
+          <ul className="mt-2 list-disc list-inside text-xs text-slate-500 dark:text-slate-400">
+            {data.assumptions.map((assumption) => (
+              <li key={assumption}>{assumption}</li>
+            ))}
+          </ul>
+        )}
+        <ProvenanceFooter source={data.sourceAttribution} methodology={data.methodology} />
+      </section>
+    );
+  }
+
+  /*
+   * The calculator inline in the text.
+   *
+   * A panel is a thing of its own; inline is a line inside a paragraph.
+   * So the inputs sit beside their labels rather than under them, and the
+   * answers are a run of figures rather than a stack of cards.
+   */
+  if (layout === 'inline') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 px-4 py-3 shadow-sm"
+      >
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+        {data.description && (
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{data.description}</p>
+        )}
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+          {data.inputs.map((input) => (
+            <label
+              key={input.id}
+              className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400"
+            >
+              {input.label}
+              {input.unit ? ` (${input.unit})` : ''}
+              {input.type === 'select' ? (
+                <select
+                  value={String(values[input.id] ?? '')}
+                  onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
+                  className="rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-xs text-slate-800 dark:text-slate-200"
+                >
+                  {(input.options ?? []).map((option) => (
+                    <option key={String(option.value)} value={String(option.value)}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  value={String(values[input.id] ?? '')}
+                  min={input.min}
+                  max={input.max}
+                  step={input.step}
+                  onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
+                  className="w-24 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
+                />
+              )}
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          {data.outputs.map((output) => {
+            const computed = evaluateExpression(output.expression, numericValues);
+            const display =
+              computed === null
+                ? '—'
+                : computed.toLocaleString(NUMBER_LOCALE, {
+                    maximumFractionDigits: output.precision ?? 2,
+                  });
+            return (
+              <span key={output.id} className="text-xs">
+                <span className="text-slate-500 dark:text-slate-400">{output.label}: </span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                  {display}
+                  {output.unit ? ` ${output.unit}` : ''}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+
+        {data.explanation && (
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{data.explanation}</p>
+        )}
+        <ProvenanceFooter source={data.sourceAttribution} methodology={data.methodology} />
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={data.title}
       className={[
-        layout === 'inline' ? 'my-4' : 'my-8',
-        layout === 'inline' ? 'rounded-xl' : 'rounded-2xl',
+        'my-8 rounded-2xl',
         'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm',
-        layout === 'inline' ? 'px-4 py-3' : 'p-5',
+        'p-5',
       ].join(' ')}
     >
       <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
@@ -576,70 +776,10 @@ export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = 
       )}
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {data.inputs.map((input) => (
-          <label
-            key={input.id}
-            className="text-xs font-semibold text-slate-600 dark:text-slate-400"
-          >
-            {input.label}
-            {input.unit ? ` (${input.unit})` : ''}
-            {input.type === 'select' ? (
-              <select
-                value={String(values[input.id] ?? '')}
-                onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
-                className="mt-1 block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200"
-              >
-                {(input.options ?? []).map((option) => (
-                  <option key={String(option.value)} value={String(option.value)}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="number"
-                value={String(values[input.id] ?? '')}
-                min={input.min}
-                max={input.max}
-                step={input.step}
-                onChange={(e) => setValues((prev) => ({ ...prev, [input.id]: e.target.value }))}
-                className="mt-1 block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200"
-              />
-            )}
-          </label>
-        ))}
+        {data.inputs.map((input) => inputField(input))}
       </div>
 
-      <div className="mt-4 space-y-2">
-        {data.outputs.map((output) => {
-          const computed = evaluateExpression(output.expression, numericValues);
-          const display =
-            computed === null
-              ? '—'
-              : computed.toLocaleString(NUMBER_LOCALE, {
-                  maximumFractionDigits: output.precision ?? 2,
-                });
-          return (
-            <div
-              key={output.id}
-              className="flex items-baseline justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 px-3 py-2"
-            >
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {output.label}
-                {output.description && (
-                  <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
-                    {output.description}
-                  </span>
-                )}
-              </span>
-              <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
-                {display}
-                {output.unit ? ` ${output.unit}` : ''}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <div className="mt-4 space-y-2">{data.outputs.map((output) => outputRow(output))}</div>
 
       {data.explanation && (
         <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">{data.explanation}</p>

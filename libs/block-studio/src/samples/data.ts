@@ -950,6 +950,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Controls',
       description: 'The figures with the controls above them.',
       data: {
+        layout: 'controls',
         title: 'Explore the grid dataset',
         subtitle: 'Every figure used in this story, in one table',
         description: 'Switch between region and quarter, or between demand and overstatement.',
@@ -989,6 +990,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The figures with the values table already open.',
       data: {
+        layout: 'table',
         title: 'Explore the grid dataset',
         subtitle: 'Every figure used in this story, in one table',
         description: 'Switch between region and quarter, or between demand and overstatement.',
@@ -1028,6 +1030,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'Each group of figures as a card.',
       data: {
+        layout: 'cards',
         title: 'Explore the grid dataset',
         subtitle: 'Every figure used in this story, in one table',
         description: 'Switch between region and quarter, or between demand and overstatement.',
@@ -1187,6 +1190,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Intervals',
       description: 'The estimates as intervals on a chart.',
       data: {
+        layout: 'intervals',
         title: 'Projected demand, 2030',
         subtitle: 'Estimates from four modelling groups',
         unit: 'TWh',
@@ -1216,6 +1220,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Forest',
       description: 'The estimates as a forest plot.',
       data: {
+        layout: 'forest',
         title: 'Projected demand, 2030',
         subtitle: 'Estimates from four modelling groups',
         unit: 'TWh',
@@ -1245,6 +1250,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The estimates as a table of numbers.',
       data: {
+        layout: 'table',
         title: 'Projected demand, 2030',
         subtitle: 'Estimates from four modelling groups',
         unit: 'TWh',
@@ -1277,6 +1283,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Matrix',
       description: 'The correlations as a matrix.',
       data: {
+        layout: 'matrix',
         title: 'What moves with what?',
         subtitle: 'Pairwise correlations across the indicators',
         description: 'Four months of site-level data, 24 observations.',
@@ -1306,6 +1313,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'List',
       description: 'The pairings as a list.',
       data: {
+        layout: 'list',
         title: 'What moves with what?',
         subtitle: 'Pairwise correlations across the indicators',
         description: 'Four months of site-level data, 24 observations.',
@@ -1335,6 +1343,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Bars',
       description: 'The pairings as bars scaled to the coefficient.',
       data: {
+        layout: 'bars',
         title: 'What moves with what?',
         subtitle: 'Pairwise correlations across the indicators',
         description: 'Four months of site-level data, 24 observations.',
@@ -1367,6 +1376,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Tornado',
       description: 'The swings as a tornado chart.',
       data: {
+        layout: 'tornado',
         title: 'What drives the cost of a 50 MW solar farm?',
         subtitle: 'Swing in total capital cost when one assumption moves at a time',
         outputLabel: 'Total capital cost',
@@ -1388,6 +1398,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Bars',
       description: 'The swings as bars scaled to the swing.',
       data: {
+        layout: 'bars',
         title: 'What drives the cost of a 50 MW solar farm?',
         subtitle: 'Swing in total capital cost when one assumption moves at a time',
         outputLabel: 'Total capital cost',
@@ -1409,6 +1420,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The swings as a table of numbers.',
       data: {
+        layout: 'table',
         title: 'What drives the cost of a 50 MW solar farm?',
         subtitle: 'Swing in total capital cost when one assumption moves at a time',
         outputLabel: 'Total capital cost',
@@ -1433,6 +1445,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The board as a table of scores.',
       data: {
+        layout: 'table',
         title: 'Who called it? Forecasters on AGI capability',
         subtitle: 'Resolved predictions ranked by Brier score',
         scoringMethod:
@@ -1478,6 +1491,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The board as a card a forecaster.',
       data: {
+        layout: 'cards',
         title: 'Who called it? Forecasters on AGI capability',
         subtitle: 'Resolved predictions ranked by Brier score',
         scoringMethod:
@@ -1523,6 +1537,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Bars',
       description: 'The board as bars scaled to the score.',
       data: {
+        layout: 'bars',
         title: 'Who called it? Forecasters on AGI capability',
         subtitle: 'Resolved predictions ranked by Brier score',
         scoringMethod:
@@ -1571,6 +1586,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The figures as cards.',
       data: {
+        layout: 'cards',
         title: 'Northwind Energy',
         entityId: 'ent_northwind',
         currency: 'USD',
@@ -1609,6 +1625,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The figures as a table.',
       data: {
+        layout: 'table',
         title: 'Northwind Energy',
         entityId: 'ent_northwind',
         currency: 'USD',
@@ -1647,6 +1664,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The figures on one line.',
       data: {
+        layout: 'inline',
         title: 'Northwind Energy',
         entityId: 'ent_northwind',
         currency: 'USD',
@@ -1688,6 +1706,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The result as a table.',
       data: {
+        layout: 'table',
         title: 'Regional assembly election, 2026',
         electionType: 'Regional assembly',
         region: 'North Province',
@@ -1738,6 +1757,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Bars',
       description: 'The result as bars scaled to the vote.',
       data: {
+        layout: 'bars',
         title: 'Regional assembly election, 2026',
         electionType: 'Regional assembly',
         region: 'North Province',
@@ -1788,6 +1808,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Seats',
       description: 'The result as the seats won.',
       data: {
+        layout: 'seats',
         title: 'Regional assembly election, 2026',
         electionType: 'Regional assembly',
         region: 'North Province',
@@ -1841,6 +1862,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Banner',
       description: 'The incident as a banner across the story.',
       data: {
+        layout: 'banner',
         title: 'M7.1 earthquake',
         disasterType: 'earthquake',
         status: 'MONITORING',
@@ -1884,6 +1906,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Panel',
       description: 'The incident as a panel with everything in it.',
       data: {
+        layout: 'panel',
         title: 'M7.1 earthquake',
         disasterType: 'earthquake',
         status: 'MONITORING',
@@ -1927,6 +1950,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Inline',
       description: 'The incident on one line.',
       data: {
+        layout: 'inline',
         title: 'M7.1 earthquake',
         disasterType: 'earthquake',
         status: 'MONITORING',
@@ -1973,6 +1997,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Paper',
       description: 'The finding set out as a paper.',
       data: {
+        layout: 'paper',
         title: 'Room-temperature operation of the topological qubit',
         field: 'Quantum physics',
         findings: [
@@ -2000,6 +2025,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The finding as a card a result.',
       data: {
+        layout: 'cards',
         title: 'Room-temperature operation of the topological qubit',
         field: 'Quantum physics',
         findings: [
@@ -2027,6 +2053,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Plain',
       description: 'The finding as plain running text.',
       data: {
+        layout: 'plain',
         title: 'Room-temperature operation of the topological qubit',
         field: 'Quantum physics',
         findings: [
@@ -2057,16 +2084,42 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Table',
       description: 'The dataset as a table of the preview rows.',
       data: {
+        layout: 'table',
         title: 'The grid review dataset',
         description: 'Every filing re-checked against meter data, with the verification outcome.',
         downloadUrl: 'https://example.org/datasets/grid-review-2026.csv',
         formats: ['csv', 'json'],
         columns: [
-          { key: 'site', label: 'Reporting site', type: 'string' },
-          { key: 'quarter', label: 'Quarter', type: 'date' },
-          { key: 'reported', label: 'Reported value', type: 'number' },
-          { key: 'verified', label: 'Verified value', type: 'number' },
-          { key: 'overstatement', label: 'Overstatement', type: 'number' },
+          {
+            key: 'site',
+            label: 'Reporting site',
+            type: 'string',
+            description: 'The site the filing came from.',
+          },
+          {
+            key: 'quarter',
+            label: 'Quarter',
+            type: 'date',
+            description: 'The quarter the filing covers.',
+          },
+          {
+            key: 'reported',
+            label: 'Reported value',
+            type: 'number',
+            description: 'The figure as the site published it, in TWh.',
+          },
+          {
+            key: 'verified',
+            label: 'Verified value',
+            type: 'number',
+            description: 'The same figure re-checked against meter data, in TWh.',
+          },
+          {
+            key: 'overstatement',
+            label: 'Overstatement',
+            type: 'number',
+            description: 'How far the reported figure was above the verified one, as a percentage.',
+          },
         ],
         previewRows: [
           {
@@ -2102,16 +2155,42 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The dataset as a card a row.',
       data: {
+        layout: 'cards',
         title: 'The grid review dataset',
         description: 'Every filing re-checked against meter data, with the verification outcome.',
         downloadUrl: 'https://example.org/datasets/grid-review-2026.csv',
         formats: ['csv', 'json'],
         columns: [
-          { key: 'site', label: 'Reporting site', type: 'string' },
-          { key: 'quarter', label: 'Quarter', type: 'date' },
-          { key: 'reported', label: 'Reported value', type: 'number' },
-          { key: 'verified', label: 'Verified value', type: 'number' },
-          { key: 'overstatement', label: 'Overstatement', type: 'number' },
+          {
+            key: 'site',
+            label: 'Reporting site',
+            type: 'string',
+            description: 'The site the filing came from.',
+          },
+          {
+            key: 'quarter',
+            label: 'Quarter',
+            type: 'date',
+            description: 'The quarter the filing covers.',
+          },
+          {
+            key: 'reported',
+            label: 'Reported value',
+            type: 'number',
+            description: 'The figure as the site published it, in TWh.',
+          },
+          {
+            key: 'verified',
+            label: 'Verified value',
+            type: 'number',
+            description: 'The same figure re-checked against meter data, in TWh.',
+          },
+          {
+            key: 'overstatement',
+            label: 'Overstatement',
+            type: 'number',
+            description: 'How far the reported figure was above the verified one, as a percentage.',
+          },
         ],
         previewRows: [
           {
@@ -2147,16 +2226,42 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Download',
       description: 'The dataset as a download, with the columns described.',
       data: {
+        layout: 'download',
         title: 'The grid review dataset',
         description: 'Every filing re-checked against meter data, with the verification outcome.',
         downloadUrl: 'https://example.org/datasets/grid-review-2026.csv',
         formats: ['csv', 'json'],
         columns: [
-          { key: 'site', label: 'Reporting site', type: 'string' },
-          { key: 'quarter', label: 'Quarter', type: 'date' },
-          { key: 'reported', label: 'Reported value', type: 'number' },
-          { key: 'verified', label: 'Verified value', type: 'number' },
-          { key: 'overstatement', label: 'Overstatement', type: 'number' },
+          {
+            key: 'site',
+            label: 'Reporting site',
+            type: 'string',
+            description: 'The site the filing came from.',
+          },
+          {
+            key: 'quarter',
+            label: 'Quarter',
+            type: 'date',
+            description: 'The quarter the filing covers.',
+          },
+          {
+            key: 'reported',
+            label: 'Reported value',
+            type: 'number',
+            description: 'The figure as the site published it, in TWh.',
+          },
+          {
+            key: 'verified',
+            label: 'Verified value',
+            type: 'number',
+            description: 'The same figure re-checked against meter data, in TWh.',
+          },
+          {
+            key: 'overstatement',
+            label: 'Overstatement',
+            type: 'number',
+            description: 'How far the reported figure was above the verified one, as a percentage.',
+          },
         ],
         previewRows: [
           {

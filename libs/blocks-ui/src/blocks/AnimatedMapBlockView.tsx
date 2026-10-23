@@ -187,20 +187,27 @@ export const AnimatedMapBlockView: React.FC<{
               {isPlaying ? '❚❚' : '▶'}
             </button>
 
-            <input
-              type="range"
-              min={0}
-              max={frameCount - 1}
-              step={1}
-              value={frameIndex}
-              onChange={(e) => {
-                setIsPlaying(false);
-                setFrameIndex(Number(e.target.value));
-              }}
-              aria-label="Frame"
-              aria-valuetext={frame.label ?? frame.at}
-              className="w-full accent-indigo-600 dark:accent-indigo-400"
-            />
+            {/*
+              A slideshow plays on its own, so the reader is not invited to
+              drag it. The scrubber belongs to the reader's treatment, not
+              to this one.
+            */}
+            {!isSlideshow && (
+              <input
+                type="range"
+                min={0}
+                max={frameCount - 1}
+                step={1}
+                value={frameIndex}
+                onChange={(e) => {
+                  setIsPlaying(false);
+                  setFrameIndex(Number(e.target.value));
+                }}
+                aria-label="Frame"
+                aria-valuetext={frame.label ?? frame.at}
+                className="w-full accent-indigo-600 dark:accent-indigo-400"
+              />
+            )}
 
             <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">
               {frameIndex + 1}/{frameCount}

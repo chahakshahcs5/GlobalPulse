@@ -403,6 +403,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Scrubber',
       description: 'The frames with a scrubber the reader drags.',
       data: {
+        layout: 'scrubber',
         title: 'How the outbreak spread',
         description: 'Confirmed cases by reporting date.',
         valueLabel: 'Confirmed cases',
@@ -447,6 +448,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Slideshow',
       description: 'The frames playing on their own.',
       data: {
+        layout: 'slideshow',
         title: 'How the outbreak spread',
         description: 'Confirmed cases by reporting date.',
         valueLabel: 'Confirmed cases',
@@ -491,6 +493,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Static',
       description: 'One frame, with no scrubber.',
       data: {
+        layout: 'static',
         title: 'How the outbreak spread',
         description: 'Confirmed cases by reporting date.',
         valueLabel: 'Confirmed cases',
@@ -623,6 +626,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Vertical',
       description: 'The events down the page.',
       data: {
+        layout: 'vertical',
         title: 'How the review unfolded',
         description: 'From the first complaint to the published findings.',
         items: [
@@ -661,6 +665,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Horizontal',
       description: 'The events across the page.',
       data: {
+        layout: 'horizontal',
         title: 'How the review unfolded',
         description: 'From the first complaint to the published findings.',
         items: [
@@ -699,6 +704,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Compact',
       description: 'The events as a compact list.',
       data: {
+        layout: 'compact',
         title: 'How the review unfolded',
         description: 'From the first complaint to the published findings.',
         items: [
@@ -819,6 +825,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Steps',
       description: 'The steps as numbered steps.',
       data: {
+        layout: 'steps',
         title: 'How a value gets published',
         description: 'The path from a site measurement to a published figure.',
         steps: [
@@ -859,6 +866,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Timeline',
       description: 'The steps as a timeline.',
       data: {
+        layout: 'timeline',
         title: 'How a value gets published',
         description: 'The path from a site measurement to a published figure.',
         steps: [
@@ -899,6 +907,7 @@ export const MAP_SAMPLES: Record<string, StudioVariant[]> = {
       label: 'Cards',
       description: 'The steps as a card each.',
       data: {
+        layout: 'cards',
         title: 'How a value gets published',
         description: 'The path from a site measurement to a published figure.',
         steps: [

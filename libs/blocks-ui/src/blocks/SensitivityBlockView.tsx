@@ -46,49 +46,135 @@ export const SensitivityBlockView: React.FC<{
    */
   const layout = data.layout ?? 'tornado';
 
-  if (layout === 'bars' || layout === 'table') {
+  /*
+   * The numbers behind the swings.
+   *
+   * The tornado chart draws them too, but a table is the treatment for a
+   * reader who wants the values rather than the shape, so it stands on
+   * its own there.
+   */
+  const table = swings.length > 0 && (
+    <div className="px-5 pb-4 overflow-x-auto">
+      <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+        <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th className="py-2 pr-3 font-semibold">Input</th>
+            <th className="py-2 pr-3 font-semibold">Range explored</th>
+            <th className="py-2 pr-3 font-semibold">Output at low</th>
+            <th className="py-2 pr-3 font-semibold">Output at high</th>
+            <th className="py-2 font-semibold">Swing</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+          {swings.map((swing) => (
+            <tr key={swing.id}>
+              <td className="py-2 pr-3 font-semibold text-slate-800 dark:text-slate-200">
+                {swing.label}
+                {swing.note && (
+                  <span className="block font-normal text-slate-500 dark:text-slate-400">
+                    {swing.note}
+                  </span>
+                )}
+              </td>
+              <td className="py-2 pr-3 font-mono">
+                {format(swing.low)} – {format(swing.high)}
+                {swing.unit ? ` ${swing.unit}` : ''}
+              </td>
+              <td className="py-2 pr-3 font-mono">{format(swing.outputLow)}</td>
+              <td className="py-2 pr-3 font-mono">{format(swing.outputHigh)}</td>
+              <td className="py-2 font-mono font-bold">
+                {format(swing.swing)}
+                {data.outputUnit ? ` ${data.outputUnit}` : ''}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (layout === 'bars') {
     const maxSwing = Math.max(...swings.map((swing) => Math.abs(swing.swing)), 0.0001);
 
-    if (layout === 'bars') {
-      return (
-        <section
-          aria-label={data.title}
-          className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
-        >
-          <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
-            {data.subtitle && (
-              <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
-            )}
-          </header>
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.subtitle && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+          )}
+        </header>
 
-          <ul className="px-5 py-4 space-y-2.5">
-            {swings.map((swing) => (
-              <li key={swing.id} className="flex items-center gap-3">
-                <span className="w-40 shrink-0 text-xs text-slate-700 dark:text-slate-300 truncate">
-                  {swing.label}
-                </span>
-                <span
-                  className="h-3 rounded-full bg-indigo-500/70"
-                  style={{ width: `${(Math.abs(swing.swing) / maxSwing) * 100}%` }}
-                />
-                <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
-                  {format(swing.swing)}
-                  {data.outputUnit ? ` ${data.outputUnit}` : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <ul className="px-5 py-4 space-y-2.5">
+          {swings.map((swing) => (
+            <li key={swing.id} className="flex items-center gap-3">
+              <span className="w-40 shrink-0 text-xs text-slate-700 dark:text-slate-300 truncate">
+                {swing.label}
+              </span>
+              <span
+                className="h-3 rounded-full bg-indigo-500/70"
+                style={{ width: `${(Math.abs(swing.swing) / maxSwing) * 100}%` }}
+              />
+              <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
+                {format(swing.swing)}
+                {data.outputUnit ? ` ${data.outputUnit}` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
 
-          <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-            <p>
-              Base case: {format(data.baseOutput)}
-              {data.outputUnit ? ` ${data.outputUnit}` : ''} {data.outputLabel}
+        <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+          <p>
+            Base case: {format(data.baseOutput)}
+            {data.outputUnit ? ` ${data.outputUnit}` : ''} {data.outputLabel}
+          </p>
+        </footer>
+      </section>
+    );
+  }
+
+  /*
+   * The table on its own.
+   *
+   * No chart: the reader asked for the numbers, and a chart beside them
+   * would be the same information twice.
+   */
+  if (layout === 'table') {
+    return (
+      <section
+        aria-label={data.title}
+        className="my-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm overflow-hidden"
+      >
+        <header className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{data.title}</h3>
+          {data.subtitle && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{data.subtitle}</p>
+          )}
+          {data.description && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{data.description}</p>
+          )}
+        </header>
+
+        <div className="pt-4">{table}</div>
+
+        <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+          <p>
+            Base case: {format(data.baseOutput)}
+            {data.outputUnit ? ` ${data.outputUnit}` : ''} {data.outputLabel}
+          </p>
+          {notices.map((notice) => (
+            <p key={notice} className="text-amber-700 dark:text-amber-400 font-medium">
+              {notice}
             </p>
-          </footer>
-        </section>
-      );
-    }
+          ))}
+          {data.methodology && <p>Methodology: {data.methodology}</p>}
+          {data.sourceAttribution && <p>Source: {data.sourceAttribution}</p>}
+        </footer>
+      </section>
+    );
   }
 
   return (
@@ -110,45 +196,7 @@ export const SensitivityBlockView: React.FC<{
         <div className="[&_svg]:w-full [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: svg }} />
       </div>
 
-      {swings.length > 0 && (
-        <div className="px-5 pb-4 overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-2 pr-3 font-semibold">Input</th>
-                <th className="py-2 pr-3 font-semibold">Range explored</th>
-                <th className="py-2 pr-3 font-semibold">Output at low</th>
-                <th className="py-2 pr-3 font-semibold">Output at high</th>
-                <th className="py-2 font-semibold">Swing</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {swings.map((swing) => (
-                <tr key={swing.id}>
-                  <td className="py-2 pr-3 font-semibold text-slate-800 dark:text-slate-200">
-                    {swing.label}
-                    {swing.note && (
-                      <span className="block font-normal text-slate-500 dark:text-slate-400">
-                        {swing.note}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2 pr-3 font-mono">
-                    {format(swing.low)} – {format(swing.high)}
-                    {swing.unit ? ` ${swing.unit}` : ''}
-                  </td>
-                  <td className="py-2 pr-3 font-mono">{format(swing.outputLow)}</td>
-                  <td className="py-2 pr-3 font-mono">{format(swing.outputHigh)}</td>
-                  <td className="py-2 font-mono font-bold">
-                    {format(swing.swing)}
-                    {data.outputUnit ? ` ${data.outputUnit}` : ''}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {table}
 
       <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
         <p>

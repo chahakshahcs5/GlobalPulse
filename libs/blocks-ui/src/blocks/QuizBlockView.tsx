@@ -90,9 +90,18 @@ export const QuizBlockView: React.FC<{ data: QuizBlock['data'] }> = ({ data }) =
         )}
       </header>
 
+      {/*
+        The cards are a grid, so a reader can see the whole quiz at once;
+        the list runs down the page; the inline treatment is a tight run of
+        them for a narrow column.
+      */}
       <div
         className={
-          layout === 'list' ? 'px-5 py-2' : 'divide-y divide-slate-100 dark:divide-slate-800'
+          layout === 'list'
+            ? 'px-5 py-2'
+            : layout === 'inline'
+              ? 'px-5 py-1'
+              : 'grid grid-cols-1 lg:grid-cols-2 gap-4 p-4'
         }
       >
         {data.questions.map((question, questionIndex) => {
@@ -105,19 +114,27 @@ export const QuizBlockView: React.FC<{ data: QuizBlock['data'] }> = ({ data }) =
               className={
                 layout === 'list'
                   ? 'py-3 border-b border-slate-100 dark:border-slate-800 last:border-b-0'
-                  : 'px-5 py-4'
+                  : layout === 'inline'
+                    ? 'py-2'
+                    : 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 px-4 py-3'
               }
             >
               <div className="flex items-start gap-2.5">
                 <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300">
                   {questionIndex + 1}
                 </span>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+                <h4
+                  className={`font-semibold text-slate-900 dark:text-slate-100 leading-snug ${
+                    layout === 'inline' ? 'text-xs' : 'text-sm'
+                  }`}
+                >
                   {question.question}
                 </h4>
               </div>
 
-              <div className="mt-3 space-y-2 pl-8">
+              <div
+                className={`pl-8 ${layout === 'inline' ? 'mt-1.5 space-y-1' : 'mt-3 space-y-2'}`}
+              >
                 {question.options.map((option) => {
                   const isChosen = chosen === option.id;
                   // Once answered, the correct option is always shown, so the
@@ -131,7 +148,9 @@ export const QuizBlockView: React.FC<{ data: QuizBlock['data'] }> = ({ data }) =
                       type="button"
                       disabled={isAnswered}
                       onClick={() => answer(question.id, option.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors disabled:cursor-default ${
+                      className={`w-full text-left px-3 rounded-lg border transition-colors disabled:cursor-default ${
+                        layout === 'inline' ? 'py-1 text-xs' : 'py-2 text-sm'
+                      } ${
                         showAsCorrect
                           ? 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-200'
                           : showAsWrong

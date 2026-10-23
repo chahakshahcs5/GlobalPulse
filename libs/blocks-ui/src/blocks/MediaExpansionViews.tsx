@@ -854,6 +854,7 @@ export const DatasetBlockView: React.FC<{ data: DatasetBlock['data'] }> = ({ dat
           key,
           label: key,
           type: 'string' as const,
+          description: undefined as string | undefined,
         }));
 
   return (
@@ -883,7 +884,91 @@ export const DatasetBlockView: React.FC<{ data: DatasetBlock['data'] }> = ({ dat
         )}
       </header>
 
-      {data.previewRows.length > 0 && (
+      {/*
+        The download treatment.
+        *
+        The rows are not the point here — the file is. So the columns are
+        described and the download is offered plainly, rather than a table
+        of rows the reader is expected to ignore.
+      */}
+      {layout === 'download' && (
+        <div className="px-5 py-4">
+          {data.downloadUrl ? (
+            <a
+              href={data.downloadUrl}
+              download
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-500"
+            >
+              <span>Download the dataset</span>
+              <span className="font-mono text-xs font-normal opacity-80">
+                {data.formats.map((f) => f.toUpperCase()).join(' / ')}
+              </span>
+            </a>
+          ) : (
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              This dataset is not available to download.
+            </p>
+          )}
+
+          {columns.length > 0 && (
+            <>
+              <p className="mt-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                What is in it
+              </p>
+              <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {columns.map((column) => (
+                  <li
+                    key={column.key}
+                    className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 px-3 py-2"
+                  >
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      {column.label}
+                    </span>
+                    <span className="block font-mono text-[10px] uppercase text-slate-400">
+                      {column.type}
+                    </span>
+                    {column.description && (
+                      <span className="mt-0.5 block text-xs text-slate-600 dark:text-slate-400">
+                        {column.description}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {data.previewRows.length > 0 && layout === 'cards' && (
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {data.previewRows.map((row, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 px-3 py-2.5"
+            >
+              {columns.map((column) => {
+                const value = row[column.key];
+                return (
+                  <div
+                    key={column.key}
+                    className="flex items-baseline justify-between gap-3 py-0.5"
+                  >
+                    <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {column.label}
+                    </span>
+                    <span className="font-mono text-xs text-slate-800 dark:text-slate-200 truncate">
+                      {value === null || value === undefined ? '—' : String(value)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.previewRows.length > 0 && layout !== 'cards' && layout !== 'download' && (
         <div className="px-5 py-4 overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
             <thead>

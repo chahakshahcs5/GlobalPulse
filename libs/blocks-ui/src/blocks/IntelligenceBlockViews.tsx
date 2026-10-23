@@ -552,7 +552,15 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
           </span>
         )}
       </div>
-      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <ul
+        className={
+          layout === 'table'
+            ? 'w-full text-left text-sm'
+            : layout === 'inline'
+              ? 'flex flex-wrap items-baseline gap-x-4 gap-y-1'
+              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3'
+        }
+      >
         {items.map((item) => {
           const direction =
             item.change === undefined || item.change === 0
@@ -560,6 +568,92 @@ export const LiveDataBlockView: React.FC<{ data: LiveDataBlock['data'] }> = ({ d
               : item.change > 0
                 ? 'up'
                 : 'down';
+
+          /*
+           * The table is the treatment for a reader who wants the values
+           * side by side rather than as separate cards, so it carries the
+           * same numbers in rows.
+           */
+          if (layout === 'table') {
+            return (
+              <li
+                key={item.id}
+                className="border-b border-slate-200 dark:border-slate-800 last:border-b-0"
+              >
+                <table className="w-full text-left">
+                  <tbody>
+                    <tr>
+                      <th
+                        scope="row"
+                        className="py-2 pr-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 align-top"
+                      >
+                        {item.label}
+                      </th>
+                      <td className="py-2 pr-3 font-mono text-sm text-slate-800 dark:text-slate-200">
+                        {item.value}
+                        {item.unit ? ` ${item.unit}` : ''}
+                      </td>
+                      <td className="py-2 pr-3 font-mono text-xs">
+                        {item.change !== undefined && (
+                          <span
+                            className={`font-bold ${
+                              direction === 'up'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : direction === 'down'
+                                  ? 'text-rose-600 dark:text-rose-400'
+                                  : 'text-slate-500'
+                            }`}
+                          >
+                            {direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→'}{' '}
+                            {Math.abs(item.change).toFixed(2)}%
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 text-xs text-slate-500 dark:text-slate-400">
+                        {item.provider && <span className="mr-2">{item.provider}</span>}
+                        {item.asOf && (
+                          <span className="font-mono">
+                            {item.asOf.slice(0, 16).replace('T', ' ')} UTC
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </li>
+            );
+          }
+
+          /*
+           * The inline treatment is a run of figures in the text, so each
+           * one carries its label and its number and nothing else.
+           */
+          if (layout === 'inline') {
+            return (
+              <li key={item.id} className="text-xs text-slate-700 dark:text-slate-300">
+                <span className="text-slate-500 dark:text-slate-400">{item.label}: </span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                  {item.value}
+                  {item.unit ? ` ${item.unit}` : ''}
+                </span>
+                {item.change !== undefined && (
+                  <span
+                    className={`ml-1 font-mono font-bold ${
+                      direction === 'up'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : direction === 'down'
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    {direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→'}{' '}
+                    {Math.abs(item.change).toFixed(2)}%
+                  </span>
+                )}
+              </li>
+            );
+          }
+
           return (
             <li
               key={item.id}

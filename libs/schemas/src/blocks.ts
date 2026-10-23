@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ClaimStatusSchema, PerspectiveStanceSchema } from './intelligence';
-import { CommentAuthorRoleSchema } from './engagement';
+import { CommentAuthorRoleSchema, CommentSchema } from './engagement';
 
 /**
  * The colours a block may be drawn in.
@@ -1305,6 +1305,17 @@ export const LiveCommentsBlockSchema = BaseBlockSchema.extend({
     roles: z.array(CommentAuthorRoleSchema).optional(),
     /** Show a link to the full discussion. */
     showCta: z.boolean().default(true),
+    /**
+     * The thread as it stood when the story was published.
+     *
+     * The comments themselves live on the server, and the block is kept
+     * live over the story's realtime channel. But a block that can only be
+     * drawn when the server answers cannot be previewed, and a story
+     * republished away from its server would show nothing at all. So the
+     * block may carry the thread it was published with, and the live
+     * comments are merged over the top of it.
+     */
+    comments: z.array(CommentSchema).optional(),
   }),
 });
 
@@ -2139,6 +2150,14 @@ export const DatasetColumnSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
   type: z.enum(['string', 'number', 'boolean', 'date']).default('string'),
+  /**
+   * What the column holds.
+   *
+   * A reader who is going to take the file away needs to know what each
+   * column is before they open it, so the description is what the
+   * download treatment shows.
+   */
+  description: z.string().max(500).optional(),
 });
 export type DatasetColumn = z.infer<typeof DatasetColumnSchema>;
 
