@@ -23,8 +23,11 @@ export class LiveController {
 
   @Get('feeds/:key')
   @RequireScope('news:read')
-  async getFeed(@Param('key') key: string): Promise<LiveFeed> {
-    const feed = await this.liveFeeds.getFeed(key);
+  async getFeed(
+    @Param('key') key: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ): Promise<LiveFeed> {
+    const feed = await this.liveFeeds.getFeed(key, { organizationId: principal?.organizationId });
     if (!feed) {
       throw new ValidationError(`No live feed registered for key "${key}"`);
     }

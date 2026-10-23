@@ -76,7 +76,7 @@ describe('End-to-End Authentication & Cookie Session Flow', () => {
 
     expect(res.statusCode).toBe(403);
     const body = JSON.parse(res.body);
-    expect(body.error || body.message).toMatch(/restricted|invitation/i);
+    expect(body.detail || body.error_description || body.message).toMatch(/restricted|invitation/i);
   });
 
   it('authenticates user on login with correct password', async () => {

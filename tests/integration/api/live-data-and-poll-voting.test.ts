@@ -25,6 +25,7 @@ describe('Live feeds and poll voting (API)', () => {
       payload: {
         title: 'Grid operators publish a live demand signal',
         summary: 'A live data story with a reader poll attached.',
+        status: 'PUBLISHED',
         articleType: 'technology',
         blocks: [
           {
@@ -68,6 +69,13 @@ describe('Live feeds and poll voting (API)', () => {
     });
     storyId = JSON.parse(createRes.body).id;
     pollBlockId = 'blk_poll_01';
+
+    await app.inject({
+      method: 'POST',
+      url: `/api/stories/${storyId}/publish`,
+      headers: { authorization: 'Bearer dev-admin' },
+      payload: {},
+    });
   });
 
   afterAll(async () => {

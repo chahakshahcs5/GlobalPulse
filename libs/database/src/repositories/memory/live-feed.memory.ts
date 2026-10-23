@@ -20,6 +20,14 @@ export class MemoryLiveFeedRepository implements ILiveFeedRepository {
     ) {
       return { ...legacy, items: legacy.items.map((i) => ({ ...i })) };
     }
+    for (const feed of this.feeds.values()) {
+      if (
+        feed.key === key &&
+        (!organizationId || !feed.organizationId || feed.organizationId === organizationId)
+      ) {
+        return { ...feed, items: feed.items.map((i) => ({ ...i })) };
+      }
+    }
     return null;
   }
 
