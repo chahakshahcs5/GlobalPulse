@@ -296,7 +296,11 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
     yAxis: z.object({
       label: z.string().min(1),
       unit: z.string().optional(),
-      format: z.string().optional(),
+      format: z
+        .string()
+        .max(16)
+        .regex(/^[^<>&"']*$/, 'Format string must not contain HTML/XML characters')
+        .optional(),
       min: z.number().optional(),
       max: z.number().optional(),
     }),
@@ -1060,7 +1064,11 @@ export const DataExplorerBlockSchema = BaseBlockSchema.extend({
           key: z.string().min(1),
           label: z.string().min(1),
           unit: z.string().optional(),
-          format: z.string().optional(),
+          format: z
+            .string()
+            .max(16)
+            .regex(/^[^<>&"']*$/, 'Format string must not contain HTML/XML characters')
+            .optional(),
         })
       )
       .min(1),

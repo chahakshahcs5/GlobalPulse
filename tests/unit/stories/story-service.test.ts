@@ -101,6 +101,22 @@ describe('Story Lifecycle & Versioning Service (Unit Tests)', () => {
     expect(reordered[0].sortOrder).toBe(0);
     expect(reordered[1].id).toBe('p_1');
     expect(reordered[1].sortOrder).toBe(1);
+
+    // 4. Update block with malicious text and verify sanitization
+    const updated = await storyService.updateBlock(
+      story.id,
+      'p_1',
+      {
+        id: 'p_1',
+        blockType: 'paragraph',
+        sortOrder: 1,
+        data: { text: 'Updated text <script>alert("xss")</script>', format: 'plain' },
+      },
+      ctx
+    );
+    if (updated.blockType === 'paragraph') {
+      expect(updated.data.text).toBe('Updated text ');
+    }
   });
 
   it('creates immutable Version 2 with automated WhatChanged diffing', async () => {

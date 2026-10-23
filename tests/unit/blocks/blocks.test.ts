@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { validateBlock, validateBlocks, sanitizeText, extractTextContent } from '@ai-news/content';
+import {
+  validateBlock,
+  validateBlocks,
+  sanitizeBlock,
+  sanitizeText,
+  extractTextContent,
+} from '@ai-news/content';
 import { ValidationError } from '@ai-news/shared';
 
 describe('Block Model & Validation (Unit Tests)', () => {
@@ -226,6 +232,45 @@ describe('Block Model & Validation (Unit Tests)', () => {
     if (block.blockType === 'audio') {
       expect(block.data.cuePoints?.length).toBe(2);
       expect(block.data.cuePoints?.[1].timeMs).toBe(3200);
+    }
+  });
+
+  it('rejects chart blocks with HTML/XML injection in yAxis.format', () => {
+    const raw = {
+      id: 'blk_chart_xss',
+      blockType: 'chart',
+      sortOrder: 1,
+      data: {
+        chartType: 'bar',
+        title: 'Injection Test',
+        xAxis: { key: 'year', label: 'Year' },
+        yAxis: { label: 'Metric', format: '</text><script>alert(1)</script>' },
+        series: [{ name: 'Test', key: 'test' }],
+        values: [{ year: '2026', test: 10 }],
+      },
+    };
+    expect(() => validateBlock(raw)).toThrow(ValidationError);
+  });
+
+  it('recursively sanitizes nested string fields across block payloads', () => {
+    const raw = {
+      id: 'blk_quote_1',
+      blockType: 'quote',
+      sortOrder: 1,
+      data: {
+        quote: 'Normal text <script>alert("xss")</script>',
+        attribution: 'Attribution <iframe src="bad"></iframe>',
+      },
+      accessibility: {
+        title: 'Title <script>evil()</script>',
+      },
+    };
+    const block = validateBlock(raw);
+    const sanitized = sanitizeBlock(block);
+    if (sanitized.blockType === 'quote') {
+      expect(sanitized.data.quote).toBe('Normal text ');
+      expect(sanitized.data.attribution).toBe('Attribution ');
+      expect(sanitized.accessibility?.title).toBe('Title ');
     }
   });
 });

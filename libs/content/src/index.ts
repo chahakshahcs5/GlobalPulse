@@ -33,13 +33,34 @@ export function sanitizeText(text: string): string {
       .replace(/\bon[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
       // Strip javascript: pseudo-protocols
       .replace(/(?:href|src)\s*=\s*['"]?\s*javascript:[^'"]*['"]?/gi, '')
+      .replace(/^\s*javascript:[^'"]*/gi, '')
   );
+}
+
+function sanitizeValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return sanitizeText(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(sanitizeValue);
+  }
+  if (value !== null && typeof value === 'object') {
+    const res: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      res[k] = sanitizeValue(v);
+    }
+    return res;
+  }
+  return value;
 }
 
 export function sanitizeBlock(block: StoryBlock): StoryBlock {
   const cloned = JSON.parse(JSON.stringify(block)) as StoryBlock;
-  if ('text' in cloned.data && typeof cloned.data.text === 'string') {
-    cloned.data.text = sanitizeText(cloned.data.text);
+  if (cloned.data && typeof cloned.data === 'object') {
+    cloned.data = sanitizeValue(cloned.data) as typeof cloned.data;
+  }
+  if (cloned.accessibility && typeof cloned.accessibility === 'object') {
+    cloned.accessibility = sanitizeValue(cloned.accessibility) as typeof cloned.accessibility;
   }
   return cloned;
 }

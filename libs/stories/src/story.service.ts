@@ -324,6 +324,7 @@ export class StoryService {
   ): Promise<StoryBlock> {
     await this.getStory(storyId, ctx.organizationId);
     const validated = validateBlock(rawBlock);
+    const sanitized = sanitizeBlock(validated);
 
     const currentBlocks = await this.db.stories.getBlocks(storyId);
     const index = currentBlocks.findIndex((b) => b.id === blockId);
@@ -331,11 +332,11 @@ export class StoryService {
       throw new NotFoundError('StoryBlock', blockId);
     }
 
-    validated.sortOrder = currentBlocks[index].sortOrder;
-    currentBlocks[index] = validated;
+    sanitized.sortOrder = currentBlocks[index].sortOrder;
+    currentBlocks[index] = sanitized;
 
     await this.db.stories.saveBlocks(storyId, currentBlocks);
-    return validated;
+    return sanitized;
   }
 
   async removeBlock(storyId: string, blockId: string, ctx: StoryContext): Promise<boolean> {

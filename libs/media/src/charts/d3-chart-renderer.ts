@@ -237,7 +237,7 @@ export class D3ChartRenderer {
       svgElements += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="${gridColor}" stroke-dasharray="3,3" />`;
       const numStr = formatChartValue(tickVal, range);
       const formattedVal = chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr;
-      svgElements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${formattedVal}</text>`;
+      svgElements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(formattedVal)}</text>`;
     }
 
     // X Axis ticks & Labels
@@ -1055,7 +1055,7 @@ export class D3ChartRenderer {
       const x = L.scaleX(tickVal);
       elements += `<line x1="${x}" y1="${L.padding.top}" x2="${x}" y2="${L.padding.top + L.chartH}" stroke="${L.gridColor}" stroke-dasharray="3,3" />`;
       const numStr = formatChartValue(tickVal, L.range);
-      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr)}</text>`;
     }
 
     // One row per category
@@ -1115,7 +1115,7 @@ export class D3ChartRenderer {
       const x = L.scaleX(tickVal);
       elements += `<line x1="${x}" y1="${L.padding.top}" x2="${x}" y2="${L.padding.top + L.chartH}" stroke="${L.gridColor}" stroke-dasharray="3,3" />`;
       const numStr = formatChartValue(tickVal, L.range);
-      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+      elements += `<text x="${x}" y="${L.padding.top + L.chartH + 20}" text-anchor="middle" font-size="11" fill="${L.subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr)}</text>`;
     }
 
     chartData.values.forEach((row, rowIdx) => {
@@ -1202,7 +1202,7 @@ export class D3ChartRenderer {
       const y = scaleY(tickVal);
       elements += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="${gridColor}" stroke-dasharray="3,3" />`;
       const numStr = formatChartValue(tickVal, range);
-      elements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr}</text>`;
+      elements += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.yAxis.format ? `${chartData.yAxis.format}${numStr}` : numStr)}</text>`;
     }
 
     const bandWidth = chartW / Math.max(1, categories.length);
