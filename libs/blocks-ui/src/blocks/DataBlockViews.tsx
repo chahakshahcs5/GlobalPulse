@@ -11,7 +11,7 @@ import type {
   DisasterBlock,
   ScienceBlock,
 } from '@ai-news/schemas';
-import { evaluateExpression } from '@ai-news/shared';
+import { evaluateExpression, formatCsv } from '@ai-news/shared';
 
 /**
  * Renderers for the data-journalism blocks.
@@ -73,9 +73,8 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
   const max = grouped.length ? grouped[0][1] : 0;
 
   const exportCsv = () => {
-    const header = [dimension.key, metric.key].join(',');
-    const body = grouped.map(([key, value]) => `${key},${value}`).join('\n');
-    const blob = new Blob([`${header}\n${body}`], { type: 'text/csv' });
+    const csv = formatCsv([[dimension.key, metric.key], ...grouped]);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

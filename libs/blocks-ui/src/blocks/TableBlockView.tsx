@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowDown, ArrowUp, Download, Search } from 'lucide-react';
 import type { TableBlock } from '@ai-news/schemas';
+import { formatCsv } from '@ai-news/shared';
 
 /**
  * A data table.
@@ -75,11 +76,7 @@ export const TableBlockView: React.FC<{ data: TableBlock['data'] }> = ({ data })
   };
 
   const downloadCsv = () => {
-    const escapeCell = (value: string) => `"${String(value).replace(/"/g, '""')}"`;
-    const csv = [
-      headers.map(escapeCell).join(','),
-      ...filteredRows.map((row) => row.map((cell) => escapeCell(String(cell))).join(',')),
-    ].join('\n');
+    const csv = formatCsv([headers, ...filteredRows]);
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);

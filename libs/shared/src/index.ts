@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export * from './expression';
 export * from './statistics';
+export * from './csv';
 
 export class DomainError extends Error {
   constructor(

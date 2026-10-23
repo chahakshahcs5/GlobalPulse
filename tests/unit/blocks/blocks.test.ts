@@ -273,4 +273,17 @@ describe('Block Model & Validation (Unit Tests)', () => {
       expect(sanitized.accessibility?.title).toBe('Title ');
     }
   });
+
+  it('rejects embed blocks with non-http/https protocols', () => {
+    const raw = {
+      id: 'blk_embed_bad',
+      blockType: 'embed',
+      sortOrder: 1,
+      data: {
+        provider: 'generic',
+        url: 'javascript:alert(1)',
+      },
+    };
+    expect(() => validateBlock(raw)).toThrow(ValidationError);
+  });
 });

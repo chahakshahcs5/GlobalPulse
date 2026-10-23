@@ -872,7 +872,10 @@ export const EmbedBlockSchema = BaseBlockSchema.extend({
      */
     layout: z.enum(['iframe', 'card', 'link']).optional(),
     provider: z.enum(['youtube', 'twitter', 'bluesky', 'github', 'generic']),
-    url: z.string().url(),
+    url: z
+      .string()
+      .url()
+      .regex(/^https?:\/\//i, 'Embed URL must use HTTP or HTTPS protocol'),
     title: z.string().optional(),
   }),
 });
