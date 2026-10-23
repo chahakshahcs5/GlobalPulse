@@ -42,7 +42,7 @@
     "dev:api": "pnpm --filter @ai-news/api dev",
     "dev:mcp": "pnpm --filter @ai-news/mcp-server dev",
     "dev:web": "pnpm --filter @ai-news/web dev",
-    "dev:studio": "pnpm --filter @ai-news/block-studio dev",
+    "dev:studio": "pnpm --filter @ai-news/block-studio-app dev",
     "dev:worker": "pnpm --filter @ai-news/worker dev",
     "dev:mobile": "pnpm --filter @ai-news/mobile start",
     "docker:up": "docker compose up -d",

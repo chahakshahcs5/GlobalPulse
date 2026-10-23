@@ -1,5 +1,5 @@
 {
-  "name": "@ai-news/block-studio",
+  "name": "@ai-news/block-studio-app",
   "version": "1.0.0",
   "private": true,
   "description": "A Storybook-style workbench for previewing and editing every story block.",
