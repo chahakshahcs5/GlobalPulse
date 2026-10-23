@@ -58,6 +58,10 @@ export function getRateLimitOptions() {
       // would let any client rotate its own buckets and bypass the limit.
       const auth = req.headers.authorization;
       if (auth && typeof auth === 'string') return auth;
+      if (req.headers.cookie && typeof req.headers.cookie === 'string') {
+        const match = req.headers.cookie.match(/(?:^|;\s*)gp_token=([^;]+)/);
+        if (match && match[1]) return `cookie:${match[1]}`;
+      }
       return req.ip || '127.0.0.1';
     },
     errorResponseBuilder: (req: FastifyRequest, context: { max: number; after: string }) => ({

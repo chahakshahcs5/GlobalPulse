@@ -145,13 +145,21 @@ export const LiveCommentsBlockView: React.FC<{
       ) : layout === 'compact' ? (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {visible.map((comment) => (
-            <li key={comment.id} className="flex items-baseline gap-2 px-5 py-2">
+            <li
+              key={comment.id}
+              data-author-id={comment.authorId}
+              data-org-id={comment.organizationId}
+              className="flex items-baseline gap-2 px-5 py-2"
+            >
               <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 shrink-0">
                 {comment.authorName}
               </span>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate flex-1">
                 {comment.content}
               </span>
+              {Boolean(comment.likesCount) && (
+                <span className="text-[10px] text-slate-400 shrink-0">♥ {comment.likesCount}</span>
+              )}
             </li>
           ))}
         </ul>
@@ -167,18 +175,37 @@ export const LiveCommentsBlockView: React.FC<{
             return (
               <li
                 key={comment.id}
+                data-author-id={comment.authorId}
+                data-org-id={comment.organizationId}
                 className={`px-5 py-3 ${isThread && isReply ? 'pl-12 border-l-2 border-slate-100 dark:border-slate-800 ml-5' : ''}`}
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    {comment.authorName}
-                  </span>
-                  <span
-                    className="text-[10px] text-slate-400 dark:text-slate-500"
-                    suppressHydrationWarning
-                  >
-                    {formatDeterministicDate(comment.createdAt)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      {comment.authorName}
+                    </span>
+                    {comment.moderationReason && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        {comment.moderationReason}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {Boolean(comment.likesCount) && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        ♥ {comment.likesCount}
+                      </span>
+                    )}
+                    <span
+                      className="text-[10px] text-slate-400 dark:text-slate-500"
+                      suppressHydrationWarning
+                    >
+                      {formatDeterministicDate(comment.createdAt)}
+                      {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
+                        <span className="ml-1 italic">(edited)</span>
+                      )}
+                    </span>
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                   {comment.content}

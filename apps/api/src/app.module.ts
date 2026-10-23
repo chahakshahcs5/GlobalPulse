@@ -42,7 +42,7 @@ import type { FastifyRequest } from 'fastify';
     GraphQLModule.forRoot<MercuriusDriverConfig>({
       driver: MercuriusDriver,
       typeDefs,
-      graphiql: true,
+      graphiql: process.env.NODE_ENV !== 'production',
       subscription: true,
       context: (req: FastifyRequest) => {
         let principal: AuthenticatedPrincipal | null = null;
