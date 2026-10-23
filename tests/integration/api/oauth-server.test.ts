@@ -82,12 +82,47 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       .update(codeVerifier, 'ascii')
       .digest('base64url');
 
+    const editorToken = AuthService.generateToken({
+      id: 'usr_editor_test',
+      organizationId: 'org_globalpulse',
+      role: 'editor',
+      clientType: 'human_web',
+      scopes: [
+        'news:read',
+        'news:write',
+        'news:publish',
+        'news:media',
+        'news:sources',
+        'news:topics',
+      ],
+    });
+
     let authorizationCode: string;
 
-    it('handles /oauth/authorize and issues short-lived authorization code', async () => {
+    it('rejects unauthenticated requests to /oauth/authorize with 401 login_required', async () => {
       const res = await app.inject({
         method: 'POST',
         url: '/oauth/authorize',
+        payload: {
+          response_type: 'code',
+          client_id: 'claude_desktop_agent',
+          scope: 'news:read news:write news:publish',
+          state: 'state_anti_csrf_99',
+          code_challenge: codeChallenge,
+          code_challenge_method: 'S256',
+        },
+      });
+
+      expect(res.statusCode).toBe(401);
+      const body = JSON.parse(res.body);
+      expect(body.error || body.message).toMatch(/login_required|unauthorized/i);
+    });
+
+    it('handles /oauth/authorize and issues short-lived authorization code for authenticated user', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           response_type: 'code',
           client_id: 'claude_desktop_agent',
@@ -129,6 +164,7 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       const authRes = await app.inject({
         method: 'POST',
         url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           response_type: 'code',
           client_id: 'claude_desktop_agent',
@@ -154,7 +190,7 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       const tokenBody = JSON.parse(tokenRes.body);
       expect(tokenBody.access_token).toBeDefined();
       expect(tokenBody.token_type).toBe('Bearer');
-      expect(tokenBody.expires_in).toBe(86400);
+      expect(tokenBody.expires_in).toBe(3600);
       expect(tokenBody.scope).toContain('news:read');
       expect(tokenBody.scope).toContain('news:write');
 
@@ -198,7 +234,7 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       const body = JSON.parse(res.body);
       expect(body.access_token).toBeDefined();
       expect(body.token_type).toBe('Bearer');
-      expect(body.expires_in).toBe(86400);
+      expect(body.expires_in).toBe(3600);
 
       const principal = AuthService.verifyToken(body.access_token);
       expect(principal.role).toBe('ai_agent');
@@ -293,10 +329,26 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
   });
 
   describe('OAuth Redirect URI and PKCE Security Hardening', () => {
+    const editorToken = AuthService.generateToken({
+      id: 'usr_editor_test',
+      organizationId: 'org_globalpulse',
+      role: 'editor',
+      clientType: 'human_web',
+      scopes: [
+        'news:read',
+        'news:write',
+        'news:publish',
+        'news:media',
+        'news:sources',
+        'news:topics',
+      ],
+    });
+
     it('rejects /oauth/authorize with unregistered redirect_uri (open redirect prevention)', async () => {
       const res = await app.inject({
         method: 'POST',
         url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           response_type: 'code',
           client_id: 'claude_desktop_agent',
@@ -311,10 +363,30 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       expect(err.error || err.detail).toMatch(/invalid_request/i);
     });
 
+    it('rejects /oauth/authorize with hostile redirect_uri suffix like evilgoogle.com', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
+        payload: {
+          response_type: 'code',
+          client_id: 'gemini_agent_service',
+          redirect_uri: 'https://evilgoogle.com/oauth/callback',
+          code_challenge: 'E9Melhoa2OwvFrGMTJguCH5rtx64410-gZB7GfqWtZo',
+          code_challenge_method: 'S256',
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const err = JSON.parse(res.body);
+      expect(err.error || err.detail).toMatch(/invalid_request/i);
+    });
+
     it('rejects /oauth/authorize when PKCE code_challenge is missing', async () => {
       const res = await app.inject({
         method: 'POST',
         url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           response_type: 'code',
           client_id: 'claude_desktop_agent',
@@ -332,6 +404,7 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/oauth/authorize',
+        headers: { authorization: `Bearer ${editorToken}` },
         payload: {
           response_type: 'code',
           client_id: 'claude_desktop_agent',

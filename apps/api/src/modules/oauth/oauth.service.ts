@@ -1,6 +1,12 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { AuthService, type ClientType, type NewsScope, type UserRole } from '@ai-news/auth';
+import {
+  AuthService,
+  type AuthenticatedPrincipal,
+  type ClientType,
+  type NewsScope,
+  type UserRole,
+} from '@ai-news/auth';
 import { appConfig } from '../../config/configuration';
 
 export interface RegisteredOAuthClient {
@@ -22,6 +28,8 @@ export interface AuthorizationCodeEntry {
   codeChallengeMethod: 'S256';
   expiresAt: number;
   principalId: string;
+  userId: string;
+  organizationId: string;
   clientType: ClientType;
 }
 
@@ -204,11 +212,21 @@ export class OAuthService {
   /**
    * RFC 7636 / RFC 6749: Authorize endpoint
    */
-  createAuthorizationCode(req: AuthorizeRequest): {
+  createAuthorizationCode(
+    req: AuthorizeRequest,
+    principal?: AuthenticatedPrincipal
+  ): {
     code: string;
     state?: string;
     redirect_uri?: string;
   } {
+    if (!principal || principal.id === 'usr_guest') {
+      throw new UnauthorizedException({
+        error: 'login_required',
+        error_description: 'User must be authenticated to authorize client applications.',
+      });
+    }
+
     if (req.response_type !== 'code') {
       throw new BadRequestException({
         error: 'unsupported_response_type',
@@ -245,12 +263,14 @@ export class OAuthService {
         try {
           const registeredUrl = new URL(uri);
           const reqUrl = new URL(req.redirect_uri!);
-          if (
-            client.clientType === 'gemini' &&
-            (reqUrl.hostname.endsWith('google.com') ||
-              reqUrl.hostname.endsWith('googleusercontent.com'))
-          ) {
-            return true;
+          if (client.clientType === 'gemini') {
+            const reqHost = reqUrl.hostname.toLowerCase();
+            const isGoogle = reqHost === 'google.com' || reqHost.endsWith('.google.com');
+            const isGoogleUserContent =
+              reqHost === 'googleusercontent.com' || reqHost.endsWith('.googleusercontent.com');
+            if (isGoogle || isGoogleUserContent) {
+              return true;
+            }
           }
           return (
             registeredUrl.origin === reqUrl.origin && registeredUrl.pathname === reqUrl.pathname
@@ -285,16 +305,20 @@ export class OAuthService {
       });
     }
 
-    // Parse and authorize scopes; downscope to client.allowedScopes (RFC 6749 §3.3)
+    // Parse and authorize scopes; downscope to client.allowedScopes AND user's authorized scopes (RFC 6749 §3.3)
+    const userScopes = principal.scopes || [];
+    const clientAllowedScopes = client.allowedScopes;
+    const authorizableScopes = clientAllowedScopes.filter((s) => userScopes.includes(s));
+
     const rawRequestedScopes: NewsScope[] = req.scope
       ? (req.scope.split(/[\s,]+/).filter(Boolean) as NewsScope[])
-      : client.allowedScopes;
+      : authorizableScopes;
 
-    const parsedScopes = rawRequestedScopes.filter((s) => client.allowedScopes.includes(s));
+    const parsedScopes = rawRequestedScopes.filter((s) => authorizableScopes.includes(s));
     if (parsedScopes.length === 0) {
       throw new BadRequestException({
         error: 'invalid_scope',
-        error_description: `None of the requested scope(s) are authorized for client "${req.client_id}".`,
+        error_description: `None of the requested scope(s) are authorized for client "${req.client_id}" by the authenticated user.`,
       });
     }
 
@@ -309,7 +333,9 @@ export class OAuthService {
       codeChallenge: req.code_challenge,
       codeChallengeMethod: 'S256',
       expiresAt,
-      principalId: `agent_${req.client_id.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
+      principalId: `agent_${principal.id}_${req.client_id.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
+      userId: principal.id,
+      organizationId: principal.organizationId,
       clientType: client.clientType,
     };
 
@@ -421,7 +447,7 @@ export class OAuthService {
     const token = AuthService.generateToken(
       {
         id: entry.principalId,
-        organizationId: 'org_globalpulse',
+        organizationId: entry.organizationId || 'org_globalpulse',
         role: entry.scopes.includes('news:admin')
           ? ('admin' as UserRole)
           : ('ai_agent' as UserRole),
@@ -440,13 +466,13 @@ export class OAuthService {
         },
       },
       undefined,
-      '24h'
+      '1h'
     );
 
     return {
       access_token: token,
       token_type: 'Bearer',
-      expires_in: 86400,
+      expires_in: 3600,
       scope: entry.scopes.join(' '),
     };
   }
@@ -460,7 +486,11 @@ export class OAuthService {
     }
 
     const client = this.clients.get(req.client_id);
-    if (!client || client.clientSecret !== req.client_secret) {
+    if (
+      !client ||
+      !client.clientSecret ||
+      !this.timingSafeEqual(client.clientSecret, req.client_secret)
+    ) {
       throw new UnauthorizedException({
         error: 'invalid_client',
         error_description: 'Invalid client credentials.',
@@ -509,15 +539,25 @@ export class OAuthService {
         },
       },
       undefined,
-      '24h'
+      '1h'
     );
 
     return {
       access_token: token,
       token_type: 'Bearer',
-      expires_in: 86400,
+      expires_in: 3600,
       scope: requestedScopes.join(' '),
     };
+  }
+
+  private timingSafeEqual(a: string, b: string): boolean {
+    const bufA = Buffer.from(a, 'utf8');
+    const bufB = Buffer.from(b, 'utf8');
+    if (bufA.length !== bufB.length) {
+      crypto.timingSafeEqual(bufA, bufA);
+      return false;
+    }
+    return crypto.timingSafeEqual(bufA, bufB);
   }
 
   private verifyPkce(verifier: string, challenge: string): boolean {

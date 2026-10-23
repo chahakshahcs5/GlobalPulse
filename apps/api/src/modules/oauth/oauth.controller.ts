@@ -8,6 +8,8 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
+  UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import {
@@ -16,6 +18,8 @@ import {
   TokenRequest,
   oauthService as defaultOAuthService,
 } from './oauth.service';
+import { NestAuthGuard, Principal } from '../../common/auth.guard';
+import { type AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('.well-known')
 export class OAuthWellKnownController {
@@ -50,11 +54,20 @@ export class OAuthController {
   }
 
   @Get('authorize')
+  @UseGuards(NestAuthGuard)
   handleAuthorizeGet(
     @Query() query: AuthorizeRequest,
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
-    const result = this.oauthService.createAuthorizationCode(query);
+    if (!principal || principal.id === 'usr_guest') {
+      throw new UnauthorizedException({
+        error: 'login_required',
+        error_description: 'User must be authenticated to authorize client applications.',
+      });
+    }
+
+    const result = this.oauthService.createAuthorizationCode(query, principal);
 
     if (query.redirect_uri) {
       const url = new URL(query.redirect_uri);
@@ -69,12 +82,21 @@ export class OAuthController {
   }
 
   @Post('authorize')
+  @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
   handleAuthorizePost(
     @Body() body: AuthorizeRequest,
+    @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
   ) {
-    const result = this.oauthService.createAuthorizationCode(body);
+    if (!principal || principal.id === 'usr_guest') {
+      throw new UnauthorizedException({
+        error: 'login_required',
+        error_description: 'User must be authenticated to authorize client applications.',
+      });
+    }
+
+    const result = this.oauthService.createAuthorizationCode(body, principal);
 
     if (body.redirect_uri) {
       const url = new URL(body.redirect_uri);
