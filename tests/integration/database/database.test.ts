@@ -122,6 +122,45 @@ describe('Production Database Core Integration Tests', () => {
       const v1 = await db.stories.getVersion(story.id, 1);
       expect(v1?.title).toBe(story.title);
     });
+
+    it('persists and roundtrips scheduledPublishAt, isSubscriberOnly, wordCount, and readingTimeMinutes', async () => {
+      const scheduledAt = '2026-10-30T15:00:00.000Z';
+      const created = await db.stories.create({
+        id: 'sty_test_scheduled',
+        organizationId: 'org_test',
+        slug: 'scheduled-deep-dive',
+        title: 'Deep Dive into LLM Efficiency',
+        summary: 'Scheduled article for subscribers.',
+        status: 'SCHEDULED',
+        articleType: 'analysis',
+        authorId: 'usr_ai_01',
+        createdByClient: 'gemini',
+        createdVia: 'api',
+        currentVersionNumber: 1,
+        topicIds: [],
+        entityIds: [],
+        sourceIds: [],
+        isSubscriberOnly: true,
+        scheduledPublishAt: scheduledAt,
+        wordCount: 1250,
+        readingTimeMinutes: 5,
+        blocks: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      expect(created.isSubscriberOnly).toBe(true);
+      expect(created.scheduledPublishAt).toBe(scheduledAt);
+      expect(created.wordCount).toBe(1250);
+      expect(created.readingTimeMinutes).toBe(5);
+
+      const fetched = await db.stories.findById('sty_test_scheduled', 'org_test');
+      expect(fetched).not.toBeNull();
+      expect(fetched?.isSubscriberOnly).toBe(true);
+      expect(fetched?.scheduledPublishAt).toBe(scheduledAt);
+      expect(fetched?.wordCount).toBe(1250);
+      expect(fetched?.readingTimeMinutes).toBe(5);
+    });
   });
 
   describe('Sources, Citations & Claims', () => {
