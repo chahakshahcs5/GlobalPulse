@@ -12,7 +12,7 @@ const nextConfig = {
   // proxy the web portal uses.
   async rewrites() {
     const apiUrl =
-      process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     return [
       { source: '/api/:path*', destination: `${apiUrl}/api/:path*` },
       { source: '/health', destination: `${apiUrl}/health` },
