@@ -54,12 +54,19 @@ export const AnimatedMapBlockView: React.FC<{
   }, [isPlaying, frameCount, frameDurationMs]);
 
   // Autoplay starts once, when the block is first seen. A slideshow always
-  // plays; the other treatments only do so if the block asks for it.
+  // plays; the other treatments only do so if the block asks for it, provided
+  // the reader has not asked for reduced motion.
   const hasAutoplayed = React.useRef(false);
   React.useEffect(() => {
     if (hasAutoplayed.current) return;
     hasAutoplayed.current = true;
-    if (data.autoplay || isSlideshow) setIsPlaying(true);
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion && (data.autoplay || isSlideshow)) {
+      setIsPlaying(true);
+    }
   }, [data.autoplay, isSlideshow]);
 
   const frame = data.frames[frameIndex];

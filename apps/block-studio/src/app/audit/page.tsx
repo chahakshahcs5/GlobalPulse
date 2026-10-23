@@ -43,7 +43,9 @@ export default function AuditPage() {
           .filter(Boolean)
       );
     const columns = Number(params.get('cols'));
-    if (columns > 0) setCols(columns);
+    if (Number.isFinite(columns) && columns > 0) {
+      setCols(Math.max(1, Math.min(6, Math.floor(columns))));
+    }
     setMounted(true);
   }, []);
 

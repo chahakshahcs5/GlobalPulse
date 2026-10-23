@@ -361,8 +361,12 @@ export class MapRenderer {
 
     const centerCoords = parseCoordinates(mapData.center) || (validMarkers[0]?.coords ?? [0, 20]);
     const [cx, cy] = project(centerCoords[0], centerCoords[1]);
+    const lat = centerCoords[1];
+    const lng = centerCoords[0];
+    const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
+    const lngStr = `${Math.abs(lng).toFixed(2)}°${lng >= 0 ? 'E' : 'W'}`;
     const zoomLevel = mapData.zoom ?? 2;
-    const coordLabel = `Coordinates: ${centerCoords[1].toFixed(2)}°N, ${centerCoords[0].toFixed(2)}°E | Zoom: ${zoomLevel}x`;
+    const coordLabel = `Coordinates: ${latStr}, ${lngStr} | Zoom: ${zoomLevel}x`;
 
     return `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColorStart}; border-radius: 16px; overflow: hidden;" role="img" aria-label="${escapeXml(mapTitle)}">

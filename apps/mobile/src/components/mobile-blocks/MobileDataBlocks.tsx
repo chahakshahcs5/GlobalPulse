@@ -123,7 +123,8 @@ export function MapBlockItem({ block }: { block: MapBlock }) {
       <Text style={styles.cardTitle}>{data.title || 'Location Overview'}</Text>
       {data.center && (
         <Text style={styles.cardSubtitle}>
-          Coordinates: {Number(data.center[1]).toFixed(2)}°N, {Number(data.center[0]).toFixed(2)}°E
+          Coordinates:{' '}
+          {`${Math.abs(Number(data.center[1])).toFixed(2)}°${Number(data.center[1]) >= 0 ? 'N' : 'S'}, ${Math.abs(Number(data.center[0])).toFixed(2)}°${Number(data.center[0]) >= 0 ? 'E' : 'W'}`}
         </Text>
       )}
       {markers.length > 0 && (
@@ -164,7 +165,8 @@ export function Map3DBlockItem({ block }: { block: Map3DBlock }) {
       {data.subtitle ? <Text style={styles.cardSubtitle}>{data.subtitle}</Text> : null}
       {data.center && (
         <Text style={styles.cardSubtitle}>
-          Coordinates: {Number(data.center[1]).toFixed(2)}°N, {Number(data.center[0]).toFixed(2)}°E
+          Coordinates:{' '}
+          {`${Math.abs(Number(data.center[1])).toFixed(2)}°${Number(data.center[1]) >= 0 ? 'N' : 'S'}, ${Math.abs(Number(data.center[0])).toFixed(2)}°${Number(data.center[0]) >= 0 ? 'E' : 'W'}`}
         </Text>
       )}
       {markers.length > 0 && (

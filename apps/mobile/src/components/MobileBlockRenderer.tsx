@@ -20,8 +20,8 @@ export function MobileBlockRenderer({ blocks, storyId }: MobileBlockProps) {
 
   return (
     <View style={styles.container}>
-      {blocks.map((block) => {
-        const key = block.id || `blk_${Math.random()}`;
+      {blocks.map((block, idx) => {
+        const key = block.id || `blk_${block.blockType}_${block.sortOrder ?? idx}`;
         return <MobileBlockItem key={key} block={block} storyId={storyId} />;
       })}
     </View>

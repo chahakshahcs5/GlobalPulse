@@ -1233,7 +1233,8 @@ export const DisasterBlockView: React.FC<{ data: DisasterBlock['data'] }> = ({ d
 
       {data.coordinates && (
         <p className="px-5 py-2 border-b border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-          Coordinates: {data.coordinates[0].toFixed(3)}°E, {data.coordinates[1].toFixed(3)}°N
+          Coordinates:{' '}
+          {`${Math.abs(data.coordinates[1]).toFixed(3)}°${data.coordinates[1] >= 0 ? 'N' : 'S'}, ${Math.abs(data.coordinates[0]).toFixed(3)}°${data.coordinates[0] >= 0 ? 'E' : 'W'}`}
         </p>
       )}
 

@@ -77,11 +77,11 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
             return (
               <div
                 key={input.id}
-                className="rounded-xl border border-slate-200 dark:border-slate-800 p-4"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 min-w-0 overflow-hidden"
               >
                 <label
                   htmlFor={`what_if_card_${input.id}`}
-                  className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                  className="text-sm font-semibold text-slate-700 dark:text-slate-300 block truncate"
                 >
                   {input.label}
                 </label>
@@ -93,7 +93,7 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
                   step={input.step}
                   value={current}
                   onChange={(e) => setInput(input, Number(e.target.value))}
-                  className="mt-2 w-full"
+                  className="mt-2 w-full max-w-full"
                 />
                 <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
                   {current}
@@ -104,7 +104,7 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
           })}
         </div>
 
-        <div className="px-5 pb-4 rounded-b-2xl bg-slate-50 dark:bg-slate-900/60 px-5 py-3">
+        <div className="rounded-b-2xl bg-slate-50 dark:bg-slate-900/60 px-5 py-3">
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {data.outcomeLabel}
           </span>{' '}
@@ -130,24 +130,24 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
 
       <div className="px-5 py-4 grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Sliders */}
-        <div className="lg:col-span-3 space-y-4">
+        <div className="lg:col-span-3 space-y-4 min-w-0">
           {data.inputs.map((input) => {
             const current = values[input.id] ?? input.defaultValue;
             return (
-              <div key={input.id}>
+              <div key={input.id} className="min-w-0">
                 <div className="flex items-baseline justify-between gap-3">
                   <label
                     htmlFor={`what_if_${input.id}`}
-                    className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                    className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-0"
                   >
-                    {input.label}
+                    <span className="block truncate">{input.label}</span>
                     {input.note && (
                       <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
                         {input.note}
                       </span>
                     )}
                   </label>
-                  <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100 shrink-0">
                     {format(current)}
                     {input.unit ? ` ${input.unit}` : ''}
                   </span>
@@ -160,7 +160,7 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
                   step={input.step ?? 1}
                   value={current}
                   onChange={(e) => setInput(input, Number(e.target.value))}
-                  className="mt-2 w-full accent-indigo-600 dark:accent-indigo-400"
+                  className="mt-2 w-full max-w-full accent-indigo-600 dark:accent-indigo-400"
                   aria-describedby={`what_if_range_${input.id}`}
                 />
                 <div
@@ -182,7 +182,7 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
         </div>
 
         {/* Outcome */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-500/25 p-4">
             <div className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
               {data.outcomeLabel}

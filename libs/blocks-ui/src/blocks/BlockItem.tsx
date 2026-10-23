@@ -106,10 +106,13 @@ function renderBlock(
               ? 'text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2'
               : 'text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1';
 
+      const Tag = (level === 1 ? 'h1' : level === 2 ? 'h2' : level === 3 ? 'h3' : 'h4') as
+        'h1' | 'h2' | 'h3' | 'h4';
+
       if (headingStyle === 'boxed') {
         return (
           <div className="my-5 rounded-xl border-l-4 border-blue-500 bg-slate-50 dark:bg-slate-800/40 px-4 py-3">
-            <h2 className={`${headingClass} !mt-0 !mb-1`}>{text}</h2>
+            <Tag className={`${headingClass} !mt-0 !mb-1`}>{text}</Tag>
             {subtext && (
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{subtext}</p>
             )}
@@ -120,11 +123,11 @@ function renderBlock(
       if (headingStyle === 'underlined') {
         return (
           <div className="my-5">
-            <h2
+            <Tag
               className={`${headingClass} border-b-2 border-slate-200 dark:border-slate-700 pb-2`}
             >
               {text}
-            </h2>
+            </Tag>
             {subtext && (
               <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
                 {subtext}
@@ -137,11 +140,11 @@ function renderBlock(
       if (headingStyle === 'numbered') {
         return (
           <div className="my-5 flex gap-3">
-            <span className="font-mono text-2xl font-bold text-slate-200 dark:text-slate-700 leading-none">
-              {String(level).padStart(2, '0')}
+            <span className="font-mono text-2xl font-bold text-slate-300 dark:text-slate-600 leading-none">
+              {level}.{String((block.sortOrder ?? 0) + 1).padStart(2, '0')}
             </span>
             <div className="min-w-0">
-              <h2 className={`${headingClass} !mt-0 !mb-1`}>{text}</h2>
+              <Tag className={`${headingClass} !mt-0 !mb-1`}>{text}</Tag>
               {subtext && (
                 <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{subtext}</p>
               )}
@@ -152,26 +155,7 @@ function renderBlock(
 
       return (
         <div className="my-3">
-          {level === 1 && (
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-3">
-              {text}
-            </h1>
-          )}
-          {level === 2 && (
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-6 mb-2">
-              {text}
-            </h2>
-          )}
-          {level === 3 && (
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-5 mb-2">
-              {text}
-            </h3>
-          )}
-          {level === 4 && (
-            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-4 mb-1">
-              {text}
-            </h4>
-          )}
+          <Tag className={headingClass}>{text}</Tag>
           {subtext && (
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">
               {subtext}
