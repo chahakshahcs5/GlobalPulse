@@ -16,6 +16,8 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY apps/worker/package.json ./apps/worker/
 COPY apps/web/package.json ./apps/web/
+COPY apps/mobile/package.json ./apps/mobile/
+COPY apps/block-studio/package.json ./apps/block-studio/
 
 # Copy all library manifests
 COPY libs/schemas/package.json ./libs/schemas/
@@ -33,6 +35,12 @@ COPY libs/jobs/package.json ./libs/jobs/
 COPY libs/observability/package.json ./libs/observability/
 COPY libs/graphql/package.json ./libs/graphql/
 COPY libs/shared/package.json ./libs/shared/
+COPY libs/api-client/package.json ./libs/api-client/
+COPY libs/blocks-ui/package.json ./libs/blocks-ui/
+COPY libs/block-studio/package.json ./libs/block-studio/
+
+# Copy Prisma schema needed for database package postinstall
+COPY libs/database/prisma/schema.prisma ./libs/database/prisma/schema.prisma
 
 # Install workspace dependencies
 RUN pnpm install --frozen-lockfile

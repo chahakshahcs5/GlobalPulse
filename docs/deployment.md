@@ -12,26 +12,28 @@ The platform is designed for zero-friction containerized deployment across multi
 
 ```dockerfile
 FROM node:20-alpine AS base
+RUN npm install -g pnpm@9
 WORKDIR /app
-RUN npm install -g pnpm
 
-FROM base AS dependencies
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
+# Copy root manifest and workspace configuration
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+
+# Copy all application manifests
+COPY apps/*/package.json ./apps/
+# Copy all library manifests and Prisma schema for database postinstall
 COPY libs/*/package.json ./libs/
+COPY libs/database/prisma/schema.prisma ./libs/database/prisma/schema.prisma
+
 RUN pnpm install --frozen-lockfile
-
-FROM base AS builder
 COPY . .
-RUN pnpm build
+RUN DATABASE_URL='postgresql://postgres:postgres@localhost:5432/ai_news?schema=public' pnpm --filter @ai-news/database exec prisma generate --schema=prisma/schema.prisma
 
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
 EXPOSE 3000
-CMD ["node", "dist/apps/api/main.js"]
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
+
+CMD ["pnpm", "--filter", "@ai-news/api", "start"]
 ```
 
 ### 1.2 Docker Compose Topologies
