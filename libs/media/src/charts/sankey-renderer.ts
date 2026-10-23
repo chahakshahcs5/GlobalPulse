@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from '../format';
 import type { SankeyBlock } from '@ai-news/schemas';
 import { escapeXml } from '@ai-news/shared';
 import {
@@ -268,5 +269,7 @@ export class SankeyRenderer {
 function formatValue(value: number, unit?: string): string {
   if (!Number.isFinite(value)) return '—';
   const rounded = Math.abs(value) >= 100 ? Math.round(value) : Math.round(value * 10) / 10;
-  return unit ? `${rounded.toLocaleString('en-GB')} ${unit}` : rounded.toLocaleString('en-GB');
+  return unit
+    ? `${rounded.toLocaleString(NUMBER_LOCALE)} ${unit}`
+    : rounded.toLocaleString(NUMBER_LOCALE);
 }

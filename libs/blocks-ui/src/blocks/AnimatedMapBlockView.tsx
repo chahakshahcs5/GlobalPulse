@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { AnimatedMapBlock } from '@ai-news/schemas';
-import { AnimatedMapRenderer, buildMapConfig } from '@ai-news/media';
+import { NUMBER_LOCALE, AnimatedMapRenderer, buildMapConfig } from '@ai-news/media';
 import { MapCanvas } from './MapCanvas';
 
 /**
@@ -216,7 +216,7 @@ export const AnimatedMapBlockView: React.FC<{
           <span className="font-mono">
             {frame.points.length} location{frame.points.length === 1 ? '' : 's'}
             {data.valueLabel && totalValue > 0
-              ? ` · ${totalValue.toLocaleString()}${data.unit ? ` ${data.unit}` : ''}`
+              ? ` · ${totalValue.toLocaleString(NUMBER_LOCALE)}${data.unit ? ` ${data.unit}` : ''}`
               : ''}
           </span>
         </div>

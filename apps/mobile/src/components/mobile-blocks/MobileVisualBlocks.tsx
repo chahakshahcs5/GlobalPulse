@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from './format';
 import { View, Text, Image } from 'react-native';
 import type {
   ImageBlock,
@@ -160,7 +161,7 @@ export function AnimatedMapBlockItem({ block }: { block: AnimatedMapBlock }) {
             <Text key={point.id} style={styles.intelMeta}>
               {point.label}
               {point.value !== undefined
-                ? ` — ${point.value.toLocaleString()}${data.unit ? ` ${data.unit}` : ''}`
+                ? ` — ${point.value.toLocaleString(NUMBER_LOCALE)}${data.unit ? ` ${data.unit}` : ''}`
                 : ''}
             </Text>
           ))}

@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from '../format';
 import type { SurveyResultsBlock } from '@ai-news/schemas';
 import { escapeXml } from '@ai-news/shared';
 import { arc, pie } from 'd3';
@@ -51,7 +52,7 @@ function entriesOf(responses: Array<{ option: string; count: number; color?: str
 
 function formatValue(value: number): string {
   if (!Number.isFinite(value)) return '—';
-  return value.toLocaleString('en-GB');
+  return value.toLocaleString(NUMBER_LOCALE);
 }
 
 export class SurveyResultsRenderer {

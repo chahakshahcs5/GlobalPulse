@@ -1,5 +1,6 @@
 'use client';
 
+import { NUMBER_LOCALE } from '@ai-news/media';
 import React, { useMemo, useState } from 'react';
 import type {
   DataExplorerBlock,
@@ -115,7 +116,7 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
                 {key}
               </div>
               <div className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
-                {value.toLocaleString()}
+                {value.toLocaleString(NUMBER_LOCALE)}
                 {metric.unit ? (
                   <span className="ml-1 text-xs font-normal text-slate-500">{metric.unit}</span>
                 ) : null}
@@ -241,7 +242,7 @@ export const DataExplorerBlockView: React.FC<{ data: DataExplorerBlock['data'] }
                 style={{ width: `${max ? (value / max) * 100 : 0}%` }}
               />
               <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
-                {value.toLocaleString()}
+                {value.toLocaleString(NUMBER_LOCALE)}
                 {metric.unit ? ` ${metric.unit}` : ''}
               </span>
             </li>
@@ -362,7 +363,7 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
                     </span>
                     {item.value !== undefined && (
                       <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
-                        {item.value.toLocaleString()}
+                        {item.value.toLocaleString(NUMBER_LOCALE)}
                         {item.unit ? ` ${item.unit}` : ''}
                       </span>
                     )}
@@ -412,7 +413,7 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
               </span>
               {item.value !== undefined && (
                 <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {item.value.toLocaleString()}
+                  {item.value.toLocaleString(NUMBER_LOCALE)}
                   {item.unit ? ` ${item.unit}` : ''}
                 </span>
               )}
@@ -439,7 +440,7 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
                 </span>
                 {item.value !== undefined && (
                   <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
-                    {item.value.toLocaleString()}
+                    {item.value.toLocaleString(NUMBER_LOCALE)}
                     {item.unit ? ` ${item.unit}` : ''}
                   </span>
                 )}
@@ -480,7 +481,7 @@ export const RankingBlockView: React.FC<{ data: RankingBlock['data'] }> = ({ dat
               </span>
               {item.value !== undefined && (
                 <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
-                  {item.value.toLocaleString()}
+                  {item.value.toLocaleString(NUMBER_LOCALE)}
                   {item.unit ? ` ${item.unit}` : ''}
                 </span>
               )}
@@ -615,7 +616,7 @@ export const CalculatorBlockView: React.FC<{ data: CalculatorBlock['data'] }> = 
           const display =
             computed === null
               ? '—'
-              : computed.toLocaleString(undefined, {
+              : computed.toLocaleString(NUMBER_LOCALE, {
                   maximumFractionDigits: output.precision ?? 2,
                 });
           return (
@@ -676,7 +677,7 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
           <span key={metric.label} className="text-slate-700 dark:text-slate-300">
             <span className="text-slate-500 dark:text-slate-400">{metric.label}</span>{' '}
             <span className="font-mono font-bold">
-              {metric.value.toLocaleString()} {metric.unit ?? data.currency}
+              {metric.value.toLocaleString(NUMBER_LOCALE)} {metric.unit ?? data.currency}
             </span>
           </span>
         ))}
@@ -710,7 +711,7 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
                 <tr key={metric.label}>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{metric.label}</td>
                   <td className="px-4 py-2.5 font-mono text-slate-900 dark:text-slate-100">
-                    {metric.value.toLocaleString()} {metric.unit ?? data.currency}
+                    {metric.value.toLocaleString(NUMBER_LOCALE)} {metric.unit ?? data.currency}
                   </td>
                   <td
                     className={`px-4 py-2.5 font-mono text-xs font-bold ${
@@ -760,7 +761,7 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
                 {metric.label}
               </div>
               <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                {metric.value.toLocaleString()}{' '}
+                {metric.value.toLocaleString(NUMBER_LOCALE)}{' '}
                 <span className="text-xs font-normal text-slate-500">
                   {metric.unit ?? data.currency}
                 </span>
@@ -810,7 +811,7 @@ export const FinancialBlockView: React.FC<{ data: FinancialBlock['data'] }> = ({
                     }}
                   />
                   <span className="ml-auto font-mono text-xs text-slate-700 dark:text-slate-300">
-                    {point.value.toLocaleString()}
+                    {point.value.toLocaleString(NUMBER_LOCALE)}
                     {point.metric ? ` ${point.metric}` : ''}
                   </span>
                 </li>
@@ -951,7 +952,7 @@ export const ElectionBlockView: React.FC<{ data: ElectionBlock['data'] }> = ({ d
                 <td className="px-3 py-2 font-semibold">{result.party}</td>
                 <td className="px-3 py-2">{result.candidate ?? '—'}</td>
                 <td className="px-3 py-2 font-mono">
-                  {result.votes !== undefined ? result.votes.toLocaleString() : '—'}
+                  {result.votes !== undefined ? result.votes.toLocaleString(NUMBER_LOCALE) : '—'}
                 </td>
                 <td className="px-3 py-2 font-mono">
                   {result.voteShare !== undefined ? `${result.voteShare}%` : '—'}

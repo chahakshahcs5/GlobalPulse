@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { SensitivityBlock } from '@ai-news/schemas';
-import { SensitivityRenderer } from '@ai-news/media';
+import { NUMBER_LOCALE, SensitivityRenderer } from '@ai-news/media';
 
 /**
  * Sensitivity analysis.
@@ -33,9 +33,9 @@ export const SensitivityBlockView: React.FC<{
     if (!Number.isFinite(value)) return '—';
     const abs = Math.abs(value);
     if (abs === 0) return '0';
-    if (abs >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    if (abs >= 1) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
+    if (abs >= 1000) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+    if (abs >= 1) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
+    return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 3 });
   };
 
   /*

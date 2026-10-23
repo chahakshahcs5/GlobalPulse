@@ -11,6 +11,7 @@ import type {
   TreemapBlock,
 } from '@ai-news/schemas';
 import {
+  NUMBER_LOCALE,
   computeNetworkLayout,
   D3ChartRenderer,
   networkGroupColor,
@@ -288,7 +289,8 @@ export const SurveyResultsBlockView: React.FC<{
           >
             <span className="font-semibold shrink-0">{response.option}:</span>
             <span>
-              {response.count.toLocaleString()} ({Math.round((response.count / total) * 100)}%)
+              {response.count.toLocaleString(NUMBER_LOCALE)} (
+              {Math.round((response.count / total) * 100)}%)
             </span>
           </li>
         ))}
@@ -335,7 +337,7 @@ export const SurveyResultsBlockView: React.FC<{
 
       <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
         {data.totalRespondents !== undefined && (
-          <p>Respondents: {data.totalRespondents.toLocaleString()}</p>
+          <p>Respondents: {data.totalRespondents.toLocaleString(NUMBER_LOCALE)}</p>
         )}
         {data.marginOfError !== undefined && <p>Margin of error: ±{data.marginOfError}%</p>}
         {data.fieldDates && <p>Field dates: {data.fieldDates}</p>}

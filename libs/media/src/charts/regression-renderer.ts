@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from '../format';
 import type { RegressionBlock } from '@ai-news/schemas';
 import { escapeXml } from '@ai-news/shared';
 import { RegressionModel } from '../analysis/regression-model';
@@ -213,6 +214,6 @@ function formatTick(value: number): string {
   if (!Number.isFinite(value)) return '—';
   const magnitude = Math.abs(value);
   if (magnitude !== 0 && (magnitude < 0.01 || magnitude >= 1e6)) return value.toExponential(2);
-  if (magnitude >= 1000) return value.toLocaleString('en-GB', { maximumFractionDigits: 0 });
+  if (magnitude >= 1000) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 0 });
   return String(Math.round(value * 1000) / 1000);
 }

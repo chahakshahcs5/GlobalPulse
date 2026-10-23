@@ -1,5 +1,6 @@
 'use client';
 
+import { NUMBER_LOCALE } from '@ai-news/media';
 import React from 'react';
 import type { PollBlock, LiveTickerBlock, ComparisonBlock, PollTally } from '@ai-news/schemas';
 import { useBlockRuntime } from './runtime';
@@ -163,7 +164,7 @@ export const PollBlockView: React.FC<{
             </span>
           )}
           <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400">
-            {totalVotes.toLocaleString()} {totalVotes === 1 ? 'vote' : 'votes'}
+            {totalVotes.toLocaleString(NUMBER_LOCALE)} {totalVotes === 1 ? 'vote' : 'votes'}
           </span>
         </div>
       </div>
@@ -464,7 +465,7 @@ export const LiveTickerBlockView: React.FC<{ data: LiveTickerBlock['data'] }> = 
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
                   {item.unit && item.unit !== '%' ? item.unit : ''}
-                  {item.value.toLocaleString(undefined, {
+                  {item.value.toLocaleString(NUMBER_LOCALE, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

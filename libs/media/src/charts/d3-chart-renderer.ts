@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from '../format';
 import type { ChartBlock } from '@ai-news/schemas';
 import { escapeXml } from '@ai-news/shared';
 import { DEFAULT_PALETTE, formatChartValue, getNiceTicks, safeColor } from './chart-helpers';
@@ -456,7 +457,7 @@ export class D3ChartRenderer {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">
         <text x="40" y="36" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>
         ${paths}
-        <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="24" font-weight="800" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${total.toLocaleString()}</text>
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="24" font-weight="800" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${total.toLocaleString(NUMBER_LOCALE)}</text>
         <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="12" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">Total Volume</text>
         ${legend}
       </svg>
@@ -565,7 +566,7 @@ export class D3ChartRenderer {
     return `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background-color: ${bgColor}; border-radius: 12px;" role="img" aria-label="${escapeXml(chartData.title)}">
         <text x="40" y="50" font-size="16" font-weight="600" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">${escapeXml(chartData.title)}</text>
-        <text x="40" y="130" font-size="64" font-weight="900" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${val.toLocaleString()}</text>
+        <text x="40" y="130" font-size="64" font-weight="900" fill="${textColor}" font-family="system-ui, -apple-system, sans-serif">${val.toLocaleString(NUMBER_LOCALE)}</text>
         <rect x="40" y="160" width="80" height="28" rx="6" fill="${deltaColor}" fill-opacity="0.15" />
         <text x="80" y="179" text-anchor="middle" font-size="14" font-weight="700" fill="${deltaColor}" font-family="system-ui, -apple-system, sans-serif">${deltaText}</text>
         <text x="132" y="180" font-size="13" fill="${subtextColor}" font-family="system-ui, -apple-system, sans-serif">vs prior period</text>
@@ -625,7 +626,7 @@ export class D3ChartRenderer {
 
         cellsSvg += `
           <rect x="${x + 2}" y="${y + 2}" width="${colWidth - 4}" height="${rowHeight - 4}" rx="4" fill="${cellFill}" stroke="${cellBorder}" stroke-width="1.5" />
-          <text x="${x + colWidth / 2}" y="${y + rowHeight / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${textFill}" font-family="system-ui, sans-serif">${val.toLocaleString()}</text>
+          <text x="${x + colWidth / 2}" y="${y + rowHeight / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${textFill}" font-family="system-ui, sans-serif">${val.toLocaleString(NUMBER_LOCALE)}</text>
         `;
       });
     });
@@ -651,9 +652,9 @@ export class D3ChartRenderer {
         <text x="40" y="36" font-size="20" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.title)}</text>
         ${chartData.subtitle ? `<text x="40" y="56" font-size="13" fill="${subtextColor}" font-family="system-ui, sans-serif">${escapeXml(chartData.subtitle)}</text>` : ''}
         ${cellsSvg}
-        <text x="${legX - 10}" y="${legY + 10}" text-anchor="end" font-size="10" fill="${subtextColor}" font-family="system-ui, sans-serif">${minVal.toLocaleString()}</text>
+        <text x="${legX - 10}" y="${legY + 10}" text-anchor="end" font-size="10" fill="${subtextColor}" font-family="system-ui, sans-serif">${minVal.toLocaleString(NUMBER_LOCALE)}</text>
         <rect x="${legX}" y="${legY}" width="${legW}" height="${legH}" rx="3" fill="url(#heatmapGrad)" stroke="${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}" />
-        <text x="${legX + legW + 10}" y="${legY + 10}" text-anchor="start" font-size="10" fill="${subtextColor}" font-family="system-ui, sans-serif">${maxVal.toLocaleString()}</text>
+        <text x="${legX + legW + 10}" y="${legY + 10}" text-anchor="start" font-size="10" fill="${subtextColor}" font-family="system-ui, sans-serif">${maxVal.toLocaleString(NUMBER_LOCALE)}</text>
         ${chartData.sourceAttribution ? `<text x="40" y="${height - 20}" font-size="11" fill="${subtextColor}" font-style="italic" font-family="system-ui, sans-serif">Source: ${escapeXml(chartData.sourceAttribution)}</text>` : ''}
       </svg>
     `;
@@ -794,7 +795,7 @@ export class D3ChartRenderer {
       const color = s.isTot ? '#3b82f6' : s.val >= 0 ? '#10b981' : '#ef4444';
       elements += `<rect x="${bx}" y="${topY}" width="${barW}" height="${bh}" rx="3" fill="${color}" />`;
 
-      const labelText = `${s.val > 0 && !s.isTot ? '+' : ''}${s.val.toLocaleString()}`;
+      const labelText = `${s.val > 0 && !s.isTot ? '+' : ''}${s.val.toLocaleString(NUMBER_LOCALE)}`;
       const labelY = topY - 6;
       elements += `<text x="${bx + barW / 2}" y="${labelY}" text-anchor="middle" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${labelText}</text>`;
 
@@ -872,11 +873,11 @@ export class D3ChartRenderer {
 
       const ax = centerX - 60 - lenA;
       elements += `<rect x="${ax}" y="${y}" width="${lenA}" height="${barH}" rx="3" fill="${colorA}" />`;
-      elements += `<text x="${ax - 8}" y="${y + barH / 2 + 4}" text-anchor="end" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${valA.toLocaleString()}</text>`;
+      elements += `<text x="${ax - 8}" y="${y + barH / 2 + 4}" text-anchor="end" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${valA.toLocaleString(NUMBER_LOCALE)}</text>`;
 
       const bx = centerX + 60;
       elements += `<rect x="${bx}" y="${y}" width="${lenB}" height="${barH}" rx="3" fill="${colorB}" />`;
-      elements += `<text x="${bx + lenB + 8}" y="${y + barH / 2 + 4}" text-anchor="start" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${valB.toLocaleString()}</text>`;
+      elements += `<text x="${bx + lenB + 8}" y="${y + barH / 2 + 4}" text-anchor="start" font-size="11" font-weight="700" fill="${textColor}" font-family="system-ui, sans-serif">${valB.toLocaleString(NUMBER_LOCALE)}</text>`;
     });
 
     if (chartData.sourceAttribution) {
@@ -951,8 +952,8 @@ export class D3ChartRenderer {
       elements += `<circle cx="${leftX}" cy="${y1}" r="4.5" fill="${bgColor}" stroke="${lineColor}" stroke-width="2" />`;
       elements += `<circle cx="${rightX}" cy="${y2}" r="4.5" fill="${bgColor}" stroke="${lineColor}" stroke-width="2" />`;
 
-      elements += `<text x="${leftX - 12}" y="${y1 + 4}" text-anchor="end" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(item.name)} <tspan fill="${subtextColor}">${item.startVal.toLocaleString()}</tspan></text>`;
-      elements += `<text x="${rightX + 12}" y="${y2 + 4}" text-anchor="start" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${item.endVal.toLocaleString()} <tspan fill="${lineColor}" font-weight="700">(${diffText})</tspan></text>`;
+      elements += `<text x="${leftX - 12}" y="${y1 + 4}" text-anchor="end" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${escapeXml(item.name)} <tspan fill="${subtextColor}">${item.startVal.toLocaleString(NUMBER_LOCALE)}</tspan></text>`;
+      elements += `<text x="${rightX + 12}" y="${y2 + 4}" text-anchor="start" font-size="11" font-weight="600" fill="${textColor}" font-family="system-ui, sans-serif">${item.endVal.toLocaleString(NUMBER_LOCALE)} <tspan fill="${lineColor}" font-weight="700">(${diffText})</tspan></text>`;
     });
 
     if (chartData.sourceAttribution) {

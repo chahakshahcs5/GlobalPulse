@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from '../format';
 import type { SensitivityBlock } from '@ai-news/schemas';
 import { escapeXml, evaluateExpression } from '@ai-news/shared';
 
@@ -246,7 +247,7 @@ function formatValue(value: number): string {
   if (!Number.isFinite(value)) return '—';
   const abs = Math.abs(value);
   if (abs === 0) return '0';
-  if (abs >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (abs >= 1) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
+  if (abs >= 1000) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+  if (abs >= 1) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
+  return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 3 });
 }

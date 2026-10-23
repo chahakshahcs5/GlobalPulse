@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { WhatIfBlock } from '@ai-news/schemas';
-import { WhatIfModel } from '@ai-news/media';
+import { NUMBER_LOCALE, WhatIfModel } from '@ai-news/media';
 
 const BREAKDOWN_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
@@ -21,7 +21,7 @@ export const WhatIfBlockView: React.FC<{ data: WhatIfBlock['data'] }> = ({ data 
   const scenario = React.useMemo(() => WhatIfModel.evaluate(data, values), [data, values]);
 
   const format = (value: number | null) =>
-    value === null ? '—' : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    value === null ? '—' : value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
 
   const setInput = (input: WhatIfBlock['data']['inputs'][number], raw: number) => {
     setValues((prev) => ({

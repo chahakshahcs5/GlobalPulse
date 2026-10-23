@@ -1,3 +1,4 @@
+export * from './format';
 export * from './charts/d3-chart-renderer';
 export * from './charts/uncertainty-renderer';
 export * from './charts/sensitivity-renderer';

@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from './format';
 import { View, Text } from 'react-native';
 import type {
   EvidenceBlock,
@@ -254,7 +255,7 @@ export function DataExplorerBlockItem({ block }: { block: DataExplorerBlock }) {
         <View key={key} style={styles.intelRowBetween}>
           <Text style={styles.intelText}>{key}</Text>
           <Text style={styles.chartValueNumber}>
-            {value.toLocaleString()}
+            {value.toLocaleString(NUMBER_LOCALE)}
             {metric?.unit ? ` ${metric.unit}` : ''}
           </Text>
         </View>
@@ -284,7 +285,7 @@ export function RankingBlockItem({ block }: { block: RankingBlock }) {
             <View style={styles.intelRow}>
               {item.value !== undefined ? (
                 <Text style={styles.chartValueNumber}>
-                  {item.value.toLocaleString()}
+                  {item.value.toLocaleString(NUMBER_LOCALE)}
                   {item.unit ? ` ${item.unit}` : ''}
                 </Text>
               ) : null}
@@ -377,7 +378,7 @@ export function FinancialBlockItem({ block }: { block: FinancialBlock }) {
             ) : null}
           </View>
           <Text style={styles.statValue}>
-            {metric.value.toLocaleString()}{' '}
+            {metric.value.toLocaleString(NUMBER_LOCALE)}{' '}
             <Text style={styles.statLabel}>{metric.unit ?? data.currency}</Text>
           </Text>
         </View>

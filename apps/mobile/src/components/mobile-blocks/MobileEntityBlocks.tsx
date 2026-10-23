@@ -7,6 +7,9 @@ import type {
 } from '@ai-news/schemas';
 import { styles } from './styles';
 
+/** The locale a date is written in, so a date reads the same on every phone. */
+const DATE_LOCALE = 'en-US';
+
 export function SourceBlockItem({ block }: { block: SourceBlock }) {
   const data = block.data || {};
   return (
@@ -14,7 +17,9 @@ export function SourceBlockItem({ block }: { block: SourceBlock }) {
       <View style={styles.badgeRow}>
         <Text style={styles.sourcePublisher}>{data.publisher}</Text>
         {data.publishedAt && (
-          <Text style={styles.sourceDate}>{new Date(data.publishedAt).toLocaleDateString()}</Text>
+          <Text style={styles.sourceDate}>
+            {new Date(data.publishedAt).toLocaleDateString(DATE_LOCALE)}
+          </Text>
         )}
       </View>
       <Text style={styles.sourceTitle}>{data.title}</Text>

@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from './format';
 import { View, Text, Image } from 'react-native';
 import type {
   AnomalyBlock,
@@ -39,7 +40,7 @@ export function SankeyBlockItem({ block }: { block: SankeyBlock }) {
               {link.source} → {link.target}
             </Text>
             <Text style={styles.intelText}>
-              {link.value.toLocaleString()}
+              {link.value.toLocaleString(NUMBER_LOCALE)}
               {data.unit ? ` ${data.unit}` : ''} ({share}%)
             </Text>
           </View>
@@ -70,7 +71,7 @@ export function TreemapBlockItem({ block }: { block: TreemapBlock }) {
           <View key={node.id} style={styles.intelListItem}>
             <Text style={styles.intelMeta}>{node.label}</Text>
             <Text style={styles.intelText}>
-              {(node.value ?? 0).toLocaleString()}
+              {(node.value ?? 0).toLocaleString(NUMBER_LOCALE)}
               {data.unit ? ` ${data.unit}` : ''} ({share}%)
             </Text>
           </View>
@@ -145,7 +146,7 @@ export function RegressionBlockItem({ block }: { block: RegressionBlock }) {
             {data.xLabel ? ` (${data.xLabel})` : ''}
           </Text>
           <Text style={styles.intelText}>
-            {point.y.toLocaleString()}
+            {point.y.toLocaleString(NUMBER_LOCALE)}
             {data.yLabel ? ` ${data.yLabel}` : ''}
           </Text>
         </View>
@@ -173,7 +174,7 @@ export function AnomalyBlockItem({ block }: { block: AnomalyBlock }) {
         <View key={`${point.x}-${index}`} style={styles.intelListItem}>
           <Text style={styles.intelMeta}>{point.x}</Text>
           <Text style={styles.intelText}>
-            {point.y.toLocaleString()}
+            {point.y.toLocaleString(NUMBER_LOCALE)}
             {data.unit ? ` ${data.unit}` : ''}
           </Text>
         </View>
@@ -202,14 +203,15 @@ export function SurveyResultsBlockItem({ block }: { block: SurveyResultsBlock })
         <View key={response.option} style={styles.intelListItem}>
           <Text style={styles.intelMeta}>{response.option}</Text>
           <Text style={styles.intelText}>
-            {response.count.toLocaleString()} ({Math.round((response.count / total) * 100)}%)
+            {response.count.toLocaleString(NUMBER_LOCALE)} (
+            {Math.round((response.count / total) * 100)}%)
           </Text>
         </View>
       ))}
 
       {data.totalRespondents !== undefined ? (
         <Text style={styles.sourceFootnote}>
-          Respondents: {data.totalRespondents.toLocaleString()}
+          Respondents: {data.totalRespondents.toLocaleString(NUMBER_LOCALE)}
           {data.marginOfError !== undefined ? ` · ±${data.marginOfError}%` : ''}
         </Text>
       ) : null}
@@ -281,7 +283,7 @@ export function MotionChartBlockItem({ block }: { block: MotionChartBlock }) {
               {String(row[labelKey ?? ''] ?? `Row ${index + 1}`)}
             </Text>
             <Text style={styles.chartValueNumber}>
-              {Number(row[valueKey ?? ''] ?? 0).toLocaleString()}
+              {Number(row[valueKey ?? ''] ?? 0).toLocaleString(NUMBER_LOCALE)}
             </Text>
           </View>
         ))}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { UncertaintyBlock } from '@ai-news/schemas';
-import { UncertaintyRenderer } from '@ai-news/media';
+import { NUMBER_LOCALE, UncertaintyRenderer } from '@ai-news/media';
 
 /**
  * Estimates with confidence intervals.
@@ -67,13 +67,13 @@ export const UncertaintyBlockView: React.FC<{
                     )}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-slate-900 dark:text-slate-100">
-                    {point.value.toLocaleString()} {data.unit}
+                    {point.value.toLocaleString(NUMBER_LOCALE)} {data.unit}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-slate-500 dark:text-slate-400">
-                    {point.low.toLocaleString()}
+                    {point.low.toLocaleString(NUMBER_LOCALE)}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-slate-500 dark:text-slate-400">
-                    {point.high.toLocaleString()}
+                    {point.high.toLocaleString(NUMBER_LOCALE)}
                   </td>
                   {data.intervalLabel && (
                     <td className="px-4 py-2.5 font-mono text-slate-500 dark:text-slate-400">
@@ -121,7 +121,7 @@ export const UncertaintyBlockView: React.FC<{
                   )}
                 </span>
                 <span className="font-mono text-slate-500 dark:text-slate-400">
-                  {point.value.toLocaleString()} {data.unit}
+                  {point.value.toLocaleString(NUMBER_LOCALE)} {data.unit}
                 </span>
               </div>
               <div className="relative mt-1.5 h-2 rounded-full bg-slate-100 dark:bg-slate-800">
@@ -138,8 +138,8 @@ export const UncertaintyBlockView: React.FC<{
                 />
               </div>
               <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-400 dark:text-slate-500">
-                <span>{point.low.toLocaleString()}</span>
-                <span>{point.high.toLocaleString()}</span>
+                <span>{point.low.toLocaleString(NUMBER_LOCALE)}</span>
+                <span>{point.high.toLocaleString(NUMBER_LOCALE)}</span>
               </div>
             </li>
           ))}
@@ -147,7 +147,8 @@ export const UncertaintyBlockView: React.FC<{
 
         {data.referenceValue !== undefined && (
           <p className="px-5 pb-3 text-xs text-slate-500 dark:text-slate-400">
-            {data.referenceLabel ?? 'Reference'}: {data.referenceValue.toLocaleString()} {data.unit}
+            {data.referenceLabel ?? 'Reference'}:{' '}
+            {data.referenceValue.toLocaleString(NUMBER_LOCALE)} {data.unit}
           </p>
         )}
       </section>

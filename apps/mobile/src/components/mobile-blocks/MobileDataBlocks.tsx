@@ -1,3 +1,4 @@
+import { NUMBER_LOCALE } from './format';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import React from 'react';
 import type {
@@ -49,7 +50,9 @@ export function ChartBlockItem({ block }: { block: ChartBlock }) {
           return (
             <View key={rIdx} style={styles.chartValueRow}>
               <Text style={styles.chartValueLabel}>{String(label)}</Text>
-              <Text style={styles.chartValueNumber}>{Number(val).toLocaleString()}</Text>
+              <Text style={styles.chartValueNumber}>
+                {Number(val).toLocaleString(NUMBER_LOCALE)}
+              </Text>
             </View>
           );
         })}
@@ -353,7 +356,7 @@ export function WhatIfBlockItem({ block }: { block: WhatIfBlock }) {
   const scenario = WhatIfModel.evaluate(data, WhatIfModel.defaultValues(data));
 
   const format = (value: number | null) =>
-    value === null ? '—' : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    value === null ? '—' : value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
 
   return (
     <View style={styles.mediaCard}>
@@ -470,9 +473,9 @@ export function SensitivityBlockItem({ block }: { block: SensitivityBlock }) {
     if (!Number.isFinite(value)) return '—';
     const abs = Math.abs(value);
     if (abs === 0) return '0';
-    if (abs >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    if (abs >= 1) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
+    if (abs >= 1000) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+    if (abs >= 1) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
+    return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 3 });
   };
 
   return (
@@ -531,9 +534,9 @@ export function UncertaintyBlockItem({ block }: { block: UncertaintyBlock }) {
     if (!Number.isFinite(value)) return '—';
     const abs = Math.abs(value);
     if (abs === 0) return '0';
-    if (abs >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    if (abs >= 1) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
+    if (abs >= 1000) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+    if (abs >= 1) return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 2 });
+    return value.toLocaleString(NUMBER_LOCALE, { maximumFractionDigits: 3 });
   };
 
   return (
