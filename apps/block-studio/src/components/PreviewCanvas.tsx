@@ -5,8 +5,11 @@ import {
   ArrowRight,
   BookOpen,
   Check,
+  Code,
   Copy,
+  Download,
   FilePlus2,
+  Maximize2,
   Monitor,
   Moon,
   Plus,
@@ -16,12 +19,16 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { StoryBlock } from '@ai-news/schemas';
-import type { StudioBlock, StudioVariant } from '@ai-news/block-studio';
+import type { StudioBlock, StudioVariant, StudioPayload } from '@ai-news/block-studio';
 import { BlockPreviewFrame } from './BlockPreviewFrame';
 import { VariantNameDialog } from './VariantNameDialog';
 import { SessionBadge } from './SessionBadge';
 import { storyUrl, type StoryContext } from './story-context';
 import type { StudioTheme, StudioViewport } from './StudioShell';
+import { ExportCodeDialog } from './ExportCodeDialog';
+import { FullscreenPreviewModal } from './FullscreenPreviewModal';
+import { LiveSimulatorControls, isRealtimeBlock } from './LiveSimulatorControls';
+import { extractBlockDataAsCsv, downloadCsvFile } from '../lib/export-csv';
 
 interface PreviewCanvasProps {
   block?: StudioBlock;
@@ -46,6 +53,8 @@ interface PreviewCanvasProps {
   connectedToComposer: boolean;
   onSendToComposer: () => void;
   onImportToStory: () => void;
+  payload?: StudioPayload;
+  onPayloadChange?: (payload: StudioPayload) => void;
 }
 
 /**
@@ -93,8 +102,25 @@ export function PreviewCanvas({
   connectedToComposer,
   onSendToComposer,
   onImportToStory,
+  payload,
+  onPayloadChange,
 }: PreviewCanvasProps) {
   const [copied, setCopied] = React.useState<'json' | 'block' | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = React.useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = React.useState(false);
+  const [csvDownloaded, setCsvDownloaded] = React.useState(false);
+
+  const csvContent = React.useMemo(() => {
+    return extractBlockDataAsCsv(previewBlock.blockType, previewBlock.data);
+  }, [previewBlock.blockType, previewBlock.data]);
+
+  const handleDownloadCsv = () => {
+    if (!csvContent) return;
+    downloadCsvFile(`${previewBlock.blockType}_${variant?.id ?? 'data'}.csv`, csvContent);
+    setCsvDownloaded(true);
+    setTimeout(() => setCsvDownloaded(false), 2000);
+  };
+
   /** The variant shown alongside the current one, when comparing. */
   const [compareWith, setCompareWith] = React.useState<string>('');
   /** Whether the "name this variant" dialog is open. */
@@ -308,6 +334,42 @@ export function PreviewCanvas({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {csvContent && (
+              <button
+                type="button"
+                onClick={handleDownloadCsv}
+                title="Download tabular data series as CSV"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-emerald-400 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+              >
+                {csvDownloaded ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                {csvDownloaded ? 'Downloaded' : 'Export CSV'}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setExportDialogOpen(true)}
+              title="Export React component, Iframe embed, or Schema.org JSON-LD"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-400 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
+            >
+              <Code className="h-3.5 w-3.5" />
+              Export Code
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFullscreenOpen(true)}
+              title="Open full-viewport modal with zoom controls"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              Fullscreen
+            </button>
+
             <button
               type="button"
               onClick={() => copy('json')}
@@ -453,6 +515,17 @@ export function PreviewCanvas({
                   </select>
                 </div>
               )}
+
+              {payload &&
+                onPayloadChange &&
+                isRealtimeBlock(block?.type ?? previewBlock.blockType) && (
+                  <LiveSimulatorControls
+                    blockType={block?.type ?? previewBlock.blockType}
+                    payload={payload}
+                    onChange={onPayloadChange}
+                    darkClass={darkClass}
+                  />
+                )}
             </div>
           </div>
 
@@ -487,6 +560,26 @@ export function PreviewCanvas({
             onSaveVariant(label);
             setNamingVariant(false);
           }}
+        />
+      )}
+
+      {exportDialogOpen && (
+        <ExportCodeDialog
+          block={previewBlock}
+          theme={theme}
+          variantId={variant?.id}
+          darkClass={darkClass}
+          onClose={() => setExportDialogOpen(false)}
+        />
+      )}
+
+      {fullscreenOpen && (
+        <FullscreenPreviewModal
+          block={previewBlock}
+          initialTheme={theme}
+          label={variant?.label}
+          darkClass={darkClass}
+          onClose={() => setFullscreenOpen(false)}
         />
       )}
 

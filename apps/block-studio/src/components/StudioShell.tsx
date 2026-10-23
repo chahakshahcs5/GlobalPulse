@@ -523,6 +523,8 @@ export function StudioShell() {
         connectedToComposer={Boolean(composerSession)}
         onSendToComposer={sendToComposer}
         onImportToStory={() => setImporting(true)}
+        payload={payload}
+        onPayloadChange={setPayload}
       />
 
       <DataInspector

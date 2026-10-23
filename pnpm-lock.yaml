@@ -162,6 +162,9 @@ importers:
       '@ai-news/schemas':
         specifier: workspace:*
         version: link:../../libs/schemas
+      '@ai-news/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
       lucide-react:
         specifier: ^1.48.0
         version: 1.48.0(react@19.3.0)

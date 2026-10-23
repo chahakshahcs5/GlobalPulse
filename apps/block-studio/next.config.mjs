@@ -7,6 +7,7 @@ const nextConfig = {
     '@ai-news/blocks-ui',
     '@ai-news/block-studio',
     '@ai-news/schemas',
+    '@ai-news/shared',
   ],
   // The studio loads real blocks from the newsroom API, so it needs the same
   // proxy the web portal uses.

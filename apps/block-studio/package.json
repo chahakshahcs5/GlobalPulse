@@ -13,6 +13,7 @@
     "@ai-news/block-studio": "workspace:*",
     "@ai-news/blocks-ui": "workspace:*",
     "@ai-news/schemas": "workspace:*",
+    "@ai-news/shared": "workspace:*",
     "lucide-react": "^1.48.0",
     "next": "^16.3.6",
     "react": "^19.3.0",
