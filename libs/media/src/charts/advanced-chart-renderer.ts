@@ -933,9 +933,16 @@ export class AdvancedChartRenderer {
       const r = Math.round(isDark ? 30 + ratio * 25 : 226 - ratio * 190);
       const g = Math.round(isDark ? 41 + ratio * 89 : 232 - ratio * 133);
       const b = Math.round(isDark ? 59 + ratio * 187 : 240 - ratio * 5);
+      /*
+       * A polygon's `points` are a list of coordinates, not a path.
+       *
+       * They are written `x,y x,y x,y`, so the cells are joined with a
+       * space. Joined with `L` they are read as path data, and the
+       * browser rejects the whole shape.
+       */
       const path = cell
         .map((position: [number, number]) => `${position[0].toFixed(2)},${position[1].toFixed(2)}`)
-        .join(' L');
+        .join(' ');
       elements += `<polygon points="${path}" fill="rgb(${r}, ${g}, ${b})" stroke="${canvas.bgColor}" stroke-width="1.5" data-label="${escapeXml(point.label)}"><title>${escapeXml(
         `${point.label}: ${point.value}`
       )}</title></polygon>`;
