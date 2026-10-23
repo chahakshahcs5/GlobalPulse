@@ -16,26 +16,21 @@ import { BlockItem } from '@ai-news/blocks-ui';
  */
 
 /** The markup a block's payload draws. */
-function markupFor(type: string, data: Record<string, unknown>): string | null {
-  try {
-    return renderToStaticMarkup(
-      React.createElement(BlockItem, {
-        // The block envelope is a union over every block type, and a probe
-        // is built from a payload that has already been checked against
-        // its own schema.
-        block: {
-          id: `probe_${type}`,
-          blockType: type,
-          sortOrder: 0,
-          data,
-        } as unknown as StoryBlock,
-        theme: 'light' as const,
-      })
-    );
-  } catch {
-    // A renderer that needs a browser cannot be checked here.
-    return null;
-  }
+function markupFor(type: string, data: Record<string, unknown>): string {
+  return renderToStaticMarkup(
+    React.createElement(BlockItem, {
+      // The block envelope is a union over every block type, and a probe
+      // is built from a payload that has already been checked against
+      // its own schema.
+      block: {
+        id: `probe_${type}`,
+        blockType: type,
+        sortOrder: 0,
+        data,
+      } as unknown as StoryBlock,
+      theme: 'light' as const,
+    })
+  );
 }
 
 /**
@@ -91,7 +86,7 @@ describe('Block Studio variants', () => {
         else pictures.set(markup, [{ id: variant.id, data: variant.data }]);
       }
 
-      if (drawn < 2) return;
+      expect(drawn).toBeGreaterThanOrEqual(2);
 
       const ignored: string[] = [];
       for (const group of pictures.values()) {

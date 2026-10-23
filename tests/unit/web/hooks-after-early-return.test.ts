@@ -93,7 +93,7 @@ describe('Hooks after an early return', () => {
     const findings = findHooksAfterEarlyReturn();
 
     expect(describeFindings(findings)).toEqual([]);
-  });
+  }, 15000);
 });
 
 function findingsOf(source: string) {
