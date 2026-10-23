@@ -62,6 +62,23 @@ describe('End-to-End Authentication & Cookie Session Flow', () => {
     expect(res.statusCode).toBe(409);
   });
 
+  it('rejects self-registration into a custom organization with 403 Forbidden', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        name: 'Infiltrator Reader',
+        email: 'infiltrator@external.com',
+        password: 'Password123!',
+        organizationId: 'org_private_tenant',
+      },
+    });
+
+    expect(res.statusCode).toBe(403);
+    const body = JSON.parse(res.body);
+    expect(body.error || body.message).toMatch(/restricted|invitation/i);
+  });
+
   it('authenticates user on login with correct password', async () => {
     const res = await app.inject({
       method: 'POST',

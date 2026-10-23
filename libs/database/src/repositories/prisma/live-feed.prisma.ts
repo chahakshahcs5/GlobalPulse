@@ -30,6 +30,7 @@ export class PrismaLiveFeedRepository implements ILiveFeedRepository {
           update: Record<string, unknown>;
         }) => Promise<PrismaLiveFeedRow>;
         findUnique: (args: { where: Record<string, unknown> }) => Promise<PrismaLiveFeedRow | null>;
+        findFirst: (args: { where: Record<string, unknown> }) => Promise<PrismaLiveFeedRow | null>;
         findMany: (args: {
           where?: Record<string, unknown>;
           orderBy?: Record<string, unknown>;
@@ -60,10 +61,16 @@ export class PrismaLiveFeedRepository implements ILiveFeedRepository {
     };
   }
 
-  async getFeed(key: string): Promise<LiveFeedRecord | null> {
+  async getFeed(key: string, organizationId?: string): Promise<LiveFeedRecord | null> {
     if (!this.feedClient) return null;
     try {
-      const row = await this.feedClient.findUnique({ where: { key } });
+      if (organizationId) {
+        const row = await this.feedClient.findFirst({
+          where: { key, organizationId },
+        });
+        if (row) return this.mapFeed(row);
+      }
+      const row = await this.feedClient.findFirst({ where: { key } });
       return row ? this.mapFeed(row) : null;
     } catch {
       return null;

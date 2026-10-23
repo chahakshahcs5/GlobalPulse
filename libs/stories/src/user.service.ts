@@ -13,7 +13,13 @@ import {
   LoginInputSchema,
   UpdatePreferencesInputSchema,
 } from '@ai-news/schemas';
-import { generateId, NotFoundError, ConflictError, UnauthorizedError } from '@ai-news/shared';
+import {
+  generateId,
+  NotFoundError,
+  ConflictError,
+  UnauthorizedError,
+  ForbiddenError,
+} from '@ai-news/shared';
 import { PasswordHasher, AuthService, ROLE_PERMISSIONS } from '@ai-news/auth';
 import type { StoryContext } from './story.service';
 
@@ -126,7 +132,13 @@ export class UserService {
    */
   async register(input: RegisterUserInput): Promise<{ user: NewsroomUser; token: string }> {
     const validated = RegisterUserInputSchema.parse(input);
-    const existing = await this.db.users.findByEmail(validated.email, validated.organizationId);
+    const targetOrgId = validated.organizationId || 'org_default';
+    if (targetOrgId !== 'org_default') {
+      throw new ForbiddenError(
+        'Direct registration into custom organizations is restricted. An invitation is required.'
+      );
+    }
+    const existing = await this.db.users.findByEmail(validated.email, targetOrgId);
     if (existing) {
       throw new ConflictError(`User with email "${validated.email}" is already registered.`);
     }
@@ -137,7 +149,7 @@ export class UserService {
 
     const newUser: NewsroomUser = {
       id: userId,
-      organizationId: validated.organizationId,
+      organizationId: targetOrgId,
       name: validated.name,
       email: validated.email.toLowerCase(),
       role: 'reader',

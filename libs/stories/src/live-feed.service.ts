@@ -28,8 +28,8 @@ export function liveFeedChannel(key: string): string {
 export class LiveFeedService {
   constructor(private readonly db: DatabaseService) {}
 
-  async getFeed(key: string): Promise<LiveFeed | null> {
-    const feed = await this.db.liveFeeds.getFeed(key);
+  async getFeed(key: string, ctx?: LiveFeedContext): Promise<LiveFeed | null> {
+    const feed = await this.db.liveFeeds.getFeed(key, ctx?.organizationId);
     return feed ? this.toLiveFeed(feed) : null;
   }
 
@@ -45,7 +45,7 @@ export class LiveFeedService {
    * render from the event alone rather than waiting for the next poll.
    */
   async setFeed(key: string, update: LiveFeedUpdate, ctx?: LiveFeedContext): Promise<LiveFeed> {
-    const previous = await this.db.liveFeeds.getFeed(key);
+    const previous = await this.db.liveFeeds.getFeed(key, ctx?.organizationId);
     const now = new Date().toISOString();
 
     const saved = await this.db.liveFeeds.saveFeed({

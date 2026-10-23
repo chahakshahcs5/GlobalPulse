@@ -171,8 +171,16 @@ export function createResolvers(database: DatabaseService = db): IResolvers {
       },
 
       getStory: async (_: unknown, { id }: { id: string }, ctx?: GraphQLContext) => {
-        const orgId = ctx?.organizationId || 'org_default';
-        return await storyService.getStory(id, orgId);
+        const orgId = ctx?.principal?.organizationId || ctx?.organizationId || 'org_default';
+        const story = await storyService.getStory(id, orgId);
+        const isEditor =
+          ctx?.principal &&
+          ctx.principal.role !== 'reader' &&
+          (ctx.principal.scopes || []).includes('news:write');
+        if (!isEditor && story && story.status !== 'PUBLISHED') {
+          return null;
+        }
+        return story;
       },
 
       getStoryVersions: async (

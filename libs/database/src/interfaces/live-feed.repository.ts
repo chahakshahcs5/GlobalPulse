@@ -20,7 +20,7 @@ export interface LiveFeedRecord {
 }
 
 export interface ILiveFeedRepository {
-  getFeed(key: string): Promise<LiveFeedRecord | null>;
+  getFeed(key: string, organizationId?: string): Promise<LiveFeedRecord | null>;
   listFeeds(organizationId?: string): Promise<LiveFeedRecord[]>;
   saveFeed(feed: LiveFeedRecord): Promise<LiveFeedRecord>;
 }

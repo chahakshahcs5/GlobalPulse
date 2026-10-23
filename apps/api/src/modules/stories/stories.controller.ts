@@ -14,6 +14,7 @@ import {
   Res,
   Inject,
   Optional,
+  NotFoundException,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import {
@@ -73,6 +74,10 @@ export class StoriesController {
   async listStories(@Query() query: unknown, @Principal() principal: AuthenticatedPrincipal) {
     const orgId = principal.organizationId;
     const validated = StoryFilterSchema.parse(query || {});
+    const isEditor = principal.role !== 'reader' && (principal.scopes || []).includes('news:write');
+    if (!isEditor) {
+      validated.status = 'PUBLISHED';
+    }
     const paginated = await this.storyService.listStoriesPaginated(validated, orgId);
     return ApiResponse.paginated(
       paginated.items,
@@ -206,7 +211,12 @@ export class StoriesController {
     @Param('id') id: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Story> {
-    return await this.storyService.getStory(id, principal.organizationId);
+    const story = await this.storyService.getStory(id, principal.organizationId);
+    const isEditor = principal.role !== 'reader' && (principal.scopes || []).includes('news:write');
+    if (!isEditor && story.status !== 'PUBLISHED') {
+      throw new NotFoundException(`Story with id "${id}" not found.`);
+    }
+    return story;
   }
 
   @Get('slug/:slug')
@@ -215,7 +225,12 @@ export class StoriesController {
     @Param('slug') slug: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Story> {
-    return await this.storyService.getStoryBySlug(slug, principal.organizationId);
+    const story = await this.storyService.getStoryBySlug(slug, principal.organizationId);
+    const isEditor = principal.role !== 'reader' && (principal.scopes || []).includes('news:write');
+    if (!isEditor && story.status !== 'PUBLISHED') {
+      throw new NotFoundException(`Story with slug "${slug}" not found.`);
+    }
+    return story;
   }
 
   @Put(':id')

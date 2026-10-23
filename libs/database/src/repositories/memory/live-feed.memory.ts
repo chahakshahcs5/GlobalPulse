@@ -4,9 +4,23 @@ import type { ILiveFeedRepository, LiveFeedRecord } from '../../interfaces/live-
 export class MemoryLiveFeedRepository implements ILiveFeedRepository {
   private feeds = new Map<string, LiveFeedRecord>();
 
-  async getFeed(key: string): Promise<LiveFeedRecord | null> {
-    const feed = this.feeds.get(key);
-    return feed ? { ...feed, items: feed.items.map((i) => ({ ...i })) } : null;
+  private storageKey(key: string, organizationId?: string): string {
+    return organizationId ? `${organizationId}:${key}` : key;
+  }
+
+  async getFeed(key: string, organizationId?: string): Promise<LiveFeedRecord | null> {
+    if (organizationId) {
+      const feed = this.feeds.get(this.storageKey(key, organizationId));
+      if (feed) return { ...feed, items: feed.items.map((i) => ({ ...i })) };
+    }
+    const legacy = this.feeds.get(key);
+    if (
+      legacy &&
+      (!organizationId || !legacy.organizationId || legacy.organizationId === organizationId)
+    ) {
+      return { ...legacy, items: legacy.items.map((i) => ({ ...i })) };
+    }
+    return null;
   }
 
   async listFeeds(organizationId?: string): Promise<LiveFeedRecord[]> {
@@ -22,7 +36,8 @@ export class MemoryLiveFeedRepository implements ILiveFeedRepository {
       ...feed,
       items: feed.items.map((i: LiveFeedItem) => ({ ...i })),
     };
-    this.feeds.set(stored.key, stored);
+    const key = this.storageKey(stored.key, stored.organizationId);
+    this.feeds.set(key, stored);
     return { ...stored, items: stored.items.map((i) => ({ ...i })) };
   }
 

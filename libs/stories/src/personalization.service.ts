@@ -57,10 +57,13 @@ export class PersonalizationService {
     const limit = Math.min(options.limit || 20, 50);
 
     // 1. Fetch all published stories in organization
-    const stories = await this.db.stories.list({
-      status: 'PUBLISHED',
-      limit: 150,
-    });
+    const stories = await this.db.stories.list(
+      {
+        status: 'PUBLISHED',
+        limit: 150,
+      },
+      orgId
+    );
 
     if (stories.length === 0) {
       return { items: [], hasMore: false, limit };
@@ -226,10 +229,13 @@ export class PersonalizationService {
     const orgId = options.organizationId || 'org_default';
     const limit = Math.min(options.limit || 20, 50);
 
-    const stories = await this.db.stories.list({
-      status: 'PUBLISHED',
-      limit: 150,
-    });
+    const stories = await this.db.stories.list(
+      {
+        status: 'PUBLISHED',
+        limit: 150,
+      },
+      orgId
+    );
 
     if (stories.length === 0) {
       return { items: [], hasMore: false, limit, totalCount: 0 };

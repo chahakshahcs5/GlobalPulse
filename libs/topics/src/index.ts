@@ -93,10 +93,13 @@ export class TopicService {
       };
     }
 
-    const allStories = await this.db.stories.list({
-      status: 'PUBLISHED',
-      limit: 100,
-    });
+    const allStories = await this.db.stories.list(
+      {
+        status: 'PUBLISHED',
+        limit: 100,
+      },
+      orgId
+    );
 
     const topicSlug = topic.slug.toLowerCase();
     const topicId = topic.id;
@@ -244,7 +247,7 @@ export class TopicService {
    */
   async getTopicKnowledgeGraph(orgId: string = 'org_default'): Promise<TopicKnowledgeGraph> {
     const topics = await this.db.topics.list(orgId);
-    const stories = await this.db.stories.list({ status: 'PUBLISHED', limit: 150 });
+    const stories = await this.db.stories.list({ status: 'PUBLISHED', limit: 150 }, orgId);
 
     const storyCountByTopic = new Map<string, number>();
     const edgeWeights = new Map<string, number>();

@@ -73,6 +73,13 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     expect(res.statusCode).toBe(200);
     const story = JSON.parse(res.body);
     expect(story.status).toBe('DRAFT');
+
+    // Reader must not be able to read this draft story
+    const readerRes = await app.inject({
+      method: 'GET',
+      url: `/api/stories/${storyId}`,
+    });
+    expect(readerRes.statusCode).toBe(404);
   });
 
   it('approves and publishes a story via POST /api/stories/:id/approve', async () => {
@@ -93,5 +100,12 @@ describe('Editorial Review & Moderation Workflow Integration Tests', () => {
     const story = JSON.parse(res.body);
     expect(story.status).toBe('PUBLISHED');
     expect(story.publishedAt).toBeDefined();
+
+    // Now reader can read the published story
+    const readerRes = await app.inject({
+      method: 'GET',
+      url: `/api/stories/${storyId}`,
+    });
+    expect(readerRes.statusCode).toBe(200);
   });
 });
