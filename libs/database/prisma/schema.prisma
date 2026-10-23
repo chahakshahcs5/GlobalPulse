@@ -187,6 +187,10 @@ model Story {
   authorId             String
   idempotencyKey       String?
   publishedAt          DateTime?
+  scheduledPublishAt   DateTime?
+  isSubscriberOnly     Boolean       @default(false)
+  wordCount            Int?
+  readingTimeMinutes   Int?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -203,8 +207,9 @@ model Story {
 
   @@unique([organizationId, slug])
   @@index([organizationId, status])
-  @@index([organizationId, idempotencyKey])
+  @@unique([organizationId, idempotencyKey])
   @@index([organizationId, publishedAt])
+  @@index([organizationId, scheduledPublishAt])
   @@map("stories")
 }
 

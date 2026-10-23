@@ -64,6 +64,10 @@ interface PrismaStoryRow {
   currentVersionNumber: number;
   currentVersionId?: string | null;
   heroImageUrl?: string | null;
+  isSubscriberOnly?: boolean;
+  scheduledPublishAt?: Date | null;
+  wordCount?: number | null;
+  readingTimeMinutes?: number | null;
   publishedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -225,6 +229,10 @@ export class PrismaStoryRepository implements IStoryRepository {
         categories: story.categories || [],
         currentVersionNumber: story.currentVersionNumber || 1,
         heroImageUrl: story.heroImageUrl,
+        isSubscriberOnly: story.isSubscriberOnly ?? false,
+        scheduledPublishAt: story.scheduledPublishAt ? new Date(story.scheduledPublishAt) : null,
+        wordCount: story.wordCount ?? null,
+        readingTimeMinutes: story.readingTimeMinutes ?? null,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
         blocks: {
           create: (story.blocks || []).map((b, idx) => ({
@@ -257,6 +265,10 @@ export class PrismaStoryRepository implements IStoryRepository {
         // many there are. Without this the id is lost on every commit.
         currentVersionId: story.currentVersionId ?? null,
         heroImageUrl: story.heroImageUrl,
+        isSubscriberOnly: story.isSubscriberOnly ?? false,
+        scheduledPublishAt: story.scheduledPublishAt ? new Date(story.scheduledPublishAt) : null,
+        wordCount: story.wordCount ?? null,
+        readingTimeMinutes: story.readingTimeMinutes ?? null,
         publishedAt: story.publishedAt ? new Date(story.publishedAt) : null,
       },
     });
@@ -391,19 +403,43 @@ export class PrismaStoryRepository implements IStoryRepository {
   }
 
   async saveBlocks(storyId: string, blocks: StoryBlock[]): Promise<void> {
-    await this.blockClient.deleteMany({ where: { storyId } });
-    if (blocks.length > 0) {
-      await this.blockClient.createMany({
-        data: blocks.map((b, idx) => ({
-          id: b.id,
-          storyId,
-          blockType: b.blockType,
-          sortOrder: b.sortOrder ?? idx,
-          data: b.data,
-          metadata: b.metadata || null,
-          citationIds: b.citationIds || [],
-        })),
+    const prismaClient = this.prisma as {
+      $transaction?: (fn: (tx: Record<string, unknown>) => Promise<void>) => Promise<void>;
+    };
+
+    if (typeof prismaClient.$transaction === 'function') {
+      await prismaClient.$transaction(async (tx) => {
+        const blockClient = tx.storyBlock as typeof this.blockClient;
+        await blockClient.deleteMany({ where: { storyId } });
+        if (blocks.length > 0) {
+          await blockClient.createMany({
+            data: blocks.map((b, idx) => ({
+              id: b.id,
+              storyId,
+              blockType: b.blockType,
+              sortOrder: b.sortOrder ?? idx,
+              data: b.data,
+              metadata: b.metadata || null,
+              citationIds: b.citationIds || [],
+            })),
+          });
+        }
       });
+    } else {
+      await this.blockClient.deleteMany({ where: { storyId } });
+      if (blocks.length > 0) {
+        await this.blockClient.createMany({
+          data: blocks.map((b, idx) => ({
+            id: b.id,
+            storyId,
+            blockType: b.blockType,
+            sortOrder: b.sortOrder ?? idx,
+            data: b.data,
+            metadata: b.metadata || null,
+            citationIds: b.citationIds || [],
+          })),
+        });
+      }
     }
   }
 
@@ -661,6 +697,10 @@ export class PrismaStoryRepository implements IStoryRepository {
       currentVersionNumber: row.currentVersionNumber,
       currentVersionId: row.currentVersionId ?? undefined,
       heroImageUrl: row.heroImageUrl || undefined,
+      isSubscriberOnly: row.isSubscriberOnly ?? false,
+      scheduledPublishAt: row.scheduledPublishAt ? row.scheduledPublishAt.toISOString() : undefined,
+      wordCount: row.wordCount ?? undefined,
+      readingTimeMinutes: row.readingTimeMinutes ?? undefined,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

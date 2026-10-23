@@ -1,5 +1,8 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { prismaManager } from '../client/prisma-client';
 import { logger } from '@ai-news/observability';
+
+export const transactionContext = new AsyncLocalStorage<Record<string, unknown>>();
 
 export type TransactionWork<T> = (tx: unknown) => Promise<T>;
 
@@ -9,7 +12,9 @@ export class TransactionManager {
     if (client && prismaManager.isDatabaseConnected()) {
       logger.debug('Executing database transaction via Prisma.$transaction');
       return client.$transaction(async (tx: unknown) => {
-        return work(tx);
+        return transactionContext.run(tx as Record<string, unknown>, async () => {
+          return work(tx);
+        });
       });
     }
 

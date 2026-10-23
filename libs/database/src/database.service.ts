@@ -87,7 +87,7 @@ import {
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
-import { TransactionManager } from './transactions/transaction-manager';
+import { TransactionManager, transactionContext } from './transactions/transaction-manager';
 import { logger } from '@ai-news/observability';
 
 export interface DatabaseServiceOptions {
@@ -240,7 +240,8 @@ export class DatabaseService {
     try {
       const client = await prismaManager.getClient();
       if (client) {
-        const getPrisma = () => client;
+        const getPrisma = () =>
+          (transactionContext.getStore() ?? client) as unknown as Record<string, unknown>;
         this.stories = new PrismaStoryRepository(getPrisma);
         this.events = new PrismaEventRepository(getPrisma);
         this.topics = new PrismaTopicRepository(getPrisma);
