@@ -7,3 +7,4 @@ test-results
 coverage
 pnpm-lock.yaml
 *.log
+next-env.d.ts
