@@ -56,6 +56,10 @@ export class QueueManager {
     logger.info(`Registered job handler for [${type}]`);
   }
 
+  public getHandler(type: JobType): JobHandler | undefined {
+    return this.handlers.get(type);
+  }
+
   public async enqueue<T = unknown>(
     type: JobType,
     payload: T,
@@ -95,7 +99,7 @@ export class QueueManager {
     metrics.incrementCounter('worker_jobs_enqueued_total', 1, { jobType: type });
     logger.info(`Enqueued background job [${id}] of type [${type}]`);
 
-    if (this.autoProcess) {
+    if (this.autoProcess && (!this.isRedisActive || this.handlers.has(type))) {
       // Non-blocking trigger of processor (honors requested delay in memory mode)
       this.scheduleProcessing(options.delayMs);
     }
@@ -145,6 +149,10 @@ export class QueueManager {
 
     const handler = this.handlers.get(job.type);
     if (!handler) {
+      if (this.isRedisActive) {
+        // Handled by external BullMQ worker process
+        return job;
+      }
       job.status = 'failed';
       job.error = `No handler registered for job type: ${job.type}`;
       metrics.incrementCounter('worker_jobs_failed_total', 1, { jobType: job.type });

@@ -4,21 +4,8 @@ import type { DatabaseService } from '@ai-news/database';
 import { StoryService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { generateId } from '@ai-news/shared';
+import { sharedMediaRegistry } from '@ai-news/media';
 import { mcpJsonResponse } from './tool-helpers';
-
-// Registry for media assets and variants
-const mediaRegistry = new Map<
-  string,
-  {
-    id: string;
-    mediaType: string;
-    title: string;
-    url: string;
-    metadata: Record<string, unknown>;
-    variants: Array<{ format: string; width: number; height: number; url: string }>;
-    createdAt: string;
-  }
->();
 
 export function registerMediaTools(
   server: McpServer,
@@ -37,7 +24,7 @@ export function registerMediaTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
 
-      const media = mediaRegistry.get(mediaId);
+      const media = sharedMediaRegistry.get(mediaId);
       if (!media) {
         throw new Error(`Media asset "${mediaId}" not found`);
       }
@@ -305,7 +292,7 @@ export function registerMediaTools(
         variants: [],
         createdAt: new Date().toISOString(),
       };
-      mediaRegistry.set(mediaId, record);
+      sharedMediaRegistry.set(mediaId, record);
 
       return mcpJsonResponse({ message: 'Media asset registered.', mediaId, asset: record });
     }
@@ -325,7 +312,7 @@ export function registerMediaTools(
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:media');
 
-      const media = mediaRegistry.get(params.mediaId);
+      const media = sharedMediaRegistry.get(params.mediaId);
       if (!media) {
         throw new Error(`Media asset "${params.mediaId}" not found`);
       }

@@ -7,8 +7,11 @@ import {
   IngestionFetchPayload,
   AlertEvaluationPayload,
   StoryGraphIndexPayload,
+  bullQueue,
+  JobType,
+  JobRecord,
 } from '@ai-news/jobs';
-import { s3Storage } from '@ai-news/media';
+import { s3Storage, sharedMediaRegistry } from '@ai-news/media';
 import { logger } from '@ai-news/observability';
 import { db as defaultDatabase, type DatabaseService } from '@ai-news/database';
 import { AlertService, IngestionService, KnowledgeGraphService } from '@ai-news/stories';
@@ -92,6 +95,7 @@ export class WorkerService {
     this.queue = queue;
     this.database = database;
     this.registerAllHandlers();
+    this.registerBullQueueWorker();
   }
 
   private registerAllHandlers(): void {
@@ -144,6 +148,12 @@ export class WorkerService {
         }
 
         updateProgress(100);
+        const existingAsset = sharedMediaRegistry.get(mediaId);
+        if (existingAsset) {
+          existingAsset.variants = variants;
+          sharedMediaRegistry.set(mediaId, existingAsset);
+        }
+
         return {
           mediaId,
           totalVariants: variants.length,
@@ -378,5 +388,29 @@ export class WorkerService {
 
   public getQueue(): QueueManager {
     return this.queue;
+  }
+
+  private registerBullQueueWorker(): void {
+    if (bullQueue.isBullActive()) {
+      bullQueue.registerWorker('globalpulse-jobs', async (job) => {
+        const handler = this.queue.getHandler(job.name as JobType);
+        if (handler) {
+          const fakeJob: JobRecord = {
+            id: job.id,
+            type: job.name as JobType,
+            payload: job.data,
+            status: 'active',
+            progress: 0,
+            attempts: 1,
+            maxAttempts: 3,
+            createdAt: new Date().toISOString(),
+          };
+          return handler(fakeJob, () => {});
+        }
+        logger.warn(`No handler registered for BullMQ job type [${job.name}]`);
+        return null;
+      });
+      logger.info('Registered BullMQ worker listener for queue [globalpulse-jobs]');
+    }
   }
 }

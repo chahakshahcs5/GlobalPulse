@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { defaultQueue } from '@ai-news/jobs';
-import { s3Storage } from '@ai-news/media';
+import { s3Storage, sharedMediaRegistry } from '@ai-news/media';
 import { generateId } from '@ai-news/shared';
 import { ApiResponse } from '../../common/response/api-response';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
@@ -41,7 +41,6 @@ export interface MediaAsset {
 // mode, the worker service) can consume media jobs. A detached QueueManager
 // instance would enqueue jobs that nothing ever processes.
 const queue = defaultQueue;
-const mediaRegistry = new Map<string, MediaAsset>();
 
 @Controller('api/media')
 @UseGuards(NestAuthGuard)
@@ -71,7 +70,7 @@ export class MediaController {
       ],
     };
 
-    mediaRegistry.set(mediaId, asset);
+    sharedMediaRegistry.set(mediaId, asset);
 
     // Queue background variant processing job (processed by worker into MinIO S3)
     await queue.enqueue('media.process_variant', {
@@ -93,7 +92,7 @@ export class MediaController {
   @Get([':id', 'assets/:id'])
   @RequireScope('news:read')
   async getMedia(@Param('id') id: string) {
-    const asset = mediaRegistry.get(id);
+    const asset = sharedMediaRegistry.get(id);
     if (!asset) {
       throw new NotFoundException(`Media asset [${id}] not found`);
     }
