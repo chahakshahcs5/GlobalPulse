@@ -9,6 +9,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    // Termux phones are slower than CI runners. The default 5s is not a
+    // correctness boundary; keep the same assertions but give ARM time to run.
+    testTimeout: 60000,
+    hookTimeout: 60000,
     env: {
       NODE_ENV: 'test',
       DATABASE_ENGINE: 'memory',

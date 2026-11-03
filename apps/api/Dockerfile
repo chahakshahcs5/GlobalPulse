@@ -4,7 +4,7 @@
 # ==============================================================================
 
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 
 WORKDIR /app
 
@@ -39,8 +39,6 @@ COPY libs/api-client/package.json ./libs/api-client/
 COPY libs/blocks-ui/package.json ./libs/blocks-ui/
 COPY libs/block-studio/package.json ./libs/block-studio/
 
-# Copy Prisma schema needed for database package postinstall
-COPY libs/database/prisma/schema.prisma ./libs/database/prisma/schema.prisma
 
 # Install workspace dependencies
 RUN pnpm install --frozen-lockfile
@@ -48,8 +46,6 @@ RUN pnpm install --frozen-lockfile
 # Copy full monorepo source tree
 COPY . .
 
-# Generate Prisma Client bindings for PostgreSQL database engine
-RUN DATABASE_URL='postgresql://postgres:postgres@localhost:5432/ai_news?schema=public' pnpm --filter @ai-news/database exec prisma generate --schema=prisma/schema.prisma
 
 # Expose API Gateway port
 EXPOSE 3000

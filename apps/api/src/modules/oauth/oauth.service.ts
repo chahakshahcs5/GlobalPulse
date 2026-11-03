@@ -7,7 +7,17 @@ import {
   type NewsScope,
   type UserRole,
 } from '@ai-news/auth';
+import { DEFAULT_API_PORT, DEFAULT_WEB_PORT, localOrigin } from '@ai-news/shared';
 import { appConfig } from '../../config/configuration';
+
+const devRedirectUris = (ports: number[]): string[] =>
+  ports.flatMap((port) =>
+    [localOrigin(port), localOrigin(port, '127.0.0.1')].map((origin) => `${origin}/oauth/callback`)
+  );
+
+// New local ports plus the legacy container ports, so OAuth clients that were
+// registered against the old compose file keep working.
+const LOCAL_REDIRECT_URIS = devRedirectUris([DEFAULT_API_PORT, DEFAULT_WEB_PORT, 3000, 3002]);
 
 export interface RegisteredOAuthClient {
   clientId: string;
@@ -91,13 +101,7 @@ export class OAuthService {
         allowedGrants: ['authorization_code'],
         isPublic: true,
         allowedScopes: DEFAULT_SCOPES,
-        redirectUris: [
-          'http://localhost:3000/oauth/callback',
-          'http://127.0.0.1:3000/oauth/callback',
-          'http://localhost:3002/oauth/callback',
-          'http://127.0.0.1:3002/oauth/callback',
-          'https://claude.ai/oauth/callback',
-        ],
+        redirectUris: [...LOCAL_REDIRECT_URIS, 'https://claude.ai/oauth/callback'],
       },
       {
         clientId: 'gemini_agent_service',
@@ -106,8 +110,7 @@ export class OAuthService {
         allowedGrants: ['client_credentials', 'authorization_code'],
         allowedScopes: DEFAULT_SCOPES,
         redirectUris: [
-          'http://localhost:3000/oauth/callback',
-          'http://localhost:3002/oauth/callback',
+          ...LOCAL_REDIRECT_URIS,
           'https://gemini.google.com/oauth/callback',
           'https://spark.gemini.google.com/oauth/callback',
           'https://oauth.googleusercontent.com',
@@ -119,11 +122,7 @@ export class OAuthService {
         clientType: 'chatgpt',
         allowedGrants: ['client_credentials', 'authorization_code'],
         allowedScopes: DEFAULT_SCOPES,
-        redirectUris: [
-          'http://localhost:3000/oauth/callback',
-          'http://localhost:3002/oauth/callback',
-          'https://chatgpt.com/api/auth/callback',
-        ],
+        redirectUris: [...LOCAL_REDIRECT_URIS, 'https://chatgpt.com/api/auth/callback'],
       },
       {
         clientId: 'globalpulse_admin_client',

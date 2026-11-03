@@ -1,4 +1,5 @@
 import type { StoryBlock } from '@ai-news/schemas';
+import { DEFAULT_WEB_PORT, localOrigin } from '@ai-news/shared';
 
 /**
  * The story the studio is working in.
@@ -25,7 +26,7 @@ export interface StoryContext {
 
 /** Where the newsroom CMS lives. */
 export function cmsUrl(): string {
-  return process.env.NEXT_PUBLIC_CMS_URL ?? 'http://localhost:3002';
+  return process.env.NEXT_PUBLIC_CMS_URL ?? localOrigin(DEFAULT_WEB_PORT);
 }
 
 /** The link back to the story the studio is working in. */

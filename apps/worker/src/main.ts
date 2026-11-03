@@ -1,6 +1,8 @@
-import { defaultQueue } from '@ai-news/jobs';
+import './env';
+
+import { bullQueue, defaultQueue } from '@ai-news/jobs';
 import { logger } from '@ai-news/observability';
-import { db as defaultDatabase, type DatabaseService } from '@ai-news/database';
+import { db as defaultDatabase, prismaManager, type DatabaseService } from '@ai-news/database';
 import { WorkerService } from './worker.service';
 
 export interface SchedulerOptions {
@@ -104,8 +106,39 @@ export async function bootstrap() {
 }
 
 if (require.main === module) {
-  bootstrap().catch((err) => {
-    logger.error(`Worker startup failed: ${err.message}`, err);
-    process.exit(1);
-  });
+  // The worker has no listening socket. A ref'd timer keeps the process alive
+  // even when Redis is absent (memory fallback), and gives Ctrl+C something to
+  // interrupt cleanly on Windows and Termux alike.
+  const keepAlive = setInterval(() => undefined, 60_000);
+
+  bootstrap()
+    .then(({ stopScheduler }) => {
+      let shuttingDown = false;
+      const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGBREAK'];
+      for (const signal of signals) {
+        process.once(signal, async () => {
+          if (shuttingDown) return;
+          shuttingDown = true;
+          logger.info(`Received ${signal}. Shutting down background worker...`);
+          clearInterval(keepAlive);
+          stopScheduler();
+          try {
+            await bullQueue.closeAll();
+            await defaultQueue.disconnect();
+            await prismaManager.disconnect();
+            process.exit(0);
+          } catch (err: unknown) {
+            logger.error(
+              `Error during worker shutdown: ${err instanceof Error ? err.message : String(err)}`
+            );
+            process.exit(1);
+          }
+        });
+      }
+    })
+    .catch((err) => {
+      clearInterval(keepAlive);
+      logger.error(`Worker startup failed: ${err.message}`, err);
+      process.exit(1);
+    });
 }

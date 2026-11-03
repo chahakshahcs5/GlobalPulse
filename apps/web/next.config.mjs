@@ -1,6 +1,26 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
+import dotenv from 'dotenv';
+
+// The repository keeps one `.env` at the root. Next only looks inside the app
+// directory, so load the root file explicitly before reading any variables.
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+const localEnv = join(repoRoot, '.env.local');
+if (existsSync(localEnv)) dotenv.config({ path: localEnv });
+dotenv.config({ path: join(repoRoot, '.env') });
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Windows and Linux build the same tree. On Termux, where no native SWC
+  // binary exists, either build on Windows and ship .next/standalone, or use
+  // the @next/swc-wasm-nodejs fallback documented in docs/platforms.md.
+  output: 'standalone',
+  // The portal does not use next/image. Turning optimisation off keeps sharp
+  // (a native optional dependency of Next) out of the runtime path on Termux,
+  // where no bionic build exists.
+  images: { unoptimized: true },
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   transpilePackages: [
     '@ai-news/schemas',
@@ -36,8 +56,11 @@ const nextConfig = {
   // Proxy API requests to the backend during local development
   // so the browser doesn't need CORS and the frontend can use relative URLs
   async rewrites() {
+    const apiPort = process.env.PORT || '4000';
     const apiUrl =
-      process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
+      process.env.API_INTERNAL_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      `http://localhost:${apiPort}`;
     return [
       {
         source: '/api/:path*',

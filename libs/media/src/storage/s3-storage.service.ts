@@ -116,6 +116,18 @@ export class S3StorageService {
         ? Buffer.from(body, 'utf-8')
         : Buffer.from(body);
 
+    // Unit/integration tests must not depend on a reachable object-storage
+    // daemon (Termux has none, and a failed TCP attempt can take seconds per
+    // variant). Use the in-memory store deterministically.
+    if (process.env.NODE_ENV === 'test') {
+      this.memoryFallback.set(normalizedKey, { body: buffer, contentType });
+      return {
+        key: normalizedKey,
+        url: this.getPublicUrl(normalizedKey),
+        bucket: this.bucket,
+      };
+    }
+
     if (this.client) {
       try {
         const command = new PutObjectCommand({

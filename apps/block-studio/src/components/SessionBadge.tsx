@@ -3,6 +3,7 @@
 import React from 'react';
 import { LogIn, LogOut, UserRound, Loader2 } from 'lucide-react';
 import { getCurrentUser, loginUser, logoutUser } from '@ai-news/api-client';
+import { DEFAULT_WEB_PORT, localOrigin } from '@ai-news/shared';
 
 /**
  * The studio's session.
@@ -17,7 +18,8 @@ import { getCurrentUser, loginUser, logoutUser } from '@ai-news/api-client';
  */
 
 /** Where the newsroom portal lives, so the studio can point at it. */
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL?.replace(/\/$/, '') ?? 'http://localhost:3002';
+const WEB_URL =
+  process.env.NEXT_PUBLIC_WEB_URL?.replace(/\/$/, '') ?? localOrigin(DEFAULT_WEB_PORT);
 
 interface SessionUser {
   id: string;

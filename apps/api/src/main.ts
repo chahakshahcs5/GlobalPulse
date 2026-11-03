@@ -4,7 +4,9 @@
 import './env';
 
 import { startServer } from './server';
-import { db } from '@ai-news/database';
+import { db, prismaManager } from '@ai-news/database';
+import { bullQueue, defaultQueue } from '@ai-news/jobs';
+import { cacheService } from './common/cache/cache.service';
 import { createLogger } from '@ai-news/observability';
 import {
   setStoryBroadcaster,
@@ -99,14 +101,22 @@ async function bootstrap() {
 `;
   console.log(banner);
 
-  // Graceful shutdown handling
-  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
+  // Graceful shutdown handling. SIGBREAK is what Windows sends for Ctrl+Break;
+  // SIGINT/SIGTERM cover Ctrl+C, Termux's `kill`, and container stops.
+  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGBREAK'];
+  let shuttingDown = false;
   for (const signal of signals) {
-    process.on(signal, async () => {
+    process.once(signal, async () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
       logger.info(`Received ${signal}. Initiating graceful shutdown...`);
       clearInterval(schedulerTimer);
       try {
         await app.close();
+        await cacheService.disconnect();
+        await defaultQueue.disconnect();
+        await bullQueue.closeAll();
+        await prismaManager.disconnect();
         logger.info('API Gateway closed successfully.');
         process.exit(0);
       } catch (err: unknown) {

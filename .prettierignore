@@ -8,3 +8,4 @@ coverage
 pnpm-lock.yaml
 *.log
 next-env.d.ts
+libs/database/generated

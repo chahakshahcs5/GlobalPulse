@@ -46,12 +46,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
     extra_hosts:
       - 'host.docker.internal:host-gateway'
-    command:
-      [
-        'sh',
-        '-c',
-        'pnpm --filter @ai-news/database exec prisma db push --schema=prisma/schema.prisma && pnpm --filter @ai-news/database exec prisma db execute --schema=prisma/schema.prisma --file=prisma/bootstrap.sql',
-      ]
+    command: ['node', 'scripts/db-setup.mjs']
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,8 +66,8 @@ services:
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
       REDIS_URL: redis://redis:6379
-      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
-      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:3001/mcp}
+      API_BASE_URL: ${API_BASE_URL:-http://api:3000}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://mcp-server:3001/mcp}
       OAUTH_ISSUER: ${OAUTH_ISSUER:-https://auth.globalpulse.news}
       OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-https://api.globalpulse.news}
       # Backblaze B2 / S3 Object Storage
@@ -111,7 +106,7 @@ services:
       MCP_HOST: 0.0.0.0
       HOST: 0.0.0.0
       API_BASE_URL: ${API_BASE_URL:-http://api:3000}
-      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:3001/mcp}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://mcp-server:3001/mcp}
       OAUTH_ISSUER: ${OAUTH_ISSUER:-https://auth.globalpulse.news}
       OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-https://api.globalpulse.news}
       DEV_TOKEN_ADMIN: ${DEV_TOKEN_ADMIN:-}
@@ -141,7 +136,7 @@ services:
       NODE_ENV: production
       PORT: 3002
       API_INTERNAL_URL: http://api:3000
-      NEXT_PUBLIC_MCP_URL: ${NEXT_PUBLIC_MCP_URL:-http://localhost:3001/mcp}
+      NEXT_PUBLIC_MCP_URL: ${NEXT_PUBLIC_MCP_URL:-http://mcp-server:3001/mcp}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:

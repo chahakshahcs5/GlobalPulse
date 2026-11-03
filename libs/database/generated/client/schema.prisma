@@ -1,0 +1,985 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/client"
+  engineType      = "client"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+enum StoryStatus {
+  DRAFT
+  IN_REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ArticleType {
+  breaking_news
+  developing_story
+  explainer
+  analysis
+  background
+  deep_dive
+  data_story
+  visual_story
+  timeline
+  technology
+  science
+  business
+  markets
+  sports
+  politics
+  culture
+  local
+  weekly_digest
+  topic_briefing
+  liveblog
+  fact_check
+  opinion
+  investigation
+  // Category codes that are also valid article types. The category pages route
+  // on stories.articleType, so a story can only be filed under one of these.
+  india
+  health
+  world
+  entertainment
+}
+
+enum ClientType {
+  gemini
+  gemini_spark
+  chatgpt
+  claude
+  custom_mcp
+  human_web
+  human_mobile
+  internal_service
+}
+
+enum CreatedVia {
+  mcp
+  web
+  mobile
+  api
+  admin
+}
+
+enum EntityType {
+  PERSON
+  ORGANIZATION
+  COUNTRY
+  LOCATION
+  TECHNOLOGY
+  PRODUCT
+  INSTITUTION
+}
+
+enum SourceType {
+  NEWS_ARTICLE
+  OFFICIAL_DOCUMENT
+  PRESS_RELEASE
+  ACADEMIC_PAPER
+  DATASET
+  INTERVIEW
+  TRANSCRIPT
+  OTHER
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                  User[]
+  stories                Story[]
+  events                 Event[]
+  topics                 Topic[]
+  entities               Entity[]
+  sources                Source[]
+  publishers             Publisher[]
+  idempotencyRecords     IdempotencyRecord[]
+  auditLogs              AuditLog[]
+  comments               Comment[]
+  storyReactions         StoryReaction[]
+  bookmarks              Bookmark[]
+  editorialNotifications EditorialNotification[]
+  storyClusters          StoryCluster[]
+  webhookSubscriptions   WebhookSubscription[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  organizationId String
+  email          String   @unique
+  name           String
+  role           String   @default("editor") // admin, editor, author, viewer, ai_agent
+  scopes         String[] @default(["news:read"])
+  passwordHash   String?
+  clientType     String   @default("human_web")
+  status         String   @default("active")
+  bio            String?
+  avatarUrl      String?
+  preferences    Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  storiesAuthored Story[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model Event {
+  id             String   @id @default(uuid())
+  organizationId String
+  slug           String   @default("")
+  title          String
+  summary        String
+  status         String   @default("ACTIVE")
+  category       String?  @default("general")
+  severity       String?  @default("MODERATE")
+  occurredAt     DateTime @default(now())
+  location       String?
+  coordinates    Float[]
+  topicIds       String[] @default([])
+  entityIds      String[] @default([])
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stories      Story[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, slug])
+  @@index([organizationId, category])
+  @@index([organizationId, severity])
+  @@map("events")
+}
+
+model Story {
+  id                   String      @id @default(uuid())
+  organizationId       String
+  slug                 String
+  title                String
+  summary              String
+  status               StoryStatus @default(DRAFT)
+  articleType          ArticleType @default(developing_story)
+  eventId              String?
+  currentVersionNumber Int         @default(1)
+  currentVersionId     String?
+  topicIds             String[]    @default([])
+  entityIds            String[]    @default([])
+  sourceIds            String[]    @default([])
+  categories           String[]    @default([])
+  heroImageUrl         String?
+  createdVia           CreatedVia  @default(mcp)
+  createdByClient      ClientType  @default(gemini)
+  authorId             String
+  idempotencyKey       String?
+  publishedAt          DateTime?
+  scheduledPublishAt   DateTime?
+  isSubscriberOnly     Boolean     @default(false)
+  wordCount            Int?
+  readingTimeMinutes   Int?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author          User             @relation(fields: [authorId], references: [id])
+  event           Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  versions        StoryVersion[]
+  blocks          StoryBlock[]
+  comments        Comment[]
+  reactions       StoryReaction[]
+  bookmarks       Bookmark[]
+  liveblogEntries LiveblogEntry[]
+  provenance      StoryProvenance?
+
+  @@unique([organizationId, slug])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status])
+  @@index([organizationId, publishedAt])
+  @@index([organizationId, scheduledPublishAt])
+  @@map("stories")
+}
+
+model StoryVersion {
+  id            String     @id @default(uuid())
+  storyId       String
+  versionNumber Int
+  title         String
+  summary       String
+  blocksJson    Json // Full structured snapshot of blocks
+  changeSummary String?
+  clientType    ClientType @default(gemini)
+  authorId      String
+  createdAt     DateTime   @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, versionNumber])
+  @@map("story_versions")
+}
+
+model StoryBlock {
+  id          String   @id @default(uuid())
+  storyId     String
+  blockType   String
+  sortOrder   Int
+  data        Json
+  metadata    Json?
+  citationIds String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, sortOrder])
+  @@map("story_blocks")
+}
+
+model Topic {
+  id             String   @id @default(uuid())
+  organizationId String
+  slug           String
+  name           String
+  description    String?
+  aliases        String[] @default([])
+  parentTopicId  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@map("topics")
+}
+
+model Entity {
+  id             String     @id @default(uuid())
+  organizationId String
+  slug           String
+  name           String
+  type           EntityType
+  description    String?
+  aliases        String[]   @default([])
+  avatarUrl      String?
+  metadata       Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, type])
+  @@map("entities")
+}
+
+model Publisher {
+  id                  String   @id @default(uuid())
+  organizationId      String
+  name                String
+  slug                String
+  domain              String
+  logoUrl             String?
+  description         String?
+  category            String   @default("general")
+  country             String?
+  language            String   @default("en")
+  websiteUrl          String?
+  biasRating          String?
+  credibilityScore    Float?
+  ownership           String?
+  methodology         String?
+  correctionPolicyUrl String?
+  foundedYear         Int?
+  metadata            Json?
+  isVerified          Boolean  @default(true)
+  followerCount       Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sources      Source[]
+
+  @@unique([organizationId, slug])
+  @@unique([organizationId, domain])
+  @@index([organizationId, category])
+  @@map("publishers")
+}
+
+model Source {
+  id                 String     @id @default(uuid())
+  organizationId     String
+  publisherId        String?
+  domain             String?
+  url                String
+  canonicalUrl       String?
+  title              String
+  publisher          String
+  author             String?
+  publishedAt        DateTime?
+  retrievedAt        DateTime   @default(now())
+  language           String     @default("en")
+  sourceType         SourceType @default(NEWS_ARTICLE)
+  licenseMetadata    String?
+  permissibleExcerpt String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  publisherRef Publisher?   @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  citations    Citation[]
+
+  @@unique([organizationId, url])
+  @@index([organizationId, publisher])
+  @@index([organizationId, publisherId])
+  @@map("sources")
+}
+
+model Citation {
+  id              String   @id @default(uuid())
+  organizationId  String
+  storyId         String
+  blockId         String?
+  sourceId        String
+  claimText       String
+  confidenceScore Float?
+  createdAt       DateTime @default(now())
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@index([sourceId])
+  @@map("citations")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid())
+  organizationId String
+  key            String
+  action         String
+  responseJson   Json
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, key])
+  @@map("idempotency_records")
+}
+
+model AuditLog {
+  id             String     @id @default(uuid())
+  organizationId String
+  userId         String
+  clientType     ClientType
+  action         String
+  resourceType   String
+  resourceId     String?
+  payloadSummary Json?
+  ipAddress      String?
+  requestId      String?
+  durationMs     Int?
+  status         String
+  errorMessage   String?
+  timestamp      DateTime   @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, timestamp])
+  @@index([organizationId, action])
+  @@map("audit_logs")
+}
+
+model Comment {
+  id               String   @id @default(uuid())
+  storyId          String
+  organizationId   String
+  authorId         String
+  authorName       String
+  authorRole       String   @default("reader")
+  content          String
+  parentId         String?
+  status           String   @default("approved")
+  likesCount       Int      @default(0)
+  moderationReason String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, status])
+  @@index([organizationId])
+  @@map("comments")
+}
+
+model StoryReaction {
+  id             String   @id @default(uuid())
+  storyId        String
+  userId         String
+  organizationId String
+  reactionType   String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, userId, reactionType])
+  @@index([organizationId])
+  @@map("story_reactions")
+}
+
+model Bookmark {
+  id             String   @id @default(uuid())
+  storyId        String
+  userId         String
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([userId, storyId])
+  @@index([organizationId])
+  @@map("bookmarks")
+}
+
+model EditorialNotification {
+  id             String   @id @default(uuid())
+  organizationId String
+  authorId       String
+  type           String
+  severity       String   @default("info")
+  title          String
+  message        String
+  storyId        String?
+  targetRole     String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, isRead])
+  @@index([organizationId])
+  @@map("editorial_notifications")
+}
+
+model StoryCluster {
+  id             String   @id @default(uuid())
+  organizationId String
+  title          String
+  summary        String?
+  leadStoryId    String
+  storyIds       String[] @default([])
+  topic          String?
+  category       String?
+  perspectives   Json     @default("[]")
+  timeline       Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([leadStoryId])
+  @@map("story_clusters")
+}
+
+model LiveblogEntry {
+  id           String   @id @default(uuid())
+  storyId      String
+  headline     String
+  content      String
+  isKeyEvent   Boolean  @default(false)
+  authorId     String
+  authorName   String?
+  authorAvatar String?
+  timestamp    DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, timestamp])
+  @@map("liveblog_entries")
+}
+
+model NewsletterSubscription {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  frequency  String   @default("daily")
+  categories String[] @default([])
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([email, active])
+  @@map("newsletter_subscriptions")
+}
+
+model NewsletterDigest {
+  id             String   @id @default(uuid())
+  frequency      String   @default("daily")
+  category       String?
+  recipientCount Int      @default(0)
+  storyIds       String[] @default([])
+  contentSummary String?
+  metadata       Json?
+  generatedAt    DateTime @default(now())
+
+  @@index([frequency, generatedAt])
+  @@map("newsletter_digests")
+}
+
+model StoryCollection {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  curatorId   String
+  curatorName String?
+  isPublic    Boolean  @default(true)
+  storyIds    String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([curatorId])
+  @@index([isPublic])
+  @@map("story_collections")
+}
+
+model WebhookSubscription {
+  id             String   @id @default(uuid())
+  organizationId String
+  url            String
+  events         String[] @default([])
+  secret         String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, active])
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDispatchLog {
+  id             String   @id @default(uuid())
+  subscriptionId String
+  event          String
+  targetUrl      String
+  payload        Json     @default("{}")
+  statusCode     Int
+  success        Boolean
+  durationMs     Int
+  attempt        Int      @default(1)
+  errorMessage   String?
+  dispatchedAt   DateTime @default(now())
+
+  @@index([subscriptionId, dispatchedAt])
+  @@map("webhook_dispatch_logs")
+}
+
+model StoryProvenance {
+  id                  String   @id @default(uuid())
+  storyId             String   @unique
+  generatorModel      String
+  promptHash          String
+  confidenceScore     Float
+  humanReviewedBy     String?
+  watermarkSignature  String
+  c2paManifestUrl     String?
+  generationTimestamp DateTime @default(now())
+  createdAt           DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@map("story_provenance")
+}
+
+model ReadingProgress {
+  id         String   @id @default(uuid())
+  userId     String
+  storyId    String
+  percentage Int
+  completed  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, storyId])
+  @@index([userId, updatedAt])
+  @@map("reading_progress")
+}
+
+model FollowRelationship {
+  id         String   @id @default(uuid())
+  userId     String
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+  @@map("follow_relationships")
+}
+
+model FactCheck {
+  id        String   @id @default(uuid())
+  claim     String
+  claimant  String
+  rating    String
+  summary   String
+  checker   String
+  sources   String[] @default([])
+  checkedAt DateTime @default(now())
+
+  @@index([rating])
+  @@map("fact_checks")
+}
+
+model StoryShare {
+  id        String   @id @default(uuid())
+  storyId   String
+  platform  String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([storyId])
+  @@map("story_shares")
+}
+
+/// A saved variant of a block type — a named, ready-made payload.
+///
+/// Variants live outside the story payload so a newsroom can keep a set of
+/// treatments for a block type — a chart as a line, as a stacked bar, as a
+/// sparkline — and share them. The Block Studio and the composer read the
+/// same list, so a treatment agreed in one is available in the other.
+model BlockVariant {
+  id             String   @id
+  blockType      String
+  label          String
+  description    String?
+  /// The block's content: the `data` payload.
+  data           Json     @default("{}")
+  /// Whether the variant is offered to everyone, or only to the
+  /// organisation that made it.
+  shared         Boolean  @default(true)
+  organizationId String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([blockType])
+  @@index([organizationId])
+  @@map("block_variants")
+}
+
+/// A live feed backing `live_data` and `live_ticker` story blocks.
+///
+/// Feeds are stored outside the story payload so a published story can pick
+/// up fresh values without being republished. The API and the MCP server both
+/// read and write this table, so a feed published by an AI agent is the same
+/// feed readers see.
+model LiveFeed {
+  key                    String   @id
+  title                  String
+  provider               String?
+  items                  Json     @default("[]")
+  asOf                   DateTime @default(now())
+  refreshIntervalSeconds Int      @default(60)
+  license                String?
+  methodology            String?
+  sourceAttribution      String?
+  organizationId         String?
+  updatedAt              DateTime @updatedAt
+
+  @@map("live_feeds")
+}
+
+/// A reader vote on a `poll` story block.
+///
+/// Votes live outside the story payload so that the published article never
+/// has to be rewritten as votes arrive. One vote per reader per block.
+model PollVote {
+  id             String   @id @default(uuid())
+  storyId        String
+  blockId        String
+  pollId         String
+  optionId       String
+  userId         String
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  @@unique([blockId, userId])
+  @@index([storyId])
+  @@index([organizationId])
+  @@map("poll_votes")
+}
+
+model Category {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  code          String
+  name          String
+  description   String?
+  icon          String?
+  sortOrder     Int      @default(0)
+  isPinned      Boolean  @default(false)
+  subCategories String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@map("categories")
+}
+
+model NavTab {
+  id        String   @id @default(uuid())
+  tabId     String   @unique
+  name      String
+  href      String
+  icon      String?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("nav_tabs")
+}
+
+// ---------------------------------------------------------------------------
+// Story intelligence: claims, evidence, timelines, perspectives.
+// These rows intentionally carry organizationId so tenant isolation is enforced
+// in every repository query, independently of the parent story row.
+// ---------------------------------------------------------------------------
+
+model StoryClaim {
+  id                    String    @id @default(uuid())
+  organizationId        String
+  storyId               String
+  text                  String
+  status                String    @default("UNVERIFIED")
+  confidence            Float?
+  confidenceMethodology String?
+  methodology           String?
+  reviewerId            String?
+  reviewedAt            DateTime?
+  reviewNotes           String?
+  sourceIds             String[]  @default([])
+  citationIds           String[]  @default([])
+  createdBy             String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([organizationId, storyId])
+  @@index([organizationId, status])
+  @@map("story_claims")
+}
+
+model Evidence {
+  id             String    @id @default(uuid())
+  organizationId String
+  storyId        String
+  claimId        String?
+  sourceId       String?
+  citationId     String?
+  type           String    @default("OTHER")
+  title          String
+  description    String?
+  url            String?
+  excerpt        String?
+  stance         String    @default("CONTEXT")
+  strength       Float?
+  methodology    String?
+  retrievedAt    DateTime?
+  publishedAt    DateTime?
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId, storyId])
+  @@index([organizationId, claimId])
+  @@map("evidence")
+}
+
+model StoryTimelineEvent {
+  id             String   @id @default(uuid())
+  organizationId String
+  storyId        String
+  title          String
+  description    String
+  eventType      String   @default("DEVELOPMENT")
+  occurredAt     DateTime
+  location       String?
+  coordinates    Float[]
+  entityIds      String[] @default([])
+  sourceIds      String[] @default([])
+  citationIds    String[] @default([])
+  mediaUrl       String?
+  authorId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, storyId, occurredAt])
+  @@map("story_timeline_events")
+}
+
+model EditorialPerspective {
+  id             String   @id @default(uuid())
+  organizationId String
+  storyId        String
+  label          String
+  summary        String
+  stance         String   @default("UNKNOWN")
+  sourceIds      String[] @default([])
+  citationIds    String[] @default([])
+  quoteExcerpt   String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, storyId])
+  @@map("editorial_perspectives")
+}
+
+// ---------------------------------------------------------------------------
+// Knowledge graph, alerts, ingestion, source intelligence.
+// ---------------------------------------------------------------------------
+
+model KnowledgeEdge {
+  id             String   @id @default(uuid())
+  organizationId String
+  fromType       String
+  fromId         String
+  relation       String
+  toType         String
+  toId           String
+  weight         Float    @default(1)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, fromType, fromId, relation, toType, toId])
+  @@index([organizationId, fromType, fromId])
+  @@index([organizationId, toType, toId])
+  @@index([organizationId, relation])
+  @@map("knowledge_edges")
+}
+
+model AlertRule {
+  id              String    @id @default(uuid())
+  organizationId  String
+  /// Owner of a personal rule. NULL means the rule is organization-wide.
+  userId          String?
+  scope           String    @default("organization")
+  name            String
+  description     String?
+  enabled         Boolean   @default(true)
+  conditions      Json
+  channels        String[]  @default(["in_app"])
+  schedule        Json?
+  cooldownMinutes Int       @default(15)
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastTriggeredAt DateTime?
+
+  @@index([organizationId, enabled])
+  @@index([organizationId, userId])
+  @@map("alert_rules")
+}
+
+model AlertTrigger {
+  id                String   @id @default(uuid())
+  organizationId    String
+  ruleId            String
+  resourceType      String
+  resourceId        String
+  severity          String
+  message           String
+  matchedConditions String[] @default([])
+  deliveredChannels String[] @default([])
+  createdAt         DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([ruleId, createdAt])
+  @@map("alert_triggers")
+}
+
+model IngestionFeed {
+  id                   String    @id @default(uuid())
+  organizationId       String
+  name                 String
+  url                  String
+  type                 String    @default("rss")
+  active               Boolean   @default(true)
+  defaultTopicIds      String[]  @default([])
+  defaultEntityIds     String[]  @default([])
+  defaultSourceType    String    @default("NEWS_ARTICLE")
+  fetchIntervalMinutes Int       @default(15)
+  lastFetchedAt        DateTime?
+  lastStatus           String?
+  etag                 String?
+  lastModified         String?
+  createdBy            String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([organizationId, url])
+  @@index([organizationId, active])
+  @@map("ingestion_feeds")
+}
+
+model IngestionItem {
+  id             String    @id @default(uuid())
+  organizationId String
+  feedId         String
+  externalId     String?
+  url            String
+  title          String
+  summary        String?
+  contentText    String?
+  author         String?
+  publishedAt    DateTime?
+  retrievedAt    DateTime  @default(now())
+  dedupeHash     String
+  status         String    @default("NEW")
+  signals        Json
+  claimTexts     String[]  @default([])
+  raw            Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([organizationId, dedupeHash])
+  @@index([organizationId, feedId])
+  @@index([organizationId, status])
+  @@map("ingestion_items")
+}
+
+model SourceCorrection {
+  id             String   @id @default(uuid())
+  organizationId String
+  publisherId    String?
+  sourceId       String?
+  storyId        String?
+  type           String
+  description    String
+  issuedAt       DateTime @default(now())
+  url            String?
+  recordedBy     String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, publisherId])
+  @@index([organizationId, sourceId])
+  @@index([organizationId, storyId])
+  @@map("source_corrections")
+}

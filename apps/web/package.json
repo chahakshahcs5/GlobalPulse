@@ -3,25 +3,32 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3002",
+    "dev": "node ../../scripts/web-dev.mjs",
     "build": "next build",
-    "start": "next start -p 3002"
+    "build:webpack": "next build --webpack",
+    "start": "node ../../scripts/start-web.mjs",
+    "start:next": "next start"
   },
   "dependencies": {
     "@ai-news/api-client": "workspace:*",
     "@ai-news/block-studio": "workspace:*",
     "@ai-news/blocks-ui": "workspace:*",
+    "dotenv": "^16.4.7",
     "lucide-react": "^1.48.0",
     "mermaid": "^12.0.0",
     "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
+  "optionalDependencies": {
+    "@next/swc-wasm-nodejs": "16.3.6"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.13.9",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "cross-env": "^7.0.3",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.8.2"

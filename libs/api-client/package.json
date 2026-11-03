@@ -10,7 +10,8 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@ai-news/schemas": "workspace:*"
+    "@ai-news/schemas": "workspace:*",
+    "@ai-news/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.2"

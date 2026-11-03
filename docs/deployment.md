@@ -12,7 +12,7 @@ The platform is designed for zero-friction containerized deployment across multi
 
 ```dockerfile
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 WORKDIR /app
 
 # Copy root manifest and workspace configuration
@@ -20,13 +20,11 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 
 # Copy all application manifests
 COPY apps/*/package.json ./apps/
-# Copy all library manifests and Prisma schema for database postinstall
+# Copy all library manifests
 COPY libs/*/package.json ./libs/
-COPY libs/database/prisma/schema.prisma ./libs/database/prisma/schema.prisma
 
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN DATABASE_URL='postgresql://postgres:postgres@localhost:5432/ai_news?schema=public' pnpm --filter @ai-news/database exec prisma generate --schema=prisma/schema.prisma
 
 EXPOSE 3000
 ENV NODE_ENV=production

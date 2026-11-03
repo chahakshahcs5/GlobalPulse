@@ -1,3 +1,11 @@
+import {
+  DEFAULT_API_PORT,
+  DEFAULT_MCP_PORT,
+  DEFAULT_STUDIO_PORT,
+  DEFAULT_WEB_PORT,
+  localOrigin,
+} from './runtime-ports';
+
 /**
  * Centralized Cross-Origin Resource Sharing (CORS) Security Policies
  * Shared across API Gateway, MCP Server, and Microservices
@@ -11,13 +19,16 @@ export const PRODUCTION_ALLOWED_ORIGINS = [
 
 export const DEVELOPMENT_ALLOWED_ORIGINS = [
   ...PRODUCTION_ALLOWED_ORIGINS,
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:4000',
-  'http://localhost:4001',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3002',
+  ...[
+    DEFAULT_API_PORT,
+    DEFAULT_MCP_PORT,
+    DEFAULT_WEB_PORT,
+    DEFAULT_STUDIO_PORT,
+    // The container compose file has historically exposed 3000/3001; keep
+    // accepting them without spelling out a localhost URL in every file.
+    3000,
+    3001,
+  ].flatMap((port) => [localOrigin(port), localOrigin(port, '127.0.0.1')]),
 ];
 
 export const DEFAULT_ALLOWED_ORIGINS =

@@ -49,8 +49,8 @@ MCP_HOST=0.0.0.0
 MCP_ENDPOINT_PATH=/mcp
 
 # Next.js 15 Web Portal & CMS
-NEXT_PUBLIC_API_URL=http://localhost:3000
-NEXT_PUBLIC_MCP_URL=http://localhost:3001/mcp
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_MCP_URL=http://localhost:4001/mcp
 NEXT_PUBLIC_SITE_URL=http://localhost:3002
 PORT=3002
 

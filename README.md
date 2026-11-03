@@ -169,8 +169,8 @@ flowchart TD
 
 ### 1. Prerequisites
 
-- Node.js `20.x` or `22.x` (ESM native support)
-- `pnpm` `9.x` or `10.x`
+- Node.js `20.x` or newer (tested through Node 26; see `docs/platforms.md`)
+- `pnpm` `10.x`
 
 ### 2. Installation
 
@@ -185,16 +185,20 @@ pnpm install
 #### Option A: Running with Native Node.js & pnpm
 
 ```bash
-# Start NestJS & GraphQL API Server (port 4001)
+# Start API, MCP, worker and web together (cross-platform)
+pnpm dev
+
+# Or start one service at a time:
+# NestJS & GraphQL API Server (PORT, default 4000)
 pnpm dev:api
 
-# Start Remote MCP Server (port 3001)
+# Remote MCP Server (MCP_PORT, default 4001)
 pnpm dev:mcp
 
-# Start Next.js 16 Web Portal, CMS & 4K Wall (port 3002)
+# Next.js 16 Web Portal, CMS & 4K Wall (PORT, default 3002)
 pnpm dev:web
 
-# Start the Block Studio (port 3003) — preview and edit every story block
+# Start the Block Studio (PORT, default 3003) — preview and edit every story block
 pnpm dev:studio
 
 # Start Asynchronous BullMQ Background Worker
@@ -203,6 +207,10 @@ pnpm dev:worker
 # Start Expo Mobile Development Server
 pnpm dev:mobile
 ```
+
+Windows and Termux have different setup steps. See
+[docs/platforms.md](docs/platforms.md) for the exact commands, database bootstrap and
+phleet deployment notes.
 
 #### Option B: Running with Docker Compose (Section 154)
 

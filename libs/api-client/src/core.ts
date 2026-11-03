@@ -6,10 +6,9 @@
  * so they all speak the same dialect and share the same session.
  */
 
-const API_BASE_URL =
-  typeof window !== 'undefined'
-    ? ''
-    : process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiBaseUrl } from '@ai-news/shared';
+
+const API_BASE_URL = typeof window !== 'undefined' ? '' : apiBaseUrl();
 
 /**
  * Where the session lives.

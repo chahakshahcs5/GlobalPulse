@@ -1,12 +1,13 @@
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector")]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions", "fullTextSearchPostgres"]
+  output          = "../generated/client"
+  engineType      = "client"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 enum StoryStatus {

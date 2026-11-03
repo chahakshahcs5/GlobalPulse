@@ -1,3 +1,5 @@
+import { DEFAULT_STUDIO_PORT, localOrigin } from '@ai-news/shared';
+
 /**
  * Where the Block Studio lives.
  *
@@ -7,7 +9,7 @@
  * behind a tunnel.
  */
 export const STUDIO_URL =
-  process.env.NEXT_PUBLIC_STUDIO_URL?.replace(/\/$/, '') ?? 'http://localhost:3003';
+  process.env.NEXT_PUBLIC_STUDIO_URL?.replace(/\/$/, '') ?? localOrigin(DEFAULT_STUDIO_PORT);
 
 /**
  * A link that opens the studio with a story already in hand.

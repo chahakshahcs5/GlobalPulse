@@ -10,9 +10,9 @@ All primary operations are accessible via `pnpm` scripts configured at the root:
 
 | Command                 | Purpose                                                                              |
 | :---------------------- | :----------------------------------------------------------------------------------- |
-| `pnpm dev:api`          | Starts Fastify HTTP REST Gateway & Mercurius GraphQL API on port 3000                |
-| `pnpm dev:mcp`          | Starts Remote MCP Server on port 3001 with Streamable HTTP transport                 |
-| `pnpm dev:web`          | Starts Next.js 15 Web Portal, CMS & 4K Display Wall on port 3002                     |
+| `pnpm dev:api`          | Starts Fastify HTTP REST Gateway & Mercurius GraphQL API on PORT (default 4000)      |
+| `pnpm dev:mcp`          | Starts Remote MCP Server on MCP_PORT (default 4001) with Streamable HTTP transport   |
+| `pnpm dev:web`          | Starts Next.js 15 Web Portal, CMS & 4K Display Wall on PORT (default 3002)           |
 | `pnpm dev:mobile`       | Starts Expo React Native bundler for mobile development                              |
 | `pnpm dev:worker`       | Starts background job worker listening to queue events                               |
 | `pnpm test`             | Runs the full Vitest unit and integration test suite (17 suites, 158 tests)          |

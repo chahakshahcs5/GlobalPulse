@@ -164,9 +164,18 @@ export function findHooksAfterEarlyReturnIn(source: string, file: string): HookF
 /** Every hook in the repository that follows an early return. */
 export function findHooksAfterEarlyReturn(roots: string[] = ROOTS): HookFinding[] {
   const all: HookFinding[] = [];
+  const hookPattern = new RegExp(`\\b(?:${[...HOOK_NAMES].join('|')})\\b`);
   for (const root of roots) {
     for (const file of walk(root)) {
-      all.push(...findHooksAfterEarlyReturnIn(readFileSync(file, 'utf8'), file));
+      const source = readFileSync(file, 'utf8');
+      // Cheap pre-filter: the TypeScript parser is the expensive part, and a
+      // file cannot contain this bug unless it has an `if`, a `return` and a
+      // hook call. This keeps the repository-wide check usable on slow ARM
+      // devices without weakening the actual analysis.
+      if (!source.includes('return') || !/\bif\s*\(/.test(source) || !hookPattern.test(source)) {
+        continue;
+      }
+      all.push(...findHooksAfterEarlyReturnIn(source, file));
     }
   }
   return all;

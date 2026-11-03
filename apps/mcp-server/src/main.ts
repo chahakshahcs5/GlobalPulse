@@ -1,9 +1,8 @@
-import dotenv from 'dotenv';
-import { createMcpApp } from './server';
-import { db } from '@ai-news/database';
-import { createLogger } from '@ai-news/observability';
+import './env';
 
-dotenv.config();
+import { createMcpApp } from './server';
+import { db, prismaManager } from '@ai-news/database';
+import { createLogger } from '@ai-news/observability';
 
 const logger = createLogger('mcp-main');
 const port = parseInt(process.env.MCP_PORT || '4001', 10);
@@ -25,6 +24,31 @@ async function start() {
     );
     console.log(`   Health check: http://${host}:${port}/health`);
   });
+
+  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGBREAK'];
+  let shuttingDown = false;
+  for (const signal of signals) {
+    process.once(signal, async () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      logger.info(`Received ${signal}. Shutting down MCP server...`);
+      try {
+        const closed = new Promise<void>((resolve, reject) => {
+          httpServer.close((err) => (err ? reject(err) : resolve()));
+        });
+        // Do not wait forever for long-lived SSE streams.
+        httpServer.closeAllConnections?.();
+        await closed;
+        await prismaManager.disconnect();
+        process.exit(0);
+      } catch (err: unknown) {
+        logger.error(
+          `Error during MCP shutdown: ${err instanceof Error ? err.message : String(err)}`
+        );
+        process.exit(1);
+      }
+    });
+  }
 }
 
 start().catch((err) => {

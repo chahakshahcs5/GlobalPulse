@@ -250,8 +250,8 @@ talks to the API directly and no CORS setup is needed. Point it somewhere
 with `apps/block-studio/.env`:
 
 ```bash
-API_INTERNAL_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:3000
+API_INTERNAL_URL=http://localhost:4000
+NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_WEB_URL=http://localhost:3002
 ```
 

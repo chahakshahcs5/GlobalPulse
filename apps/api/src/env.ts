@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import { loadEnv } from '../../../libs/shared/src/env';
 
 /**
  * The API's environment.
@@ -11,4 +11,4 @@ import dotenv from 'dotenv';
  *
  * Importing this module first is what makes the order right.
  */
-dotenv.config();
+loadEnv();

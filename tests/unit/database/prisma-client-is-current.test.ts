@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'fs';
-import { createRequire } from 'module';
-import { dirname, join } from 'path';
+import { join } from 'path';
 
 const SCHEMA_PATH = join(process.cwd(), 'libs/database/prisma/schema.prisma');
-// `@prisma/client` is a dependency of the database package, not the root.
-const require = createRequire(join(process.cwd(), 'libs/database/package.json'));
+// The client is generated into the repository so Windows can generate it once
+// and Termux never has to run the Prisma CLI (which needs a native engine).
+const GENERATED_CLIENT_DIR = join(process.cwd(), 'libs/database/generated/client');
 
 interface ModelShape {
   models: Record<string, string[]>;
@@ -44,25 +44,8 @@ function readShape(source: string): ModelShape {
 
 /** Where Prisma put the generated client. */
 function generatedSchemaPath(): string | null {
-  let entry: string;
-  try {
-    entry = require.resolve('@prisma/client');
-  } catch {
-    return null;
-  }
-
-  // Walk up looking for the `.prisma/client` directory Prisma generates
-  // alongside the client package, rather than assuming a fixed depth.
-  let dir = dirname(entry);
-  for (let depth = 0; depth < 8; depth++) {
-    const candidate = join(dir, '.prisma', 'client', 'schema.prisma');
-    if (existsSync(candidate)) return candidate;
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-
-  return null;
+  const candidate = join(GENERATED_CLIENT_DIR, 'schema.prisma');
+  return existsSync(candidate) ? candidate : null;
 }
 
 /**

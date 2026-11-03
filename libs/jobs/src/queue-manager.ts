@@ -231,6 +231,19 @@ export class QueueManager {
     this.jobs.clear();
   }
 
+  /** Close the Redis connection owned by this queue (no-op in memory mode). */
+  public async disconnect(): Promise<void> {
+    if (this.redis) {
+      try {
+        await this.redis.quit();
+      } catch {
+        this.redis.disconnect();
+      }
+      this.redis = null;
+    }
+    this.isRedisActive = false;
+  }
+
   public getMetrics(): {
     queued: number;
     running: number;

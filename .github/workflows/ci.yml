@@ -27,13 +27,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install pnpm
-        run: npm install -g pnpm@12.3.4
+        run: npm install -g pnpm@10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Case-sensitive imports
+        run: pnpm run check:imports
+
+      - name: Portable scripts and paths
+        run: pnpm run check:portability
 
       - name: Type check (TypeScript)
         run: pnpm exec tsc --noEmit
@@ -85,10 +91,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install pnpm
-        run: npm install -g pnpm@12.3.4
+        run: npm install -g pnpm@10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -110,10 +116,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install pnpm
-        run: npm install -g pnpm@12.3.4
+        run: npm install -g pnpm@10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

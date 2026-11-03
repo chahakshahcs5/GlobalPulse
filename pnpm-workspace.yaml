@@ -1,13 +1,11 @@
 packages:
   - 'apps/*'
   - 'libs/*'
-allowBuilds:
-  '@prisma/client': true
-  '@prisma/engines': true
-  prisma: true
-  esbuild: true
-  msgpackr-extract: true
-  nx: true
+# Only esbuild needs a postinstall script (tsx uses its platform binary).
+# Prisma is generated once on a development machine and the output is
+# committed; the phone must never download a native Prisma engine.
+onlyBuiltDependencies:
+  - esbuild
 minimumReleaseAgeExclude:
   - framer-motion@14.5.0
   - motion-dom@14.5.0

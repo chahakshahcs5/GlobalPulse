@@ -4,7 +4,7 @@
 # ==============================================================================
 
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 
 WORKDIR /app
 
@@ -39,8 +39,6 @@ COPY libs/api-client/package.json ./libs/api-client/
 COPY libs/blocks-ui/package.json ./libs/blocks-ui/
 COPY libs/block-studio/package.json ./libs/block-studio/
 
-# Copy Prisma schema needed for database package postinstall
-COPY libs/database/prisma/schema.prisma ./libs/database/prisma/schema.prisma
 
 # Install workspace dependencies
 RUN pnpm install --frozen-lockfile
@@ -58,4 +56,4 @@ ENV NODE_ENV=production
 ENV PORT=3002
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD ["pnpm", "--filter", "@ai-news/web", "exec", "next", "start", "-p", "3002", "-H", "0.0.0.0"]
+CMD ["pnpm", "--filter", "@ai-news/web", "start"]
