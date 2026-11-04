@@ -41,13 +41,44 @@ jobs:
       PHLEET_PROJECT_ID: ${{ vars.PHLEET_PROJECT_ID }}
       DEPLOY_REF: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
     steps:
-      - name: Trigger phleet deploy
+      - name: Ensure stack addons are running
         run: |
           set -euo pipefail
           test -n "$PHLEET_URL" || { echo "PHLEET_URL is not set"; exit 1; }
           test -n "$PHLEET_TOKEN" || { echo "PHLEET_DEPLOY_TOKEN is not set"; exit 1; }
           test -n "$PHLEET_PROJECT_ID" || { echo "PHLEET_PROJECT_ID is not set"; exit 1; }
 
+          # Starting the stack also starts its databases and caches. It can
+          # return 409 when a child has no release yet; the deploy below builds
+          # those children, so only the addon check below decides success.
+          code=$(curl -sS -o "$RUNNER_TEMP/stack-start.json" -w '%{http_code}' \
+            -X POST "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/start" \
+            -H "Authorization: Bearer $PHLEET_TOKEN")
+          cat "$RUNNER_TEMP/stack-start.json"
+          case "$code" in
+            200|409) ;;
+            *) echo "stack start returned HTTP $code"; exit 1 ;;
+          esac
+
+          for _ in $(seq 1 60); do
+            view=$(curl -fsS \
+              -H "Authorization: Bearer $PHLEET_TOKEN" \
+              "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID")
+            not_running=$(printf '%s' "$view" | jq -r \
+              '[.project.addons[]? | select(.status != "running")] | length')
+            if [ "$not_running" -eq 0 ]; then
+              echo "all stack addons are running"
+              exit 0
+            fi
+            echo "waiting for $not_running addon(s) to start"
+            sleep 5
+          done
+          echo "addons did not start in time"
+          exit 1
+
+      - name: Trigger phleet deploy
+        run: |
+          set -euo pipefail
           payload=$(jq -nc --arg ref "$DEPLOY_REF" '{ref:$ref}')
           response=$(curl -fsS -X POST \
             "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deploy" \
@@ -56,15 +87,19 @@ jobs:
             -d "$payload")
 
           echo "$response"
-          echo "$response" | jq -r '.deployments[].id' > "$RUNNER_TEMP/phleet-deployment-ids.txt"
-          test -s "$RUNNER_TEMP/phleet-deployment-ids.txt" || {
-            echo "phleet did not start any deployments"
+          failed=$(printf '%s' "$response" | jq -r \
+            '[.deployments[] | select(.status == "failed")] | length')
+          skipped=$(printf '%s' "$response" | jq -r '.skipped | length')
+          if [ "$failed" -gt 0 ] || [ "$skipped" -gt 0 ]; then
+            echo "phleet refused to start $failed deployment(s); skipped phones: $skipped"
             exit 1
-          }
+          fi
 
-          skipped=$(echo "$response" | jq -r '.skipped[]?' | wc -l)
-          if [ "$skipped" -gt 0 ]; then
-            echo "warning: $skipped phone(s) were skipped"
+          printf '%s' "$response" | jq -r '.deployments[].id | select(. != "")' \
+            > "$RUNNER_TEMP/phleet-deployment-ids.txt"
+          if [ -z "$(cat "$RUNNER_TEMP/phleet-deployment-ids.txt")" ]; then
+            echo "phleet did not return any deployment ids"
+            exit 1
           fi
 
       - name: Wait for phleet deployments
@@ -105,3 +140,17 @@ jobs:
 
           echo "timed out waiting for phleet deployments"
           exit 1
+
+      - name: Verify services are running
+        run: |
+          set -euo pipefail
+          view=$(curl -fsS \
+            -H "Authorization: Bearer $PHLEET_TOKEN" \
+            "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID")
+          not_running=$(printf '%s' "$view" | jq -r \
+            '[.project.services[] | select((.placements[0].status // "") != "running") | .name] | join(", ")')
+          if [ -n "$not_running" ]; then
+            echo "services not running: $not_running"
+            exit 1
+          fi
+          echo "all stack services are running"
