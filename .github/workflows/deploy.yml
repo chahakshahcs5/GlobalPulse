@@ -1,7 +1,12 @@
 name: Deploy GlobalPulse to phleet
 
 # Runs after the CI workflow succeeds on main, then asks phleet to deploy the
-# exact commit that passed CI. The stack deploys every service at that ref.
+# exact commit that passed CI.
+#
+# phleet serialises builds on one phone and times out a deployment after 20
+# minutes. A single stack deploy creates all five deployments at once, so the
+# queued ones age out before they start. Deploy the services one at a time so
+# each gets its own 20-minute window.
 #
 # Repository secrets:   PHLEET_URL, PHLEET_DEPLOY_TOKEN
 # Repository variable:  PHLEET_PROJECT_ID  (the GlobalPulse stack id)
@@ -31,9 +36,8 @@ jobs:
   deploy:
     name: Deploy stack
     runs-on: ubuntu-latest
-    # A cold full-stack build on the phone (web + studio + installs) can take
-    # 20-30 minutes. Keep the job comfortably above the poll window below.
-    timeout-minutes: 75
+    # Five services, each with its own 20-minute phleet window.
+    timeout-minutes: 120
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           (github.event.workflow_run.conclusion == 'success' &&
@@ -79,71 +83,61 @@ jobs:
           echo "addons did not start in time"
           exit 1
 
-      - name: Trigger phleet deploy
+      - name: Deploy services one at a time
         run: |
           set -euo pipefail
-          payload=$(jq -nc --arg ref "$DEPLOY_REF" '{ref:$ref}')
-          response=$(curl --max-time 120 -fsS -X POST \
-            "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deploy" \
+          view=$(curl --max-time 30 -fsS \
             -H "Authorization: Bearer $PHLEET_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$payload")
+            "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID")
+          services=$(printf '%s' "$view" | jq -r '.project.services[] | "\(.id) \(.name)"')
+          test -n "$services" || { echo "stack has no services"; exit 1; }
 
-          echo "$response"
-          failed=$(printf '%s' "$response" | jq -r \
-            '[.deployments[] | select(.status == "failed")] | length')
-          skipped=$(printf '%s' "$response" | jq -r '.skipped | length')
-          if [ "$failed" -gt 0 ] || [ "$skipped" -gt 0 ]; then
-            echo "phleet refused to start $failed deployment(s); skipped phones: $skipped"
-            exit 1
-          fi
-
-          printf '%s' "$response" | jq -r '.deployments[].id | select(. != "")' \
-            > "$RUNNER_TEMP/phleet-deployment-ids.txt"
-          if [ -z "$(cat "$RUNNER_TEMP/phleet-deployment-ids.txt")" ]; then
-            echo "phleet did not return any deployment ids"
-            exit 1
-          fi
-
-      - name: Wait for phleet deployments
-        run: |
-          set -euo pipefail
-          ids=$(cat "$RUNNER_TEMP/phleet-deployment-ids.txt")
-          echo "waiting for: $ids"
-
-          # 720 * 5s = 60 minutes. A cold web/studio build can exceed 20 minutes.
-          for _ in $(seq 1 720); do
-            list=$(curl --max-time 30 -fsS \
+          while read -r service_id service_name; do
+            echo "deploying $service_name ($service_id)"
+            payload=$(jq -nc --arg ref "$DEPLOY_REF" '{ref:$ref}')
+            response=$(curl --max-time 120 -fsS -X POST \
+              "$PHLEET_URL/api/projects/$service_id/deploy" \
               -H "Authorization: Bearer $PHLEET_TOKEN" \
-              "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deployments")
+              -H "Content-Type: application/json" \
+              -d "$payload")
 
-            pending=0
-            failed=0
-            for id in $ids; do
-              status=$(printf '%s' "$list" | jq -r --arg id "$id" \
-                '.deployments[] | select(.id == $id) | .status' | head -n1)
-              status=${status:-queued}
-              echo "$id: $status"
-              case "$status" in
-                active) ;;
-                failed|rolled_back) failed=1 ;;
-                *) pending=1 ;;
-              esac
-            done
-
-            if [ "$failed" -eq 1 ]; then
-              echo "one or more deployments failed"
+            echo "$response"
+            failed=$(printf '%s' "$response" | jq -r \
+              '[.deployments[] | select(.status == "failed")] | length')
+            skipped=$(printf '%s' "$response" | jq -r '.skipped | length')
+            if [ "$failed" -gt 0 ] || [ "$skipped" -gt 0 ]; then
+              echo "$service_name was refused by phleet; failed=$failed skipped=$skipped"
               exit 1
             fi
-            if [ "$pending" -eq 0 ]; then
-              echo "all deployments are active"
-              exit 0
-            fi
-            sleep 5
-          done
 
-          echo "timed out waiting for phleet deployments"
-          exit 1
+            dep_id=$(printf '%s' "$response" | jq -r '.deployments[0].id // empty')
+            test -n "$dep_id" || { echo "$service_name returned no deployment id"; exit 1; }
+            echo "waiting for $service_name deployment $dep_id"
+
+            status=queued
+            for _ in $(seq 1 240); do
+              list=$(curl --max-time 30 -fsS \
+                -H "Authorization: Bearer $PHLEET_TOKEN" \
+                "$PHLEET_URL/api/projects/$service_id/deployments")
+              status=$(printf '%s' "$list" | jq -r --arg id "$dep_id" \
+                '.deployments[] | select(.id == $id) | .status' | head -n1)
+              status=${status:-queued}
+              echo "$service_name: $status"
+              case "$status" in
+                active) break ;;
+                failed|rolled_back)
+                  echo "$service_name deployment ended as $status"
+                  exit 1
+                  ;;
+              esac
+              sleep 5
+            done
+
+            if [ "$status" != "active" ]; then
+              echo "$service_name deployment timed out"
+              exit 1
+            fi
+          done <<< "$services"
 
       - name: Verify services are running
         run: |
