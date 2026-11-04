@@ -2,9 +2,9 @@
 /**
  * Cross-platform development stack.
  *
- * Starts the API, MCP server, web portal and worker with one command on
- * Windows, Linux and Termux. All ports come from the environment (with local
- * defaults); nothing here assumes a Unix shell.
+ * Starts the API, MCP server, web portal, Block Studio and worker with one
+ * command on Windows, Linux and Termux. All ports come from the environment
+ * (with local defaults); nothing here assumes a Unix shell.
  *
  *   node scripts/dev.mjs                    # everything
  *   node scripts/dev.mjs --only=api,web     # a subset
@@ -27,8 +27,9 @@ const DEFAULTS = {
   api: 4000,
   mcp: 4001,
   web: 3002,
+  studio: 3003,
 };
-const ENV_KEYS = { api: 'PORT', mcp: 'MCP_PORT', web: 'WEB_PORT' };
+const ENV_KEYS = { api: 'PORT', mcp: 'MCP_PORT', web: 'WEB_PORT', studio: 'STUDIO_PORT' };
 
 const args = process.argv.slice(2);
 const onlyArg = args.find((arg) => arg.startsWith('--only='));
@@ -42,6 +43,7 @@ const services = [
   { name: 'mcp', filter: '@ai-news/mcp-server', port: 'MCP_PORT' },
   { name: 'worker', filter: '@ai-news/worker', port: null },
   { name: 'web', filter: '@ai-news/web', port: 'WEB_PORT' },
+  { name: 'studio', filter: '@ai-news/block-studio-app', port: 'STUDIO_PORT' },
 ];
 
 const selected = services.filter(
@@ -76,6 +78,11 @@ function start(service) {
     // processes can run in the same terminal.
     env.PORT = env.WEB_PORT || String(DEFAULTS.web);
     env.WEB_PORT = env.PORT;
+  }
+  if (service.name === 'studio') {
+    // The studio also reads PORT. Its own dev script pins 3003, but the
+    // production start (`next start`) needs the value from here.
+    env.PORT = env.STUDIO_PORT || String(DEFAULTS.studio);
   }
   const command = [pnpm, '--filter', service.filter, mode];
   console.log(`[dev] starting ${service.name} (${command.join(' ')})`);

@@ -608,6 +608,7 @@ export function PreviewCanvas({
                 theme={theme}
                 width={isComparing ? compareWidth : previewWidth}
                 label={`${block?.type ?? 'block'} preview`}
+                renderKey={variant?.id}
               />
             </div>
 
@@ -629,6 +630,7 @@ export function PreviewCanvas({
                   theme={theme}
                   width={compareWidth}
                   label={`${block?.type ?? 'block'} preview, ${compareVariant.label}`}
+                  renderKey={compareVariant.id}
                 />
               </div>
               <p className="mt-3 text-center text-[12px] text-slate-500 dark:text-slate-400">

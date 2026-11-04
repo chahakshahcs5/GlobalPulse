@@ -837,11 +837,18 @@ export class AdvancedChartRenderer {
 
     let elements = heading(chartData, canvas);
 
+    /*
+     * The ribbons are built around the origin; the arcs and labels are placed
+     * around the centre. Without moving the ribbons to that centre they are
+     * drawn in the top-left corner, outside the diagram.
+     */
+    let ribbons = '';
     layout.forEach((arc) => {
       const path = ribbonBuilder(arc);
       const color = DEFAULT_PALETTE[arc.source.index % DEFAULT_PALETTE.length];
-      elements += `<path d="${path ?? ''}" fill="${color}" fill-opacity="0.55" stroke="${color}" stroke-width="0.5" data-source="${escapeXml(rowNames[arc.source.index] ?? '')}" data-target="${escapeXml(columnNames[arc.target.index] ?? '')}"/>`;
+      ribbons += `<path d="${path ?? ''}" fill="${color}" fill-opacity="0.55" stroke="${color}" stroke-width="0.5" data-source="${escapeXml(rowNames[arc.source.index] ?? '')}" data-target="${escapeXml(columnNames[arc.target.index] ?? '')}"/>`;
     });
+    elements += `<g transform="translate(${centreX.toFixed(2)} ${centreY.toFixed(2)})">${ribbons}</g>`;
 
     layout.groups.forEach((group, index) => {
       const midAngle = (group.startAngle + group.endAngle) / 2;

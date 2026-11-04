@@ -32,9 +32,24 @@ export interface BlockPreviewFrameProps {
   width: number;
   /** The accessible name of the frame. */
   label: string;
+  /**
+   * The treatment being previewed.
+   *
+   * A variant is a treatment, not only a payload: changing it must remount
+   * the block so state derived from the payload (a timeline's direction, an
+   * audio block's open transcript) is initialised again. Without this, the
+   * second variant would keep the first one's state.
+   */
+  renderKey?: string;
 }
 
-export function BlockPreviewFrame({ block, theme, width, label }: BlockPreviewFrameProps) {
+export function BlockPreviewFrame({
+  block,
+  theme,
+  width,
+  label,
+  renderKey,
+}: BlockPreviewFrameProps) {
   const frameRef = React.useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = React.useState(320);
   const [ready, setReady] = React.useState(false);
@@ -65,10 +80,10 @@ export function BlockPreviewFrame({ block, theme, width, label }: BlockPreviewFr
   React.useEffect(() => {
     if (!ready) return;
     frameRef.current?.contentWindow?.postMessage(
-      { type: RENDER, block, theme },
+      { type: RENDER, block, theme, renderKey },
       window.location.origin
     );
-  }, [ready, block, theme]);
+  }, [ready, block, theme, renderKey]);
 
   return (
     <iframe

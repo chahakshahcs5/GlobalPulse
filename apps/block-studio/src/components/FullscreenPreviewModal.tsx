@@ -139,6 +139,7 @@ export function FullscreenPreviewModal({
               theme={theme}
               width={1100}
               label={`${block.blockType} Fullscreen`}
+              renderKey={label}
             />
           </div>
         </div>

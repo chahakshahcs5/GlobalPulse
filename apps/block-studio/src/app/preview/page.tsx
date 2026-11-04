@@ -29,6 +29,7 @@ const RESIZE = 'globalpulse:preview:resize';
 export default function PreviewPage() {
   const [block, setBlock] = React.useState<StoryBlock | null>(null);
   const [theme, setTheme] = React.useState<'dark' | 'light'>('dark');
+  const [renderKey, setRenderKey] = React.useState<string>('empty');
   const cardRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -40,11 +41,13 @@ export default function PreviewPage() {
         type?: string;
         block?: StoryBlock;
         theme?: 'dark' | 'light';
+        renderKey?: string;
       };
       if (message?.type !== RENDER) return;
 
       if (message.block) setBlock(message.block);
       if (message.theme) setTheme(message.theme);
+      if (message.renderKey) setRenderKey(message.renderKey);
     };
 
     window.addEventListener('message', onMessage);
@@ -85,7 +88,14 @@ export default function PreviewPage() {
         className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="px-6 py-5">
-          {block ? <BlockItem block={block} theme={theme} storyId="studio-preview" /> : null}
+          {block ? (
+            <BlockItem
+              key={`${block.blockType}:${renderKey}`}
+              block={block}
+              theme={theme}
+              storyId="studio-preview"
+            />
+          ) : null}
         </div>
       </div>
     </div>

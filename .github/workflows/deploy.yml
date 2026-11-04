@@ -1,0 +1,107 @@
+name: Deploy GlobalPulse to phleet
+
+# Runs after the CI workflow succeeds on main, then asks phleet to deploy the
+# exact commit that passed CI. The stack deploys every service at that ref.
+#
+# Repository secrets:   PHLEET_URL, PHLEET_DEPLOY_TOKEN
+# Repository variable:  PHLEET_PROJECT_ID  (the GlobalPulse stack id)
+#
+# The phleet token must have the deployer role. Do not use the admin token.
+
+on:
+  workflow_run:
+    workflows: ['CI/CD Pipeline - GlobalPulse']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit SHA, branch or tag to deploy (defaults to the selected branch)
+        required: false
+        type: string
+
+concurrency:
+  group: phleet-globalpulse-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy stack
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main') }}
+    env:
+      PHLEET_URL: ${{ secrets.PHLEET_URL }}
+      PHLEET_TOKEN: ${{ secrets.PHLEET_DEPLOY_TOKEN }}
+      PHLEET_PROJECT_ID: ${{ vars.PHLEET_PROJECT_ID }}
+      DEPLOY_REF: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+    steps:
+      - name: Trigger phleet deploy
+        run: |
+          set -euo pipefail
+          test -n "$PHLEET_URL" || { echo "PHLEET_URL is not set"; exit 1; }
+          test -n "$PHLEET_TOKEN" || { echo "PHLEET_DEPLOY_TOKEN is not set"; exit 1; }
+          test -n "$PHLEET_PROJECT_ID" || { echo "PHLEET_PROJECT_ID is not set"; exit 1; }
+
+          payload=$(jq -nc --arg ref "$DEPLOY_REF" '{ref:$ref}')
+          response=$(curl -fsS -X POST \
+            "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deploy" \
+            -H "Authorization: Bearer $PHLEET_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+
+          echo "$response"
+          echo "$response" | jq -r '.deployments[].id' > "$RUNNER_TEMP/phleet-deployment-ids.txt"
+          test -s "$RUNNER_TEMP/phleet-deployment-ids.txt" || {
+            echo "phleet did not start any deployments"
+            exit 1
+          }
+
+          skipped=$(echo "$response" | jq -r '.skipped[]?' | wc -l)
+          if [ "$skipped" -gt 0 ]; then
+            echo "warning: $skipped phone(s) were skipped"
+          fi
+
+      - name: Wait for phleet deployments
+        run: |
+          set -euo pipefail
+          ids=$(cat "$RUNNER_TEMP/phleet-deployment-ids.txt")
+          echo "waiting for: $ids"
+
+          for _ in $(seq 1 240); do
+            list=$(curl -fsS \
+              -H "Authorization: Bearer $PHLEET_TOKEN" \
+              "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deployments")
+
+            pending=0
+            failed=0
+            for id in $ids; do
+              status=$(printf '%s' "$list" | jq -r --arg id "$id" \
+                '.deployments[] | select(.id == $id) | .status' | head -n1)
+              status=${status:-queued}
+              echo "$id: $status"
+              case "$status" in
+                active) ;;
+                failed|rolled_back) failed=1 ;;
+                *) pending=1 ;;
+              esac
+            done
+
+            if [ "$failed" -eq 1 ]; then
+              echo "one or more deployments failed"
+              exit 1
+            fi
+            if [ "$pending" -eq 0 ]; then
+              echo "all deployments are active"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "timed out waiting for phleet deployments"
+          exit 1

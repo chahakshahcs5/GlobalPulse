@@ -70,7 +70,7 @@ Copy-Item .env.windows.example .env
 pnpm install
 pnpm db:setup        # prisma db push + bootstrap.sql (native schema engine)
 pnpm db:check        # SELECT 1 through the Prisma driver adapter
-pnpm dev             # api + mcp + worker + web
+pnpm dev             # api + mcp + worker + web + block studio
 ```
 
 `pnpm dev` prints the service URLs and stops every child on Ctrl+C. `scripts/dev.ps1` is a
@@ -87,6 +87,7 @@ pnpm dev:api         # PORT=4000
 pnpm dev:mcp         # MCP_PORT=4001
 pnpm dev:worker      # no listening port
 pnpm dev:web         # WEB_PORT=3002
+pnpm dev:studio      # STUDIO_PORT=3003
 ```
 
 The production web server:
@@ -337,18 +338,18 @@ If vectors are introduced later:
 
 ## 7. Scripts and checks
 
-| Command                                               | Purpose                                                            |
-| ----------------------------------------------------- | ------------------------------------------------------------------ |
-| `pnpm dev`                                            | Cross-platform stack (api, mcp, worker, web)                       |
-| `pnpm dev:api` / `dev:mcp` / `dev:worker` / `dev:web` | One service                                                        |
-| `pnpm db:generate`                                    | Regenerate the committed Prisma client (Windows/Linux)             |
-| `pnpm db:setup`                                       | `prisma db push` + `bootstrap.sql` (Windows/Linux/Docker)          |
-| `pnpm db:check`                                       | `SELECT 1` through the driver adapter                              |
-| `pnpm start:web`                                      | Standalone/Next production server honouring `PORT`                 |
-| `pnpm check:imports`                                  | Case-sensitive import check (also in CI)                           |
-| `pnpm check:portability`                              | Rejects shell env prefixes, POSIX paths, old `localhost:300x` URLs |
-| `pnpm typecheck`                                      | TypeScript                                                         |
-| `pnpm test:unit`                                      | Unit suite on Windows and Termux                                   |
+| Command                                                              | Purpose                                                            |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `pnpm dev`                                                           | Cross-platform stack (api, mcp, worker, web, block studio)         |
+| `pnpm dev:api` / `dev:mcp` / `dev:worker` / `dev:web` / `dev:studio` | One service                                                        |
+| `pnpm db:generate`                                                   | Regenerate the committed Prisma client (Windows/Linux)             |
+| `pnpm db:setup`                                                      | `prisma db push` + `bootstrap.sql` (Windows/Linux/Docker)          |
+| `pnpm db:check`                                                      | `SELECT 1` through the driver adapter                              |
+| `pnpm start:web`                                                     | Standalone/Next production server honouring `PORT`                 |
+| `pnpm check:imports`                                                 | Case-sensitive import check (also in CI)                           |
+| `pnpm check:portability`                                             | Rejects shell env prefixes, POSIX paths, old `localhost:300x` URLs |
+| `pnpm typecheck`                                                     | TypeScript                                                         |
+| `pnpm test:unit`                                                     | Unit suite on Windows and Termux                                   |
 
 `scripts/dev.ps1` and `scripts/dev.sh` are one-line wrappers around `scripts/dev.mjs`.
 There is no platform-specific logic in either wrapper.
@@ -366,12 +367,13 @@ command. For the `web` service, leave `WEB_PORT` unset so the script uses the in
 `PORT`; only a whole-stack `.env` needs `WEB_PORT` (to keep the web port separate from the
 API's `PORT`).
 
-| Service  | Start command                             | Port                                         | Health                |
-| -------- | ----------------------------------------- | -------------------------------------------- | --------------------- |
-| `api`    | `pnpm --filter @ai-news/api start`        | `PORT`                                       | HTTP `/health`        |
-| `mcp`    | `pnpm --filter @ai-news/mcp-server start` | `MCP_PORT` (set to the same value as `PORT`) | HTTP `/health`        |
-| `web`    | `pnpm start:web`                          | `PORT`                                       | HTTP `/`              |
-| `worker` | `pnpm --filter @ai-news/worker start`     | none                                         | `healthMode: process` |
+| Service  | Start command                                   | Port                                         | Health                |
+| -------- | ----------------------------------------------- | -------------------------------------------- | --------------------- |
+| `api`    | `pnpm --filter @ai-news/api start`              | `PORT`                                       | HTTP `/health`        |
+| `mcp`    | `pnpm --filter @ai-news/mcp-server start`       | `MCP_PORT` (set to the same value as `PORT`) | HTTP `/health`        |
+| `web`    | `pnpm start:web`                                | `PORT`                                       | HTTP `/`              |
+| `studio` | `pnpm --filter @ai-news/block-studio-app start` | `PORT`                                       | HTTP `/`              |
+| `worker` | `pnpm --filter @ai-news/worker start`           | none                                         | `healthMode: process` |
 
 Environment for managed services:
 
@@ -381,6 +383,11 @@ REDIS_URL=redis://127.0.0.1:6379
 NEXT_PUBLIC_API_URL=https://<api-public-url>
 MCP_BASE_URL=https://<mcp-public-url>/mcp
 API_INTERNAL_URL=http://127.0.0.1:<api-port>
+NEXT_PUBLIC_WEB_URL=https://<web-public-url>
+NEXT_PUBLIC_CMS_URL=https://<web-public-url>
+# Only when the portal and studio are sibling subdomains, so one session is
+# shared between them. The API sets the cookie for this parent domain.
+# COOKIE_DOMAIN=.example.com
 # Do not set WEB_PORT for the managed web service; phleet's PORT is used.
 DATABASE_ENGINE=prisma
 NODE_ENV=production
