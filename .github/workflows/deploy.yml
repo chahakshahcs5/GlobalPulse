@@ -31,6 +31,9 @@ jobs:
   deploy:
     name: Deploy stack
     runs-on: ubuntu-latest
+    # A cold full-stack build on the phone (web + studio + installs) can take
+    # 20-30 minutes. Keep the job comfortably above the poll window below.
+    timeout-minutes: 75
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           (github.event.workflow_run.conclusion == 'success' &&
@@ -51,7 +54,7 @@ jobs:
           # Starting the stack also starts its databases and caches. It can
           # return 409 when a child has no release yet; the deploy below builds
           # those children, so only the addon check below decides success.
-          code=$(curl -sS -o "$RUNNER_TEMP/stack-start.json" -w '%{http_code}' \
+          code=$(curl --max-time 120 -sS -o "$RUNNER_TEMP/stack-start.json" -w '%{http_code}' \
             -X POST "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/start" \
             -H "Authorization: Bearer $PHLEET_TOKEN")
           cat "$RUNNER_TEMP/stack-start.json"
@@ -60,8 +63,8 @@ jobs:
             *) echo "stack start returned HTTP $code"; exit 1 ;;
           esac
 
-          for _ in $(seq 1 60); do
-            view=$(curl -fsS \
+          for _ in $(seq 1 120); do
+            view=$(curl --max-time 30 -fsS \
               -H "Authorization: Bearer $PHLEET_TOKEN" \
               "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID")
             not_running=$(printf '%s' "$view" | jq -r \
@@ -80,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           payload=$(jq -nc --arg ref "$DEPLOY_REF" '{ref:$ref}')
-          response=$(curl -fsS -X POST \
+          response=$(curl --max-time 120 -fsS -X POST \
             "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deploy" \
             -H "Authorization: Bearer $PHLEET_TOKEN" \
             -H "Content-Type: application/json" \
@@ -108,8 +111,9 @@ jobs:
           ids=$(cat "$RUNNER_TEMP/phleet-deployment-ids.txt")
           echo "waiting for: $ids"
 
-          for _ in $(seq 1 240); do
-            list=$(curl -fsS \
+          # 720 * 5s = 60 minutes. A cold web/studio build can exceed 20 minutes.
+          for _ in $(seq 1 720); do
+            list=$(curl --max-time 30 -fsS \
               -H "Authorization: Bearer $PHLEET_TOKEN" \
               "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID/deployments")
 
@@ -144,7 +148,7 @@ jobs:
       - name: Verify services are running
         run: |
           set -euo pipefail
-          view=$(curl -fsS \
+          view=$(curl --max-time 30 -fsS \
             -H "Authorization: Bearer $PHLEET_TOKEN" \
             "$PHLEET_URL/api/projects/$PHLEET_PROJECT_ID")
           not_running=$(printf '%s' "$view" | jq -r \
