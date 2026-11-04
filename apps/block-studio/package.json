@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "cross-env PORT=3003 next dev",
     "build": "next build",
+    "build:webpack": "next build --webpack",
     "start": "next start"
   },
   "dependencies": {
