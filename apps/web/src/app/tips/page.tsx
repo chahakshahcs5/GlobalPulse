@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ShieldAlert,
@@ -17,6 +17,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import type { CitizenTipUrgency, CitizenTipAnonymity } from '@ai-news/schemas';
+import { submitCitizenTip } from '@ai-news/api-client';
 
 export default function TipLinePage() {
   const [headline, setHeadline] = useState('');
@@ -35,47 +36,65 @@ export default function TipLinePage() {
   } | null>(null);
   const [copiedReceipt, setCopiedReceipt] = useState(false);
 
-  // Compute a deterministic client-side SHA-256 pseudo-hash for integrity verification
-  const computeChecksum = () => {
+  // Compute a real SHA-256 over the submitted payload. The old implementation
+  // was a 32-bit non-cryptographic hash formatted to look like SHA-256.
+  const computeChecksum = async (): Promise<string> => {
     const raw = `${headline}|${details}|${category}|${urgency}|${attachedFileName}`;
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-      const char = raw.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash |= 0;
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+      const hex = Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      return `sha256:${hex}`;
     }
-    const hex = Math.abs(hash).toString(16).padStart(8, '0');
-    return `sha256:${hex}e7a192df44c01b2a95c89f13d80${hex}`;
+    return `sha256:${Date.now().toString(16)}`;
   };
 
-  const checksum = computeChecksum();
+  const [checksum, setChecksum] = useState('sha256:pending');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    void computeChecksum().then((value) => {
+      if (!cancelled) setChecksum(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [headline, details, category, urgency, attachedFileName]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!headline.trim() || !details.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    setTimeout(() => {
-      const receiptToken = `rcpt_${Math.random().toString(36).substring(2, 9)}_${Date.now().toString(36)}`;
-      const receipt = {
-        receiptToken,
-        checksum,
-        headline,
-        submittedAt: new Date().toISOString(),
-      };
+    try {
+      const payloadChecksum = await computeChecksum();
+      const result = await submitCitizenTip({
+        headline: headline.trim(),
+        details: details.trim(),
+        category,
+        urgency,
+        anonymityMode,
+        verificationChecksum: payloadChecksum,
+        contactAlias: contactAlias.trim() || undefined,
+      });
 
-      // Save locally to reader drop logs
-      if (typeof window !== 'undefined') {
-        try {
-          const prev = JSON.parse(localStorage.getItem('globalpulse_submitted_tips') || '[]');
-          localStorage.setItem('globalpulse_submitted_tips', JSON.stringify([receipt, ...prev]));
-        } catch {}
-      }
-
-      setSubmissionReceipt(receipt);
+      setSubmissionReceipt({
+        receiptToken: result.receiptToken,
+        checksum: result.tip.verificationChecksum,
+        headline: result.tip.headline,
+        submittedAt: result.tip.createdAt,
+      });
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : 'The tip could not be submitted. Please try again.'
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   const handleCopyReceipt = () => {
@@ -404,7 +423,12 @@ export default function TipLinePage() {
           </div>
 
           {/* Submit Action */}
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {submitError && (
+              <p className="text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                {submitError}
+              </p>
+            )}
             <button
               type="submit"
               disabled={!headline.trim() || !details.trim() || isSubmitting}

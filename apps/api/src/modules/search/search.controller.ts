@@ -12,7 +12,11 @@ import { SearchService } from '@ai-news/search';
 import { db } from '@ai-news/database';
 import { NestAuthGuard, RequireScope, Principal } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
-import type { SearchStoriesInput, FindSimilarStoriesInput } from '@ai-news/schemas';
+import {
+  SearchStoriesInputSchema,
+  type SearchStoriesInput,
+  type FindSimilarStoriesInput,
+} from '@ai-news/schemas';
 
 @Controller('api/search')
 @UseGuards(NestAuthGuard)
@@ -23,6 +27,15 @@ export class SearchController {
     this.searchService = new SearchService(db);
   }
 
+  private canReadDrafts(principal: AuthenticatedPrincipal): boolean {
+    return (
+      principal.role === 'admin' ||
+      principal.role === 'editor' ||
+      principal.scopes.includes('news:admin') ||
+      principal.scopes.includes('news:write')
+    );
+  }
+
   @Get('stories')
   @RequireScope('news:read')
   async searchStories(
@@ -30,7 +43,11 @@ export class SearchController {
     @Principal() principal: AuthenticatedPrincipal
   ) {
     const orgId = principal.organizationId;
-    return await this.searchService.searchStories(query, orgId);
+    const parsed = SearchStoriesInputSchema.parse(query);
+    if (!this.canReadDrafts(principal)) {
+      parsed.status = 'PUBLISHED';
+    }
+    return await this.searchService.searchStories(parsed, orgId);
   }
 
   @Post(['similar', 'stories/similar'])

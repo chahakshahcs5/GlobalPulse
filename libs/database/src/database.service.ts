@@ -26,6 +26,9 @@ import type {
   ISourceCorrectionRepository,
   ILiveFeedRepository,
   IBlockVariantRepository,
+  ICitizenTipRepository,
+  IStoryEmbeddingRepository,
+  IStoryReadRepository,
 } from './interfaces';
 import {
   MemoryStoryRepository,
@@ -55,6 +58,9 @@ import {
   MemorySourceCorrectionRepository,
   MemoryLiveFeedRepository,
   MemoryBlockVariantRepository,
+  MemoryCitizenTipRepository,
+  MemoryStoryEmbeddingRepository,
+  MemoryStoryReadRepository,
 } from './repositories/memory';
 import {
   PrismaStoryRepository,
@@ -84,6 +90,9 @@ import {
   PrismaSourceCorrectionRepository,
   PrismaLiveFeedRepository,
   PrismaBlockVariantRepository,
+  PrismaCitizenTipRepository,
+  PrismaStoryEmbeddingRepository,
+  PrismaStoryReadRepository,
 } from './repositories/prisma';
 import { prismaManager } from './client/prisma-client';
 import { checkDatabaseHealth, DatabaseHealthStatus } from './client/connection-status';
@@ -123,6 +132,9 @@ export class DatabaseService {
   public sourceCorrections: ISourceCorrectionRepository;
   public liveFeeds: ILiveFeedRepository;
   public blockVariants: IBlockVariantRepository;
+  public citizenTips: ICitizenTipRepository;
+  public storyEmbeddings: IStoryEmbeddingRepository;
+  public storyReads: IStoryReadRepository;
 
   private memoryStories = new MemoryStoryRepository();
   private memoryEvents = new MemoryEventRepository();
@@ -151,6 +163,9 @@ export class DatabaseService {
   private memorySourceCorrections = new MemorySourceCorrectionRepository();
   private memoryLiveFeeds = new MemoryLiveFeedRepository();
   private memoryBlockVariants = new MemoryBlockVariantRepository();
+  private memoryCitizenTips = new MemoryCitizenTipRepository();
+  private memoryStoryEmbeddings = new MemoryStoryEmbeddingRepository();
+  private memoryStoryReads = new MemoryStoryReadRepository();
 
   private isPrismaActive = false;
 
@@ -212,6 +227,9 @@ export class DatabaseService {
     this.sourceCorrections = this.memorySourceCorrections;
     this.liveFeeds = this.memoryLiveFeeds;
     this.blockVariants = this.memoryBlockVariants;
+    this.citizenTips = this.memoryCitizenTips;
+    this.storyEmbeddings = this.memoryStoryEmbeddings;
+    this.storyReads = this.memoryStoryReads;
   }
 
   /**
@@ -269,6 +287,9 @@ export class DatabaseService {
         this.sourceCorrections = new PrismaSourceCorrectionRepository(getPrisma);
         this.liveFeeds = new PrismaLiveFeedRepository(getPrisma);
         this.blockVariants = new PrismaBlockVariantRepository(getPrisma);
+        this.citizenTips = new PrismaCitizenTipRepository(getPrisma);
+        this.storyEmbeddings = new PrismaStoryEmbeddingRepository(getPrisma);
+        this.storyReads = new PrismaStoryReadRepository(getPrisma);
         this.isPrismaActive = true;
         logger.info('DatabaseService initialized in PostgreSQL Prisma mode (all 25 domains).');
         return true;
@@ -340,6 +361,9 @@ export class DatabaseService {
     const correctionSnap = this.memorySourceCorrections.snapshot();
     const liveFeedSnap = this.memoryLiveFeeds.snapshot();
     const blockVariantSnap = this.memoryBlockVariants.snapshot();
+    const citizenTipSnap = this.memoryCitizenTips.snapshot();
+    const storyEmbeddingSnap = this.memoryStoryEmbeddings.snapshot();
+    const storyReadSnap = this.memoryStoryReads.snapshot();
 
     try {
       const result = await work(null);
@@ -372,6 +396,9 @@ export class DatabaseService {
       this.memorySourceCorrections.restore(correctionSnap);
       this.memoryLiveFeeds.restore(liveFeedSnap);
       this.memoryBlockVariants.restore(blockVariantSnap);
+      this.memoryCitizenTips.restore(citizenTipSnap);
+      this.memoryStoryEmbeddings.restore(storyEmbeddingSnap);
+      this.memoryStoryReads.restore(storyReadSnap);
       throw err;
     } finally {
       this.releaseTransactionLock();
@@ -417,6 +444,10 @@ export class DatabaseService {
     this.memoryIngestion.clear();
     this.memorySourceCorrections.clear();
     this.memoryLiveFeeds.clear();
+    this.memoryBlockVariants.clear();
+    this.memoryCitizenTips.clear();
+    this.memoryStoryEmbeddings.clear();
+    this.memoryStoryReads.clear();
   }
 }
 

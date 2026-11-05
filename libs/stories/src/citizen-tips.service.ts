@@ -4,13 +4,18 @@ import type {
   CitizenTipStatus,
   CitizenTipUrgency,
 } from '@ai-news/schemas';
+import type { DatabaseService } from '@ai-news/database';
 import { generateId, NotFoundError } from '@ai-news/shared';
 
 export class CitizenTipsService {
   private tips = new Map<string, CitizenTip>();
 
-  constructor() {
-    this.seedDefaultTips();
+  constructor(private readonly db?: DatabaseService) {
+    if (!db) {
+      // Standalone/test fallback. The API and MCP pass a DatabaseService so
+      // tips survive restarts and are visible across processes.
+      this.seedDefaultTips();
+    }
   }
 
   private seedDefaultTips(): void {
@@ -89,6 +94,9 @@ export class CitizenTipsService {
     };
 
     this.tips.set(id, tip);
+    if (this.db) {
+      return { tip: await this.db.citizenTips.create(tip), receiptToken };
+    }
     return { tip, receiptToken };
   }
 
@@ -101,6 +109,10 @@ export class CitizenTipsService {
       limit?: number;
     }
   ): Promise<CitizenTip[]> {
+    if (this.db) {
+      return this.db.citizenTips.list(organizationId, filter);
+    }
+
     const list: CitizenTip[] = [];
     for (const t of this.tips.values()) {
       if (t.organizationId !== organizationId && organizationId !== '*') continue;
@@ -115,6 +127,9 @@ export class CitizenTipsService {
   }
 
   async getTipById(id: string, organizationId?: string): Promise<CitizenTip | null> {
+    if (this.db) {
+      return this.db.citizenTips.findById(id, organizationId);
+    }
     const tip = this.tips.get(id);
     if (!tip) return null;
     if (organizationId && organizationId !== '*' && tip.organizationId !== organizationId) {
@@ -124,6 +139,9 @@ export class CitizenTipsService {
   }
 
   async getTipByChecksum(checksum: string, organizationId?: string): Promise<CitizenTip | null> {
+    if (this.db) {
+      return this.db.citizenTips.findByChecksum(checksum, organizationId);
+    }
     for (const tip of this.tips.values()) {
       if (tip.verificationChecksum === checksum) {
         if (organizationId && organizationId !== '*' && tip.organizationId !== organizationId) {
@@ -150,6 +168,9 @@ export class CitizenTipsService {
     if (editorialNotes) tip.editorialNotes = editorialNotes;
     tip.updatedAt = new Date().toISOString();
 
+    if (this.db) {
+      return this.db.citizenTips.update(tip);
+    }
     this.tips.set(id, tip);
     return { ...tip };
   }

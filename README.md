@@ -7,9 +7,9 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.2-green.svg)](https://fastify.dev/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-Mercurius-e10098.svg)](https://mercurius.dev/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-orange.svg)](https://modelcontextprotocol.io/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%2B%20pgvector-336791.svg)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-1264%2B%20passing-brightgreen.svg)](<>)
+[![Tests](https://img.shields.io/badge/Tests-1287%2B%20passing-brightgreen.svg)](<>)
 
 A production-grade, modern, interactive, animated multimedia news publishing platform designed from the ground up as an **AI-operable application**. External AI agents—such as Google Gemini, Gemini Spark, ChatGPT / OpenAI agents, Claude, and enterprise MCP clients—operate the newsroom remotely through the **Model Context Protocol (MCP)** and **GraphQL Mercurius API**.
 
@@ -50,7 +50,7 @@ flowchart TD
         Taxonomy["Events, Entities & Topics\nKnowledge Graph Indexing"]
         Sources["Primary Source Registry\nCitations & Evidence Verification"]
         Search["Hybrid Search Engine\nFull-Text & Jaccard Deduplication"]
-        MediaLib["Programmatic D3 Renderers (13 Types)\nMapLibre Maps & Timelines"]
+        MediaLib["Programmatic D3 Renderers (29 Types)\nMapLibre Maps & Timelines"]
     end
 
     subgraph AsyncTier["Asynchronous Processing & Telemetry"]
@@ -59,7 +59,7 @@ flowchart TD
     end
 
     subgraph DataTier["Dual-Engine Persistence"]
-        Postgres[("PostgreSQL 16 + pgvector\nPrisma ORM & Connection Pooling")]
+        Postgres[("PostgreSQL 16\nPrisma ORM & Connection Pooling")]
         Memory[("High-Speed In-Memory Store\nZero-Dependency Testing & Local Dev")]
     end
 
@@ -102,7 +102,7 @@ flowchart TD
 
 ### 2. Human Editorial CMS & Newsroom Workflow
 
-- **Structured 46-Block Engine**: Content is authored as composable, typed JSON blocks—including Lead Paragraphs, Pull Quotes, 19 D3 chart types, MapLibre Maps, Milestone Timelines, Comparison Tables, Callouts, KPI Metric Statistics, and media blocks for video galleries, podcasts, waveforms, transcripts, and published datasets.
+- **Structured 66-Block Engine**: Content is authored as composable, typed JSON blocks-including Lead Paragraphs, Pull Quotes, 29 D3 chart types, MapLibre Maps, Milestone Timelines, Comparison Tables, Callouts, KPI Metric Statistics, and media blocks for video galleries, podcasts, waveforms, transcripts, and published datasets.
 - **Compose & Live Article Preview**: Switch between form editing and a real-time dark/light preview rendered by the production `StoryRenderer`.
 - **Revision Snapshots & WhatChanged Diffs**: Committing revisions creates immutable version snapshots with changelog diffs displayed automatically to readers.
 - **Editorial Review Queue & Scheduled Embargo**: Multi-role review gates (Draft → Submit for Review → Approve/Publish) and automated embargo scheduling.
@@ -148,13 +148,13 @@ flowchart TD
 │   ├── topics/          # News taxonomy classification and topic hierarchy
 │   ├── sources/         # Primary source registry, fact-checking, and citation linker
 │   ├── search/          # Jaccard similarity, full-text tokenization, deduplication
-│   ├── media/           # D3 programmatic chart engine (13 types), MapLibre, Timelines
+│   ├── media/           # D3 programmatic chart engine (29 types), MapLibre, Timelines
 │   ├── graphql/         # Mercurius GraphQL schema, resolvers, and subscriptions
 │   ├── auth/            # OAuth 2.1, PKCE verification, JWT token service, scopes
 │   ├── jobs/            # Job queue manager, handlers, and retry backoff policies
 │   ├── observability/   # Structured JSON logger, Prometheus metrics, OpenTelemetry
 │   └── shared/          # Shared utilities, slugify, generateId, error hierarchy
-├── docs/                # Comprehensive 26-file production documentation suite
+├── docs/                # Comprehensive 30-file production documentation suite
 ├── tests/
 │   ├── unit/            # Isolated unit test suites (Blocks, Renderers, Auth, Search)
 │   ├── integration/     # Subsystem integration tests (API, DB, MCP, GraphQL, Web)
@@ -215,7 +215,7 @@ phleet deployment notes.
 #### Option B: Running with Docker Compose (Section 154)
 
 ```bash
-# Launch PostgreSQL (pgvector), Redis 7, MinIO S3, API, MCP Server, Web, and Worker
+# Launch PostgreSQL, Redis 7, MinIO S3, API, MCP Server, Web, and Worker
 pnpm docker:up
 
 # Check container health and running status
@@ -231,7 +231,7 @@ pnpm docker:down
 ### 4. Running the Test Suite & Demonstrations
 
 ```bash
-# Run all 56 unit and integration test suites (432 tests)
+# Run all 138 unit and integration test suites (1,287 tests)
 pnpm test
 
 # Run isolated unit tests

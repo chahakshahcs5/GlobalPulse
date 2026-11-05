@@ -87,3 +87,16 @@ export async function logoutUser(): Promise<void> {
     setAuthToken(null);
   }
 }
+
+/**
+ * Persist reader preferences (theme, depth, algorithm weights) on the server.
+ *
+ * The local cache is still useful for instant UI, but the server copy is what
+ * personalization and other devices read.
+ */
+export async function updatePreferences(input: Record<string, unknown>): Promise<unknown> {
+  return request('/api/auth/preferences', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}

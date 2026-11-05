@@ -598,7 +598,7 @@ export class PrismaStoryRepository implements IStoryRepository {
     const [rows, total] = await Promise.all([
       this.storyClient.findMany({
         where,
-        take: params.limit || 20,
+        take: Number(params.limit) || 20,
         orderBy: { updatedAt: 'desc' },
       }),
       this.storyClient.count({ where }),

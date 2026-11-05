@@ -7,13 +7,19 @@ import { generateNewsArticleJsonLd, escapeXml } from '@ai-news/shared';
 @Controller()
 export class FeedsController {
   private baseUrl = process.env.BASE_URL || process.env.API_BASE_URL || 'http://localhost:4000';
+  /**
+   * Public feeds are single-tenant by default. A multi-tenant deployment maps
+   * the request host to an organization and sets DEFAULT_ORG_ID per instance;
+   * omitting the org entirely used to return every tenant's stories.
+   */
+  private readonly orgId = process.env.DEFAULT_ORG_ID || 'org_default';
 
   /**
    * RSS 2.0 Feed with media enclosures and Google News compat
    */
   @Get(['rss.xml', 'api/feeds/rss', 'feed'])
   async getRssFeed(@Res() reply: FastifyReply) {
-    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 50 });
+    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 50 }, this.orgId);
     const now = new Date().toUTCString();
 
     const itemsXml = stories
@@ -62,7 +68,7 @@ export class FeedsController {
    */
   @Get(['atom.xml', 'api/feeds/atom'])
   async getAtomFeed(@Res() reply: FastifyReply) {
-    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 50 });
+    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 50 }, this.orgId);
     const nowIso = new Date().toISOString();
 
     const entriesXml = stories
@@ -101,10 +107,13 @@ export class FeedsController {
   @Get(['feeds/:category/rss.xml', 'api/feeds/category/:category'])
   async getCategoryRssFeed(@Param('category') category: string, @Res() reply: FastifyReply) {
     const normalized = category.toLowerCase();
-    const allPublished = await db.stories.list({
-      status: 'PUBLISHED',
-      limit: 100,
-    });
+    const allPublished = await db.stories.list(
+      {
+        status: 'PUBLISHED',
+        limit: 100,
+      },
+      this.orgId
+    );
     const stories = allPublished
       .filter((s) => {
         const matchesArticleType = s.articleType?.toLowerCase() === normalized;
@@ -158,11 +167,14 @@ export class FeedsController {
    */
   @Get(['feeds/topics/:topic/rss.xml', 'api/feeds/topics/:topic'])
   async getTopicRssFeed(@Param('topic') topic: string, @Res() reply: FastifyReply) {
-    const stories = await db.stories.list({
-      status: 'PUBLISHED',
-      topicId: topic,
-      limit: 30,
-    });
+    const stories = await db.stories.list(
+      {
+        status: 'PUBLISHED',
+        topicId: topic,
+        limit: 30,
+      },
+      this.orgId
+    );
     const now = new Date().toUTCString();
 
     const itemsXml = stories
@@ -204,7 +216,7 @@ export class FeedsController {
    */
   @Get(['sitemap.xml', 'api/sitemap.xml'])
   async getSitemap(@Res() reply: FastifyReply) {
-    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 500 });
+    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 500 }, this.orgId);
     const nowIso = new Date().toISOString().split('T')[0];
 
     const staticUrls = [
@@ -260,7 +272,7 @@ export class FeedsController {
    */
   @Get(['sitemap-news.xml', 'api/sitemaps/news.xml'])
   async getGoogleNewsSitemap(@Res() reply: FastifyReply) {
-    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 250 });
+    const stories = await db.stories.list({ status: 'PUBLISHED', limit: 250 }, this.orgId);
     const fortyEightHoursAgo = Date.now() - 48 * 60 * 60 * 1000;
 
     // Filter to last 48 hours per Google News spec

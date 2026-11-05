@@ -108,3 +108,4 @@ export * from './provenance';
 export * from './cors';
 export * from './escape';
 export * from './runtime-ports';
+export * from './embeddings';

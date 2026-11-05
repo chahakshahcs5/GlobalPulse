@@ -30,7 +30,7 @@ export function registerJobTools(
       jobType: z
         .enum(['media_transcode', 'video_render', 'pdf_export', 'bulk_import'])
         .describe('Type of job'),
-      payload: z.record(z.unknown()).describe('Job parameters'),
+      payload: z.record(z.string(), z.unknown()).describe('Job parameters'),
     },
     async ({ jobType, payload: _payload }) => {
       const principal = getPrincipal();

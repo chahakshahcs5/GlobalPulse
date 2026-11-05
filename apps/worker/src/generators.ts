@@ -136,28 +136,64 @@ export function generateValidPdf(
   storyId: string,
   versionNumber: number,
   layout: string,
-  textContent: string = ''
+  textContent: string = '',
+  title: string = ''
 ): Buffer {
   const dateStr = new Date().toISOString().split('T')[0];
-  const sanitizedText = textContent
-    .replace(/[^\x20-\x7E\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .slice(0, 500);
+  const sanitized = (value: string) =>
+    value
+      .replace(/[^\x20-\x7E\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const wrap = (text: string, maxChars: number): string[] => {
+    const words = sanitized(text).split(' ').filter(Boolean);
+    const lines: string[] = [];
+    let line = '';
+    for (const word of words) {
+      if ((line + ' ' + word).trim().length > maxChars) {
+        if (line) lines.push(line);
+        line = word;
+      } else {
+        line = `${line} ${word}`.trim();
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  const headlineLines = wrap(title || 'GlobalPulse archived dispatch', 58).slice(0, 3);
+  const bodyLines = wrap(
+    textContent || 'Certified immutable news dispatch published via GlobalPulse AI Network.',
+    82
+  ).slice(0, 42);
+
+  const escapePdf = (value: string) =>
+    value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+
+  const headlineStream = headlineLines
+    .map((line, index) => `${index === 0 ? '' : '0 -24 Td\n'}(${escapePdf(line)}) Tj`)
+    .join('\n');
+
+  const bodyStream = bodyLines.map((line) => `0 -14 Td\n(${escapePdf(line)}) Tj`).join('\n');
 
   const pdfStream = `BT
-/F1 18 Tf
-50 740 Td
+/F1 9 Tf
+50 760 Td
 (GLOBALPULSE BROADSHEET ARCHIVE) Tj
-/F1 12 Tf
-0 -26 Td
-(Story ID: ${storyId} | Revision: v${versionNumber} | Layout: ${layout.toUpperCase()}) Tj
-0 -20 Td
+/F1 20 Tf
+0 -28 Td
+${headlineStream}
+/F1 11 Tf
+0 -28 Td
+(Story ID: ${escapePdf(storyId)} | Revision: v${versionNumber} | Layout: ${escapePdf(layout.toUpperCase())}) Tj
+0 -18 Td
 (Archived on: ${dateStr}) Tj
-0 -30 Td
+0 -24 Td
 (--------------------------------------------------------------------------------) Tj
 /F1 10 Tf
-0 -24 Td
-(${sanitizedText || 'Certified immutable news dispatch published via GlobalPulse AI Network.'}) Tj
+0 -22 Td
+${bodyStream}
 ET`;
 
   const streamLength = Buffer.byteLength(pdfStream);
@@ -190,34 +226,64 @@ ET`;
 }
 
 /**
- * Computes a normalized semantic embedding vector using deterministic projection.
+ * Re-exported from the shared library so the API and worker generate
+ * byte-identical embeddings.
  */
-export function generateSemanticEmbedding(tokens: string[], dimensions = 1536): number[] {
-  const vector = new Array(dimensions).fill(0);
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    let hash = 0;
-    for (let c = 0; c < token.length; c++) {
-      hash = (hash << 5) - hash + token.charCodeAt(c);
-      hash |= 0;
-    }
-    const idx = Math.abs(hash) % dimensions;
-    vector[idx] += 1;
-    // Harmonic spread to simulate dense contextual clustering
-    vector[(idx + 17) % dimensions] += 0.5;
-    vector[(idx + 43) % dimensions] += 0.25;
+export { generateSemanticEmbedding } from '@ai-news/shared';
+
+/**
+ * Generates a valid 16-bit PCM WAV file.
+ *
+ * The waveform is synthesized locally (a voiced carrier with word-rate
+ * amplitude modulation) so the artifact is real audio even when no external
+ * text-to-speech provider is configured. Set TTS_WEBHOOK_URL to replace it
+ * with provider-rendered speech.
+ */
+export function generateValidWav(
+  scriptText: string,
+  voice: string,
+  durationSeconds: number
+): Buffer {
+  const sampleRate = 22050;
+  const channels = 1;
+  const bitsPerSample = 16;
+  const safeDuration = Math.max(1, Math.min(Math.floor(durationSeconds), 300));
+  const sampleCount = sampleRate * safeDuration;
+  const dataSize = sampleCount * channels * (bitsPerSample / 8);
+
+  const buffer = Buffer.alloc(44 + dataSize);
+  buffer.write('RIFF', 0, 'ascii');
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write('WAVE', 8, 'ascii');
+  buffer.write('fmt ', 12, 'ascii');
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20); // PCM
+  buffer.writeUInt16LE(channels, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * channels * (bitsPerSample / 8), 28);
+  buffer.writeUInt16LE(channels * (bitsPerSample / 8), 32);
+  buffer.writeUInt16LE(bitsPerSample, 34);
+  buffer.write('data', 36, 'ascii');
+  buffer.writeUInt32LE(dataSize, 40);
+
+  const words = Math.max(1, scriptText.trim().split(/\s+/).filter(Boolean).length);
+  const wordsPerSecond = Math.max(1.2, Math.min(3.2, words / safeDuration));
+  const baseFrequency = voice === 'news_anchor_f' ? 210 : voice === 'news_anchor_m' ? 125 : 165;
+
+  for (let i = 0; i < sampleCount; i++) {
+    const t = i / sampleRate;
+    // Word-rate envelope so the audio has speech-like pacing.
+    const wordPhase = (t * wordsPerSecond) % 1;
+    const envelope = Math.max(0, Math.sin(Math.PI * Math.min(1, wordPhase * 1.8)));
+    // A small pitch glide per word avoids a single flat tone.
+    const pitch = baseFrequency * (1 + 0.08 * Math.sin(2 * Math.PI * wordsPerSecond * t));
+    const carrier =
+      Math.sin(2 * Math.PI * pitch * t) * 0.6 +
+      Math.sin(2 * Math.PI * pitch * 2 * t) * 0.2 +
+      Math.sin(2 * Math.PI * pitch * 3 * t) * 0.1;
+    const sample = Math.max(-1, Math.min(1, carrier * envelope * 0.5));
+    buffer.writeInt16LE(Math.round(sample * 32767), 44 + i * 2);
   }
 
-  // L2 normalization
-  let norm = 0;
-  for (let i = 0; i < dimensions; i++) {
-    norm += vector[i] * vector[i];
-  }
-  norm = Math.sqrt(norm) || 1;
-
-  for (let i = 0; i < dimensions; i++) {
-    vector[i] = parseFloat((vector[i] / norm).toFixed(6));
-  }
-
-  return vector;
+  return buffer;
 }

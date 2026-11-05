@@ -146,9 +146,14 @@ export class RealtimeService implements OnModuleDestroy {
     this.activeSubscriptionsCount++;
 
     return this.messageSubject.asObservable().pipe(
-      filter(
-        (msg) => channelSet.has(msg.channel) || channelSet.has('all') || msg.channel === 'all'
-      ),
+      /*
+       * Exact channel membership only.
+       *
+       * The old `|| msg.channel === 'all'` clause delivered every event to
+       * every subscriber — including draft events. The controller expands the
+       * `all` subscription into the channels the principal may actually read.
+       */
+      filter((msg) => channelSet.has(msg.channel)),
       map((msg) => ({
         type: msg.eventName,
         data: msg.data as object,

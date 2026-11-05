@@ -333,7 +333,7 @@ export class MemoryStoryRepository implements IStoryRepository {
 
     filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    const limit = params.limit || 20;
+    const limit = Number(params.limit) || 20;
     const items = filtered.slice(0, limit).map((s) => ({
       storyId: s.id,
       title: s.title,

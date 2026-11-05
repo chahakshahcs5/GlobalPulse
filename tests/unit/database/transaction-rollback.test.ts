@@ -287,6 +287,7 @@ describe('Transactional Integrity & Rollback Handling', () => {
     await db.newsletters.subscribe('reader@example.com', 'daily', ['tech']);
     await db.collections.create({
       id: 'col_baseline',
+      organizationId: 'org_test',
       name: 'Baseline Collection',
       slug: 'baseline-collection',
       curatorId: 'usr_curator',
@@ -330,6 +331,7 @@ describe('Transactional Integrity & Rollback Handling', () => {
         // Mutate collections
         await db.collections.create({
           id: 'col_corrupted',
+          organizationId: 'org_test',
           name: 'Corrupted Collection',
           slug: 'corrupted-col',
           curatorId: 'usr_curator',

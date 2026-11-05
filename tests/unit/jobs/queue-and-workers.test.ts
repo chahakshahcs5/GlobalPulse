@@ -180,7 +180,7 @@ describe('Jobs Queue & Background Worker Unit Tests', () => {
       const res = processed.result as { voice: string; durationSeconds: number; audioUrl: string };
       expect(res.voice).toBe('news_anchor_f');
       expect(res.durationSeconds).toBeGreaterThanOrEqual(10);
-      expect(res.audioUrl).toContain('audio/sty_breaking_mars_briefing_news_anchor_f.mp3');
+      expect(res.audioUrl).toContain('audio/sty_breaking_mars_briefing_news_anchor_f.wav');
     });
 
     it('executes export.generate_pdf and produces archivable PDF artifact', async () => {

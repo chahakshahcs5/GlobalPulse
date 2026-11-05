@@ -25,3 +25,4 @@ export * from './diagrams/diagram-renderer';
 export * from './diff/visual-diff-renderer';
 export * from './storage/s3-storage.service';
 export * from './storage/media-registry';
+export * from './storage/magic-bytes';

@@ -31,7 +31,7 @@ export const PublisherSchema = z.object({
   methodology: z.string().max(4000).optional(),
   correctionPolicyUrl: z.string().url().optional(),
   foundedYear: z.number().int().min(1500).max(3000).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   isVerified: z.boolean().default(true),
   followerCount: z.number().int().nonnegative().default(0),
   createdAt: z.string(),

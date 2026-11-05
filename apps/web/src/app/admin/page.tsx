@@ -25,6 +25,7 @@ import {
   StaffManagementTab,
   McpDiscoveryTab,
   TaxonomyManagementTab,
+  AdminGuard,
   type AdminTab,
   type FilterStatus,
 } from './components';
@@ -88,98 +89,102 @@ export default function EditorialCMSPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <AdminHeader
-        isApiConnected={isApiConnected}
-        isEditorOpen={isEditorOpen}
-        onToggleEditor={() => {
-          if (isEditorOpen) {
-            handleCloseEditor();
-          } else {
-            setEditingStory(null);
-            setIsEditorOpen(true);
-          }
-        }}
-      />
-
-      <AdminNavTabs
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        storiesCount={total}
-        notificationsCount={notifications.length}
-        staffCount={staff.length}
-      />
-
-      {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{successMessage}</span>
-          </div>
-          <Link href="/" className="underline font-bold hover:text-emerald-900">
-            View on Homepage →
-          </Link>
-        </div>
-      )}
-
-      <StoryEditorDrawer
-        isOpen={isEditorOpen}
-        onClose={handleCloseEditor}
-        onSuccess={triggerSuccess}
-        editingStory={editingStory}
-      />
-
-      {activeTab === 'stories' && (
-        <div className="space-y-6">
-          <AdminMetricsBar
-            metrics={metrics}
-            onSweepScheduled={async () => {
-              await sweepScheduled();
-              triggerSuccess('Triggered scheduled publishing sweep across all pending embargoes!');
-            }}
-          />
-
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            <StoryFilterBar
-              filterStatus={filterStatus}
-              onSelectFilter={setFilterStatus}
-              metrics={metrics}
-              displayedCount={stories.length}
-              displayedTotal={total}
-              query={searchInput}
-              onQueryChange={setSearchInput}
-              sort={sort}
-              onSortChange={setSort}
-            />
-            <StoryTable
-              stories={stories}
-              filterStatus={filterStatus}
-              onSuccess={triggerSuccess}
-              onEditStory={handleEditStory}
-              total={total}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMore}
-            />
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'pulse' && <NewsroomPulseTab metrics={metrics} trending={trending} />}
-
-      {activeTab === 'breaking' && (
-        <BreakingNewsTab
-          stories={stories}
-          notifications={notifications}
-          onSuccess={triggerSuccess}
+    <AdminGuard>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <AdminHeader
+          isApiConnected={isApiConnected}
+          isEditorOpen={isEditorOpen}
+          onToggleEditor={() => {
+            if (isEditorOpen) {
+              handleCloseEditor();
+            } else {
+              setEditingStory(null);
+              setIsEditorOpen(true);
+            }
+          }}
         />
-      )}
 
-      {activeTab === 'staff' && <StaffManagementTab onSuccess={triggerSuccess} />}
+        <AdminNavTabs
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          storiesCount={total}
+          notificationsCount={notifications.length}
+          staffCount={staff.length}
+        />
 
-      {activeTab === 'mcp' && <McpDiscoveryTab />}
+        {successMessage && (
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{successMessage}</span>
+            </div>
+            <Link href="/" className="underline font-bold hover:text-emerald-900">
+              View on Homepage →
+            </Link>
+          </div>
+        )}
 
-      {activeTab === 'taxonomy' && <TaxonomyManagementTab onSuccess={triggerSuccess} />}
-    </div>
+        <StoryEditorDrawer
+          isOpen={isEditorOpen}
+          onClose={handleCloseEditor}
+          onSuccess={triggerSuccess}
+          editingStory={editingStory}
+        />
+
+        {activeTab === 'stories' && (
+          <div className="space-y-6">
+            <AdminMetricsBar
+              metrics={metrics}
+              onSweepScheduled={async () => {
+                await sweepScheduled();
+                triggerSuccess(
+                  'Triggered scheduled publishing sweep across all pending embargoes!'
+                );
+              }}
+            />
+
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+              <StoryFilterBar
+                filterStatus={filterStatus}
+                onSelectFilter={setFilterStatus}
+                metrics={metrics}
+                displayedCount={stories.length}
+                displayedTotal={total}
+                query={searchInput}
+                onQueryChange={setSearchInput}
+                sort={sort}
+                onSortChange={setSort}
+              />
+              <StoryTable
+                stories={stories}
+                filterStatus={filterStatus}
+                onSuccess={triggerSuccess}
+                onEditStory={handleEditStory}
+                total={total}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={loadMore}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pulse' && <NewsroomPulseTab metrics={metrics} trending={trending} />}
+
+        {activeTab === 'breaking' && (
+          <BreakingNewsTab
+            stories={stories}
+            notifications={notifications}
+            onSuccess={triggerSuccess}
+          />
+        )}
+
+        {activeTab === 'staff' && <StaffManagementTab onSuccess={triggerSuccess} />}
+
+        {activeTab === 'mcp' && <McpDiscoveryTab />}
+
+        {activeTab === 'taxonomy' && <TaxonomyManagementTab onSuccess={triggerSuccess} />}
+      </div>
+    </AdminGuard>
   );
 }

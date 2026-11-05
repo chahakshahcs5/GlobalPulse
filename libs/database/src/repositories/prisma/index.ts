@@ -25,3 +25,6 @@ export * from './ingestion.prisma';
 export * from './source-correction.prisma';
 export * from './live-feed.prisma';
 export * from './block-variant.prisma';
+export * from './citizen-tip.prisma';
+export * from './story-embedding.prisma';
+export * from './story-read.prisma';

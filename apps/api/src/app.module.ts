@@ -34,6 +34,11 @@ import { WeatherModule } from './modules/weather/weather.module';
 import { LiveModule } from './modules/live/live.module';
 import { BlockVariantModule } from './modules/block-variants/block-variant.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { TipsModule } from './modules/tips/tips.module';
+import { McpToolsModule } from './modules/mcp/mcp-tools.module';
+import { PaywallModule } from './modules/paywall/paywall.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import type { FastifyRequest } from 'fastify';
 
@@ -103,6 +108,11 @@ import type { FastifyRequest } from 'fastify';
     IntelligenceModule,
     LiveModule,
     BlockVariantModule,
+    MetricsModule,
+    TipsModule,
+    McpToolsModule,
+    PaywallModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

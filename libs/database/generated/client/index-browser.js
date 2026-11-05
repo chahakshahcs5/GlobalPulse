@@ -142,6 +142,7 @@ exports.Prisma.UserScalarFieldEnum = {
   bio: 'bio',
   avatarUrl: 'avatarUrl',
   preferences: 'preferences',
+  isSubscriber: 'isSubscriber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -424,6 +425,7 @@ exports.Prisma.NewsletterDigestScalarFieldEnum = {
 
 exports.Prisma.StoryCollectionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   name: 'name',
   slug: 'slug',
   description: 'description',
@@ -747,6 +749,45 @@ exports.Prisma.SourceCorrectionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.CitizenTipScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  headline: 'headline',
+  details: 'details',
+  category: 'category',
+  urgency: 'urgency',
+  anonymityMode: 'anonymityMode',
+  verificationChecksum: 'verificationChecksum',
+  contactAlias: 'contactAlias',
+  attachments: 'attachments',
+  status: 'status',
+  editorialNotes: 'editorialNotes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StoryEmbeddingScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  storyId: 'storyId',
+  versionNumber: 'versionNumber',
+  dimensions: 'dimensions',
+  embedding: 'embedding',
+  tokens: 'tokens',
+  model: 'model',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StoryReadScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  storyId: 'storyId',
+  monthKey: 'monthKey',
+  readAt: 'readAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1004,6 +1045,7 @@ exports.Prisma.NewsletterDigestOrderByRelevanceFieldEnum = {
 
 exports.Prisma.StoryCollectionOrderByRelevanceFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   name: 'name',
   slug: 'slug',
   description: 'description',
@@ -1249,6 +1291,36 @@ exports.Prisma.SourceCorrectionOrderByRelevanceFieldEnum = {
   url: 'url',
   recordedBy: 'recordedBy'
 };
+
+exports.Prisma.CitizenTipOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  headline: 'headline',
+  details: 'details',
+  category: 'category',
+  urgency: 'urgency',
+  anonymityMode: 'anonymityMode',
+  verificationChecksum: 'verificationChecksum',
+  contactAlias: 'contactAlias',
+  status: 'status',
+  editorialNotes: 'editorialNotes'
+};
+
+exports.Prisma.StoryEmbeddingOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  storyId: 'storyId',
+  tokens: 'tokens',
+  model: 'model'
+};
+
+exports.Prisma.StoryReadOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  storyId: 'storyId',
+  monthKey: 'monthKey'
+};
 exports.StoryStatus = exports.$Enums.StoryStatus = {
   DRAFT: 'DRAFT',
   IN_REVIEW: 'IN_REVIEW',
@@ -1371,7 +1443,10 @@ exports.Prisma.ModelName = {
   AlertTrigger: 'AlertTrigger',
   IngestionFeed: 'IngestionFeed',
   IngestionItem: 'IngestionItem',
-  SourceCorrection: 'SourceCorrection'
+  SourceCorrection: 'SourceCorrection',
+  CitizenTip: 'CitizenTip',
+  StoryEmbedding: 'StoryEmbedding',
+  StoryRead: 'StoryRead'
 };
 
 /**

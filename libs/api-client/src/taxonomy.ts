@@ -9,6 +9,27 @@ export async function listCategories(): Promise<Category[]> {
   return request<Category[]>('/api/categories');
 }
 
+export async function createCategory(input: {
+  name: string;
+  slug?: string;
+  code?: string;
+  description?: string;
+  icon?: string;
+  subCategories?: string[];
+}): Promise<Category> {
+  return request<Category>('/api/categories', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteCategory(slug: string): Promise<boolean> {
+  const res = await request<{ success: boolean }>(`/api/categories/${encodeURIComponent(slug)}`, {
+    method: 'DELETE',
+  });
+  return Boolean(res?.success);
+}
+
 export async function addCategoryDesk(categorySlug: string, desk: string): Promise<Category> {
   return request<Category>(`/api/categories/${encodeURIComponent(categorySlug)}/desks`, {
     method: 'POST',
@@ -63,6 +84,13 @@ export async function createTopic(input: {
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+export async function deleteTopic(id: string): Promise<boolean> {
+  const res = await request<{ success: boolean }>(`/api/topics/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  return Boolean(res?.success);
 }
 
 // ---------------------------------------------------------------------------

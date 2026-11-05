@@ -35,7 +35,6 @@ coverage/
 
 # Documentation
 docs/
-scripts/
 
 # OS
 .DS_Store

@@ -13,7 +13,8 @@
     "@ai-news/media": "workspace:*",
     "@ai-news/observability": "workspace:*",
     "@ai-news/shared": "workspace:*",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",

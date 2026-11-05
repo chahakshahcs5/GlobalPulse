@@ -13,7 +13,7 @@ import type {
 import { CreateIngestionFeedInputSchema, PromoteIngestionItemInputSchema } from '@ai-news/schemas';
 import type { DatabaseService } from '@ai-news/database';
 import { ConflictError, generateId, NotFoundError, ValidationError } from '@ai-news/shared';
-import { validateWebhookUrl } from './webhook.service';
+import { validateWebhookUrl, validateWebhookUrlResolved } from './webhook.service';
 import { StoryService } from './story.service';
 import {
   IngestionEnrichmentProvider,
@@ -44,6 +44,10 @@ export interface IngestionOptions {
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 10_000;
 
+function unwrapCdata(value: string): string {
+  return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+}
+
 function stripHtml(value: string): string {
   return value
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -55,7 +59,6 @@ function stripHtml(value: string): string {
 
 function decodeEntities(value: string): string {
   return value
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
@@ -64,10 +67,21 @@ function decodeEntities(value: string): string {
     .trim();
 }
 
+/**
+ * Feed text often arrives as `<![CDATA[...]]>`.
+ *
+ * CDATA must be unwrapped *before* HTML is stripped: `<[^>]+>` would otherwise
+ * consume the whole `<![CDATA[...]]>` token and leave an empty string, which
+ * silently dropped every item from BBC-style feeds.
+ */
+function cleanFeedText(value: string): string {
+  return decodeEntities(stripHtml(unwrapCdata(value)));
+}
+
 function firstTag(block: string, names: string[]): string | undefined {
   for (const name of names) {
     const match = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'i'));
-    if (match?.[1]) return decodeEntities(stripHtml(match[1]));
+    if (match?.[1]) return cleanFeedText(match[1]);
   }
   return undefined;
 }
@@ -76,9 +90,9 @@ function atomLink(block: string): string | undefined {
   const alternate = block.match(
     /<link[^>]*rel=["']alternate["'][^>]*href=["']([^"']+)["'][^>]*\/?>/i
   );
-  if (alternate?.[1]) return decodeEntities(alternate[1]);
+  if (alternate?.[1]) return cleanFeedText(alternate[1]);
   const href = block.match(/<link[^>]*href=["']([^"']+)["'][^>]*\/?>/i);
-  if (href?.[1]) return decodeEntities(href[1]);
+  if (href?.[1]) return cleanFeedText(href[1]);
   return firstTag(block, ['link']);
 }
 
@@ -238,6 +252,7 @@ export class IngestionService {
   private readonly fetchImpl: typeof fetch;
   private readonly maxResponseBytes: number;
   private readonly timeoutMs: number;
+  private readonly validateDns: boolean;
   private readonly storyService: StoryService;
   private readonly enrichment: IngestionEnrichmentService;
 
@@ -248,6 +263,10 @@ export class IngestionService {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.maxResponseBytes = options.maxResponseBytes ?? DEFAULT_MAX_BYTES;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    // Injected fetches (tests, future proxies) do not hit the network, so a
+    // live DNS check would make them depend on external resolvers. Tests also
+    // use reserved example hostnames; the literal-host SSRF guard still runs.
+    this.validateDns = options.fetchImpl === undefined && process.env.NODE_ENV !== 'test';
     this.storyService = new StoryService(db);
     this.enrichment = new IngestionEnrichmentService(db, options.enrichmentProvider);
   }
@@ -269,7 +288,7 @@ export class IngestionService {
     ctx: IntelligenceContext
   ): Promise<IngestionFeed> {
     const validated = CreateIngestionFeedInputSchema.parse(input);
-    this.assertSafeUrl(validated.url);
+    await this.assertSafeUrl(validated.url);
     if (await this.db.ingestion.findFeedByUrl(validated.url, ctx.organizationId)) {
       throw new ConflictError('An ingestion feed with this URL already exists.');
     }
@@ -300,7 +319,7 @@ export class IngestionService {
     ctx: IntelligenceContext
   ): Promise<IngestionFeed> {
     const existing = await this.getFeed(id, ctx.organizationId);
-    if (input.url && input.url !== existing.url) this.assertSafeUrl(input.url);
+    if (input.url && input.url !== existing.url) await this.assertSafeUrl(input.url);
     const updated: IngestionFeed = {
       ...existing,
       name: input.name ?? existing.name,
@@ -324,13 +343,48 @@ export class IngestionService {
     await this.audit(ctx, 'delete_ingestion_feed', id);
   }
 
-  private assertSafeUrl(rawUrl: string): void {
-    const check = validateWebhookUrl(rawUrl);
+  private async assertSafeUrl(rawUrl: string): Promise<void> {
+    const check = this.validateDns
+      ? await validateWebhookUrlResolved(rawUrl)
+      : validateWebhookUrl(rawUrl);
     if (!check.valid) {
       throw new ValidationError(
         `Unsafe feed URL: ${check.reason ?? 'destination is not allowed'}.`
       );
     }
+  }
+
+  /**
+   * Fetch a feed while validating every redirect hop.
+   *
+   * `redirect: 'follow'` would let a public feed redirect the server to
+   * `127.0.0.1` or a cloud metadata endpoint after the first URL was checked.
+   */
+  private async fetchFeedFollowingSafeRedirects(
+    url: string,
+    headers: Record<string, string>,
+    signal: AbortSignal
+  ): Promise<Response> {
+    let current = url;
+    for (let hop = 0; hop < 4; hop++) {
+      await this.assertSafeUrl(current);
+      const response = await this.fetchImpl(current, {
+        method: 'GET',
+        headers,
+        signal,
+        redirect: 'manual',
+      });
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get('location');
+        if (!location) {
+          throw new ValidationError('Feed redirect did not include a Location header.');
+        }
+        current = new URL(location, current).toString();
+        continue;
+      }
+      return response;
+    }
+    throw new ValidationError('Feed redirected too many times.');
   }
 
   // --- Items ----------------------------------------------------------------
@@ -353,25 +407,24 @@ export class IngestionService {
     if (!feed.active) {
       throw new ConflictError('Ingestion feed is inactive.');
     }
-    this.assertSafeUrl(feed.url);
+    await this.assertSafeUrl(feed.url);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     let body: string;
     let contentType: string;
     try {
-      const response = await this.fetchImpl(feed.url, {
-        method: 'GET',
-        headers: {
+      const response = await this.fetchFeedFollowingSafeRedirects(
+        feed.url,
+        {
           'User-Agent': 'GlobalPulse-Intelligence/1.0 (+https://globalpulse.example/feeds)',
           Accept:
             'application/rss+xml, application/atom+xml, application/json, application/xml, text/xml, */*',
           ...(feed.etag ? { 'If-None-Match': feed.etag } : {}),
           ...(feed.lastModified ? { 'If-Modified-Since': feed.lastModified } : {}),
         },
-        signal: controller.signal,
-        redirect: 'follow',
-      });
+        controller.signal
+      );
       if (response.status === 304) {
         const existing = await this.db.ingestion.listItems(ctx.organizationId, {
           feedId: feed.id,

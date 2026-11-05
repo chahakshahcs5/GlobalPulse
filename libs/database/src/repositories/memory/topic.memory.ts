@@ -51,6 +51,13 @@ export class MemoryTopicRepository implements ITopicRepository {
     );
   }
 
+  async delete(id: string, orgId?: string): Promise<boolean> {
+    const topic = this.topics.get(id);
+    if (!topic) return false;
+    if (orgId && topic.organizationId !== orgId) return false;
+    return this.topics.delete(id);
+  }
+
   snapshot(): Map<string, Topic> {
     return new Map(this.topics);
   }

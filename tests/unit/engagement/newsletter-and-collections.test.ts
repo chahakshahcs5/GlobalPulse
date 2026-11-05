@@ -150,6 +150,7 @@ describe('Newsletter System, Social Sharing & Reader Collections (F14, F15, F16)
 
       const collection = await service.createCollection(
         'usr_editor_clara',
+        testOrgId,
         {
           name: 'Frontier AI & Quantum 2026',
           description: 'Curated breakthroughs shaping the next decade.',
@@ -164,7 +165,7 @@ describe('Newsletter System, Social Sharing & Reader Collections (F14, F15, F16)
       expect(collection.storyIds).toEqual([testStoryId]);
 
       // Add another story
-      const updated = await service.addStory(collection.id, 'sty_another_story');
+      const updated = await service.addStory(collection.id, 'sty_another_story', testOrgId);
       expect(updated.storyIds).toContain('sty_another_story');
 
       // Populate full stories
@@ -175,14 +176,14 @@ describe('Newsletter System, Social Sharing & Reader Collections (F14, F15, F16)
       );
 
       // Remove story
-      const removed = await service.removeStory(collection.id, 'sty_another_story');
+      const removed = await service.removeStory(collection.id, 'sty_another_story', testOrgId);
       expect(removed.storyIds).not.toContain('sty_another_story');
 
       // Delete collection
-      const deleted = await service.deleteCollection(collection.id);
+      const deleted = await service.deleteCollection(collection.id, testOrgId);
       expect(deleted).toBe(true);
 
-      const check = await service.getCollectionWithStories(collection.id);
+      const check = await service.getCollectionWithStories(collection.id, testOrgId);
       expect(check).toBeNull();
     });
   });

@@ -3,8 +3,6 @@ import {
   Get,
   Sse,
   Query,
-  Optional,
-  Inject,
   Req,
   UseGuards,
   Injectable,
@@ -27,9 +25,6 @@ function resolvePrincipalFromRequest(req?: FastifyRequest): AuthenticatedPrincip
       authHeader = `Bearer ${decodeURIComponent(match[1])}`;
     }
   }
-  if (!authHeader && typeof (req.query as Record<string, unknown>)?.token === 'string') {
-    authHeader = `Bearer ${(req.query as Record<string, unknown>).token}`;
-  }
 
   if (authHeader) {
     try {
@@ -39,6 +34,34 @@ function resolvePrincipalFromRequest(req?: FastifyRequest): AuthenticatedPrincip
     }
   }
   return null;
+}
+
+/**
+ * Expands the `all` subscription into the channels this principal may read.
+ *
+ * A reader gets the public surfaces; a newsroom principal also gets the
+ * internal ones. Draft events are broadcast on `newsroom`, never on `all`.
+ */
+function expandChannels(channels: string[], principal: AuthenticatedPrincipal | null): string[] {
+  if (!channels.includes('all')) return channels;
+
+  const expanded = ['public', 'breaking_news', 'stories'];
+  if (!principal) return expanded;
+
+  expanded.push(`user_${principal.id.toLowerCase()}`);
+  expanded.push(principal.organizationId.toLowerCase());
+
+  const canReadNewsroom =
+    principal.role === 'admin' ||
+    principal.role === 'editor' ||
+    principal.scopes.includes('news:admin') ||
+    principal.scopes.includes('news:write');
+
+  if (canReadNewsroom) {
+    expanded.push('newsroom', 'editorial', 'internal', 'admin', 'drafts');
+  }
+
+  return Array.from(new Set(expanded));
 }
 
 @Injectable()
@@ -110,8 +133,8 @@ export class RealtimeChannelGuard implements CanActivate {
 export class RealtimeController {
   private readonly service: RealtimeService;
 
-  constructor(@Optional() @Inject(RealtimeService) service?: RealtimeService) {
-    this.service = service || RealtimeService.getInstance();
+  constructor() {
+    this.service = RealtimeService.getInstance();
   }
 
   @UseGuards(RealtimeChannelGuard)
@@ -121,16 +144,12 @@ export class RealtimeController {
     @Req() req?: FastifyRequest
   ): Observable<RealtimeMessageEvent> {
     const principal = resolvePrincipalFromRequest(req);
-    let channels =
+    const channels =
       typeof channelsQuery === 'string' && channelsQuery.trim().length > 0
         ? channelsQuery.split(',').map((c) => c.trim())
         : ['all'];
 
-    if (!principal && channels.includes('all')) {
-      channels = ['public', 'breaking_news', 'stories'];
-    }
-
-    return this.service.getEventStream(channels);
+    return this.service.getEventStream(expandChannels(channels, principal));
   }
 
   @Get('status')

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { listStories } from '@ai-news/api-client';
+import { getPersonalizedFeedExplained } from '@ai-news/api-client';
 import { formatDeterministicDate } from '../../lib/date-utils';
 import { AlgorithmTunerModal } from '../../components/AlgorithmTunerModal';
 import { TopicBalanceWidget } from '../../components/TopicBalanceWidget';
@@ -42,61 +42,50 @@ export default function ForYouPage() {
   useEffect(() => {
     let isMounted = true;
 
-    listStories({ limit: 40 })
-      .then((allStories) => {
+    getPersonalizedFeedExplained({ limit: 40 })
+      .then((feed) => {
         if (!isMounted) return;
-        const published = allStories.filter((s) => s.status === 'PUBLISHED');
 
-        // Synthesize explainable attribution signals based on story tags and categories
-        const explained: ExplainedStoryItem[] = published.map((story, idx) => {
-          let score = 92 - idx * 2.5;
-          const reasons: string[] = [];
-          let primarySignal = {
-            type: 'affinity',
-            text: `High Affinity for ${story.articleType.replace('_', ' ')}`,
-            color:
-              'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30',
-          };
+        const signalColors: Record<string, string> = {
+          followed_topic:
+            'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-400 dark:border-purple-500/30',
+          entity_interest:
+            'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30',
+          followed_author:
+            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30',
+          followed_story:
+            'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-400 dark:border-rose-500/30',
+          cluster_continuity:
+            'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-400 dark:border-rose-500/30',
+          category_affinity:
+            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30',
+          reading_depth:
+            'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+          serendipity_discovery:
+            'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+          resume_reading:
+            'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+        };
 
-          if (story.topicIds && story.topicIds.length > 0) {
-            const top = story.topicIds[0].replace(/^top_/, '');
-            reasons.push(`Follows #${top}`);
-            primarySignal = {
-              type: 'followed_topic',
-              text: `Because you follow #${top}`,
-              color:
-                'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-400 dark:border-purple-500/30',
-            };
-          } else if (idx % 4 === 3) {
-            score += 15;
-            reasons.push('Serendipity Discovery');
-            primarySignal = {
-              type: 'serendipity',
-              text: 'Serendipity Discovery (Broaden Perspective)',
-              color:
-                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
-            };
-          } else {
-            reasons.push(`Matches your ${story.articleType} reading history`);
-          }
-
-          if (idx === 1) {
-            reasons.push('Resume reading from earlier');
-            primarySignal = {
-              type: 'resume',
-              text: 'Resume Reading (In Progress)',
-              color:
-                'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+        const explained: ExplainedStoryItem[] = feed.items.map(
+          ({ story, score, reasons, signals }) => {
+            const signal = signals?.[0];
+            return {
+              story,
+              score: Math.max(0, Math.round(score)),
+              reasons: reasons?.length
+                ? reasons
+                : ['Ranked by the newsroom personalization engine'],
+              primarySignal: {
+                type: signal?.type || 'affinity',
+                text: signal?.explanation || reasons?.[0] || 'Recommended for you',
+                color:
+                  signalColors[signal?.type || 'affinity'] ||
+                  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30',
+              },
             };
           }
-
-          return {
-            story,
-            score: Math.max(55, Math.round(score)),
-            reasons,
-            primarySignal,
-          };
-        });
+        );
 
         setStories(explained);
         setIsLoading(false);

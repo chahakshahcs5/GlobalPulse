@@ -14,7 +14,8 @@ export function setSchedulingBroadcaster(fn: SchedulingBroadcaster): void {
 function broadcast(eventName: string, data: unknown): void {
   if (_broadcaster) {
     try {
-      _broadcaster('all', eventName, data);
+      const channel = eventName === 'story.published' ? 'stories' : 'newsroom';
+      _broadcaster(channel, eventName, data);
     } catch {
       // Ignored
     }

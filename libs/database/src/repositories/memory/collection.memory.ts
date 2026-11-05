@@ -22,22 +22,28 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return { ...collection };
   }
 
-  async findById(id: string): Promise<StoryCollection | null> {
+  async findById(id: string, orgId?: string): Promise<StoryCollection | null> {
     const col = this.collections.get(id);
-    return col ? { ...col } : null;
+    if (!col) return null;
+    if (orgId && col.organizationId !== orgId) return null;
+    return { ...col };
   }
 
-  async findBySlug(slug: string): Promise<StoryCollection | null> {
+  async findBySlug(slug: string, orgId: string): Promise<StoryCollection | null> {
     for (const col of this.collections.values()) {
-      if (col.slug === slug) return { ...col };
+      if (col.slug === slug && col.organizationId === orgId) return { ...col };
     }
     return null;
   }
 
-  async listPublic(limit: number = 20, offset: number = 0): Promise<StoryCollection[]> {
+  async listPublic(
+    orgId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<StoryCollection[]> {
     const list: StoryCollection[] = [];
     for (const col of this.collections.values()) {
-      if (col.isPublic) {
+      if (col.isPublic && col.organizationId === orgId) {
         list.push({ ...col });
       }
     }
@@ -45,10 +51,10 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return list.slice(offset, offset + limit);
   }
 
-  async listByUser(userId: string): Promise<StoryCollection[]> {
+  async listByUser(userId: string, orgId: string): Promise<StoryCollection[]> {
     const list: StoryCollection[] = [];
     for (const col of this.collections.values()) {
-      if (col.curatorId === userId) {
+      if (col.curatorId === userId && col.organizationId === orgId) {
         list.push({ ...col });
       }
     }
@@ -56,9 +62,13 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return list;
   }
 
-  async addStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
+  async addStory(
+    collectionId: string,
+    storyId: string,
+    orgId: string
+  ): Promise<StoryCollection | null> {
     const col = this.collections.get(collectionId);
-    if (!col) return null;
+    if (!col || col.organizationId !== orgId) return null;
     if (!col.storyIds.includes(storyId)) {
       // Copy-on-write: never mutate the stored record in place, otherwise an
       // in-flight transaction snapshot shares the array and rollback misses
@@ -74,9 +84,13 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return { ...col };
   }
 
-  async removeStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
+  async removeStory(
+    collectionId: string,
+    storyId: string,
+    orgId: string
+  ): Promise<StoryCollection | null> {
     const col = this.collections.get(collectionId);
-    if (!col) return null;
+    if (!col || col.organizationId !== orgId) return null;
     const filtered = col.storyIds.filter((id) => id !== storyId);
     const updated: StoryCollection = {
       ...col,
@@ -87,7 +101,9 @@ export class MemoryCollectionRepository implements ICollectionRepository {
     return { ...updated };
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, orgId: string): Promise<boolean> {
+    const col = this.collections.get(id);
+    if (!col || col.organizationId !== orgId) return false;
     return this.collections.delete(id);
   }
 

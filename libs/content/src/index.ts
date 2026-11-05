@@ -4,10 +4,10 @@ import { ValidationError } from '@ai-news/shared';
 export function validateBlock(raw: unknown): StoryBlock {
   const result = StoryBlockSchema.safeParse(raw);
   if (!result.success) {
-    const errorDetails = result.error.errors
+    const errorDetails = result.error.issues
       .map((e) => `${e.path.join('.')}: ${e.message}`)
       .join(', ');
-    throw new ValidationError(`Invalid block data: ${errorDetails}`, result.error.errors);
+    throw new ValidationError(`Invalid block data: ${errorDetails}`, result.error.issues);
   }
   return result.data;
 }

@@ -14,3 +14,7 @@ export * from './intelligence';
 export * from './weather';
 export * from './live';
 export * from './block-variants';
+export * from './tips';
+export * from './newsletter';
+export * from './mcp';
+export * from './paywall';

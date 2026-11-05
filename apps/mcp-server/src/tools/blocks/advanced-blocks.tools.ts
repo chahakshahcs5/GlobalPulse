@@ -309,7 +309,7 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
                       series: z
                         .array(z.object({ name: z.string().min(1), key: z.string().min(1) }))
                         .min(1),
-                      values: z.array(z.record(z.unknown())).min(1),
+                      values: z.array(z.record(z.string(), z.unknown())).min(1),
                     })
                     .describe('A complete chart payload'),
                 }),
@@ -371,7 +371,7 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
           xAxis: z.object({ key: z.string().min(1), label: z.string().min(1) }),
           yAxis: z.object({ label: z.string().min(1) }),
           series: z.array(z.object({ name: z.string().min(1), key: z.string().min(1) })).min(1),
-          values: z.array(z.record(z.unknown())).min(1),
+          values: z.array(z.record(z.string(), z.unknown())).min(1),
         })
         .describe('The chart that is drawn, and then animated'),
       animation: z.enum(['grow', 'draw', 'sweep', 'count', 'fade']).optional(),
@@ -399,7 +399,7 @@ export function registerAdvancedBlockTools(server: McpServer, helperAdd: AddBloc
       title: z.string().optional(),
       html: z.string().max(200000).describe('The markup and styles the frame is given'),
       script: z.string().max(200000).optional().describe('The script the frame runs'),
-      data: z.record(z.unknown()).optional().describe('The data handed to the frame'),
+      data: z.record(z.string(), z.unknown()).optional().describe('The data handed to the frame'),
       height: z.number().int().min(80).max(2000).optional(),
       allowScripts: z.boolean().optional(),
       caption: z.string().optional(),

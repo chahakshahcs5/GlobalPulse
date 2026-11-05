@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { AnalyticsService } from '@ai-news/stories';
-import { NestAuthGuard, Principal } from '../../common/auth.guard';
+import { NestAuthGuard, Principal, RequireScope } from '../../common/auth.guard';
 import type { AuthenticatedPrincipal } from '@ai-news/auth';
 
 @Controller('api/analytics')
@@ -24,11 +24,13 @@ export class AnalyticsController {
     @Principal() principal?: AuthenticatedPrincipal
   ) {
     const orgId = principal?.organizationId || 'org_default';
-    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    const rawLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedLimit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 10;
     return this.analyticsService.getTrendingStories(parsedLimit, orgId);
   }
 
   @Get('newsroom')
+  @RequireScope('news:write')
   async getNewsroomMetrics(@Principal() principal: AuthenticatedPrincipal) {
     return this.analyticsService.getNewsroomMetrics(principal.organizationId);
   }

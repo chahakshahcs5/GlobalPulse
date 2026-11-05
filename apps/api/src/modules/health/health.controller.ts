@@ -85,7 +85,11 @@ export class HealthController {
       s3Storage.checkHealth(),
     ]);
 
-    const isReady = dbHealth.status !== 'error' && storageHealth.status === 'healthy';
+    // Storage is optional for deployments that do not process media. Only
+    // make it a readiness gate when the operator explicitly requires it.
+    const storageRequired = process.env.REQUIRE_STORAGE === 'true';
+    const isReady =
+      dbHealth.status !== 'error' && (!storageRequired || storageHealth.status === 'healthy');
 
     reply.status(isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
     return {

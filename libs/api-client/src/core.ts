@@ -46,7 +46,7 @@ export function setAuthToken(token: string | null): void {
 export function getAuthToken(): string | null {
   if (_authToken) return _authToken;
   if (typeof window !== 'undefined') {
-    _authToken = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(AUTH_TOKEN_KEY);
+    _authToken = sessionStorage.getItem(AUTH_TOKEN_KEY);
   }
   return _authToken;
 }

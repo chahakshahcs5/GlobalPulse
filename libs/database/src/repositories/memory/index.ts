@@ -25,3 +25,6 @@ export * from './ingestion.memory';
 export * from './source-correction.memory';
 export * from './live-feed.memory';
 export * from './block-variant.memory';
+export * from './citizen-tip.memory';
+export * from './story-embedding.memory';
+export * from './story-read.memory';

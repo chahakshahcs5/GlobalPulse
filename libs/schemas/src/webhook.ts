@@ -34,7 +34,7 @@ export const WebhookDispatchLogSchema = z.object({
   id: z.string(),
   subscriptionId: z.string(),
   event: WebhookEventEnum,
-  payload: z.record(z.unknown()),
+  payload: z.record(z.string(), z.unknown()),
   statusCode: z.number().int().optional(),
   success: z.boolean(),
   error: z.string().optional(),

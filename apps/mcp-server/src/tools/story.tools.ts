@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { DatabaseService } from '@ai-news/database';
-import { StoryService, PersonalizationService } from '@ai-news/stories';
+import { StoryService, PersonalizationService, PaywallService } from '@ai-news/stories';
 import { AuthService, type AuthenticatedPrincipal } from '@ai-news/auth';
 import { ArticleTypeSchema, StoryBlockSchema, StoryStatusSchema } from '@ai-news/schemas';
 import { mcpJsonResponse } from './tool-helpers';
@@ -14,6 +14,18 @@ export function registerStoryTools(
 ) {
   const storyService = services?.storyService || new StoryService(db);
   const personalizationService = services?.personalizationService || new PersonalizationService(db);
+  const paywallService = new PaywallService(db);
+
+  const assertStoryEntitled = async (
+    principal: AuthenticatedPrincipal,
+    storyId: string
+  ): Promise<void> => {
+    const story = await storyService.getStory(storyId, principal.organizationId);
+    const access = await paywallService.getAccess(principal, story);
+    if (access.isLocked) {
+      throw new Error('This story requires an active subscription.');
+    }
+  };
 
   server.tool(
     'get_story',
@@ -33,11 +45,13 @@ export function registerStoryTools(
       AuthService.requireScope(principal, 'news:read');
 
       const story = await storyService.getStory(storyId, principal.organizationId);
+      const access = await paywallService.getAccess(principal, story);
+      const entitledStory = paywallService.redactIfLocked(story, access);
       if (!includeBlocks) {
-        const { blocks, ...rest } = story;
+        const { blocks, ...rest } = entitledStory;
         return mcpJsonResponse({ ...rest, blockCount: blocks?.length || 0 });
       }
-      return mcpJsonResponse(story);
+      return mcpJsonResponse(entitledStory);
     }
   );
 
@@ -51,6 +65,7 @@ export function registerStoryTools(
     async ({ storyId, versionNumber }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
+      await assertStoryEntitled(principal, storyId);
 
       const version = await storyService.getStoryVersion(
         storyId,
@@ -70,6 +85,7 @@ export function registerStoryTools(
     async ({ storyId }) => {
       const principal = getPrincipal();
       AuthService.requireScope(principal, 'news:read');
+      await assertStoryEntitled(principal, storyId);
 
       const versions = await storyService.getStoryVersions(storyId, principal.organizationId);
       return mcpJsonResponse(versions);

@@ -9,3 +9,4 @@ export * from './BreakingNewsTab';
 export * from './StaffManagementTab';
 export * from './McpDiscoveryTab';
 export * from './TaxonomyManagementTab';
+export * from './AdminGuard';

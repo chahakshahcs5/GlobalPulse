@@ -9,6 +9,10 @@ import {
 } from '@ai-news/auth';
 import { DEFAULT_API_PORT, DEFAULT_WEB_PORT, localOrigin } from '@ai-news/shared';
 import { appConfig } from '../../config/configuration';
+import {
+  createAuthorizationCodeStore,
+  type AuthorizationCodeStore,
+} from './authorization-code.store';
 
 const devRedirectUris = (ports: number[]): string[] =>
   ports.flatMap((port) =>
@@ -76,20 +80,16 @@ const DEFAULT_SCOPES: NewsScope[] = [
 
 @Injectable()
 export class OAuthService {
-  private codes = new Map<string, AuthorizationCodeEntry>();
+  private codes: AuthorizationCodeStore = createAuthorizationCodeStore();
   private clients = new Map<string, RegisteredOAuthClient>();
 
   constructor() {
     this.seedDefaultClients();
 
-    // Periodically clean up expired authorization codes
+    // Periodically clean up expired authorization codes (Redis expires them
+    // via TTL; the memory store needs a sweep).
     setInterval(() => {
-      const now = Date.now();
-      for (const [code, entry] of this.codes.entries()) {
-        if (entry.expiresAt <= now) {
-          this.codes.delete(code);
-        }
-      }
+      void this.codes.cleanup();
     }, 60000).unref();
   }
 
@@ -162,12 +162,12 @@ export class OAuthService {
    * RFC 8414 Authorization Server Metadata
    */
   getAuthorizationServerMetadata() {
-    const issuer = appConfig.apiBaseUrl;
+    const issuer = appConfig.jwtIssuer;
+    const apiBaseUrl = appConfig.apiBaseUrl;
     return {
       issuer,
-      authorization_endpoint: `${issuer}/oauth/authorize`,
-      token_endpoint: `${issuer}/oauth/token`,
-      jwks_uri: `${issuer}/oauth/jwks`,
+      authorization_endpoint: `${apiBaseUrl}/oauth/authorize`,
+      token_endpoint: `${apiBaseUrl}/oauth/token`,
       response_types_supported: ['code'],
       grant_types_supported: ['authorization_code', 'client_credentials'],
       code_challenge_methods_supported: ['S256'],
@@ -211,14 +211,14 @@ export class OAuthService {
   /**
    * RFC 7636 / RFC 6749: Authorize endpoint
    */
-  createAuthorizationCode(
+  async createAuthorizationCode(
     req: AuthorizeRequest,
     principal?: AuthenticatedPrincipal
-  ): {
+  ): Promise<{
     code: string;
     state?: string;
     redirect_uri?: string;
-  } {
+  }> {
     if (!principal || principal.id === 'usr_guest') {
       throw new UnauthorizedException({
         error: 'login_required',
@@ -255,22 +255,16 @@ export class OAuthService {
       });
     }
 
-    // Validate redirect_uri against registered client redirect URIs
+    // Validate redirect_uri against the exact registered client redirect URIs.
+    // A wildcard host check (previously any *.google.com / *.googleusercontent.com
+    // for Gemini) let an attacker receive authorization codes on user-controlled
+    // Google content. Exact origin + pathname matching is the only safe rule.
     if (req.redirect_uri) {
       const allowedUris = client.redirectUris || [];
       const isAllowed = allowedUris.some((uri) => {
         try {
           const registeredUrl = new URL(uri);
           const reqUrl = new URL(req.redirect_uri!);
-          if (client.clientType === 'gemini') {
-            const reqHost = reqUrl.hostname.toLowerCase();
-            const isGoogle = reqHost === 'google.com' || reqHost.endsWith('.google.com');
-            const isGoogleUserContent =
-              reqHost === 'googleusercontent.com' || reqHost.endsWith('.googleusercontent.com');
-            if (isGoogle || isGoogleUserContent) {
-              return true;
-            }
-          }
           return (
             registeredUrl.origin === reqUrl.origin && registeredUrl.pathname === reqUrl.pathname
           );
@@ -338,7 +332,7 @@ export class OAuthService {
       clientType: client.clientType,
     };
 
-    this.codes.set(code, entry);
+    await this.codes.set(entry);
 
     return {
       code,
@@ -350,12 +344,12 @@ export class OAuthService {
   /**
    * RFC 6749 / RFC 7636: Token Exchange Endpoint
    */
-  exchangeToken(req: TokenRequest): {
+  async exchangeToken(req: TokenRequest): Promise<{
     access_token: string;
     token_type: string;
     expires_in: number;
     scope: string;
-  } {
+  }> {
     if (req.grant_type === 'authorization_code') {
       return this.handleAuthorizationCodeGrant(req);
     } else if (req.grant_type === 'client_credentials') {
@@ -368,7 +362,7 @@ export class OAuthService {
     });
   }
 
-  private handleAuthorizationCodeGrant(req: TokenRequest) {
+  private async handleAuthorizationCodeGrant(req: TokenRequest) {
     if (!req.code) {
       throw new BadRequestException({
         error: 'invalid_request',
@@ -376,7 +370,7 @@ export class OAuthService {
       });
     }
 
-    const entry = this.codes.get(req.code);
+    const entry = await this.codes.get(req.code);
     if (!entry) {
       throw new BadRequestException({
         error: 'invalid_grant',
@@ -384,8 +378,8 @@ export class OAuthService {
       });
     }
 
-    // Single-use: immediately delete
-    this.codes.delete(req.code);
+    // Single-use codes are deleted only after every validation passes, so a
+    // failed verifier/client attempt does not burn the legitimate client's code.
 
     if (entry.expiresAt <= Date.now()) {
       throw new BadRequestException({
@@ -442,11 +436,22 @@ export class OAuthService {
       });
     }
 
+    // Consume the code atomically now that every validation passed. If a
+    // concurrent request won the race, this returns null and the exchange is
+    // rejected rather than issuing two tokens for one code.
+    const consumed = await this.codes.consume(req.code);
+    if (!consumed) {
+      throw new BadRequestException({
+        error: 'invalid_grant',
+        error_description: 'Authorization code is invalid or has already been used.',
+      });
+    }
+
     // Generate production-grade JWT
     const token = AuthService.generateToken(
       {
         id: entry.principalId,
-        organizationId: entry.organizationId || 'org_globalpulse',
+        organizationId: entry.organizationId || process.env.OAUTH_DEFAULT_ORG_ID || 'org_default',
         role: entry.scopes.includes('news:admin')
           ? ('admin' as UserRole)
           : ('ai_agent' as UserRole),
@@ -521,7 +526,7 @@ export class OAuthService {
     const token = AuthService.generateToken(
       {
         id: `agent_${client.clientId.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
-        organizationId: 'org_globalpulse',
+        organizationId: process.env.OAUTH_DEFAULT_ORG_ID || 'org_default',
         role,
         clientType: client.clientType,
         scopes: requestedScopes,

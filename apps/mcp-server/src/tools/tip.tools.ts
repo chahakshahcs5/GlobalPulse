@@ -7,10 +7,10 @@ import { mcpJsonResponse, mcpErrorResponse } from './tool-helpers';
 
 export function registerTipTools(
   server: McpServer,
-  _db: DatabaseService,
+  db: DatabaseService,
   getPrincipal: () => AuthenticatedPrincipal
 ) {
-  const tipsService = new CitizenTipsService();
+  const tipsService = new CitizenTipsService(db);
 
   // 1. submit_citizen_tip
   server.tool(

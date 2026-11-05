@@ -29,6 +29,17 @@ const ATOM_BODY = `<?xml version="1.0"?>
   </entry>
 </feed>`;
 
+const CDATA_RSS_BODY = `<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <title>CDATA Wire</title>
+  <item>
+    <title><![CDATA[Breaking: central bank holds rates]]></title>
+    <link>https://news.example.com/markets/cdata-rates</link>
+    <guid>ex-cdata-1</guid>
+    <description><![CDATA[<p>The <strong>policy committee</strong> voted to hold rates.</p>]]></description>
+  </item>
+</channel></rss>`;
+
 const JSON_BODY = JSON.stringify({
   items: [
     {
@@ -73,6 +84,14 @@ describe('Ingestion Service (feeds, dedupe, promotion, breaking news)', () => {
       expect(items).toHaveLength(1);
       expect(items[0].title).toBe('Central bank holds rates steady');
       expect(items[0].url).toBe('https://news.example.com/markets/rates-held');
+      expect(items[0].summary).toContain('policy committee');
+    });
+
+    it('parses CDATA-wrapped RSS titles and summaries', () => {
+      const items = parseFeedBody(CDATA_RSS_BODY, 'rss');
+      expect(items).toHaveLength(1);
+      expect(items[0].title).toBe('Breaking: central bank holds rates');
+      expect(items[0].url).toBe('https://news.example.com/markets/cdata-rates');
       expect(items[0].summary).toContain('policy committee');
     });
 

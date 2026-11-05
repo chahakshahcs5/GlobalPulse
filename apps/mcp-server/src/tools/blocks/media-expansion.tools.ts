@@ -200,7 +200,7 @@ export function registerMediaExpansionTools(server: McpServer, helperAdd: AddBlo
         )
         .optional(),
       previewRows: z
-        .array(z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])))
+        .array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])))
         .optional(),
       license: z.string().max(500).optional(),
       methodology: z.string().max(4000).optional(),

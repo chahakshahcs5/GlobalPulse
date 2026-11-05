@@ -1,3 +1,4 @@
+import { createHttpEmailSender, type EmailSender } from './email-sender';
 import type { DatabaseService } from '@ai-news/database';
 import type { ClientType } from '@ai-news/schemas';
 import { generateId } from '@ai-news/shared';
@@ -47,13 +48,6 @@ export interface DeliveryOutcome {
   delivered: boolean;
   detail?: string;
 }
-
-export type EmailSender = (params: {
-  to: string;
-  subject: string;
-  htmlBody: string;
-  textBody: string;
-}) => Promise<{ success: boolean; messageId?: string; error?: string }>;
 
 export interface DeliveryTransport {
   readonly channel: DeliveryChannel;
@@ -211,6 +205,7 @@ export class DeliveryService {
       new WebhookDeliveryTransport(new WebhookService(db)),
       new EmailDeliveryTransport(
         options.emailSender ??
+          createHttpEmailSender() ??
           (async () => ({
             success: false,
             error: 'no email sender is configured for this deployment',

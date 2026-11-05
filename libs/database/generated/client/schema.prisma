@@ -112,6 +112,9 @@ model Organization {
   editorialNotifications EditorialNotification[]
   storyClusters          StoryCluster[]
   webhookSubscriptions   WebhookSubscription[]
+  storyCollections       StoryCollection[]
+  storyEmbeddings        StoryEmbedding[]
+  storyReads             StoryRead[]
 
   @@map("organizations")
 }
@@ -119,7 +122,7 @@ model Organization {
 model User {
   id             String   @id @default(uuid())
   organizationId String
-  email          String   @unique
+  email          String
   name           String
   role           String   @default("editor") // admin, editor, author, viewer, ai_agent
   scopes         String[] @default(["news:read"])
@@ -129,13 +132,16 @@ model User {
   bio            String?
   avatarUrl      String?
   preferences    Json?
+  isSubscriber   Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   storiesAuthored Story[]
   auditLogs       AuditLog[]
+  storyReads      StoryRead[]
 
+  @@unique([organizationId, email])
   @@map("users")
 }
 
@@ -205,6 +211,7 @@ model Story {
   bookmarks       Bookmark[]
   liveblogEntries LiveblogEntry[]
   provenance      StoryProvenance?
+  embeddings      StoryEmbedding[]
 
   @@unique([organizationId, slug])
   @@unique([organizationId, idempotencyKey])
@@ -543,19 +550,23 @@ model NewsletterDigest {
 }
 
 model StoryCollection {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  description String?
-  curatorId   String
-  curatorName String?
-  isPublic    Boolean  @default(true)
-  storyIds    String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  curatorId      String
+  curatorName    String?
+  isPublic       Boolean  @default(true)
+  storyIds       String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  @@index([curatorId])
-  @@index([isPublic])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, curatorId])
+  @@index([organizationId, isPublic])
   @@map("story_collections")
 }
 
@@ -982,4 +993,62 @@ model SourceCorrection {
   @@index([organizationId, sourceId])
   @@index([organizationId, storyId])
   @@map("source_corrections")
+}
+
+model CitizenTip {
+  id                   String   @id @default(uuid())
+  organizationId       String
+  headline             String
+  details              String
+  category             String   @default("general")
+  urgency              String   @default("routine")
+  anonymityMode        String   @default("full_anonymous")
+  verificationChecksum String
+  contactAlias         String?
+  attachments          Json     @default("[]")
+  status               String   @default("received")
+  editorialNotes       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status])
+  @@index([organizationId, verificationChecksum])
+  @@map("citizen_tips")
+}
+
+model StoryEmbedding {
+  id             String   @id @default(uuid())
+  organizationId String
+  storyId        String
+  versionNumber  Int
+  dimensions     Int
+  embedding      Json
+  tokens         String[] @default([])
+  model          String   @default("deterministic-projection-v1")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, versionNumber])
+  @@index([organizationId, storyId])
+  @@map("story_embeddings")
+}
+
+model StoryRead {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  storyId        String
+  monthKey       String
+  readAt         DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId, monthKey])
+  @@index([organizationId, userId, monthKey])
+  @@map("story_reads")
 }

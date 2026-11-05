@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listNotifications, listStories } from '@ai-news/api-client';
+import { listNotifications, listStories, subscribeToRealtimeEvents } from '@ai-news/api-client';
 import type { Story } from '@ai-news/schemas';
 
 interface TickerItem {
@@ -60,8 +60,30 @@ export const BreakingTicker: React.FC<{ items?: TickerItem[] }> = ({ items: init
 
     loadTickerData();
 
+    // Refresh when a breaking alert or a new published story arrives.
+    const unsubscribe = subscribeToRealtimeEvents(
+      ['breaking_news', 'stories'],
+      (event) => {
+        if (
+          event.type === 'breaking_news' ||
+          event.type === 'story.published' ||
+          event.type === 'story.updated'
+        ) {
+          void loadTickerData();
+        }
+      },
+      () => {
+        // SSE is best-effort; the periodic refresh below keeps the ticker fresh.
+      }
+    );
+
+    // Safety net for deployments where the SSE broker is unavailable.
+    const interval = setInterval(() => void loadTickerData(), 30_000);
+
     return () => {
       isMounted = false;
+      unsubscribe();
+      clearInterval(interval);
     };
   }, []);
 

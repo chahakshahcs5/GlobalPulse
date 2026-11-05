@@ -23,6 +23,7 @@ import {
   PersonalizationService,
   ClusteringService,
   LiveblogService,
+  PaywallService,
 } from '@ai-news/stories';
 import { db } from '@ai-news/database';
 import { ApiResponse } from '../../common/response/api-response';
@@ -54,6 +55,7 @@ export class StoriesController {
   private readonly personalizationService: PersonalizationService;
   private readonly clusteringService: ClusteringService;
   private readonly liveblogService: LiveblogService;
+  private readonly paywallService: PaywallService;
 
   constructor(
     @Optional() @Inject(StoryService) storyService?: StoryService,
@@ -67,6 +69,7 @@ export class StoriesController {
     this.personalizationService = personalizationService || new PersonalizationService(db);
     this.clusteringService = clusteringService || new ClusteringService(db);
     this.liveblogService = liveblogService || new LiveblogService(db);
+    this.paywallService = new PaywallService(db);
   }
 
   @Get()
@@ -79,8 +82,17 @@ export class StoriesController {
       validated.status = 'PUBLISHED';
     }
     const paginated = await this.storyService.listStoriesPaginated(validated, orgId);
+    const baseAccess = await this.paywallService.getAccess(principal);
+    const items = await Promise.all(
+      paginated.items.map(async (item) => {
+        if (baseAccess.isLocked) return this.paywallService.redactIfLocked(item, baseAccess);
+        if (!item.isSubscriberOnly) return item;
+        const access = await this.paywallService.getAccess(principal, item);
+        return this.paywallService.redactIfLocked(item, access);
+      })
+    );
     return ApiResponse.paginated(
-      paginated.items,
+      items,
       paginated.total,
       paginated.limit,
       paginated.nextCursor,
@@ -165,6 +177,25 @@ export class StoriesController {
     );
   }
 
+  @Get('personalized/explained')
+  @RequireScope('news:read')
+  async getPersonalizedFeedExplained(
+    @Query('limit') limitStr: string,
+    @Query('cursor') cursor: string,
+    @Query('includeCompleted') includeCompletedStr: string,
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    const limit = limitStr ? parseInt(limitStr, 10) : 20;
+    const includeCompleted = includeCompletedStr === 'true';
+    return await this.personalizationService.getPersonalizedFeedWithAttribution({
+      userId: principal.id,
+      organizationId: principal.organizationId,
+      limit,
+      cursor,
+      includeCompleted,
+    });
+  }
+
   @Get(':id/full-coverage')
   @RequireScope('news:read')
   async getFullCoverage(
@@ -216,7 +247,8 @@ export class StoriesController {
     if (!isEditor && story.status !== 'PUBLISHED') {
       throw new NotFoundException(`Story with id "${id}" not found.`);
     }
-    return story;
+    const access = await this.paywallService.getAccess(principal, story);
+    return this.paywallService.redactIfLocked(story, access);
   }
 
   @Get('slug/:slug')
@@ -230,7 +262,8 @@ export class StoriesController {
     if (!isEditor && story.status !== 'PUBLISHED') {
       throw new NotFoundException(`Story with slug "${slug}" not found.`);
     }
-    return story;
+    const access = await this.paywallService.getAccess(principal, story);
+    return this.paywallService.redactIfLocked(story, access);
   }
 
   @Put(':id')
@@ -530,7 +563,7 @@ export class StoriesController {
     @Headers('x-request-id') requestId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Story> {
-    return await this.storyService.unpublishStory(id, {
+    return await this.storyService.retractStory(id, {
       organizationId: principal.organizationId,
       authorId: principal.id,
       clientType: principal.clientType,

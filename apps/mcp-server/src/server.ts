@@ -244,10 +244,10 @@ export function createMcpApp(database: DatabaseService = db): McpServerApp {
       return;
     }
 
-    // Rate limiting — keyed by auth token or socket IP. The raw
-    // x-forwarded-for header is client-controlled and must not mint fresh
-    // buckets for attackers (see trustProxy handling in the API gateway).
-    const rateLimitKey = req.headers.authorization || req.socket.remoteAddress || '127.0.0.1';
+    // Rate limiting — keyed by the connection IP. The raw Authorization header
+    // must never be the key: rotating junk tokens (or appending whitespace to a
+    // valid one) would mint a fresh bucket per request and bypass the limit.
+    const rateLimitKey = req.socket.remoteAddress || '127.0.0.1';
     const rateResult = rateLimiter.check(rateLimitKey);
     res.setHeader('X-RateLimit-Limit', String(mcpRateMax));
     res.setHeader('X-RateLimit-Remaining', String(rateResult.remaining));

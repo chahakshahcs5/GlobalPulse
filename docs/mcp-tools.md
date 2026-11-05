@@ -1,6 +1,6 @@
 # Remote MCP Tools Catalog (Complete Section 38 Specifications)
 
-This document provides complete reference specifications for all 18 Section 38 MCP tools registered on the **GlobalPulse Remote MCP Server**.
+This document provides reference specifications for the core editorial subset of the 291 MCP tools registered on the **GlobalPulse Remote MCP Server**. Use the live `tools/list` JSON-RPC method for the complete catalog.
 
 ---
 

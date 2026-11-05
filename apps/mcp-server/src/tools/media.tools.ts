@@ -68,7 +68,7 @@ export function registerMediaTools(
       series: z.array(
         z.object({ name: z.string(), key: z.string(), color: z.string().optional() })
       ),
-      values: z.array(z.record(z.unknown())).min(1).describe('Array of data points'),
+      values: z.array(z.record(z.string(), z.unknown())).min(1).describe('Array of data points'),
       sourceAttribution: z.string().optional(),
     },
     async (params) => {
@@ -274,7 +274,7 @@ export function registerMediaTools(
       title: z.string().min(1).describe('Asset title or label'),
       url: z.string().url().describe('Public or storage URL'),
       metadata: z
-        .record(z.unknown())
+        .record(z.string(), z.unknown())
         .optional()
         .describe('Resolution, duration, bitrate, prompt, or provenance info'),
     },

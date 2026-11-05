@@ -36,10 +36,17 @@ export function setStoryBroadcaster(fn: BroadcastFn): void {
   _broadcast = fn;
 }
 
+/**
+ * Events a reader-facing surface may see. Everything else is a newsroom event
+ * and is broadcast on the restricted `newsroom` channel.
+ */
+const PUBLIC_STORY_EVENTS = new Set(['story.published', 'story.unpublished', 'story.retracted']);
+
 function broadcast(eventName: string, data: unknown): void {
   if (_broadcast) {
     try {
-      _broadcast('all', eventName, data);
+      const channel = PUBLIC_STORY_EVENTS.has(eventName) ? 'stories' : 'newsroom';
+      _broadcast(channel, eventName, data);
     } catch {
       // SSE broadcast failure should never break story operations
     }
@@ -289,31 +296,33 @@ export class StoryService {
   }
 
   async addBlock(storyId: string, rawBlock: unknown, ctx: StoryContext): Promise<StoryBlock> {
-    await this.getStory(storyId, ctx.organizationId);
-    const validated = validateBlock(rawBlock);
-    const sanitized = sanitizeBlock(validated);
+    return this.db.runInTransaction(async () => {
+      await this.getStory(storyId, ctx.organizationId);
+      const validated = validateBlock(rawBlock);
+      const sanitized = sanitizeBlock(validated);
 
-    const currentBlocks = await this.db.stories.getBlocks(storyId);
-    sanitized.sortOrder = currentBlocks.length;
-    currentBlocks.push(sanitized);
+      const currentBlocks = await this.db.stories.getBlocks(storyId);
+      sanitized.sortOrder = currentBlocks.length;
+      currentBlocks.push(sanitized);
 
-    await this.db.stories.saveBlocks(storyId, currentBlocks);
+      await this.db.stories.saveBlocks(storyId, currentBlocks);
 
-    await this.db.audit.log({
-      id: generateId('aud'),
-      organizationId: ctx.organizationId,
-      userId: ctx.authorId,
-      clientType: ctx.clientType,
-      action: `${ctx.createdVia || 'mcp'}.add_story_block`,
-      resourceType: 'story_block',
-      resourceId: sanitized.id,
-      payloadSummary: { storyId, blockType: sanitized.blockType },
-      requestId: ctx.requestId,
-      status: 'SUCCESS',
-      timestamp: new Date().toISOString(),
+      await this.db.audit.log({
+        id: generateId('aud'),
+        organizationId: ctx.organizationId,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'mcp'}.add_story_block`,
+        resourceType: 'story_block',
+        resourceId: sanitized.id,
+        payloadSummary: { storyId, blockType: sanitized.blockType },
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: new Date().toISOString(),
+      });
+
+      return sanitized;
     });
-
-    return sanitized;
   }
 
   async updateBlock(
@@ -322,38 +331,42 @@ export class StoryService {
     rawBlock: unknown,
     ctx: StoryContext
   ): Promise<StoryBlock> {
-    await this.getStory(storyId, ctx.organizationId);
-    const validated = validateBlock(rawBlock);
-    const sanitized = sanitizeBlock(validated);
+    return this.db.runInTransaction(async () => {
+      await this.getStory(storyId, ctx.organizationId);
+      const validated = validateBlock(rawBlock);
+      const sanitized = sanitizeBlock(validated);
 
-    const currentBlocks = await this.db.stories.getBlocks(storyId);
-    const index = currentBlocks.findIndex((b) => b.id === blockId);
-    if (index === -1) {
-      throw new NotFoundError('StoryBlock', blockId);
-    }
+      const currentBlocks = await this.db.stories.getBlocks(storyId);
+      const index = currentBlocks.findIndex((b) => b.id === blockId);
+      if (index === -1) {
+        throw new NotFoundError('StoryBlock', blockId);
+      }
 
-    sanitized.sortOrder = currentBlocks[index].sortOrder;
-    currentBlocks[index] = sanitized;
+      sanitized.sortOrder = currentBlocks[index].sortOrder;
+      currentBlocks[index] = sanitized;
 
-    await this.db.stories.saveBlocks(storyId, currentBlocks);
-    return sanitized;
+      await this.db.stories.saveBlocks(storyId, currentBlocks);
+      return sanitized;
+    });
   }
 
   async removeBlock(storyId: string, blockId: string, ctx: StoryContext): Promise<boolean> {
-    await this.getStory(storyId, ctx.organizationId);
-    const currentBlocks = await this.db.stories.getBlocks(storyId);
-    const filtered = currentBlocks.filter((b) => b.id !== blockId);
-    if (filtered.length === currentBlocks.length) {
-      return false;
-    }
+    return this.db.runInTransaction(async () => {
+      await this.getStory(storyId, ctx.organizationId);
+      const currentBlocks = await this.db.stories.getBlocks(storyId);
+      const filtered = currentBlocks.filter((b) => b.id !== blockId);
+      if (filtered.length === currentBlocks.length) {
+        return false;
+      }
 
-    // Re-index sort order
-    filtered.forEach((b, idx) => {
-      b.sortOrder = idx;
+      // Re-index sort order
+      filtered.forEach((b, idx) => {
+        b.sortOrder = idx;
+      });
+
+      await this.db.stories.saveBlocks(storyId, filtered);
+      return true;
     });
-
-    await this.db.stories.saveBlocks(storyId, filtered);
-    return true;
   }
 
   async reorderBlocks(
@@ -361,38 +374,40 @@ export class StoryService {
     blockIdsInOrder: string[],
     ctx: StoryContext
   ): Promise<StoryBlock[]> {
-    await this.getStory(storyId, ctx.organizationId);
-    const currentBlocks = await this.db.stories.getBlocks(storyId);
-    const blockMap = new Map(currentBlocks.map((b) => [b.id, b]));
+    return this.db.runInTransaction(async () => {
+      await this.getStory(storyId, ctx.organizationId);
+      const currentBlocks = await this.db.stories.getBlocks(storyId);
+      const blockMap = new Map(currentBlocks.map((b) => [b.id, b]));
 
-    // Clients may send a partial ordering (e.g. the block list as they know
-    // it). Replacing the stored list wholesale would silently delete every
-    // omitted block, so merge: ordered known blocks first, then any blocks
-    // missing from the payload in their original order.
-    const reordered: StoryBlock[] = [];
-    const seen = new Set<string>();
-    blockIdsInOrder.forEach((id) => {
-      const block = blockMap.get(id);
-      if (block && !seen.has(id)) {
-        seen.add(id);
-        reordered.push(block);
-      }
+      // Clients may send a partial ordering (e.g. the block list as they know
+      // it). Replacing the stored list wholesale would silently delete every
+      // omitted block, so merge: ordered known blocks first, then any blocks
+      // missing from the payload in their original order.
+      const reordered: StoryBlock[] = [];
+      const seen = new Set<string>();
+      blockIdsInOrder.forEach((id) => {
+        const block = blockMap.get(id);
+        if (block && !seen.has(id)) {
+          seen.add(id);
+          reordered.push(block);
+        }
+      });
+
+      currentBlocks.forEach((block) => {
+        if (!seen.has(block.id)) {
+          seen.add(block.id);
+          reordered.push(block);
+        }
+      });
+
+      // Contiguous final sort order
+      reordered.forEach((b, idx) => {
+        b.sortOrder = idx;
+      });
+
+      await this.db.stories.saveBlocks(storyId, reordered);
+      return reordered;
     });
-
-    currentBlocks.forEach((block) => {
-      if (!seen.has(block.id)) {
-        seen.add(block.id);
-        reordered.push(block);
-      }
-    });
-
-    // Contiguous final sort order
-    reordered.forEach((b, idx) => {
-      b.sortOrder = idx;
-    });
-
-    await this.db.stories.saveBlocks(storyId, reordered);
-    return reordered;
   }
 
   async createStoryVersion(
@@ -596,6 +611,44 @@ export class StoryService {
     story.updatedAt = new Date().toISOString();
     const saved = await this.db.stories.update(story);
     broadcast('story.unpublished', { storyId: saved.id, title: saved.title });
+    return saved;
+  }
+
+  /**
+   * Retract a published story.
+   *
+   * This is deliberately distinct from `unpublishStory`: a retraction is an
+   * editorial act with an audit trail and its own event, not a silent return
+   * to draft.
+   */
+  async retractStory(storyId: string, ctx: StoryContext): Promise<Story> {
+    const story = await this.getStory(storyId, ctx.organizationId);
+    story.status = 'DRAFT';
+    story.updatedAt = new Date().toISOString();
+
+    const saved = await this.db.runInTransaction(async () => {
+      const updated = await this.db.stories.update(story);
+      await this.db.audit.log({
+        id: generateId('aud'),
+        organizationId: ctx.organizationId,
+        userId: ctx.authorId,
+        clientType: ctx.clientType,
+        action: `${ctx.createdVia || 'api'}.retract_story`,
+        resourceType: 'story',
+        resourceId: storyId,
+        payloadSummary: { title: story.title, previousStatus: 'PUBLISHED' },
+        requestId: ctx.requestId,
+        status: 'SUCCESS',
+        timestamp: story.updatedAt,
+      });
+      return updated;
+    });
+
+    broadcast('story.retracted', {
+      storyId: saved.id,
+      title: saved.title,
+      retractedAt: saved.updatedAt,
+    });
     return saved;
   }
 

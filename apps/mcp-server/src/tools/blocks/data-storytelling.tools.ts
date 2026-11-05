@@ -55,7 +55,7 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
       series: z.array(
         z.object({ name: z.string(), key: z.string(), color: z.string().optional() })
       ),
-      values: z.array(z.record(z.unknown())).min(1),
+      values: z.array(z.record(z.string(), z.unknown())).min(1),
       annotations: z
         .array(
           z.object({
@@ -170,7 +170,7 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
         .min(2)
         .max(20),
       observations: z
-        .array(z.record(z.number()))
+        .array(z.record(z.string(), z.number()))
         .min(2)
         .max(5000)
         .describe(
@@ -512,7 +512,9 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
           z.object({
             id: z.string().min(1),
             type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
-            geojson: z.record(z.unknown()).describe('The GeoJSON the layer is drawn from'),
+            geojson: z
+              .record(z.string(), z.unknown())
+              .describe('The GeoJSON the layer is drawn from'),
             property: z
               .string()
               .optional()
@@ -578,7 +580,9 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
         .array(
           z.object({
             id: z.string().min(1),
-            geojson: z.record(z.unknown()).describe('The GeoJSON the shapes are drawn from'),
+            geojson: z
+              .record(z.string(), z.unknown())
+              .describe('The GeoJSON the shapes are drawn from'),
             heightKey: z.string().optional().describe('The property holding the height'),
             baseKey: z
               .string()
@@ -595,7 +599,7 @@ export function registerDataStorytellingTools(server: McpServer, helperAdd: AddB
           z.object({
             id: z.string().min(1),
             type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
-            geojson: z.record(z.unknown()),
+            geojson: z.record(z.string(), z.unknown()),
             property: z.string().optional(),
             colorScale: z.array(z.string()).optional(),
           })

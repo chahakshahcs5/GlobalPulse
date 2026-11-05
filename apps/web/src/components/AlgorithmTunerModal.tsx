@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Sliders, Sparkles, BookOpen, Compass, ShieldCheck, Check } from 'lucide-react';
+import { updatePreferences } from '@ai-news/api-client';
 import type { AlgorithmTuning, DepthPreference } from '@ai-news/schemas';
 
 interface AlgorithmTunerModalProps {
@@ -39,7 +40,7 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const tuning: AlgorithmTuning = {
       depthPreference: depth,
       serendipityWeight: serendipity,
@@ -48,6 +49,11 @@ export function AlgorithmTunerModal({ isOpen, onClose, onApply }: AlgorithmTuner
     };
     if (typeof window !== 'undefined') {
       localStorage.setItem('globalpulse_algorithm_tuning', JSON.stringify(tuning));
+    }
+    try {
+      await updatePreferences(tuning);
+    } catch {
+      // The local cache still applies; the server will catch up next save.
     }
     setSaved(true);
     if (onApply) onApply(tuning);

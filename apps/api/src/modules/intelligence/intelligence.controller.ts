@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -39,12 +40,35 @@ import { db, intelligenceContext } from './context';
 export class StoryIntelligenceController {
   private readonly service = new StoryIntelligenceService(db);
 
+  private canReadDrafts(principal: AuthenticatedPrincipal): boolean {
+    return (
+      principal.role === 'admin' ||
+      principal.role === 'editor' ||
+      principal.scopes.includes('news:admin') ||
+      principal.scopes.includes('news:write')
+    );
+  }
+
+  private async assertStoryVisible(
+    storyId: string,
+    principal: AuthenticatedPrincipal
+  ): Promise<void> {
+    const story = await db.stories.findById(storyId, principal.organizationId);
+    if (!story) {
+      throw new NotFoundException(`Story with id "${storyId}" was not found.`);
+    }
+    if (!this.canReadDrafts(principal) && story.status !== 'PUBLISHED') {
+      throw new NotFoundException(`Story with id "${storyId}" was not found.`);
+    }
+  }
+
   @Get('stories/:storyId/intelligence')
   @RequireScope('news:read')
   async getIntelligence(
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryIntelligence> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.getStoryIntelligence(storyId, principal.organizationId);
   }
 
@@ -54,6 +78,7 @@ export class StoryIntelligenceController {
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryWhatChanged> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.getWhatChanged(storyId, principal.organizationId);
   }
 
@@ -65,6 +90,7 @@ export class StoryIntelligenceController {
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryClaim[]> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.listClaims(storyId, principal.organizationId);
   }
 
@@ -120,6 +146,7 @@ export class StoryIntelligenceController {
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<Evidence[]> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.listEvidence(storyId, principal.organizationId);
   }
 
@@ -158,6 +185,7 @@ export class StoryIntelligenceController {
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryTimelineEvent[]> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.listTimeline(storyId, principal.organizationId);
   }
 
@@ -213,6 +241,7 @@ export class StoryIntelligenceController {
     @Param('storyId') storyId: string,
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<EditorialPerspective[]> {
+    await this.assertStoryVisible(storyId, principal);
     return this.service.listPerspectives(storyId, principal.organizationId);
   }
 

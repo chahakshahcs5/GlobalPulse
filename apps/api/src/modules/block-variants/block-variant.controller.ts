@@ -79,7 +79,7 @@ export class BlockVariantController {
     const parsed = BlockVariantInputSchema.safeParse(body);
     if (!parsed.success) {
       throw new ValidationError(
-        `Invalid block variant: ${parsed.error.errors
+        `Invalid block variant: ${parsed.error.issues
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ')}`
       );
@@ -102,7 +102,7 @@ export class BlockVariantController {
     const parsed = BlockVariantUpdateSchema.safeParse(body);
     if (!parsed.success) {
       throw new ValidationError(
-        `Invalid block variant: ${parsed.error.errors
+        `Invalid block variant: ${parsed.error.issues
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ')}`
       );

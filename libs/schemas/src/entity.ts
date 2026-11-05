@@ -20,7 +20,7 @@ export const EntitySchema = z.object({
   description: z.string().optional(),
   aliases: z.array(z.string()).default([]),
   avatarUrl: z.string().url().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -32,7 +32,7 @@ export const CreateEntityInputSchema = z.object({
   description: z.string().max(2000).optional(),
   aliases: z.array(z.string()).optional().default([]),
   avatarUrl: z.string().url().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateEntityInput = z.input<typeof CreateEntityInputSchema>;
 export type CreateEntityOutput = z.output<typeof CreateEntityInputSchema>;

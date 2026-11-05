@@ -37,6 +37,39 @@ services:
       timeout: 5s
       retries: 5
 
+  # 2b. MinIO — S3-compatible object storage for local/self-hosted deployments
+  minio:
+    image: minio/minio:latest
+    container_name: globalpulse_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    command: server /data --console-address ':9001'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Create the media bucket once MinIO is healthy.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-minioadmin} ${S3_SECRET_KEY:-minioadmin} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-news-media} &&
+      mc anonymous set download local/${S3_BUCKET:-news-media}
+      "
+
   # 3. Database Schema Initialization & Bootstrap Seed
   db-setup:
     build:
@@ -70,16 +103,21 @@ services:
       MCP_BASE_URL: ${MCP_BASE_URL:-http://mcp-server:3001/mcp}
       OAUTH_ISSUER: ${OAUTH_ISSUER:-https://auth.globalpulse.news}
       OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-https://api.globalpulse.news}
-      # Backblaze B2 / S3 Object Storage
-      S3_ENDPOINT: ${S3_ENDPOINT:-}
-      S3_REGION: ${S3_REGION:-us-east-005}
+      OAUTH_ADMIN_CLIENT_SECRET: ${OAUTH_ADMIN_CLIENT_SECRET:?OAUTH_ADMIN_CLIENT_SECRET must be set}
+      OAUTH_GEMINI_CLIENT_SECRET: ${OAUTH_GEMINI_CLIENT_SECRET:?OAUTH_GEMINI_CLIENT_SECRET must be set}
+      OAUTH_CHATGPT_CLIENT_SECRET: ${OAUTH_CHATGPT_CLIENT_SECRET:?OAUTH_CHATGPT_CLIENT_SECRET must be set}
+      # S3-compatible object storage (MinIO by default; point at B2/S3 in production)
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-news-media}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
-      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:9000/news-media}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
       JWT_ISSUER: https://auth.globalpulse.news
       JWT_AUDIENCE: https://api.globalpulse.news
+      BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:-}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
@@ -91,6 +129,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # 5. Remote Model Context Protocol (MCP) Server (Streamable HTTP / JSON-RPC 2.0)
   mcp-server:
@@ -113,6 +153,8 @@ services:
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production}
+      JWT_ISSUER: ${JWT_ISSUER:-https://auth.globalpulse.news}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-https://api.globalpulse.news}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
@@ -137,6 +179,7 @@ services:
       PORT: 3002
       API_INTERNAL_URL: http://api:3000
       NEXT_PUBLIC_MCP_URL: ${NEXT_PUBLIC_MCP_URL:-http://mcp-server:3001/mcp}
+      NEXT_PUBLIC_SUBSCRIPTION_URL: ${NEXT_PUBLIC_SUBSCRIPTION_URL:-}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
@@ -154,15 +197,18 @@ services:
     environment:
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
+      TTS_WEBHOOK_URL: ${TTS_WEBHOOK_URL:-}
+      TTS_WEBHOOK_TOKEN: ${TTS_WEBHOOK_TOKEN:-}
       DATABASE_ENGINE: prisma
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-ai_news}?schema=public
-      # Backblaze B2 / S3 Object Storage
-      S3_ENDPOINT: ${S3_ENDPOINT:-}
-      S3_REGION: ${S3_REGION:-us-east-005}
+      # S3-compatible object storage (MinIO by default; point at B2/S3 in production)
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-news-media}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
-      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:9000/news-media}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     depends_on:
@@ -172,7 +218,10 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

@@ -21,7 +21,9 @@ export const requestLoggerPlugin: FastifyPluginAsync = async (app: FastifyInstan
     const logPayload = {
       requestId: request.headers['x-request-id'],
       method: request.method,
-      url: request.url,
+      // Never log query strings: SSE clients historically passed a JWT as
+      // `?token=`, and other endpoints can carry sensitive filters.
+      url: request.url.split('?')[0],
       statusCode,
       durationMs,
       userAgent: request.headers['user-agent'],
@@ -30,19 +32,20 @@ export const requestLoggerPlugin: FastifyPluginAsync = async (app: FastifyInstan
         : 'anonymous',
     };
 
+    const safeUrl = request.url.split('?')[0];
     if (statusCode >= 500) {
       logger.error(
-        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        `HTTP ${request.method} ${safeUrl} - ${statusCode} (${durationMs}ms)`,
         logPayload
       );
     } else if (statusCode >= 400) {
       logger.warn(
-        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        `HTTP ${request.method} ${safeUrl} - ${statusCode} (${durationMs}ms)`,
         logPayload
       );
     } else {
       logger.info(
-        `HTTP ${request.method} ${request.url} - ${statusCode} (${durationMs}ms)`,
+        `HTTP ${request.method} ${safeUrl} - ${statusCode} (${durationMs}ms)`,
         logPayload
       );
     }

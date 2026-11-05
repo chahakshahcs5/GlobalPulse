@@ -51,7 +51,7 @@ export const KnowledgeEdgeSchema = z.object({
   toType: GraphNodeTypeSchema,
   toId: z.string().min(1),
   weight: z.number().min(0).max(1).default(1),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
 });
 export type KnowledgeEdge = z.infer<typeof KnowledgeEdgeSchema>;
@@ -63,7 +63,7 @@ export const CreateKnowledgeEdgeInputSchema = z.object({
   toType: GraphNodeTypeSchema,
   toId: z.string().min(1),
   weight: z.number().min(0).max(1).optional().default(1),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateKnowledgeEdgeInput = z.input<typeof CreateKnowledgeEdgeInputSchema>;
 
@@ -71,7 +71,7 @@ export const GraphNodeSchema = z.object({
   type: GraphNodeTypeSchema,
   id: z.string().min(1),
   label: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type GraphNode = z.infer<typeof GraphNodeSchema>;
 

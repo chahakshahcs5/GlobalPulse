@@ -27,6 +27,7 @@ export class PrismaTopicRepository implements ITopicRepository {
       where: Record<string, unknown>;
       data: Record<string, unknown>;
     }) => Promise<PrismaTopicRow>;
+    delete: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow>;
     findMany: (args: {
       where: Record<string, unknown>;
       orderBy?: Record<string, unknown>;
@@ -39,6 +40,7 @@ export class PrismaTopicRepository implements ITopicRepository {
         where: Record<string, unknown>;
         data: Record<string, unknown>;
       }) => Promise<PrismaTopicRow>;
+      delete: (args: { where: Record<string, unknown> }) => Promise<PrismaTopicRow>;
       findMany: (args: {
         where: Record<string, unknown>;
         orderBy?: Record<string, unknown>;
@@ -108,6 +110,17 @@ export class PrismaTopicRepository implements ITopicRepository {
       },
     });
     return rows.map((r) => this.mapToDomain(r));
+  }
+
+  async delete(id: string, orgId?: string): Promise<boolean> {
+    const existing = await this.findById(id, orgId);
+    if (!existing) return false;
+    try {
+      await this.topicClient.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private mapToDomain(row: PrismaTopicRow): Topic {

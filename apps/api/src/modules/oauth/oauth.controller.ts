@@ -55,7 +55,7 @@ export class OAuthController {
 
   @Get('authorize')
   @UseGuards(NestAuthGuard)
-  handleAuthorizeGet(
+  async handleAuthorizeGet(
     @Query() query: AuthorizeRequest,
     @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
@@ -67,7 +67,7 @@ export class OAuthController {
       });
     }
 
-    const result = this.oauthService.createAuthorizationCode(query, principal);
+    const result = await this.oauthService.createAuthorizationCode(query, principal);
 
     if (query.redirect_uri) {
       const url = new URL(query.redirect_uri);
@@ -84,7 +84,7 @@ export class OAuthController {
   @Post('authorize')
   @UseGuards(NestAuthGuard)
   @HttpCode(HttpStatus.OK)
-  handleAuthorizePost(
+  async handleAuthorizePost(
     @Body() body: AuthorizeRequest,
     @Principal() principal: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply
@@ -96,7 +96,7 @@ export class OAuthController {
       });
     }
 
-    const result = this.oauthService.createAuthorizationCode(body, principal);
+    const result = await this.oauthService.createAuthorizationCode(body, principal);
 
     if (body.redirect_uri) {
       const url = new URL(body.redirect_uri);
@@ -112,7 +112,7 @@ export class OAuthController {
 
   @Post('token')
   @HttpCode(HttpStatus.OK)
-  handleToken(@Body() body: TokenRequest, @Headers('authorization') authHeader?: string) {
+  async handleToken(@Body() body: TokenRequest, @Headers('authorization') authHeader?: string) {
     let clientId = body.client_id;
     let clientSecret = body.client_secret;
 
@@ -127,7 +127,7 @@ export class OAuthController {
       }
     }
 
-    return this.oauthService.exchangeToken({
+    return await this.oauthService.exchangeToken({
       ...body,
       client_id: clientId,
       client_secret: clientSecret,
@@ -136,15 +136,10 @@ export class OAuthController {
 
   @Get('jwks')
   getJwks() {
-    return {
-      keys: [
-        {
-          kty: 'oct',
-          use: 'sig',
-          alg: 'HS256',
-          kid: 'globalpulse-default-key-1',
-        },
-      ],
-    };
+    // Tokens are signed with HS256, which is symmetric and cannot be verified
+    // from a public JWKS without disclosing the signing secret. Returning an
+    // empty key set is the honest response; clients must use the shared
+    // secret (or a future asymmetric key pair) to verify tokens.
+    return { keys: [] };
   }
 }

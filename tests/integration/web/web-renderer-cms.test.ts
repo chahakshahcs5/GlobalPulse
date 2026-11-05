@@ -354,7 +354,7 @@ describe('Web Application, StoryRenderer & Large Display Mode Integration Tests'
       expect(html).toContain('Claude 3.7 Sonnet Desk');
       expect(html).toContain('The Application Is Not The AI');
       expect(html).toContain('AsyncLocalStorage Principal Isolation');
-      expect(html).toContain('18 Complete Section 38 Tools');
+      expect(html).toContain('291 Live MCP Tools');
     });
 
     it('renders Special Pop-Up Desk Page with adaptive theme, hero masthead, and stream status', async () => {

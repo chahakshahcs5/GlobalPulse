@@ -58,6 +58,14 @@ export class TopicService {
     return this.db.topics.search(query, orgId);
   }
 
+  async deleteTopic(id: string, orgId: string): Promise<boolean> {
+    const deleted = await this.db.topics.delete(id, orgId);
+    if (!deleted) {
+      throw new NotFoundError('Topic', id);
+    }
+    return true;
+  }
+
   /**
    * Generates a topic dossier with storyline milestones, sentiment breakdown, linked entities, and co-occurring topics.
    */

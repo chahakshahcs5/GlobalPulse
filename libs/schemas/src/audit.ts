@@ -9,7 +9,7 @@ export const AuditLogSchema = z.object({
   action: z.string().min(1), // e.g. 'mcp.create_story', 'mcp.publish_story', 'web.update_block'
   resourceType: z.string().min(1), // 'story', 'event', 'source', 'topic'
   resourceId: z.string().optional(),
-  payloadSummary: z.record(z.unknown()).optional(),
+  payloadSummary: z.record(z.string(), z.unknown()).optional(),
   ipAddress: z.string().optional(),
   requestId: z.string().optional(),
   durationMs: z.number().nonnegative().optional(),

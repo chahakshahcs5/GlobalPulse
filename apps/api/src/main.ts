@@ -27,10 +27,14 @@ async function bootstrap() {
   logger.info('Initializing Database Engine...');
   await db.initialize();
 
-  // Auto-seed in-memory or unseeded database so all stories, clusters, and fact-checks are live via API
+  // Auto-seed in-memory or unseeded database so all stories, clusters, and fact-checks are live via API.
+  // Demo data includes known development credentials, so it must never run in
+  // production unless the operator explicitly opts in.
+  const allowDemoSeed =
+    process.env.NODE_ENV !== 'production' || process.env.SEED_DEMO_DATA === 'true';
   try {
     const existingStories = await db.stories.listPaginated({ limit: 1 }, 'org_default');
-    if (existingStories.total === 0) {
+    if (allowDemoSeed && existingStories.total === 0) {
       logger.info('Database empty; auto-seeding canonical enterprise records from seed.ts...');
       const { seedDatabase } = await import('@ai-news/database');
       await seedDatabase(db);
@@ -38,6 +42,10 @@ async function bootstrap() {
   } catch (seedErr) {
     logger.warn(`Auto-seeding check notice: ${String(seedErr)}`);
   }
+
+  // Refuse to run in production with an ephemeral in-memory store unless the
+  // operator explicitly opted in.
+  db.validateProductionConfiguration();
 
   // Wire SSE broadcasting: story, engagement, notification & scheduling events flow to connected clients
   const realtime = RealtimeService.getInstance();

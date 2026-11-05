@@ -145,6 +145,16 @@ export class CategoriesController {
     return db.categories.create(newCat);
   }
 
+  @Delete(':slug')
+  @RequireScope('news:write')
+  async deleteCategory(@Param('slug') slug: string) {
+    const deleted = await db.categories.delete(slug.toLowerCase());
+    if (!deleted) {
+      throw new NotFoundException(`Category "${slug}" not found`);
+    }
+    return { success: true };
+  }
+
   @Post(':slug/desks')
   @RequireScope('news:write')
   async addCategoryDesk(@Param('slug') slug: string, @Body() body: { desk: string }) {

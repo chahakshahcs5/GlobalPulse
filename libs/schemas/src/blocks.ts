@@ -85,7 +85,7 @@ export const BaseBlockSchema = z.object({
   id: z.string().min(1),
   blockType: z.string(),
   sortOrder: z.number().int().nonnegative(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   /** How the block is presented. See `BlockPresentationSchema`. */
   presentation: BlockPresentationSchema.optional(),
   citationIds: z.array(z.string()).optional(),
@@ -327,7 +327,7 @@ export const ChartBlockSchema = BaseBlockSchema.extend({
         })
       )
       .min(1),
-    values: z.array(z.record(z.unknown())).min(1),
+    values: z.array(z.record(z.string(), z.unknown())).min(1),
     facetField: z.string().optional(),
     /**
      * The key in each row that names the group the row belongs to.
@@ -469,7 +469,7 @@ export const MapBlockSchema = BaseBlockSchema.extend({
         z.object({
           id: z.string().min(1),
           type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
-          geojson: z.record(z.unknown()),
+          geojson: z.record(z.string(), z.unknown()),
           property: z.string().optional(),
           colorScale: z.array(z.string()).optional(),
         })
@@ -1077,7 +1077,9 @@ export const DataExplorerBlockSchema = BaseBlockSchema.extend({
       .min(1),
     defaultDimension: z.string().min(1),
     defaultMetric: z.string().min(1),
-    rows: z.array(z.record(z.union([z.string(), z.number(), z.boolean(), z.null()]))).min(1),
+    rows: z
+      .array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])))
+      .min(1),
     filters: z
       .array(
         z.object({
@@ -1358,7 +1360,7 @@ export const CorrelationBlockSchema = BaseBlockSchema.extend({
      * heatmap of hand-written correlation values hides how thin the evidence
      * is.
      */
-    observations: z.array(z.record(z.number())).min(2).max(5000),
+    observations: z.array(z.record(z.string(), z.number())).min(2).max(5000),
     /** Optional labels for the observations (e.g. years). */
     rowLabels: z.array(z.string()).optional(),
     /** Show the coefficient and the sample size in each cell, not just colour. */
@@ -1549,7 +1551,7 @@ export const Map3DBlockSchema = BaseBlockSchema.extend({
       .array(
         z.object({
           id: z.string().min(1),
-          geojson: z.record(z.unknown()),
+          geojson: z.record(z.string(), z.unknown()),
           /** The property holding the height. */
           heightKey: z.string().optional(),
           /** The property holding the height the shape starts at. */
@@ -1565,7 +1567,7 @@ export const Map3DBlockSchema = BaseBlockSchema.extend({
         z.object({
           id: z.string().min(1),
           type: z.enum(['fill', 'line', 'circle', 'heatmap', 'fill-extrusion']),
-          geojson: z.record(z.unknown()),
+          geojson: z.record(z.string(), z.unknown()),
           property: z.string().optional(),
           colorScale: z.array(z.string()).optional(),
         })
@@ -1700,7 +1702,7 @@ export const ElectionBlockSchema = BaseBlockSchema.extend({
           year: z.number().int(),
           winner: z.string().optional(),
           turnout: z.number().min(0).max(100).optional(),
-          seats: z.record(z.number()).optional(),
+          seats: z.record(z.string(), z.number()).optional(),
         })
       )
       .optional(),
@@ -2188,7 +2190,7 @@ export const DatasetBlockSchema = BaseBlockSchema.extend({
     formats: z.array(z.enum(['csv', 'json', 'xlsx'])).default(['csv']),
     columns: z.array(DatasetColumnSchema).default([]),
     previewRows: z
-      .array(z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])))
+      .array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])))
       .default([]),
     license: z.string().max(500).optional(),
     methodology: z.string().max(4000).optional(),
@@ -2578,7 +2580,7 @@ export const SandboxBlockSchema = BaseBlockSchema.extend({
     /** The script the frame runs, if any. */
     script: z.string().max(200000).optional(),
     /** The data handed to the frame once it has loaded. */
-    data: z.record(z.unknown()).optional(),
+    data: z.record(z.string(), z.unknown()).optional(),
     /** How tall the frame is, in pixels. */
     height: z.number().int().min(80).max(2000).optional(),
     /** Let the frame run its script. */
@@ -2719,7 +2721,8 @@ export type BaseBlock = z.infer<typeof BaseBlockSchema>;
  * it in on write — so an editor's form must not be forced to spell out every
  * defaulted field by hand.
  */
-export type BlockDataInput<T extends z.ZodTypeAny> = z.input<T>['data'];
+export type BlockDataInput<T extends z.ZodTypeAny> =
+  T extends z.ZodType<infer Output> ? (Output extends { data: infer Data } ? Data : never) : never;
 
 export type HeadingBlockDataInput = BlockDataInput<typeof HeadingBlockSchema>;
 export type ParagraphBlockDataInput = BlockDataInput<typeof ParagraphBlockSchema>;

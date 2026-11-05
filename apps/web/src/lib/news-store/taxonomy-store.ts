@@ -321,6 +321,16 @@ export function useTaxonomy() {
         return updated;
       });
 
+      // Persist to the API; the local entry is an optimistic cache.
+      void api
+        .createCategory({
+          name: newCat.name,
+          slug: newCat.slug,
+          description: newCat.description,
+          icon: newCat.icon,
+        })
+        .catch(() => {});
+
       return newCat;
     },
     []
@@ -328,11 +338,15 @@ export function useTaxonomy() {
 
   const deleteCategory = useCallback((id: string) => {
     setCategories((prev) => {
+      const target = prev.find((c) => c.id === id);
       const updated = prev.filter((c) => c.id !== id);
       try {
         localStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
         emitTaxonomyUpdated();
       } catch {}
+      if (target?.slug) {
+        void api.deleteCategory(target.slug).catch(() => {});
+      }
       return updated;
     });
   }, []);
@@ -381,11 +395,15 @@ export function useTaxonomy() {
 
   const deleteTopic = useCallback((id: string) => {
     setTopics((prev) => {
+      const target = prev.find((t) => t.id === id);
       const updated = prev.filter((t) => t.id !== id);
       try {
         localStorage.setItem(TOPICS_KEY, JSON.stringify(updated));
         emitTaxonomyUpdated();
       } catch {}
+      if (target?.id) {
+        void api.deleteTopic(target.id).catch(() => {});
+      }
       return updated;
     });
   }, []);

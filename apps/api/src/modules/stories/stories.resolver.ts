@@ -3,10 +3,11 @@ import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
+  NotFoundException,
   Inject,
   Optional,
 } from '@nestjs/common';
-import { StoryService } from '@ai-news/stories';
+import { StoryService, PaywallService } from '@ai-news/stories';
 import { SearchService } from '@ai-news/search';
 import { SourceService } from '@ai-news/sources';
 import { db } from '@ai-news/database';
@@ -35,6 +36,7 @@ export class StoriesResolver {
   private readonly storyService: StoryService;
   private readonly searchService: SearchService;
   private readonly sourceService: SourceService;
+  private readonly paywallService: PaywallService;
 
   constructor(
     @Optional() @Inject(StoryService) storyService?: StoryService,
@@ -44,6 +46,21 @@ export class StoriesResolver {
     this.storyService = storyService || new StoryService(db);
     this.searchService = searchService || new SearchService(db);
     this.sourceService = sourceService || new SourceService(db);
+    this.paywallService = new PaywallService(db);
+  }
+
+  private paywallPrincipal(
+    ctx: StoriesResolverContext | undefined,
+    orgId: string
+  ): { id: string; organizationId: string; role: string; scopes: string[] } {
+    return (
+      ctx?.principal || {
+        id: ctx?.userId || 'anonymous',
+        organizationId: orgId,
+        role: 'reader',
+        scopes: ['news:read'],
+      }
+    );
   }
 
   private requirePrincipal(
@@ -69,6 +86,17 @@ export class StoriesResolver {
     return ctx.principal;
   }
 
+  private canReadDrafts(ctx?: StoriesResolverContext): boolean {
+    const principal = ctx?.principal;
+    if (!principal) return false;
+    return (
+      principal.role === 'admin' ||
+      principal.role === 'editor' ||
+      principal.scopes.includes('news:admin') ||
+      principal.scopes.includes('news:write')
+    );
+  }
+
   @Query('searchStories')
   async searchStories(
     @Args('input') input?: SearchStoriesInput,
@@ -76,17 +104,39 @@ export class StoriesResolver {
   ): Promise<Story[]> {
     const orgId = ctx?.organizationId || ctx?.principal?.organizationId || 'org_default';
     const params: SearchStoriesInput = { limit: 20, ...(input || {}) };
+    if (!this.canReadDrafts(ctx)) {
+      params.status = 'PUBLISHED';
+    }
     const res = await this.searchService.searchStories(params, orgId);
+    const principal = this.paywallPrincipal(ctx, orgId);
+    const baseAccess = await this.paywallService.getAccess(principal);
     const stories = await Promise.all(
       (res.items || []).map((item) => this.storyService.getStory(item.storyId, orgId))
     );
-    return stories.filter((s): s is Story => s !== null);
+    const visible: Story[] = [];
+    for (const story of stories) {
+      if (!story) continue;
+      if (baseAccess.isLocked) {
+        visible.push(this.paywallService.redactIfLocked(story, baseAccess));
+      } else if (story.isSubscriberOnly) {
+        const access = await this.paywallService.getAccess(principal, story);
+        visible.push(this.paywallService.redactIfLocked(story, access));
+      } else {
+        visible.push(story);
+      }
+    }
+    return visible;
   }
 
   @Query('getStory')
   async getStory(@Args('id') id: string, @Context() ctx?: StoriesResolverContext): Promise<Story> {
     const orgId = ctx?.organizationId || ctx?.principal?.organizationId || 'org_default';
-    return await this.storyService.getStory(id, orgId);
+    const story = await this.storyService.getStory(id, orgId);
+    if (!this.canReadDrafts(ctx) && story.status !== 'PUBLISHED') {
+      throw new NotFoundException(`Story with id "${id}" was not found.`);
+    }
+    const access = await this.paywallService.getAccess(this.paywallPrincipal(ctx, orgId), story);
+    return this.paywallService.redactIfLocked(story, access);
   }
 
   @Query('getStoryVersions')
@@ -95,6 +145,14 @@ export class StoriesResolver {
     @Context() ctx?: StoriesResolverContext
   ): Promise<StoryVersion[]> {
     const orgId = ctx?.organizationId || ctx?.principal?.organizationId || 'org_default';
+    const story = await this.storyService.getStory(storyId, orgId);
+    if (!this.canReadDrafts(ctx) && story.status !== 'PUBLISHED') {
+      throw new NotFoundException(`Story with id "${storyId}" was not found.`);
+    }
+    const access = await this.paywallService.getAccess(this.paywallPrincipal(ctx, orgId), story);
+    if (access.isLocked) {
+      throw new NotFoundException(`Story with id "${storyId}" was not found.`);
+    }
     return await this.storyService.getStoryVersions(storyId, orgId);
   }
 

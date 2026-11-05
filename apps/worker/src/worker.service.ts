@@ -17,10 +17,11 @@ import { db as defaultDatabase, type DatabaseService } from '@ai-news/database';
 import { AlertService, IngestionService, KnowledgeGraphService } from '@ai-news/stories';
 import {
   generateValidPng,
-  generateValidMp3,
   generateValidPdf,
+  generateValidWav,
   generateSemanticEmbedding,
 } from './generators';
+import { tokenizeForEmbedding } from '@ai-news/shared';
 
 export interface MediaProcessingResult {
   mediaId: string;
@@ -117,6 +118,25 @@ export class WorkerService {
           sizeBytes: number;
         }> = [];
 
+        // Fetch the real source image once and derive every variant from it.
+        // A generated solid-colour PNG is only a last-resort fallback for
+        // local development when the source is unreachable.
+        let sourceBuffer: Buffer | null = null;
+        try {
+          const response = await fetch(sourceUrl, {
+            redirect: 'manual',
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (response.ok) {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.startsWith('image/')) {
+              sourceBuffer = Buffer.from(await response.arrayBuffer());
+            }
+          }
+        } catch {
+          sourceBuffer = null;
+        }
+
         let step = 0;
         const totalSteps = formats.length * dimensions.length;
 
@@ -124,16 +144,39 @@ export class WorkerService {
           for (const dim of dimensions) {
             step++;
             const variantKey = `variants/${mediaId}/${dim.suffix}.${format}`;
-            const imageBuffer = generateValidPng(dim.width, dim.height, [37, 99, 235]);
-            const stored = await s3Storage.upload(
-              variantKey,
-              imageBuffer,
+            const mimeType =
               (format as string) === 'png'
                 ? 'image/png'
                 : format === 'webp'
                   ? 'image/webp'
-                  : 'image/jpeg'
-            );
+                  : format === 'avif'
+                    ? 'image/avif'
+                    : 'image/jpeg';
+
+            let imageBuffer: Buffer;
+            if (sourceBuffer) {
+              try {
+                const sharp = (await import('sharp')).default;
+                const pipeline = sharp(sourceBuffer).resize(dim.width, dim.height, {
+                  fit: 'cover',
+                  position: 'centre',
+                });
+                imageBuffer =
+                  format === 'webp'
+                    ? await pipeline.webp({ quality: 82 }).toBuffer()
+                    : format === 'avif'
+                      ? await pipeline.avif({ quality: 60 }).toBuffer()
+                      : (format as string) === 'png'
+                        ? await pipeline.png().toBuffer()
+                        : await pipeline.jpeg({ quality: 82 }).toBuffer();
+              } catch {
+                imageBuffer = generateValidPng(dim.width, dim.height, [37, 99, 235]);
+              }
+            } else {
+              imageBuffer = generateValidPng(dim.width, dim.height, [37, 99, 235]);
+            }
+
+            const stored = await s3Storage.upload(variantKey, imageBuffer, mimeType);
             variants.push({
               format,
               width: dim.width,
@@ -173,16 +216,28 @@ export class WorkerService {
         );
 
         updateProgress(30);
-        const tokens = `${title} ${summary} ${textContent}`
-          .toLowerCase()
-          .replace(/[^\w\s]/g, '')
-          .split(/\s+/)
-          .filter(Boolean);
+        const tokens = tokenizeForEmbedding(`${title} ${summary} ${textContent}`);
 
         updateProgress(70);
         const embedding = generateSemanticEmbedding(tokens, 1536);
+
+        const organizationId =
+          job.payload.organizationId ||
+          (await this.database.stories.findById(storyId))?.organizationId;
+        if (organizationId) {
+          await this.database.storyEmbeddings.upsert({
+            organizationId,
+            storyId,
+            versionNumber,
+            dimensions: embedding.length,
+            embedding,
+            tokens,
+            model: 'deterministic-projection-v1',
+          });
+        }
+
         logger.info(
-          `Generated ${embedding.length}-dimensional semantic vector for story [${storyId}] version ${versionNumber}`
+          `Persisted ${embedding.length}-dimensional semantic vector for story [${storyId}] version ${versionNumber}`
         );
 
         updateProgress(100);
@@ -197,24 +252,58 @@ export class WorkerService {
       }
     );
 
-    // 3. Audio Briefing Generation with ID3v2 & MPEG Audio Frames
+    // 3. Audio Briefing Generation (provider TTS or local WAV synthesis)
     this.queue.registerHandler<AudioBriefingPayload, AudioBriefingResult>(
       'audio.generate_briefing',
       async (job, updateProgress) => {
         const { storyId, voice, scriptText } = job.payload;
-        logger.info(
-          `Generating authentic audio briefing for story [${storyId}] with voice [${voice}]`
-        );
+        logger.info(`Generating audio briefing for story [${storyId}] with voice [${voice}]`);
 
         updateProgress(30);
         const estimatedSeconds = Math.max(10, Math.floor(scriptText.split(/\s+/).length / 2.5));
 
         updateProgress(60);
-        const audioBuffer = generateValidMp3(storyId, voice, estimatedSeconds);
+        let audioBuffer: Buffer | null = null;
+        let extension = 'wav';
+        let contentType = 'audio/wav';
+
+        const ttsUrl = process.env.TTS_WEBHOOK_URL;
+        if (ttsUrl) {
+          try {
+            const response = await fetch(ttsUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(process.env.TTS_WEBHOOK_TOKEN
+                  ? { Authorization: `Bearer ${process.env.TTS_WEBHOOK_TOKEN}` }
+                  : {}),
+              },
+              body: JSON.stringify({ text: scriptText, voice }),
+              signal: AbortSignal.timeout(30_000),
+            });
+            if (response.ok) {
+              audioBuffer = Buffer.from(await response.arrayBuffer());
+              extension = (response.headers.get('x-audio-extension') || 'mp3').replace(
+                /[^a-z0-9]/gi,
+                ''
+              );
+              contentType = response.headers.get('content-type') || 'audio/mpeg';
+            }
+          } catch {
+            audioBuffer = null;
+          }
+        }
+
+        if (!audioBuffer) {
+          // Real, playable PCM audio generated locally. A deployment that
+          // wants synthetic speech sets TTS_WEBHOOK_URL.
+          audioBuffer = generateValidWav(scriptText, voice, estimatedSeconds);
+        }
+
         const s3Audio = await s3Storage.upload(
-          `audio/${storyId}_briefing_${voice}.mp3`,
+          `audio/${storyId}_briefing_${voice}.${extension}`,
           audioBuffer,
-          'audio/mpeg'
+          contentType
         );
         const audioUrl = s3Audio.url;
 
@@ -224,7 +313,7 @@ export class WorkerService {
           voice,
           durationSeconds: estimatedSeconds,
           audioUrl,
-          bitrateKbps: 192,
+          bitrateKbps: extension === 'mp3' ? 192 : 705,
           generatedAt: new Date().toISOString(),
         };
       }
@@ -240,11 +329,13 @@ export class WorkerService {
         );
 
         updateProgress(50);
+        const story = await this.database.stories.findById(storyId);
         const pdfBuffer = generateValidPdf(
           storyId,
           versionNumber,
           layout,
-          `Archived dispatch for story ${storyId}`
+          job.payload.summary || story?.summary || '',
+          job.payload.title || story?.title || ''
         );
         const s3Pdf = await s3Storage.upload(
           `archive/${storyId}_v${versionNumber}_${layout}.pdf`,

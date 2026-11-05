@@ -1,17 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { listAuditLogs } from '@ai-news/api-client';
-import {
-  Bot,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
-  Clock,
-  Zap,
-  Terminal,
-  Search,
-} from 'lucide-react';
+import { listAuditLogs, listMcpTools } from '@ai-news/api-client';
+import { Bot, Sparkles, ShieldCheck, Clock, Zap, Terminal, Search } from 'lucide-react';
 
 interface McpTool {
   name: string;
@@ -21,89 +12,6 @@ interface McpTool {
   latencyMs: number;
   callCount: number;
 }
-
-const MCP_TOOLS_CATALOG: McpTool[] = [
-  {
-    name: 'news_create_story',
-    domain: 'Stories & Publishing',
-    description: 'Generates and drafts a verified news dispatch with structured multimedia blocks',
-    parameters: ['title', 'summary', 'articleType', 'blocks', 'clientName'],
-    latencyMs: 142,
-    callCount: 1248,
-  },
-  {
-    name: 'news_publish_story',
-    domain: 'Stories & Publishing',
-    description:
-      'Promotes an editorial or autonomous story to live PUBLISHED status with idempotency keys',
-    parameters: ['storyId', 'idempotencyKey'],
-    latencyMs: 98,
-    callCount: 890,
-  },
-  {
-    name: 'collab_acquire_lock',
-    domain: 'Editorial Collaboration',
-    description:
-      'Acquires exclusive distributed Redis/Memory lease lock preventing concurrent edit collisions',
-    parameters: ['storyId', 'userId', 'ttlSeconds'],
-    latencyMs: 24,
-    callCount: 420,
-  },
-  {
-    name: 'factcheck_verify',
-    domain: 'Integrity & Verification',
-    description:
-      'Cross-references story claims against sovereign primary registries and official dispatches',
-    parameters: ['storyId', 'claim', 'verdict', 'confidence'],
-    latencyMs: 310,
-    callCount: 654,
-  },
-  {
-    name: 'provenance_record',
-    domain: 'AI Governance & Provenance',
-    description:
-      'Cryptographically watermarks story dispatches with HMAC-SHA256 model provenance tags',
-    parameters: ['storyId', 'generatorModel', 'promptHash'],
-    latencyMs: 45,
-    callCount: 1120,
-  },
-  {
-    name: 'webhook_dispatch',
-    domain: 'Enterprise Webhooks',
-    description:
-      'Dispatches real outbound HTTP webhooks with HMAC-SHA256 signature and retry logic',
-    parameters: ['event', 'payload', 'organizationId'],
-    latencyMs: 115,
-    callCount: 312,
-  },
-  {
-    name: 'mcp_batch_publish',
-    domain: 'Batch Operations (F24)',
-    description:
-      'Batch processes and promotes multiple story drafts simultaneously with transaction safety',
-    parameters: ['storyIds', 'batchPriority'],
-    latencyMs: 240,
-    callCount: 84,
-  },
-  {
-    name: 'ai_generate_summary',
-    domain: 'AI Summaries (F25)',
-    description:
-      'Generates executive TL;DR bullet points and 1-sentence synopsis from rich story blocks',
-    parameters: ['storyId', 'maxWords', 'readingLevel'],
-    latencyMs: 180,
-    callCount: 780,
-  },
-  {
-    name: 'editorial_validate_quality_gates',
-    domain: 'Content Quality Gates (F26)',
-    description:
-      'Evaluates pre-publish quality: readability index, minimum word length, and citation thresholds',
-    parameters: ['storyId', 'strictMode'],
-    latencyMs: 65,
-    callCount: 540,
-  },
-];
 
 interface AgentLog {
   id: string;
@@ -133,7 +41,34 @@ export function McpDiscoveryTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('ALL');
   const [logs, setLogs] = useState<AgentLog[]>([]);
-  const [qualityTestResult, setQualityTestResult] = useState<string | null>(null);
+  const [tools, setTools] = useState<McpTool[]>([]);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [isLoadingTools, setIsLoadingTools] = useState(true);
+
+  const fetchTools = useCallback(async () => {
+    setIsLoadingTools(true);
+    try {
+      const liveTools = await listMcpTools();
+      setTools(
+        liveTools.map((tool) => ({
+          name: tool.name,
+          domain: 'MCP',
+          description: tool.description,
+          parameters: tool.parameters,
+          latencyMs: 0,
+          callCount: 0,
+        }))
+      );
+      setCatalogError(null);
+    } catch (err) {
+      setCatalogError(
+        err instanceof Error ? err.message : 'Unable to load the live MCP tool catalog.'
+      );
+      setTools([]);
+    } finally {
+      setIsLoadingTools(false);
+    }
+  }, []);
 
   const fetchAgentLogs = useCallback(async () => {
     try {
@@ -167,26 +102,24 @@ export function McpDiscoveryTab() {
 
   useEffect(() => {
     fetchAgentLogs();
+    void fetchTools();
     const interval = setInterval(fetchAgentLogs, 10000);
-    return () => clearInterval(interval);
-  }, [fetchAgentLogs]);
+    const catalogInterval = setInterval(() => void fetchTools(), 60_000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(catalogInterval);
+    };
+  }, [fetchAgentLogs, fetchTools]);
 
-  const domains = ['ALL', ...Array.from(new Set(MCP_TOOLS_CATALOG.map((t) => t.domain)))];
+  const domains = ['ALL', ...Array.from(new Set(tools.map((t) => t.domain)))];
 
-  const filteredTools = MCP_TOOLS_CATALOG.filter((tool) => {
+  const filteredTools = tools.filter((tool) => {
     const matchesDomain = selectedDomain === 'ALL' || tool.domain === selectedDomain;
     const matchesSearch =
       tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesDomain && matchesSearch;
   });
-
-  const runQualityGateTest = () => {
-    setQualityTestResult(
-      'Validating story against F26 Quality Gates: Readability Grade 9.2 (Pass) | Citations: 4 (Pass) | Length: 840 words (Pass) -> STATUS: APPROVED FOR PUBLICATION'
-    );
-    setTimeout(() => setQualityTestResult(null), 7000);
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in">
@@ -205,25 +138,30 @@ export function McpDiscoveryTab() {
                 </span>
               </h2>
               <p className="text-xs text-slate-300">
-                19 Tool Domains, Dual-Engine DB, Cryptographic Provenance, and Autonomous AI Agents
+                Live tool catalog, Dual-Engine DB, Cryptographic Provenance, and Autonomous AI
+                Agents
               </p>
             </div>
           </div>
 
           <button
-            onClick={runQualityGateTest}
+            onClick={() => void fetchTools()}
             className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-md shadow-blue-500/20 flex items-center gap-2 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            <span>Simulate F26 Quality Gate Check</span>
+            <span>{isLoadingTools ? 'Loading catalog…' : 'Refresh tool catalog'}</span>
           </button>
         </div>
 
-        {qualityTestResult && (
-          <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{qualityTestResult}</span>
+        {catalogError && (
+          <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-mono font-semibold flex items-center gap-2">
+            <span>{catalogError}</span>
           </div>
+        )}
+        {!catalogError && (
+          <p className="text-xs text-slate-300 font-mono">
+            Live catalog: {tools.length} tools registered on the remote MCP server.
+          </p>
         )}
       </div>
 

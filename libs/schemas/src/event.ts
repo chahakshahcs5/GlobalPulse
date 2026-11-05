@@ -24,7 +24,7 @@ export const EventSchema = z.object({
   storyIds: z.array(z.string()).default([]),
   sourceIds: z.array(z.string()).default([]),
   /** Additional structured measurements (magnitude, depth, wind speed, ...). */
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -41,7 +41,7 @@ export const CreateEventInputSchema = z.object({
   coordinates: z.tuple([z.number(), z.number()]).optional(),
   topicIds: z.array(z.string()).optional().default([]),
   entityIds: z.array(z.string()).optional().default([]),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   idempotencyKey: z.string().optional(),
 });
 export type CreateEventInput = z.input<typeof CreateEventInputSchema>;
@@ -89,7 +89,7 @@ export const EventMapPointSchema = z.object({
   storyCount: z.number().int().nonnegative().default(0),
   sourceCount: z.number().int().nonnegative().default(0),
   entityCount: z.number().int().nonnegative().default(0),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type EventMapPoint = z.infer<typeof EventMapPointSchema>;
 

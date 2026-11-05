@@ -15,6 +15,7 @@ const PUBLIC_CACHE_ROUTES = [
 const PRIVATE_ROUTES = [
   /^\/api\/stories\/review-queue(\?.*)?$/,
   /^\/api\/stories\/scheduled(\/.*)?$/,
+  /^\/api\/stories\/personalized(\?.*)?$/,
   /^\/api\/audit(\?.*)?$/,
   /^\/api\/users(\/.*)?$/,
   /^\/api\/auth(\/.*)?$/,

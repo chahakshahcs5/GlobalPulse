@@ -9,12 +9,28 @@ This document details the security posture, threat modeling, tenant isolation, r
 | Threat Category                        | Potential Attack Vector                                                 | Applied Mitigation                                                                                                                                                                                                                         |
 | :------------------------------------- | :---------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Prompt Injection**                   | Attacker injects malicious instruction inside news draft payload        | **Application Decoupling**: The server never feeds story body text into LLM prompts. Blocks are strictly stored, indexed, and sanitized as structured data.                                                                                |
-| **SSRF (Server-Side Request Forgery)** | Malicious source URL (e.g. `http://169.254.169.254/latest/meta-data`)   | **URL Validation Gate**: Primary source URLs must strictly use `http:` or `https:`. Private IPv4 ranges (RFC 1918), link-local (`169.254.0.0/16`), and loopback (`127.0.0.1`) are blocked.                                                 |
+| **SSRF (Server-Side Request Forgery)** | Malicious source URL (e.g. `http://169.254.169.254/latest/meta-data`)   | **URL Validation Gate**: Only `http:`/`https:` is accepted; private IPv4 ranges, link-local, loopback, and DNS answers that resolve to them are blocked. Redirects are re-validated hop by hop.                                            |
 | **Unauthenticated Ingestion**          | Spoofed dispatches submitted by untrusted actors                        | **OAuth 2.1 Mutual Auth**: Mandatory JWT verification with PKCE (S256). Every story version requires valid `client_id` attribution.                                                                                                        |
-| **Malicious File Uploads**             | Executable scripts disguised as media assets                            | **MIME Sniffing & Magic Bytes**: Files undergo strict magic-byte inspection. Executables are rejected; only WebP, AVIF, PNG, JPEG, and MP4 are permitted.                                                                                  |
-| **Denial of Service (DoS)**            | Automated bots spamming `create_story` or search                        | **Token Bucket Rate Limiting**: 100 requests/minute per client ID, with burst allowance up to 150.                                                                                                                                         |
-| **Tenant Data Bleed**                  | Organization A inspecting unpublished drafts of Organization B          | **Multi-Tenancy Scoping**: Every database query filters by `organizationId`. Cross-tenant retrieval throws `NotFoundError`.                                                                                                                |
+| **Malicious File Uploads**             | Executable scripts disguised as media assets                            | **Magic-byte inspection**: Inline uploads are sniffed before storage; the declared MIME type must match the file signature (PNG, JPEG, WebP, GIF, AVIF, MP4, MP3, WAV, PDF). Mismatches are rejected with `400`.                           |
+| **Paywall Bypass**                     | Clearing storage or calling the API directly to read premium stories    | **Server-side entitlement**: `User.isSubscriber` and monthly reads live in the database. Locked story blocks are removed from API responses, and only a signed billing webhook can change entitlement.                                     |
+| **Denial of Service (DoS)**            | Automated bots spamming `create_story` or search                        | **Token Bucket Rate Limiting**: 100 requests/minute per authenticated principal, or per connection IP when unauthenticated. The raw Authorization header is never used as a bucket key.                                                    |
+| **Tenant Data Bleed**                  | Organization A inspecting unpublished drafts of Organization B          | **Multi-Tenancy Scoping**: Tenant-scoped repository calls require an `organizationId`; public feeds are pinned to `DEFAULT_ORG_ID`. Cross-tenant retrieval throws `NotFoundError`.                                                         |
 | **Session Theft**                      | Script on the page reading the session out of a cookie or a storage key | **`HttpOnly` Session Cookie**: The session is carried by the API's `gp_token` cookie, which script cannot read. The token the client keeps in `sessionStorage` is per-tab and per-origin, and it is never written to a cookie from script. |
+
+### Entitlement and authorization codes
+
+- **Paywall**: `GET /api/paywall/access/:storyId` returns the server's decision;
+  `POST /api/paywall/read/:storyId` meters a free read. Story list and detail
+  responses redact blocks when the reader is not entitled. `User.isSubscriber`
+  is changed only by the signed `POST /api/billing/webhook` event or by an
+  administrator with `news:admin`.
+- **OAuth codes**: authorization codes are single-use and short-lived. When
+  `REDIS_URL` is configured they live in Redis (`PX` TTL, atomic `GETDEL`), so
+  a code issued by one API replica can be exchanged by another. If Redis is
+  unreachable the store falls back to process memory instead of failing the
+  token endpoint; the memory store is only safe for a single replica.
+- **Collections**: `StoryCollection` carries `organizationId`; list, slug,
+  curator and mutation lookups all require the caller's organization.
 
 ---
 
@@ -55,7 +71,7 @@ and it is cleared when the tab closes.
 Because **"The Application is NOT the AI"**, GlobalPulse has structural immunity against classic prompt injection vulnerabilities:
 
 - The backend does **not** take user comments or incoming web wires and feed them into internal LLM completion prompts.
-- Text content is treated as untrusted data strings, sanitized with DOMPurify when rendering HTML excerpts, and compiled into typed React components.
+- Text content is treated as untrusted data strings, escaped at render time, and compiled into typed React components. Code-bearing blocks run in an opaque-origin sandboxed iframe.
 
 ---
 

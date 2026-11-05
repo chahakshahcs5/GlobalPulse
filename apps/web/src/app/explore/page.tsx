@@ -16,7 +16,12 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useTaxonomy } from '../../lib/news-store';
-import { listPublishers } from '@ai-news/api-client';
+import {
+  listPublishers,
+  updatePreferences,
+  followTarget,
+  unfollowTarget,
+} from '@ai-news/api-client';
 import type { Publisher } from '@ai-news/schemas';
 import { DynamicIcon } from '../../components/DynamicIcon';
 
@@ -86,6 +91,8 @@ export default function ExploreHubPage() {
         localStorage.setItem('globalpulse_followed_categories', JSON.stringify(updated));
         window.dispatchEvent(new Event('globalpulse_categories_updated'));
       } catch {}
+      // Mirror the preference to the server so personalization can use it.
+      void updatePreferences({ categories: updated }).catch(() => {});
       showToast(exists ? `Unfollowed category: ${name}` : `Following category: ${name}`);
       return updated;
     });
@@ -93,6 +100,7 @@ export default function ExploreHubPage() {
 
   // Toggle Topic Follow
   const toggleFollowTopic = (name: string) => {
+    const topic = topics.find((t) => t.name === name);
     setFollowedTopics((prev) => {
       const exists = prev.includes(name);
       const updated = exists ? prev.filter((t) => t !== name) : [...prev, name];
@@ -100,6 +108,11 @@ export default function ExploreHubPage() {
         localStorage.setItem('globalpulse_following', JSON.stringify(updated));
         window.dispatchEvent(new Event('globalpulse_following_updated'));
       } catch {}
+      if (topic) {
+        void (exists ? unfollowTarget('topic', topic.id) : followTarget('topic', topic.id)).catch(
+          () => {}
+        );
+      }
       showToast(exists ? `Unfollowed topic: ${name}` : `Following topic: ${name}`);
       return updated;
     });

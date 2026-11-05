@@ -167,7 +167,7 @@ export async function seedDatabase(db: DatabaseService): Promise<void> {
     try {
       const existing = await db.collections.findById(col.id);
       if (!existing) {
-        await db.collections.create(col);
+        await db.collections.create({ organizationId: 'org_default', ...col });
       }
     } catch (err) {
       logger.debug(`Collection seeding notice for ${col.id}: ${String(err)}`);

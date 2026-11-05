@@ -72,7 +72,7 @@ export const IngestionItemSchema = z.object({
   status: IngestionItemStatusSchema.default('NEW'),
   signals: IngestionSignalsSchema,
   claimTexts: z.array(z.string()).default([]),
-  raw: z.record(z.unknown()).optional(),
+  raw: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

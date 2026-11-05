@@ -27,6 +27,8 @@ export interface SearchIndexingPayload {
   textContent: string;
   topicIds?: string[];
   entityIds?: string[];
+  /** Optional: the worker resolves the story's organization when omitted. */
+  organizationId?: string;
 }
 
 export interface AudioBriefingPayload {
@@ -41,6 +43,8 @@ export interface PdfExportPayload {
   versionNumber: number;
   layout: 'a4' | 'letter';
   includeVisuals: boolean;
+  title?: string;
+  summary?: string;
 }
 
 export interface IngestionFetchPayload {

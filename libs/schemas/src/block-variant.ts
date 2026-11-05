@@ -33,7 +33,7 @@ export const BlockVariantInputSchema = z.object({
   blockType: z.string().min(1),
   label: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   shared: z.boolean().default(true),
 });
 export type BlockVariantInput = z.infer<typeof BlockVariantInputSchema>;
@@ -41,7 +41,7 @@ export type BlockVariantInput = z.infer<typeof BlockVariantInputSchema>;
 export const BlockVariantUpdateSchema = z.object({
   label: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
   shared: z.boolean().optional(),
 });
 export type BlockVariantUpdate = z.infer<typeof BlockVariantUpdateSchema>;

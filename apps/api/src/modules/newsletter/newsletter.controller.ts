@@ -3,10 +3,12 @@ import {
   Get,
   Post,
   Body,
+  Param,
   Query,
   UseGuards,
   HttpStatus,
   HttpCode,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { NewsletterService } from '@ai-news/stories';
 import { db } from '@ai-news/database';
@@ -66,6 +68,23 @@ export class NewsletterController {
       input.targetDate,
       orgId
     );
+  }
+
+  @Post('dispatch/:id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(NestAuthGuard)
+  @Roles('admin', 'editor')
+  @RequireScope('news:publish')
+  async dispatchDigest(@Param('id') id: string) {
+    try {
+      return await this.newsletterService.dispatchDigest(id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('not configured')) {
+        throw new ServiceUnavailableException(message);
+      }
+      throw err;
+    }
   }
 
   @Get('latest')

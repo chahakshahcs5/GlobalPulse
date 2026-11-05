@@ -95,6 +95,7 @@ describe('Story summaries', () => {
     it('a collection carries summaries, not full stories', () => {
       const parsed = StoryCollectionWithStoriesSchema.parse({
         id: 'col_1',
+        organizationId: 'org_default',
         name: 'Reading list',
         slug: 'reading-list',
         curatorId: 'usr_1',

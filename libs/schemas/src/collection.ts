@@ -3,6 +3,7 @@ import { StorySummarySchema } from './story';
 
 export const StoryCollectionSchema = z.object({
   id: z.string(),
+  organizationId: z.string(),
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().optional(),

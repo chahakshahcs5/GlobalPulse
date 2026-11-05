@@ -21,6 +21,7 @@ interface PrismaUserRow {
   bio?: string | null;
   avatarUrl?: string | null;
   preferences?: UserPreferences;
+  isSubscriber?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -100,6 +101,7 @@ export class PrismaUserRepository implements IUserRepository {
       status: (row.status as UserStatus) || 'active',
       passwordHash: row.passwordHash || undefined,
       preferences: row.preferences || undefined,
+      isSubscriber: row.isSubscriber ?? false,
       bio: row.bio || undefined,
       avatarUrl: row.avatarUrl || undefined,
       createdAt:
@@ -144,6 +146,7 @@ export class PrismaUserRepository implements IUserRepository {
         status: user.status,
         passwordHash: user.passwordHash,
         preferences: user.preferences,
+        isSubscriber: user.isSubscriber ?? false,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
         createdAt: new Date(user.createdAt),
@@ -164,6 +167,7 @@ export class PrismaUserRepository implements IUserRepository {
         status: user.status,
         passwordHash: user.passwordHash,
         preferences: user.preferences,
+        isSubscriber: user.isSubscriber ?? false,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
         updatedAt: new Date(user.updatedAt),

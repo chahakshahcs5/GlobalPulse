@@ -14,9 +14,13 @@ describe('RealtimeChannelGuard — SSE channel authorization', () => {
   const guard = new RealtimeChannelGuard();
 
   function makeContext(query: Record<string, string | undefined> = {}, cookie?: string): never {
+    const { token, ...rest } = query;
     const req = {
-      query,
-      headers: { cookie },
+      query: rest,
+      headers: {
+        cookie,
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
     };
     return {
       switchToHttp: () => ({ getRequest: () => req }),
@@ -113,13 +117,24 @@ describe('RealtimeChannelGuard — SSE channel authorization', () => {
     ).toBe(true);
   });
 
-  it('resolves principals from the ?token= query parameter using dev tokens', () => {
+  it('resolves principals from an Authorization bearer token', () => {
     expect(guard.canActivate(makeContext({ channels: 'editorial', token: 'dev-admin' }))).toBe(
       true
     );
     expect(() =>
       guard.canActivate(makeContext({ channels: 'editorial', token: 'dev-reader' }))
     ).toThrowError(/Insufficient privileges/);
+  });
+
+  it('ignores a ?token= query parameter (tokens must travel in headers or the session cookie)', () => {
+    const req = {
+      query: { channels: 'editorial', token: 'dev-admin' },
+      headers: {},
+    };
+    const ctx = {
+      switchToHttp: () => ({ getRequest: () => req }),
+    } as never;
+    expect(() => guard.canActivate(ctx)).toThrowError(/Authentication required/);
   });
 
   it('resolves principals from a gp_token cookie', () => {

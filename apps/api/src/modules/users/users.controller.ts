@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { db } from '@ai-news/database';
 import { UserService, type StoryContext } from '@ai-news/stories';
@@ -29,13 +30,13 @@ export class UsersController {
 
   @Get()
   async listUsers(@Principal() principal: AuthenticatedPrincipal) {
-    AuthService.requireScope(principal, 'news:read');
+    AuthService.requireScope(principal, 'news:write');
     return this.userService.listUsers(principal.organizationId);
   }
 
   @Get(':id')
   async getUser(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
-    AuthService.requireScope(principal, 'news:read');
+    AuthService.requireScope(principal, 'news:write');
     return this.userService.getUser(id, principal.organizationId);
   }
 
@@ -45,6 +46,10 @@ export class UsersController {
     AuthService.requireRole(principal, 'admin', 'editor');
 
     const validated = InviteUserInputSchema.parse(body);
+    // Only an administrator may mint another administrator.
+    if (validated.role === 'admin') {
+      AuthService.requireScope(principal, 'news:admin');
+    }
     const ctx: StoryContext = {
       organizationId: principal.organizationId,
       authorId: principal.id,
@@ -108,6 +113,20 @@ export class UsersController {
   ) {
     AuthService.requireScope(principal, 'news:read');
     return this.userService.listFollowing(principal.id, targetType);
+  }
+
+  @Post(':id/subscription')
+  async setSubscription(
+    @Param('id') id: string,
+    @Body() body: { isSubscriber?: boolean },
+    @Principal() principal: AuthenticatedPrincipal
+  ) {
+    AuthService.requireScope(principal, 'news:admin');
+    const user = await db.users.findById(id, principal.organizationId);
+    if (!user) {
+      throw new NotFoundException(`User with id "${id}" was not found.`);
+    }
+    return db.users.update({ ...user, isSubscriber: Boolean(body?.isSubscriber) });
   }
 
   /**

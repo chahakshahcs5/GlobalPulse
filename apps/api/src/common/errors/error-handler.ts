@@ -68,7 +68,7 @@ export function globalErrorHandler(
       code: 'VALIDATION_ERROR',
       detail: 'The payload failed input validation requirements.',
       instance,
-      errors: error.errors.map((e) => ({
+      errors: error.issues.map((e) => ({
         path: e.path.join('.'),
         message: e.message,
         code: e.code,

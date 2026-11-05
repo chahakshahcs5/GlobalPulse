@@ -28,7 +28,9 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       expect(meta.issuer).toBeDefined();
       expect(meta.authorization_endpoint).toContain('/oauth/authorize');
       expect(meta.token_endpoint).toContain('/oauth/token');
-      expect(meta.jwks_uri).toContain('/oauth/jwks');
+      // HS256 tokens cannot be verified from a public JWKS without exposing
+      // the signing secret, so the metadata intentionally omits jwks_uri.
+      expect(meta.jwks_uri).toBeUndefined();
       expect(meta.grant_types_supported).toContain('authorization_code');
       expect(meta.grant_types_supported).toContain('client_credentials');
       expect(meta.code_challenge_methods_supported).toContain('S256');
@@ -61,7 +63,7 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       expect(meta.token_endpoint).toBeDefined();
     });
 
-    it('serves /oauth/jwks public keys', async () => {
+    it('serves /oauth/jwks as an empty key set for HS256 tokens', async () => {
       const res = await app.inject({
         method: 'GET',
         url: '/oauth/jwks',
@@ -70,7 +72,8 @@ describe('OAuth 2.1 & RFC 8414 Authorization Server Integration Tests', () => {
       expect(res.statusCode).toBe(200);
       const jwks = JSON.parse(res.body);
       expect(jwks.keys).toBeInstanceOf(Array);
-      expect(jwks.keys.length).toBeGreaterThan(0);
+      // Symmetric keys must not be published.
+      expect(jwks.keys.length).toBe(0);
     });
   });
 

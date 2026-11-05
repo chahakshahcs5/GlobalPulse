@@ -4,6 +4,7 @@ import { MemoryCollectionRepository } from '../memory/collection.memory';
 
 interface PrismaCollectionRow {
   id: string;
+  organizationId: string;
   name: string;
   slug: string;
   description?: string | null;
@@ -61,6 +62,7 @@ export class PrismaCollectionRepository implements ICollectionRepository {
       const row = await this.collectionClient.create({
         data: {
           id,
+          organizationId: data.organizationId,
           name: data.name,
           slug: data.slug,
           description: data.description,
@@ -73,140 +75,82 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         },
       });
 
-      return {
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description || undefined,
-        curatorId: row.curatorId,
-        curatorName: row.curatorName || undefined,
-        isPublic: row.isPublic,
-        storyIds: row.storyIds as string[],
-        createdAt:
-          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt:
-          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-      };
+      return this.mapCollectionRow(row);
     } catch {
       return this.fallbackMemory.create(data);
     }
   }
 
-  async findById(id: string): Promise<StoryCollection | null> {
+  async findById(id: string, orgId?: string): Promise<StoryCollection | null> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.findById(id);
+      return this.fallbackMemory.findById(id, orgId);
     }
     try {
-      const row = await this.collectionClient.findUnique({ where: { id } });
+      const where: Record<string, unknown> = { id };
+      if (orgId) where.organizationId = orgId;
+      const row = await this.collectionClient.findFirst({ where });
       if (!row) return null;
-      return {
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description || undefined,
-        curatorId: row.curatorId,
-        curatorName: row.curatorName || undefined,
-        isPublic: row.isPublic,
-        storyIds: row.storyIds as string[],
-        createdAt:
-          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt:
-          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-      };
+      return this.mapCollectionRow(row);
     } catch {
-      return this.fallbackMemory.findById(id);
+      return this.fallbackMemory.findById(id, orgId);
     }
   }
 
-  async findBySlug(slug: string): Promise<StoryCollection | null> {
+  async findBySlug(slug: string, orgId: string): Promise<StoryCollection | null> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.findBySlug(slug);
+      return this.fallbackMemory.findBySlug(slug, orgId);
     }
     try {
-      const row = await this.collectionClient.findFirst({ where: { slug } });
+      const row = await this.collectionClient.findFirst({ where: { slug, organizationId: orgId } });
       if (!row) return null;
-      return {
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description || undefined,
-        curatorId: row.curatorId,
-        curatorName: row.curatorName || undefined,
-        isPublic: row.isPublic,
-        storyIds: row.storyIds as string[],
-        createdAt:
-          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt:
-          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-      };
+      return this.mapCollectionRow(row);
     } catch {
-      return this.fallbackMemory.findBySlug(slug);
+      return this.fallbackMemory.findBySlug(slug, orgId);
     }
   }
 
-  async listPublic(limit: number = 20, offset: number = 0): Promise<StoryCollection[]> {
+  async listPublic(
+    orgId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<StoryCollection[]> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.listPublic(limit, offset);
+      return this.fallbackMemory.listPublic(orgId, limit, offset);
     }
     try {
       const rows = await this.collectionClient.findMany({
-        where: { isPublic: true },
+        where: { isPublic: true, organizationId: orgId },
         orderBy: { updatedAt: 'desc' },
         skip: offset,
         take: limit,
       });
 
-      return rows.map((row: PrismaCollectionRow) => ({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description || undefined,
-        curatorId: row.curatorId,
-        curatorName: row.curatorName || undefined,
-        isPublic: row.isPublic,
-        storyIds: row.storyIds as string[],
-        createdAt:
-          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt:
-          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-      }));
+      return rows.map((row) => this.mapCollectionRow(row));
     } catch {
-      return this.fallbackMemory.listPublic(limit, offset);
+      return this.fallbackMemory.listPublic(orgId, limit, offset);
     }
   }
 
-  async listByUser(userId: string): Promise<StoryCollection[]> {
+  async listByUser(userId: string, orgId: string): Promise<StoryCollection[]> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.listByUser(userId);
+      return this.fallbackMemory.listByUser(userId, orgId);
     }
     try {
       const rows = await this.collectionClient.findMany({
-        where: { curatorId: userId },
+        where: { curatorId: userId, organizationId: orgId },
         orderBy: { updatedAt: 'desc' },
       });
 
-      return rows.map((row: PrismaCollectionRow) => ({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description || undefined,
-        curatorId: row.curatorId,
-        curatorName: row.curatorName || undefined,
-        isPublic: row.isPublic,
-        storyIds: row.storyIds as string[],
-        createdAt:
-          row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-        updatedAt:
-          row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-      }));
+      return rows.map((row) => this.mapCollectionRow(row));
     } catch {
-      return this.fallbackMemory.listByUser(userId);
+      return this.fallbackMemory.listByUser(userId, orgId);
     }
   }
 
   private mapCollectionRow(row: PrismaCollectionRow): StoryCollection {
     return {
       id: row.id,
+      organizationId: row.organizationId,
       name: row.name,
       slug: row.slug,
       description: row.description || undefined,
@@ -221,12 +165,16 @@ export class PrismaCollectionRepository implements ICollectionRepository {
     };
   }
 
-  async addStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
+  async addStory(
+    collectionId: string,
+    storyId: string,
+    orgId: string
+  ): Promise<StoryCollection | null> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.addStory(collectionId, storyId);
+      return this.fallbackMemory.addStory(collectionId, storyId, orgId);
     }
     try {
-      const col = await this.findById(collectionId);
+      const col = await this.findById(collectionId, orgId);
       if (!col) return null;
       try {
         const row = await this.collectionClient.update({
@@ -240,9 +188,9 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         });
         return this.mapCollectionRow(row);
       } catch {
-        // Some Prisma versions reject scalar-list push in this position —
-        // fall back to the read-modify-write path.
-        const fresh = await this.findById(collectionId);
+        // Some Prisma versions reject scalar-list push in this position — fall
+        // back to the read-modify-write path.
+        const fresh = await this.findById(collectionId, orgId);
         if (!fresh) return null;
         if (!fresh.storyIds.includes(storyId)) {
           fresh.storyIds.push(storyId);
@@ -258,16 +206,20 @@ export class PrismaCollectionRepository implements ICollectionRepository {
         return fresh;
       }
     } catch {
-      return this.fallbackMemory.addStory(collectionId, storyId);
+      return this.fallbackMemory.addStory(collectionId, storyId, orgId);
     }
   }
 
-  async removeStory(collectionId: string, storyId: string): Promise<StoryCollection | null> {
+  async removeStory(
+    collectionId: string,
+    storyId: string,
+    orgId: string
+  ): Promise<StoryCollection | null> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.removeStory(collectionId, storyId);
+      return this.fallbackMemory.removeStory(collectionId, storyId, orgId);
     }
     try {
-      const col = await this.findById(collectionId);
+      const col = await this.findById(collectionId, orgId);
       if (!col) return null;
       if (!col.storyIds.includes(storyId)) {
         // Nothing to remove — don't churn updatedAt on no-op calls.
@@ -285,19 +237,21 @@ export class PrismaCollectionRepository implements ICollectionRepository {
       col.updatedAt = new Date().toISOString();
       return col;
     } catch {
-      return this.fallbackMemory.removeStory(collectionId, storyId);
+      return this.fallbackMemory.removeStory(collectionId, storyId, orgId);
     }
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, orgId: string): Promise<boolean> {
     if (!this.collectionClient) {
-      return this.fallbackMemory.delete(id);
+      return this.fallbackMemory.delete(id, orgId);
     }
     try {
+      const existing = await this.findById(id, orgId);
+      if (!existing) return false;
       await this.collectionClient.delete({ where: { id } });
       return true;
     } catch {
-      return this.fallbackMemory.delete(id);
+      return this.fallbackMemory.delete(id, orgId);
     }
   }
 }

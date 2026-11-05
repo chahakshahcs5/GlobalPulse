@@ -542,7 +542,10 @@ export function registerIntelligenceTools(
       toType: graphNodeType.describe('Target node type'),
       toId: z.string().min(1).describe('Target node ID'),
       weight: z.number().min(0).max(1).optional().describe('Confidence/weight 0-1'),
-      metadata: z.record(z.unknown()).optional().describe('Additional structured metadata'),
+      metadata: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe('Additional structured metadata'),
     },
     async (input) => {
       try {

@@ -44,7 +44,7 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
       code = 'VALIDATION_ERROR';
       title = 'Validation Failed';
       detail = 'The request payload failed schema validation.';
-      invalidParams = exception.errors.map((e) => ({
+      invalidParams = exception.issues.map((e) => ({
         field: e.path.join('.'),
         message: e.message,
         code: e.code,

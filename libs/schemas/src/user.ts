@@ -44,8 +44,8 @@ export const ReaderConsumptionProfileSchema = z.object({
   userId: z.string(),
   totalReadingMinutes: z.number().nonnegative(),
   storiesReadCount: z.number().int().nonnegative(),
-  categoryDistribution: z.record(z.number()),
-  topicDistribution: z.record(z.number()),
+  categoryDistribution: z.record(z.string(), z.number()),
+  topicDistribution: z.record(z.string(), z.number()),
   diversityScore: z.number().min(0).max(100),
   depthHabit: DepthPreferenceSchema,
 });
@@ -72,6 +72,7 @@ export const NewsroomUserSchema = z.object({
   clientType: ClientTypeSchema,
   status: UserStatusSchema,
   passwordHash: z.string().optional(),
+  isSubscriber: z.boolean().optional(),
   preferences: UserPreferencesSchema.optional(),
   avatarUrl: z.string().url().optional(),
   bio: z.string().optional(),

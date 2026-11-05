@@ -27,6 +27,7 @@ export class CollectionService {
    */
   async createCollection(
     curatorId: string,
+    organizationId: string,
     input: CreateCollectionInput,
     curatorName?: string
   ): Promise<StoryCollection> {
@@ -40,7 +41,7 @@ export class CollectionService {
     let resolvedName = curatorName;
     if (!resolvedName || resolvedName === curatorId) {
       try {
-        const user = await this.db.users.findById(curatorId);
+        const user = await this.db.users.findById(curatorId, organizationId);
         resolvedName = user?.name || curatorId;
       } catch {
         resolvedName = resolvedName || curatorId;
@@ -48,6 +49,7 @@ export class CollectionService {
     }
 
     return this.db.collections.create({
+      organizationId,
       name: input.name,
       slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
       description: input.description,
@@ -66,9 +68,9 @@ export class CollectionService {
    */
   async getCollectionWithStories(
     id: string,
-    orgId: string = 'org_default'
+    orgId: string
   ): Promise<StoryCollectionWithStories | null> {
-    const collection = await this.db.collections.findById(id);
+    const collection = await this.db.collections.findById(id, orgId);
     if (!collection) return null;
 
     const stories: StorySummary[] = [];
@@ -88,9 +90,9 @@ export class CollectionService {
    */
   async getCollectionBySlug(
     slug: string,
-    orgId: string = 'org_default'
+    orgId: string
   ): Promise<StoryCollectionWithStories | null> {
-    const collection = await this.db.collections.findBySlug(slug);
+    const collection = await this.db.collections.findBySlug(slug, orgId);
     if (!collection) return null;
 
     const stories: StorySummary[] = [];
@@ -108,29 +110,33 @@ export class CollectionService {
   /**
    * List public collections for discovery.
    */
-  async listPublicCollections(limit: number = 20, offset: number = 0): Promise<StoryCollection[]> {
-    return this.db.collections.listPublic(limit, offset);
+  async listPublicCollections(
+    orgId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<StoryCollection[]> {
+    return this.db.collections.listPublic(orgId, limit, offset);
   }
 
   /**
    * Get a bare collection (no story population) — used for permission checks.
    */
-  async getCollection(id: string): Promise<StoryCollection | null> {
-    return this.db.collections.findById(id);
+  async getCollection(id: string, orgId: string): Promise<StoryCollection | null> {
+    return this.db.collections.findById(id, orgId);
   }
 
   /**
    * List collections created by a specific user or editor.
    */
-  async listUserCollections(userId: string): Promise<StoryCollection[]> {
-    return this.db.collections.listByUser(userId);
+  async listUserCollections(userId: string, orgId: string): Promise<StoryCollection[]> {
+    return this.db.collections.listByUser(userId, orgId);
   }
 
   /**
    * Add a story to an existing collection.
    */
-  async addStory(collectionId: string, storyId: string): Promise<StoryCollection> {
-    const updated = await this.db.collections.addStory(collectionId, storyId);
+  async addStory(collectionId: string, storyId: string, orgId: string): Promise<StoryCollection> {
+    const updated = await this.db.collections.addStory(collectionId, storyId, orgId);
     if (!updated) {
       throw new Error(`Collection with id ${collectionId} was not found`);
     }
@@ -140,8 +146,12 @@ export class CollectionService {
   /**
    * Remove a story from a collection.
    */
-  async removeStory(collectionId: string, storyId: string): Promise<StoryCollection> {
-    const updated = await this.db.collections.removeStory(collectionId, storyId);
+  async removeStory(
+    collectionId: string,
+    storyId: string,
+    orgId: string
+  ): Promise<StoryCollection> {
+    const updated = await this.db.collections.removeStory(collectionId, storyId, orgId);
     if (!updated) {
       throw new Error(`Collection with id ${collectionId} was not found`);
     }
@@ -151,7 +161,7 @@ export class CollectionService {
   /**
    * Delete a collection.
    */
-  async deleteCollection(id: string): Promise<boolean> {
-    return this.db.collections.delete(id);
+  async deleteCollection(id: string, orgId: string): Promise<boolean> {
+    return this.db.collections.delete(id, orgId);
   }
 }

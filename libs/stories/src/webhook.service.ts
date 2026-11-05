@@ -8,6 +8,7 @@ import type {
 import { ValidationError } from '@ai-news/shared';
 import { randomUUID, randomBytes, createHmac } from 'crypto';
 import { isIP } from 'net';
+import { lookup } from 'node:dns/promises';
 
 export type WebhookHttpClient = (
   url: string,
@@ -71,6 +72,39 @@ export function validateWebhookUrl(rawUrl: string): { valid: boolean; reason?: s
   }
 }
 
+/**
+ * DNS-aware SSRF validation.
+ *
+ * The literal-host check above cannot stop a public hostname that resolves to
+ * `127.0.0.1` or a cloud metadata address. Resolve the hostname and reject any
+ * private/link-local answer before the request is made.
+ */
+export async function validateWebhookUrlResolved(
+  rawUrl: string
+): Promise<{ valid: boolean; reason?: string }> {
+  const basic = validateWebhookUrl(rawUrl);
+  if (!basic.valid) return basic;
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (isIP(parsed.hostname)) return basic;
+
+    const addresses = await lookup(parsed.hostname, { all: true });
+    if (addresses.length === 0) {
+      return { valid: false, reason: 'Disallowed destination: hostname did not resolve.' };
+    }
+    if (addresses.some((entry) => isPrivateOrLoopbackIp(entry.address))) {
+      return {
+        valid: false,
+        reason: 'Disallowed destination: hostname resolves to a private or loopback address.',
+      };
+    }
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: 'Disallowed destination: DNS lookup failed.' };
+  }
+}
+
 async function defaultWebhookHttpClient(
   url: string,
   options: {
@@ -80,11 +114,6 @@ async function defaultWebhookHttpClient(
     signal?: AbortSignal;
   }
 ): Promise<{ status: number; ok: boolean }> {
-  const urlCheck = validateWebhookUrl(url);
-  if (!urlCheck.valid) {
-    throw new ValidationError(urlCheck.reason || 'Invalid webhook destination URL.');
-  }
-
   // Gracefully simulate success for dummy example domains strictly in test environment
   if (
     process.env.NODE_ENV === 'test' &&
@@ -93,12 +122,20 @@ async function defaultWebhookHttpClient(
     return { status: 200, ok: true };
   }
 
+  const urlCheck = await validateWebhookUrlResolved(url);
+  if (!urlCheck.valid) {
+    throw new ValidationError(urlCheck.reason || 'Invalid webhook destination URL.');
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
   try {
     const res = await fetch(url, {
       ...options,
       signal: controller.signal,
+      // A redirect can point at an internal address after validation; refuse
+      // to follow it rather than re-validating every hop in the webhook path.
+      redirect: 'manual',
     });
     return { status: res.status, ok: res.ok };
   } finally {

@@ -35,7 +35,12 @@ export class CollectionsController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection> {
     const input = CreateCollectionInputSchema.parse(body);
-    return await this.collectionService.createCollection(principal.id, input, principal.id);
+    return await this.collectionService.createCollection(
+      principal.id,
+      principal.organizationId,
+      input,
+      principal.email || principal.id
+    );
   }
 
   @Get()
@@ -45,7 +50,11 @@ export class CollectionsController {
   ): Promise<StoryCollection[]> {
     const parsedLimit = limit ? Math.min(parseInt(limit, 10), 100) : 20;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
-    return await this.collectionService.listPublicCollections(parsedLimit, parsedOffset);
+    return await this.collectionService.listPublicCollections(
+      process.env.DEFAULT_ORG_ID || 'org_default',
+      parsedLimit,
+      parsedOffset
+    );
   }
 
   @Get('user/me')
@@ -53,12 +62,15 @@ export class CollectionsController {
   async listMyCollections(
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection[]> {
-    return await this.collectionService.listUserCollections(principal.id);
+    return await this.collectionService.listUserCollections(principal.id, principal.organizationId);
   }
 
   @Get(':id')
   async getCollection(@Param('id') id: string): Promise<StoryCollectionWithStories> {
-    const collection = await this.collectionService.getCollectionWithStories(id);
+    const collection = await this.collectionService.getCollectionWithStories(
+      id,
+      process.env.DEFAULT_ORG_ID || 'org_default'
+    );
     if (!collection) {
       throw new NotFoundException(`Collection with id "${id}" was not found.`);
     }
@@ -69,7 +81,10 @@ export class CollectionsController {
     collectionId: string,
     principal: AuthenticatedPrincipal
   ): Promise<void> {
-    const collection = await this.collectionService.getCollection(collectionId);
+    const collection = await this.collectionService.getCollection(
+      collectionId,
+      principal.organizationId
+    );
     if (!collection) {
       throw new NotFoundException(`Collection with id "${collectionId}" was not found.`);
     }
@@ -90,7 +105,11 @@ export class CollectionsController {
   ): Promise<StoryCollection> {
     const input = AddStoryToCollectionInputSchema.parse(body);
     await this.assertCurator(collectionId, principal);
-    return await this.collectionService.addStory(collectionId, input.storyId);
+    return await this.collectionService.addStory(
+      collectionId,
+      input.storyId,
+      principal.organizationId
+    );
   }
 
   @Delete(':id/stories/:storyId')
@@ -102,7 +121,11 @@ export class CollectionsController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<StoryCollection> {
     await this.assertCurator(collectionId, principal);
-    return await this.collectionService.removeStory(collectionId, storyId);
+    return await this.collectionService.removeStory(
+      collectionId,
+      storyId,
+      principal.organizationId
+    );
   }
 
   @Delete(':id')
@@ -113,7 +136,7 @@ export class CollectionsController {
     @Principal() principal: AuthenticatedPrincipal
   ): Promise<{ success: boolean }> {
     await this.assertCurator(id, principal);
-    const success = await this.collectionService.deleteCollection(id);
+    const success = await this.collectionService.deleteCollection(id, principal.organizationId);
     return { success };
   }
 }

@@ -7,6 +7,7 @@ import type {
   StoryVersion,
   CreateStoryInput,
   UpdateStoryInput,
+  LiveblogEntry,
 } from '@ai-news/schemas';
 import { request } from './core';
 
@@ -215,6 +216,67 @@ export async function sweepScheduledStories(): Promise<{
       method: 'POST',
     }
   );
+}
+
+// ---------------------------------------------------------------------------
+// Live coverage (liveblog)
+// ---------------------------------------------------------------------------
+
+export async function listLiveblogEntries(storyId: string, limit = 100): Promise<LiveblogEntry[]> {
+  return request<LiveblogEntry[]>(
+    `/api/stories/${encodeURIComponent(storyId)}/liveblog/entries?limit=${limit}`
+  );
+}
+
+export async function addLiveblogEntry(
+  storyId: string,
+  input: { headline: string; content: string; isKeyEvent?: boolean }
+): Promise<LiveblogEntry> {
+  return request<LiveblogEntry>(`/api/stories/${encodeURIComponent(storyId)}/liveblog/entries`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Personalized feed (server-ranked, with attribution)
+// ---------------------------------------------------------------------------
+
+export interface PersonalizedFeedSignal {
+  type: string;
+  target?: string;
+  contribution?: number;
+  explanation?: string;
+}
+
+export interface ExplainedPersonalizedFeedItem {
+  story: Story;
+  score: number;
+  reasons: string[];
+  signals: PersonalizedFeedSignal[];
+}
+
+export interface ExplainedPersonalizedFeed {
+  items: ExplainedPersonalizedFeedItem[];
+  nextCursor?: string;
+  hasMore: boolean;
+  limit: number;
+  totalCount: number;
+}
+
+export async function getPersonalizedFeedExplained(
+  params: {
+    limit?: number;
+    cursor?: string;
+    includeCompleted?: boolean;
+  } = {}
+): Promise<ExplainedPersonalizedFeed> {
+  const query = new URLSearchParams();
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.cursor) query.set('cursor', params.cursor);
+  if (params.includeCompleted) query.set('includeCompleted', 'true');
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return request<ExplainedPersonalizedFeed>(`/api/stories/personalized/explained${suffix}`);
 }
 
 // ---------------------------------------------------------------------------

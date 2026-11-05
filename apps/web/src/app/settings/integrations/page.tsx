@@ -258,7 +258,7 @@ export default function IntegrationsPage() {
             </div>
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <span className="text-slate-400">Registered Tools</span>
-              <span className="text-white">18 Complete Section 38 Tools</span>
+              <span className="text-white">291 Live MCP Tools</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Resource Templates</span>

@@ -20,6 +20,46 @@ export interface ApiServerOptions {
 }
 
 import { isOriginAllowed, ALLOWED_CORS_HEADERS, ALLOWED_CORS_METHODS } from '@ai-news/shared';
+import { AuthService } from '@ai-news/auth';
+
+/**
+ * Bucket key for the rate limiter.
+ *
+ * A raw Authorization header must never be the key: a client can append
+ * whitespace (or rotate junk tokens) and mint a fresh bucket on every request.
+ * Use the verified principal when credentials are present, otherwise the
+ * connection IP.
+ */
+function resolveRateLimitKey(req: FastifyRequest): string {
+  const auth = req.headers.authorization;
+  const cookie = req.headers.cookie;
+  let credential: string | undefined;
+
+  if (typeof auth === 'string' && auth.length > 0) {
+    credential = auth;
+  } else if (typeof cookie === 'string' && cookie.includes('gp_token')) {
+    const match = cookie.match(/(?:^|;\s*)gp_token=([^;]+)/);
+    if (match?.[1]) {
+      try {
+        credential = `Bearer ${decodeURIComponent(match[1])}`;
+      } catch {
+        credential = undefined;
+      }
+    }
+  }
+
+  if (credential) {
+    try {
+      const principal = AuthService.resolveBearerToken(credential);
+      return `principal:${principal.organizationId}:${principal.id}`;
+    } catch {
+      // Invalid credentials fall back to the connection IP; they must not
+      // receive a per-token bucket.
+    }
+  }
+
+  return req.ip || '127.0.0.1';
+}
 
 export function getCorsOptions(): FastifyCorsOptions {
   return {
@@ -51,19 +91,7 @@ export function getRateLimitOptions() {
     max,
     timeWindow,
     allowList,
-    keyGenerator: (req: FastifyRequest) => {
-      // Key buckets on the authenticated principal when present, otherwise on
-      // the connection-derived IP. req.ip already reflects the Fastify
-      // trustProxy configuration; reading the raw x-forwarded-for header here
-      // would let any client rotate its own buckets and bypass the limit.
-      const auth = req.headers.authorization;
-      if (auth && typeof auth === 'string') return auth;
-      if (req.headers.cookie && typeof req.headers.cookie === 'string') {
-        const match = req.headers.cookie.match(/(?:^|;\s*)gp_token=([^;]+)/);
-        if (match && match[1]) return `cookie:${match[1]}`;
-      }
-      return req.ip || '127.0.0.1';
-    },
+    keyGenerator: (req: FastifyRequest) => resolveRateLimitKey(req),
     errorResponseBuilder: (req: FastifyRequest, context: { max: number; after: string }) => ({
       type: 'https://news.platform/errors/rate-limit-exceeded',
       title: 'Too Many Requests',
@@ -88,6 +116,21 @@ export function buildServer(options: ApiServerOptions = {}): FastifyInstance {
     ? process.env.TRUST_PROXY !== 'false'
     : process.env.NODE_ENV === 'production' || isTest;
   const fastify = Fastify({ logger: options.logger ?? false, trustProxy });
+
+  fastify.addHook('onRequest', async (request) => {
+    /*
+     * A body-less POST/PUT/DELETE that still advertises
+     * `Content-Type: application/json` is rejected by Fastify's JSON parser
+     * before it reaches the handler. Clients routinely set the header by
+     * default, so drop it when there is provably no body.
+     */
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+      const length = request.headers['content-length'];
+      if (length === '0' || (length === undefined && !request.headers['transfer-encoding'])) {
+        delete request.headers['content-type'];
+      }
+    }
+  });
 
   fastify.addHook('onRequest', async (_req, reply) => {
     reply.header('X-Content-Type-Options', 'nosniff');
@@ -137,6 +180,14 @@ export async function createNestApp(): Promise<NestFastifyApplication> {
 
   const fastifyInstance = app.getHttpAdapter().getInstance() as FastifyInstance;
   if (fastifyInstance && typeof fastifyInstance.addHook === 'function') {
+    fastifyInstance.addHook('onRequest', async (request) => {
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+        const length = request.headers['content-length'];
+        if (length === '0' || (length === undefined && !request.headers['transfer-encoding'])) {
+          delete request.headers['content-type'];
+        }
+      }
+    });
     fastifyInstance.addHook('onRequest', async (_req, reply) => {
       reply.header('X-Content-Type-Options', 'nosniff');
       reply.header('X-Frame-Options', 'DENY');

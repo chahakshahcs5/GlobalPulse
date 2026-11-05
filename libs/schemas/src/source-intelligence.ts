@@ -37,8 +37,8 @@ export const SourceIntelligenceMetricsSchema = z.object({
   correctionCount: z.number().int().nonnegative(),
   retractionCount: z.number().int().nonnegative(),
   correctionRate: z.number().min(0).max(1),
-  languages: z.record(z.number()),
-  sourceTypes: z.record(z.number()),
+  languages: z.record(z.string(), z.number()),
+  sourceTypes: z.record(z.string(), z.number()),
   coverageAreas: z.array(z.object({ topicId: z.string(), storyCount: z.number() })),
   lastPublishedAt: z.string().optional(),
 });

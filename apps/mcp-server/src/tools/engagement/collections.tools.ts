@@ -40,8 +40,9 @@ export function registerCollectionTools(
 
         const collection = await collectionService.createCollection(
           principal.id,
+          principal.organizationId,
           { name, description, storyIds, isPublic },
-          principal.id
+          principal.email || principal.id
         );
 
         return mcpJsonResponse({
@@ -67,13 +68,20 @@ export function registerCollectionTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
 
-        const collection = await collectionService.getCollection(collectionId);
+        const collection = await collectionService.getCollection(
+          collectionId,
+          principal.organizationId
+        );
         if (!collection) {
           return mcpErrorResponse(`Collection "${collectionId}" not found`);
         }
         assertCollectionCurator(collection, principal);
 
-        const updated = await collectionService.addStory(collectionId, storyId);
+        const updated = await collectionService.addStory(
+          collectionId,
+          storyId,
+          principal.organizationId
+        );
         return mcpJsonResponse({
           message: `Story ${storyId} added to collection ${collectionId}.`,
           collection: updated,
@@ -138,8 +146,8 @@ export function registerCollectionTools(
         AuthService.requireScope(principal, 'news:read');
 
         const collections = onlyMine
-          ? await collectionService.listUserCollections(principal.id)
-          : await collectionService.listPublicCollections(limit);
+          ? await collectionService.listUserCollections(principal.id, principal.organizationId)
+          : await collectionService.listPublicCollections(principal.organizationId, limit);
 
         return mcpJsonResponse({
           total: collections.length,
@@ -164,13 +172,20 @@ export function registerCollectionTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
 
-        const collection = await collectionService.getCollection(collectionId);
+        const collection = await collectionService.getCollection(
+          collectionId,
+          principal.organizationId
+        );
         if (!collection) {
           return mcpErrorResponse(`Collection "${collectionId}" not found`);
         }
         assertCollectionCurator(collection, principal);
 
-        const updated = await collectionService.removeStory(collectionId, storyId);
+        const updated = await collectionService.removeStory(
+          collectionId,
+          storyId,
+          principal.organizationId
+        );
         return mcpJsonResponse({
           message: `Story ${storyId} removed from collection ${collectionId}.`,
           collection: updated,
@@ -193,13 +208,19 @@ export function registerCollectionTools(
         const principal = getPrincipal();
         AuthService.requireScope(principal, 'news:write');
 
-        const collection = await collectionService.getCollection(collectionId);
+        const collection = await collectionService.getCollection(
+          collectionId,
+          principal.organizationId
+        );
         if (!collection) {
           return mcpErrorResponse(`Collection "${collectionId}" not found`);
         }
         assertCollectionCurator(collection, principal);
 
-        const success = await collectionService.deleteCollection(collectionId);
+        const success = await collectionService.deleteCollection(
+          collectionId,
+          principal.organizationId
+        );
         return mcpJsonResponse({
           success,
           message: success

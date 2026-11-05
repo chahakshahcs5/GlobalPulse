@@ -74,7 +74,7 @@ export class NotificationService {
       timestamp: saved.createdAt,
     });
 
-    broadcast('all', 'breaking_news', {
+    broadcast('breaking_news', 'breaking_news', {
       notificationId: saved.id,
       storyId: story.id,
       slug: story.slug,

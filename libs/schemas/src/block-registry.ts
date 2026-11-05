@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
   AnnotatedImageBlockSchema,
   AudioBlockSchema,
@@ -801,6 +801,25 @@ export function supportsBlockType(type: string): boolean {
  * consumed by MCP discovery, documentation, and external AI agents.
  */
 export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
+  // Zod 4 ships a native JSON Schema converter. Prefer it so records, unions,
+  // defaults and checks keep their real semantics; the legacy walker below is
+  // only a fallback for older Zod runtimes.
+  const nativeConverter = (
+    z as unknown as {
+      toJSONSchema?: (
+        schema: z.ZodTypeAny,
+        options?: Record<string, unknown>
+      ) => Record<string, unknown>;
+    }
+  ).toJSONSchema;
+  if (typeof nativeConverter === 'function') {
+    try {
+      return nativeConverter(schema, { io: 'input', unrepresentable: 'any' });
+    } catch {
+      // Fall through to the legacy converter.
+    }
+  }
+
   const def = schema._def as unknown as {
     typeName?: string;
     shape?: () => Record<string, z.ZodTypeAny>;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Bookmark,
   Share2,
@@ -45,6 +45,7 @@ import {
 
 export default function StoryPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params?.slug as string;
   const { stories: allStories } = useAllStories();
   const bookmarks = useBookmarks();
@@ -80,6 +81,7 @@ export default function StoryPage() {
   const [isDark, setIsDark] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [monthlyReads, setMonthlyReads] = useState(1);
+  const [paywallAccess, setPaywallAccess] = useState<api.PaywallAccess | null>(null);
   const [isAskDrawerOpen, setIsAskDrawerOpen] = useState(false);
   const [readingDepth, setReadingDepth] = useState<'quick' | 'balanced' | 'deep_dive'>('balanced');
 
@@ -146,7 +148,8 @@ export default function StoryPage() {
 
   const READ_LIMIT = 5;
   const isSubscriberOnly = Boolean(story?.isSubscriberOnly);
-  const isLocked = !isSubscribed && (isSubscriberOnly || monthlyReads >= READ_LIMIT);
+  const isLocked =
+    paywallAccess?.isLocked ?? (!isSubscribed && (isSubscriberOnly || monthlyReads >= READ_LIMIT));
 
   // Asynchronous fallback for direct deep links / shared URLs beyond initial cache
   useEffect(() => {
@@ -249,45 +252,25 @@ export default function StoryPage() {
         });
         localStorage.setItem('globalpulse_reading_history', JSON.stringify(filtered.slice(0, 30)));
 
-        const sub = localStorage.getItem('globalpulse_subscribed') === 'true';
-        setIsSubscribed(sub);
+        // Entitlement and metering are owned by the API. The local cache is
+        // only used for the reading history above.
+        void api
+          .getPaywallAccess(story.id)
+          .then((access) => {
+            setPaywallAccess(access);
+            setIsSubscribed(access.isSubscriber);
+            setMonthlyReads(access.monthlyReads);
+          })
+          .catch(() => undefined);
 
-        const now = new Date();
-        const monthKey = `globalpulse_reads_${now.getFullYear()}_${now.getMonth() + 1}`;
-        const slugsMonthKey = `globalpulse_read_slugs_${now.getFullYear()}_${now.getMonth() + 1}`;
-
-        let readSlugs: string[] = [];
-        try {
-          readSlugs = JSON.parse(localStorage.getItem(slugsMonthKey) || '[]');
-        } catch {
-          readSlugs = [];
-        }
-
-        // If story is subscriber-only, it does not consume a free metered quota slot
-        if (story.isSubscriberOnly) {
-          const currentCount = Math.min(
-            readSlugs.length || parseInt(localStorage.getItem(monthKey) || '0', 10),
-            READ_LIMIT
-          );
-          setMonthlyReads(currentCount);
-        } else if (!sub) {
-          if (readSlugs.includes(story.slug)) {
-            // Already read this month — keep count capped at limit
-            setMonthlyReads(Math.min(readSlugs.length, READ_LIMIT));
-          } else if (readSlugs.length < READ_LIMIT) {
-            // Unlocking a new free story
-            readSlugs.push(story.slug);
-            localStorage.setItem(slugsMonthKey, JSON.stringify(readSlugs));
-            localStorage.setItem(monthKey, readSlugs.length.toString());
-            setMonthlyReads(readSlugs.length);
-          } else {
-            // Reached free quota limit (5 of 5) — never increment beyond READ_LIMIT
-            localStorage.setItem(monthKey, READ_LIMIT.toString());
-            setMonthlyReads(READ_LIMIT);
-          }
-        } else {
-          setMonthlyReads(Math.min(readSlugs.length, READ_LIMIT));
-        }
+        void api
+          .recordStoryRead(story.id)
+          .then((access) => {
+            setPaywallAccess(access);
+            setIsSubscribed(access.isSubscriber);
+            setMonthlyReads(access.monthlyReads);
+          })
+          .catch(() => undefined);
       } catch {
         // Safe fallback
       }
@@ -749,13 +732,14 @@ export default function StoryPage() {
                 readLimit={READ_LIMIT}
                 isSubscriberOnly={isSubscriberOnly}
                 onSubscribe={() => {
-                  setIsSubscribed(true);
-                  localStorage.setItem('globalpulse_subscribed', 'true');
+                  const checkout = process.env.NEXT_PUBLIC_SUBSCRIPTION_URL;
+                  if (checkout) {
+                    window.location.href = checkout;
+                  } else {
+                    router.push('/subscribe');
+                  }
                 }}
-                onSignIn={() => {
-                  setIsSubscribed(true);
-                  localStorage.setItem('globalpulse_subscribed', 'true');
-                }}
+                onSignIn={() => router.push('/login')}
               />
             </div>
           </div>

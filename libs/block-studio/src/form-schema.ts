@@ -126,7 +126,83 @@ interface ZodDef {
 }
 
 function defOf(schema: z.ZodTypeAny): ZodDef {
-  return schema._def as unknown as ZodDef;
+  const legacy = schema._def as unknown as ZodDef;
+  if (legacy?.typeName) return legacy;
+
+  /*
+   * Zod 4 moved the definition to `_zod.def` and replaced `typeName` with a
+   * short `type`. Normalise it back to the shape this converter understands so
+   * the studio's generated form keeps working across Zod versions.
+   */
+  const v4 = (
+    schema as unknown as {
+      _zod?: {
+        def?: {
+          type?: string;
+          shape?: Record<string, z.ZodTypeAny>;
+          element?: z.ZodTypeAny;
+          options?: z.ZodTypeAny[];
+          innerType?: z.ZodTypeAny;
+          in?: z.ZodTypeAny;
+          valueType?: z.ZodTypeAny;
+          value?: unknown;
+          values?: string[];
+          entries?: Record<string, string>;
+          checks?: unknown[];
+          defaultValue?: unknown;
+        };
+      };
+    }
+  )._zod?.def;
+
+  if (!v4) return legacy || {};
+
+  const typeMap: Record<string, string> = {
+    object: 'ZodObject',
+    array: 'ZodArray',
+    tuple: 'ZodTuple',
+    union: 'ZodUnion',
+    enum: 'ZodEnum',
+    literal: 'ZodLiteral',
+    number: 'ZodNumber',
+    string: 'ZodString',
+    boolean: 'ZodBoolean',
+    record: 'ZodRecord',
+    optional: 'ZodOptional',
+    nullable: 'ZodNullable',
+    default: 'ZodDefault',
+    branded: 'ZodBranded',
+    pipe: 'ZodEffects',
+    transform: 'ZodEffects',
+    any: 'ZodAny',
+    unknown: 'ZodUnknown',
+  };
+
+  const rawChecks = (v4.checks || []) as Array<Record<string, unknown>>;
+  const checks = rawChecks.map((check) => {
+    const inner = (check.def || check) as Record<string, unknown>;
+    return {
+      kind: (inner.check as string) || (inner.kind as string) || '',
+      value: (inner.value as number) ?? (inner.minimum as number) ?? (inner.maximum as number),
+      regex: inner.pattern instanceof RegExp ? (inner.pattern as RegExp) : undefined,
+    };
+  });
+
+  return {
+    typeName: v4.type ? typeMap[v4.type] || `Zod${v4.type}` : undefined,
+    shape:
+      typeof v4.shape === 'object' && v4.shape !== null
+        ? () => v4.shape as Record<string, z.ZodTypeAny>
+        : undefined,
+    type: v4.element,
+    options: v4.options,
+    innerType: v4.innerType || v4.in,
+    valueType: v4.valueType,
+    value: v4.value,
+    values: v4.values || (v4.entries ? Object.values(v4.entries) : undefined),
+    checks,
+    defaultValue: v4.defaultValue !== undefined ? () => v4.defaultValue : undefined,
+  };
 }
 
 function descriptionOf(schema: z.ZodTypeAny): string | undefined {

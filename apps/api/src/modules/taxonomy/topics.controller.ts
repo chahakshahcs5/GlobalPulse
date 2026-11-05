@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Query,
   Body,
@@ -58,5 +59,11 @@ export class TopicsController {
     const topic = await this.topicService.createTopic(body, principal.organizationId);
     reply.status(HttpStatus.CREATED);
     return topic;
+  }
+
+  @Delete(':id')
+  @RequireScope('news:write')
+  async deleteTopic(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal) {
+    return { success: await this.topicService.deleteTopic(id, principal.organizationId) };
   }
 }

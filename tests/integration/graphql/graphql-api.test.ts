@@ -269,7 +269,7 @@ describe('GraphQL API Integration Tests (Section 10 & 36)', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/graphql',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         payload: { query, variables: { id: createdStoryId } },
       });
 

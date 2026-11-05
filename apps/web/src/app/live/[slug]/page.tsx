@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Radio, Star, Send, RefreshCw, ArrowLeft, ChevronRight, Clock } from 'lucide-react';
 import { useAllStories } from '../../../lib/news-store';
+import { listLiveblogEntries, addLiveblogEntry } from '@ai-news/api-client';
 import type { LiveblogEntry } from '@ai-news/schemas';
 
 export default function LiveCoveragePage() {
@@ -12,56 +13,19 @@ export default function LiveCoveragePage() {
   const slug = params?.slug as string;
   const { stories } = useAllStories();
 
-  const story = stories.find((s) => s.slug === slug || s.id === slug) || {
+  const liveStory = stories.find((s) => s.slug === slug || s.id === slug);
+  const story = liveStory || {
     id: 'sty_live_sample',
-    title: 'COP30 High-Level Ministerial Plenary & Treaty Ratification',
+    title: 'Live Coverage',
     summary:
-      'Continuous dispatches, delegate press conferences, and breaking text negotiations live from Belém pavilion.',
+      'Continuous dispatches, delegate press conferences, and breaking developments as they happen.',
     articleType: 'breaking_news',
     publishedAt: new Date().toISOString(),
   };
 
-  const [entries, setEntries] = useState<LiveblogEntry[]>([
-    {
-      id: 'live_entry_1',
-      storyId: story.id,
-      headline: 'Ministerial Plenary Gavel Closes Final Working Session',
-      content:
-        'The plenary hall has concluded negotiations on Article 6 carbon accounting frameworks with unanimous consensus among all 194 participating delegations.',
-      isKeyEvent: true,
-      author: {
-        id: 'usr_reporter_1',
-        name: 'Rachel Davies',
-      },
-      timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    },
-    {
-      id: 'live_entry_2',
-      storyId: story.id,
-      headline: 'European Commission Delegation Approves Concessional Funding Window',
-      content:
-        'The EU lead negotiator confirms a €15B matching fund earmarked for coastal adaptation in developing archipelagic states.',
-      isKeyEvent: true,
-      author: {
-        id: 'usr_reporter_2',
-        name: 'Jean-Luc Moreau',
-      },
-      timestamp: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
-    },
-    {
-      id: 'live_entry_3',
-      storyId: story.id,
-      headline: 'Informal Bilateral Talks Continue in Hall B',
-      content:
-        'Small island developing states meet behind closed doors with multilateral development bank executives to streamline capital disbursement schedules.',
-      isKeyEvent: false,
-      author: {
-        id: 'usr_wire',
-        name: 'GlobalPulse Wire Desk',
-      },
-      timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    },
-  ]);
+  const [entries, setEntries] = useState<LiveblogEntry[]>([]);
+  const [isLoadingEntries, setIsLoadingEntries] = useState(true);
+  const [entryError, setEntryError] = useState<string | null>(null);
 
   const [keyEventsOnly, setKeyEventsOnly] = useState(false);
   const [newHeadline, setNewHeadline] = useState('');
@@ -71,37 +35,56 @@ export default function LiveCoveragePage() {
   const [isPosting, setIsPosting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Auto-refresh simulation
-  const handleRefresh = () => {
+  const loadEntries = useCallback(async () => {
+    if (!liveStory) {
+      setEntries([]);
+      setIsLoadingEntries(false);
+      return;
+    }
+    setIsLoadingEntries(true);
+    setEntryError(null);
+    try {
+      const data = await listLiveblogEntries(liveStory.id, 100);
+      setEntries(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setEntryError(err instanceof Error ? err.message : 'Unable to load live coverage.');
+      setEntries([]);
+    } finally {
+      setIsLoadingEntries(false);
+    }
+  }, [liveStory]);
+
+  useEffect(() => {
+    void loadEntries();
+  }, [loadEntries]);
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 400);
+    await loadEntries();
+    setIsRefreshing(false);
   };
 
-  const handlePostEntry = (e: React.FormEvent) => {
+  const handlePostEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHeadline.trim() || !newContent.trim() || isPosting) return;
+    if (!newHeadline.trim() || !newContent.trim() || isPosting || !liveStory) return;
 
     setIsPosting(true);
-    const entry: LiveblogEntry = {
-      id: `live_${Date.now()}`,
-      storyId: story.id,
-      headline: newHeadline.trim(),
-      content: newContent.trim(),
-      isKeyEvent,
-      author: {
-        id: 'usr_live_contributor',
-        name: authorName.trim() || 'Newsroom Correspondent',
-      },
-      timestamp: new Date().toISOString(),
-    };
-
-    setEntries((prev) => [entry, ...prev]);
-    setNewHeadline('');
-    setNewContent('');
-    setIsKeyEvent(false);
-    setIsPosting(false);
+    setEntryError(null);
+    try {
+      const entry = await addLiveblogEntry(liveStory.id, {
+        headline: newHeadline.trim(),
+        content: newContent.trim(),
+        isKeyEvent,
+      });
+      setEntries((prev) => [entry, ...prev]);
+      setNewHeadline('');
+      setNewContent('');
+      setIsKeyEvent(false);
+    } catch (err) {
+      setEntryError(err instanceof Error ? err.message : 'Unable to post the dispatch.');
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const filteredEntries = keyEventsOnly ? entries.filter((e) => e.isKeyEvent) : entries;
@@ -244,6 +227,15 @@ export default function LiveCoveragePage() {
 
       {/* Live Dispatches Timeline Stream */}
       <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2.5 sm:before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+        {entryError && <p className="text-xs text-rose-400 font-semibold">{entryError}</p>}
+        {isLoadingEntries && (
+          <p className="text-xs text-slate-400 font-mono">Loading live dispatches…</p>
+        )}
+        {!isLoadingEntries && !entryError && filteredEntries.length === 0 && (
+          <p className="text-xs text-slate-400 font-mono">
+            No dispatches yet. The newsroom will post updates here as they happen.
+          </p>
+        )}
         {filteredEntries.map((entry) => (
           <article
             key={entry.id}

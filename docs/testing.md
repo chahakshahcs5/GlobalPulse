@@ -10,7 +10,7 @@ This document describes the testing pyramid, test suites organization, Vitest co
 graph TD
     E2E[End-to-End Journeys: Playwright + scripts/demo-e2e.ts]
     Integration[Subsystem Integration: Fastify API, MCP Server, GraphQL Mercurius, Web, DB]
-    Unit[Domain & Unit Tests: 22 Blocks, 13 D3 Charts, MapLibre, Timelines, Auth, Search, Mobile]
+    Unit[Domain & Unit Tests: 66 Blocks, 29 Chart Types, MapLibre, Timelines, Auth, Search, Mobile]
 
     E2E --> Integration
     Integration --> Unit
@@ -26,7 +26,7 @@ All tests reside under the root `tests/` directory:
 tests/
 ├── unit/
 │   ├── blocks/blocks.test.ts                 # Validates 22 block schemas and diff calculations
-│   ├── visual-renderers/visual-renderers.test.ts # 13 D3 chart renderers, maps, timelines
+│   ├── visual-renderers/visual-renderers.test.ts # 29 chart renderers, maps, timelines
 │   ├── stories/story-service.test.ts          # Story lifecycle, version snapshots
 │   ├── search/search-service.test.ts          # Jaccard text similarity and scoring
 │   ├── api/guards-and-errors.test.ts          # OAuth scope guards, RFC 7807 error responses
@@ -67,7 +67,7 @@ pnpm test:unit
 pnpm test:integration
 ```
 
-### 3.3 Full Test Suite (17 Suites, 158 Tests)
+### 3.3 Full Test Suite (138 Suites, 1,287 Tests)
 
 ```bash
 pnpm test

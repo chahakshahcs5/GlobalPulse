@@ -40,6 +40,11 @@ COPY libs/blocks-ui/package.json ./libs/blocks-ui/
 COPY libs/block-studio/package.json ./libs/block-studio/
 
 
+# The install-time prepare hook lives in scripts/; copy it before pnpm install
+# so the install does not fail on a missing file.
+COPY scripts/prepare.mjs ./scripts/prepare.mjs
+ENV HUSKY=0
+
 # Install workspace dependencies
 RUN pnpm install --frozen-lockfile
 

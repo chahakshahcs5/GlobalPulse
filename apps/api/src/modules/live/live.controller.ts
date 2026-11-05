@@ -52,7 +52,7 @@ export class LiveController {
     const parsed = LiveFeedUpdateSchema.safeParse(body);
     if (!parsed.success) {
       throw new ValidationError(
-        `Invalid live feed payload: ${parsed.error.errors
+        `Invalid live feed payload: ${parsed.error.issues
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ')}`
       );

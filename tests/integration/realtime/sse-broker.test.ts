@@ -29,11 +29,11 @@ describe('Realtime SSE Broker Integration Tests', () => {
 
     const tradeEvents: RealtimeMessageEvent[] = [];
     const sportsEvents: RealtimeMessageEvent[] = [];
-    const allEvents: RealtimeMessageEvent[] = [];
+    const publicEvents: RealtimeMessageEvent[] = [];
 
     const subTrade = sse.getEventStream(['channel:trade']).subscribe((e) => tradeEvents.push(e));
     const subSports = sse.getEventStream(['channel:sports']).subscribe((e) => sportsEvents.push(e));
-    const subAll = sse.getEventStream(['all']).subscribe((e) => allEvents.push(e));
+    const subPublic = sse.getEventStream(['stories']).subscribe((e) => publicEvents.push(e));
 
     // Broadcast on channel:trade
     sse.broadcast('channel:trade', 'story:breaking', {
@@ -47,15 +47,20 @@ describe('Realtime SSE Broker Integration Tests', () => {
     expect(tradeEvents[0].type).toBe('story:breaking');
     expect((tradeEvents[0].data as { title: string }).title).toBe('Quantum Advantage Milestone');
 
-    expect(allEvents.length).toBe(1);
-    expect((allEvents[0].data as { title: string }).title).toBe('Quantum Advantage Milestone');
+    // A public subscriber does not receive an internal channel event.
+    expect(publicEvents.length).toBe(0);
 
     // Sports subscriber receives NOTHING
     expect(sportsEvents.length).toBe(0);
 
+    // A public event reaches the public subscriber.
+    sse.broadcast('stories', 'story.published', { title: 'Published' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(publicEvents.length).toBe(1);
+
     subTrade.unsubscribe();
     subSports.unsubscribe();
-    subAll.unsubscribe();
+    subPublic.unsubscribe();
     sse.decrementSubscriberCount();
     sse.decrementSubscriberCount();
     sse.decrementSubscriberCount();

@@ -7,4 +7,5 @@ export interface ITopicRepository {
   update(topic: Topic): Promise<Topic>;
   list(orgId: string): Promise<Topic[]>;
   search(query: string, orgId: string): Promise<Topic[]>;
+  delete(id: string, orgId?: string): Promise<boolean>;
 }

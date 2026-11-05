@@ -6,6 +6,7 @@ import type {
   Story,
 } from '@ai-news/schemas';
 import { randomUUID } from 'crypto';
+import { createHttpEmailSender } from './email-sender';
 
 export class NewsletterService {
   constructor(private readonly db: DatabaseService) {}
@@ -148,12 +149,15 @@ export class NewsletterService {
     );
     const activeSubs = subscriptions.filter((s) => s.active);
 
-    const defaultSender = async () => ({
-      success: true,
-      messageId: `msg_${randomUUID().replace(/-/g, '').slice(0, 12)}`,
-    });
+    const defaultSender = createHttpEmailSender();
 
-    const sender = emailSender || defaultSender;
+    if (!emailSender && !defaultSender) {
+      throw new Error(
+        'Email delivery is not configured. Set EMAIL_WEBHOOK_URL (and optionally EMAIL_WEBHOOK_TOKEN) to dispatch newsletters.'
+      );
+    }
+
+    const sender = emailSender || defaultSender!;
     let sentCount = 0;
     let errors = 0;
     const logs: Array<{ email: string; success: boolean }> = [];

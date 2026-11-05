@@ -25,3 +25,6 @@ export * from './ingestion.repository';
 export * from './source-correction.repository';
 export * from './live-feed.repository';
 export * from './block-variant.repository';
+export * from './citizen-tip.repository';
+export * from './story-embedding.repository';
+export * from './story-read.repository';

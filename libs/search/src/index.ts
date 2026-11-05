@@ -10,6 +10,7 @@ import type {
 import { CANONICAL_CATEGORIES } from '@ai-news/schemas';
 import type { DatabaseService } from '@ai-news/database';
 import type { PaginatedResult } from '@ai-news/shared';
+import { cosineSimilarity, generateSemanticEmbedding, tokenizeForEmbedding } from '@ai-news/shared';
 
 export interface SearchSuggestionItem {
   text: string;
@@ -32,6 +33,57 @@ export class SearchService {
     params: FindSimilarStoriesInput,
     orgId: string
   ): Promise<StorySearchResultItem[]> {
+    /*
+     * Prefer persisted embeddings: they are generated once per story version
+     * by the indexing worker, so a similarity query does not have to re-embed
+     * the whole corpus. Fall back to the repository's lexical matcher when no
+     * story has been indexed yet.
+     */
+    const stored = await this.db.storyEmbeddings.listByOrganization(orgId);
+    if (stored.length > 0) {
+      const latestByStory = new Map<string, (typeof stored)[number]>();
+      for (const record of stored) {
+        const current = latestByStory.get(record.storyId);
+        if (!current || current.versionNumber < record.versionNumber) {
+          latestByStory.set(record.storyId, record);
+        }
+      }
+
+      const queryTokens = tokenizeForEmbedding(`${params.title} ${params.summary || ''}`);
+      const queryEmbedding = generateSemanticEmbedding(queryTokens);
+      const threshold = Math.min(params.threshold ?? 0.7, 0.2);
+
+      const scored: Array<{ storyId: string; score: number }> = [];
+      for (const record of latestByStory.values()) {
+        const score = cosineSimilarity(queryEmbedding, record.embedding);
+        if (score >= threshold) scored.push({ storyId: record.storyId, score });
+      }
+      scored.sort((a, b) => b.score - a.score);
+
+      const results: StorySearchResultItem[] = [];
+      for (const { storyId, score } of scored.slice(0, (params.limit || 5) * 2)) {
+        const story = await this.db.stories.findById(storyId, orgId);
+        if (!story || story.status !== 'PUBLISHED') continue;
+        results.push({
+          storyId: story.id,
+          title: story.title,
+          summary: story.summary,
+          status: story.status,
+          articleType: story.articleType,
+          currentVersionNumber: story.currentVersionNumber,
+          publishedAt: story.publishedAt,
+          updatedAt: story.updatedAt,
+          topicIds: story.topicIds || [],
+          entityIds: story.entityIds || [],
+          sourceCount: (story.sourceIds || []).length,
+          similarityScore: score,
+        });
+        if (results.length >= (params.limit || 5)) break;
+      }
+
+      if (results.length > 0) return results;
+    }
+
     return this.db.stories.findSimilar(params, orgId);
   }
 
@@ -87,7 +139,7 @@ export class SearchService {
     const [topicsRes, entitiesRes, storiesRes] = await Promise.allSettled([
       this.db.topics.search(q, orgId),
       this.db.entities.search(q, orgId),
-      this.db.stories.search({ query: q, limit: 10 }, orgId),
+      this.db.stories.search({ query: q, status: 'PUBLISHED', limit: 10 }, orgId),
     ]);
 
     const topics = topicsRes.status === 'fulfilled' ? topicsRes.value : [];

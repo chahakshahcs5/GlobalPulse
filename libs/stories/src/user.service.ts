@@ -195,6 +195,10 @@ export class UserService {
       throw new UnauthorizedError('Invalid email or password.');
     }
 
+    if (user.status !== 'active') {
+      throw new UnauthorizedError('This account is not active. Contact a newsroom administrator.');
+    }
+
     const isValid = PasswordHasher.verify(validated.password, user.passwordHash);
     if (!isValid) {
       throw new UnauthorizedError('Invalid email or password.');
