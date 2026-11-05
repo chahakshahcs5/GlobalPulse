@@ -626,7 +626,7 @@ export const MEDIA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         layout: 'iframe',
         provider: 'youtube',
-        url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/embed/aqz-KE-bpKQ',
         title: 'Review panel, full session',
       },
     },
@@ -637,7 +637,7 @@ export const MEDIA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         layout: 'card',
         provider: 'youtube',
-        url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/embed/aqz-KE-bpKQ',
         title: 'Review panel, full session',
       },
     },
@@ -648,7 +648,7 @@ export const MEDIA_SAMPLES: Record<string, StudioVariant[]> = {
       data: {
         layout: 'link',
         provider: 'youtube',
-        url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/embed/aqz-KE-bpKQ',
         title: 'Review panel, full session',
       },
     },

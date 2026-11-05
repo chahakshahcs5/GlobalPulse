@@ -570,7 +570,7 @@ export const EmbedBlockView: React.FC<{ data: EmbedBlock['data'] }> = ({ data })
             title={data.title || `${data.provider} embed`}
             className="w-full h-full"
             sandbox="allow-scripts allow-same-origin allow-presentation"
-            referrerPolicy="no-referrer"
+            referrerPolicy="strict-origin-when-cross-origin"
             loading="lazy"
             allowFullScreen
           />
@@ -608,7 +608,7 @@ export const EmbedBlockView: React.FC<{ data: EmbedBlock['data'] }> = ({ data })
             title={data.title || 'YouTube embed'}
             className="w-full h-full"
             sandbox="allow-scripts allow-same-origin allow-presentation"
-            referrerPolicy="no-referrer"
+            referrerPolicy="strict-origin-when-cross-origin"
             loading="lazy"
             allowFullScreen
           />

@@ -665,7 +665,9 @@ values.forEach(function (entry, index) {
       description: 'The picture that stands in for the scene where it cannot be drawn.',
       data: {
         title: 'The reviewed network',
-        scene: 'globe',
+        // A model with no source falls back to its poster, which is exactly
+        // what this variant demonstrates.
+        scene: 'model',
         points: [
           { lat: 53.5, lon: -2.4, value: 412, label: 'Northfield' },
           { lat: 51.5, lon: -0.1, value: 388, label: 'Harbour East' },
@@ -703,7 +705,7 @@ values.forEach(function (entry, index) {
           { coordinates: [35.2, 40.8], title: 'Harbour East substation', severity: 'critical' },
         ],
         sourceAttribution: 'GlobalPulse investigations',
-        methodology: 'Terrain © JAXA.',
+        methodology: 'Terrain © Mapzen, AWS.',
       },
     },
     {
@@ -717,7 +719,7 @@ values.forEach(function (entry, index) {
         scene: 'extruded',
         style: 'dark',
         center: [34.5, 41.2],
-        zoom: 13,
+        zoom: 14,
         pitch: 55,
         extrusions: [
           {
@@ -732,11 +734,11 @@ values.forEach(function (entry, index) {
                     type: 'Polygon',
                     coordinates: [
                       [
-                        [34.08, 41.38],
-                        [34.12, 41.38],
-                        [34.12, 41.42],
-                        [34.08, 41.42],
-                        [34.08, 41.38],
+                        [34.496, 41.198],
+                        [34.5, 41.198],
+                        [34.5, 41.202],
+                        [34.496, 41.202],
+                        [34.496, 41.198],
                       ],
                     ],
                   },
@@ -748,11 +750,11 @@ values.forEach(function (entry, index) {
                     type: 'Polygon',
                     coordinates: [
                       [
-                        [35.18, 40.78],
-                        [35.22, 40.78],
-                        [35.22, 40.82],
-                        [35.18, 40.82],
-                        [35.18, 40.78],
+                        [34.503, 41.196],
+                        [34.507, 41.196],
+                        [34.507, 41.2],
+                        [34.503, 41.2],
+                        [34.503, 41.196],
                       ],
                     ],
                   },
@@ -764,11 +766,59 @@ values.forEach(function (entry, index) {
                     type: 'Polygon',
                     coordinates: [
                       [
-                        [33.38, 39.58],
-                        [33.42, 39.58],
-                        [33.42, 39.62],
-                        [33.38, 39.62],
-                        [33.38, 39.58],
+                        [34.494, 41.203],
+                        [34.498, 41.203],
+                        [34.498, 41.207],
+                        [34.494, 41.207],
+                        [34.494, 41.203],
+                      ],
+                    ],
+                  },
+                },
+                {
+                  type: 'Feature',
+                  properties: { name: 'Coastal', height: 74, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [34.5, 41.204],
+                        [34.504, 41.204],
+                        [34.504, 41.208],
+                        [34.5, 41.208],
+                        [34.5, 41.204],
+                      ],
+                    ],
+                  },
+                },
+                {
+                  type: 'Feature',
+                  properties: { name: 'Westmarsh', height: 33, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [34.506, 41.202],
+                        [34.51, 41.202],
+                        [34.51, 41.206],
+                        [34.506, 41.206],
+                        [34.506, 41.202],
+                      ],
+                    ],
+                  },
+                },
+                {
+                  type: 'Feature',
+                  properties: { name: 'Kestrel', height: 58, base: 0 },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [34.497, 41.207],
+                        [34.501, 41.207],
+                        [34.501, 41.211],
+                        [34.497, 41.211],
+                        [34.497, 41.207],
                       ],
                     ],
                   },

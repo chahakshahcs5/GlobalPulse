@@ -20,6 +20,7 @@ export const Scene3DBlockView: React.FC<{
 }> = ({ data, theme = 'light' }) => {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = React.useState(false);
+  const [ready, setReady] = React.useState(false);
 
   const scene = data.scene ?? 'globe';
   const height = data.height ?? 480;
@@ -31,6 +32,9 @@ export const Scene3DBlockView: React.FC<{
 
     let cancelled = false;
     let dispose: (() => void) | undefined;
+
+    setFailed(false);
+    setReady(false);
 
     const start = async () => {
       try {
@@ -170,6 +174,7 @@ export const Scene3DBlockView: React.FC<{
               box.setFromObject(model);
               const centre = box.getCenter(new THREE.Vector3());
               model.position.sub(centre);
+              if (!cancelled) setReady(true);
             },
             undefined,
             () => {
@@ -190,10 +195,16 @@ export const Scene3DBlockView: React.FC<{
         controls.autoRotateSpeed = 1.2;
 
         let frame = 0;
+        let painted = false;
         const animate = () => {
           frame = requestAnimationFrame(animate);
           controls.update();
           renderer.render(scene3d, camera);
+          if (!painted) {
+            painted = true;
+            // The model keeps its poster until the model itself is ready.
+            if (scene !== 'model' || !data.modelUrl) setReady(true);
+          }
         };
         animate();
 
@@ -258,7 +269,22 @@ export const Scene3DBlockView: React.FC<{
             </div>
           )
         ) : (
-          <canvas ref={canvasRef} className="w-full h-full block" />
+          <>
+            <canvas ref={canvasRef} className="w-full h-full block" />
+            {!ready && data.posterUrl && (
+              <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/70 backdrop-blur-[1px]">
+                <img
+                  src={data.posterUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-full h-full object-contain"
+                />
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900/80 px-3 py-1 text-[11px] font-semibold text-white">
+                  Loading the 3D scene…
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
 

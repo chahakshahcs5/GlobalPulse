@@ -98,7 +98,8 @@ export const AnimatedMapBlockView: React.FC<{
       buildMapConfig(
         {
           center: frame.points[0] ? [frame.points[0].lng, frame.points[0].lat] : [0, 20],
-          zoom: 3,
+          // A globe only reads as a globe when the camera is far enough out.
+          zoom: data.projection === 'globe' ? 2 : 3,
           style: data.style,
         } as never,
         {

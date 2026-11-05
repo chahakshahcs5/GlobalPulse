@@ -12,6 +12,50 @@ import {
 import { MapCanvas } from './MapCanvas';
 
 /**
+ * Every coordinate in the scene's extruded shapes, so the camera can frame
+ * them. A block that draws its shapes off-screen is not a three-dimensional
+ * scene a reader can read.
+ */
+function extrusionCoordinates(
+  extrusions: Map3DBlock['data']['extrusions']
+): Array<[number, number]> | undefined {
+  const coordinates: Array<[number, number]> = [];
+
+  const addRing = (ring: unknown) => {
+    if (!Array.isArray(ring)) return;
+    for (const point of ring) {
+      if (!Array.isArray(point) || point.length < 2) continue;
+      const lng = Number(point[0]);
+      const lat = Number(point[1]);
+      if (Number.isFinite(lng) && Number.isFinite(lat)) coordinates.push([lng, lat]);
+    }
+  };
+
+  const addGeometry = (geometry: unknown) => {
+    if (!geometry || typeof geometry !== 'object') return;
+    const { type, coordinates: shape } = geometry as {
+      type?: string;
+      coordinates?: unknown;
+    };
+    if (type === 'Polygon' && Array.isArray(shape)) {
+      for (const ring of shape) addRing(ring);
+    } else if (type === 'MultiPolygon' && Array.isArray(shape)) {
+      for (const polygon of shape) {
+        if (!Array.isArray(polygon)) continue;
+        for (const ring of polygon) addRing(ring);
+      }
+    }
+  };
+
+  for (const extrusion of extrusions ?? []) {
+    const geojson = extrusion.geojson as { features?: Array<{ geometry?: unknown }> };
+    for (const feature of geojson?.features ?? []) addGeometry(feature.geometry);
+  }
+
+  return coordinates.length >= 2 ? coordinates : undefined;
+}
+
+/**
  * A map in three dimensions.
  *
  * Three kinds of scene, which read very differently:
@@ -79,6 +123,11 @@ export const Map3DBlockView: React.FC<{
 
   const drawnMarkers = React.useMemo(() => buildMarkerSpecs(markers as never), [markers]);
 
+  const fitTo = React.useMemo(
+    () => (resolvedScene === 'extruded' ? extrusionCoordinates(extrusions) : undefined),
+    [resolvedScene, extrusions]
+  );
+
   return (
     <figure className="my-8 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
       {(title || subtitle) && (
@@ -99,6 +148,8 @@ export const Map3DBlockView: React.FC<{
           config={config}
           layers={drawnLayers}
           markers={drawnMarkers}
+          fitTo={fitTo}
+          maxFitZoom={resolvedScene === 'extruded' ? 15 : 12}
           terrainExaggeration={terrainExaggeration ?? 1.2}
           terrainSource={resolvedScene === 'terrain' ? TERRAIN_SOURCE : undefined}
           height={520}
@@ -111,7 +162,7 @@ export const Map3DBlockView: React.FC<{
       <footer className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
         <p>
           Basemap: {config.basemap.label}. {config.attribution}.
-          {resolvedScene === 'terrain' && ' Terrain © JAXA.'}
+          {resolvedScene === 'terrain' && ' Terrain © Mapzen, AWS.'}
         </p>
         {sourceAttribution && <p>Source: {sourceAttribution}</p>}
         {methodology && <p>Methodology: {methodology}</p>}

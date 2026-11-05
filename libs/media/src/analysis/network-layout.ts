@@ -4,7 +4,6 @@ import {
   forceCollide,
   forceLink,
   forceManyBody,
-  forceRadial,
   forceSimulation,
   type SimulationLinkDatum,
   type SimulationNodeDatum,
@@ -103,6 +102,25 @@ export function computeNetworkLayout(
     return { nodes, links, width, height, degrees };
   }
 
+  if (layout === 'radial') {
+    const centreX = width / 2;
+    const centreY = height / 2;
+    const ranked = [...nodes].sort((a, b) => (degrees[b.id] ?? 0) - (degrees[a.id] ?? 0));
+    const centre = ranked[0];
+    const ring = ranked.slice(1);
+    const radius = Math.min(width, height) / 2 - 90;
+    if (centre) {
+      centre.x = centreX;
+      centre.y = centreY;
+    }
+    ring.forEach((node, index) => {
+      const angle = (index / Math.max(1, ring.length)) * Math.PI * 2 - Math.PI / 2;
+      node.x = centreX + radius * Math.cos(angle);
+      node.y = centreY + radius * Math.sin(angle);
+    });
+    return { nodes, links, width, height, degrees };
+  }
+
   const simulation = forceSimulation(nodes as NetworkLayoutNode[])
     .force(
       'link',
@@ -122,31 +140,50 @@ export function computeNetworkLayout(
     )
     .stop();
 
-  if (layout === 'radial') {
-    simulation.force(
-      'radial',
-      forceRadial<NetworkLayoutNode>(
-        Math.min(width, height) / 2 - 60,
-        width / 2,
-        height / 2
-      ).strength(0.9)
-    );
-  } else {
-    simulation.force('center', forceCenter(width / 2, height / 2));
-  }
+  simulation.force('center', forceCenter(width / 2, height / 2));
 
   // Run the simulation to a fixed point rather than letting it animate.
   simulation.tick(SIMULATION_STEPS);
 
-  // Keep the nodes inside the frame: a node that has drifted off the canvas
-  // is a node the reader cannot see.
-  const margin = 24;
+  // Fit the finished layout to the frame. Clamping each node independently
+  // piles nodes up against the edges; scaling keeps the shape of the graph
+  // and gives every node room to breathe.
+  const margin = 56;
+  const xs = nodes.map((node) => node.x);
+  const ys = nodes.map((node) => node.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const scale = Math.min((width - margin * 2) / spanX, (height - margin * 2) / spanY, 2.5);
+  const offsetX = (width - spanX * scale) / 2;
+  const offsetY = (height - spanY * scale) / 2;
   for (const node of nodes) {
-    node.x = Math.min(width - margin, Math.max(margin, node.x));
-    node.y = Math.min(height - margin, Math.max(margin, node.y));
+    node.x = offsetX + (node.x - minX) * scale;
+    node.y = offsetY + (node.y - minY) * scale;
   }
 
-  return { nodes, links, width, height, degrees };
+  /*
+   * d3's forceLink replaces each link's source and target with the node
+   * objects it resolved them to. Put the ids back before handing the links
+   * to the renderer, which looks them up by id — otherwise every connection
+   * is filtered out and the graph is drawn with no edges.
+   */
+  const resolvedLinks = links.map((link) => ({
+    ...link,
+    source:
+      typeof link.source === 'string'
+        ? link.source
+        : ((link.source as unknown as NetworkLayoutNode).id ?? ''),
+    target:
+      typeof link.target === 'string'
+        ? link.target
+        : ((link.target as unknown as NetworkLayoutNode).id ?? ''),
+  }));
+
+  return { nodes, links: resolvedLinks, width, height, degrees };
 }
 
 /** The groups a graph's nodes fall into, in a stable order. */

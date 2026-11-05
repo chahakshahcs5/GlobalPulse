@@ -31,13 +31,14 @@ export interface MapCanvasProps {
    * and the engine redraws them without the map being rebuilt.
    */
   points?: Record<string, unknown>;
-  /**
-   * Where the camera should look.
+  /** Where the camera should look.
    *
    * The map moves to these bounds when they change, which is how the
    * animated map follows a situation as it spreads.
    */
   fitTo?: Array<[number, number]>;
+  /** The closest the fit-to-bounds camera may go. */
+  maxFitZoom?: number;
   /** How much the land is raised, when the scene has terrain. */
   terrainExaggeration?: number;
   /** The source of the terrain, when the scene has any. */
@@ -111,6 +112,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   markers,
   points,
   fitTo,
+  maxFitZoom = 12,
   terrainExaggeration,
   terrainSource,
   onReady,
@@ -228,10 +230,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         onReadyRef.current?.(map);
       });
 
-      map.on('error', (event: { error?: Error }) => {
+      map.on('error', (event) => {
+        const error = (event as { error?: { message?: string } }).error;
         // A tile that will not load is not worth tearing the map down for.
-        if (event?.error && /style|json|glyphs|sprite/i.test(event.error.message ?? '')) {
-          onFallbackRef.current?.(event.error.message);
+        if (error && /style|json|glyphs|sprite/i.test(error.message ?? '')) {
+          onFallbackRef.current?.(error.message ?? 'Map style failed to load');
         }
       });
     };
@@ -375,16 +378,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (!ready || !map || !engine || !fitTo || fitTo.length < 2) return;
     const box = new engine.LngLatBounds();
     for (const coordinate of fitTo) box.extend(coordinate);
-    map.fitBounds(box, { padding: 60, maxZoom: 12, duration: 900 });
-  }, [ready, fitTo]);
+    map.fitBounds(box, { padding: 60, maxZoom: maxFitZoom, duration: 900 });
+  }, [ready, fitTo, maxFitZoom]);
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ height: `${height}px`, width: '100%' }}
-      role="application"
-      aria-label="Interactive map"
-    />
+    <div className="relative" style={{ height: `${height}px`, width: '100%' }}>
+      <div
+        ref={containerRef}
+        className={className}
+        style={{ height: '100%', width: '100%' }}
+        role="application"
+        aria-label="Interactive map"
+      />
+      {!ready && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-100/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/80 dark:text-slate-400">
+          Loading map…
+        </div>
+      )}
+    </div>
   );
 };

@@ -30,13 +30,15 @@ export const ChartBlockView: React.FC<{
   // canvas so it reads as an inline trend rather than a chart with acres of
   // whitespace.
   const isSparkline = data.chartType === 'sparkline';
+  const chartHeight = data.chartType === 'calendar_heatmap' ? 260 : isSparkline ? 140 : 440;
   const svg = React.useMemo(
     () =>
-      D3ChartRenderer.renderToSvg(
-        data,
-        isSparkline ? { theme, width: 800, height: 140 } : { theme, width: 800, height: 440 }
-      ),
-    [data, theme, isSparkline]
+      D3ChartRenderer.renderToSvg(data, {
+        theme,
+        width: 800,
+        height: chartHeight,
+      }),
+    [data, theme, chartHeight]
   );
 
   // Delegate clicks on the SVG markers to React state.

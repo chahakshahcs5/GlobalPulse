@@ -12,6 +12,31 @@
  */
 import type { StudioVariant } from '../types';
 
+/**
+ * A year of weekday filing counts.
+ *
+ * The calendar heatmap is about the shape of a year, so its sample has to be
+ * a year rather than a month: January is busy, August is quiet, and the rest
+ * of the year gives the grid something to say.
+ */
+const FILING_DAYS: Array<{ date: string; filings: number }> = (() => {
+  const rows: Array<{ date: string; filings: number }> = [];
+  const start = Date.UTC(2025, 0, 1);
+  const seasonal = [26, 22, 19, 16, 13, 10, 8, 6, 9, 13, 17, 21];
+  for (let offset = 0; offset < 365; offset += 1) {
+    const date = new Date(start + offset * 24 * 60 * 60 * 1000);
+    const weekday = date.getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+    const month = date.getUTCMonth();
+    const pulse = 0.65 + 0.5 * Math.abs(Math.sin(offset / 7));
+    rows.push({
+      date: date.toISOString().slice(0, 10),
+      filings: Math.max(3, Math.round(seasonal[month] * pulse)),
+    });
+  }
+  return rows;
+})();
+
 export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
   chart: [
     {
@@ -604,28 +629,7 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
         xAxis: { key: 'date', label: 'Date', type: 'time' },
         yAxis: { label: 'Filings', unit: 'filings' },
         series: [{ name: 'Filings', key: 'filings' }],
-        values: [
-          { date: '2025-01-06', filings: 12 },
-          { date: '2025-01-07', filings: 18 },
-          { date: '2025-01-08', filings: 21 },
-          { date: '2025-01-09', filings: 14 },
-          { date: '2025-01-10', filings: 27 },
-          { date: '2025-01-13', filings: 31 },
-          { date: '2025-01-14', filings: 24 },
-          { date: '2025-01-15', filings: 19 },
-          { date: '2025-01-16', filings: 33 },
-          { date: '2025-01-17', filings: 28 },
-          { date: '2025-01-20', filings: 22 },
-          { date: '2025-01-21', filings: 35 },
-          { date: '2025-01-22', filings: 29 },
-          { date: '2025-01-23', filings: 26 },
-          { date: '2025-01-24', filings: 17 },
-          { date: '2025-01-27', filings: 11 },
-          { date: '2025-01-28', filings: 9 },
-          { date: '2025-01-29', filings: 7 },
-          { date: '2025-01-30', filings: 6 },
-          { date: '2025-01-31', filings: 8 },
-        ],
+        values: FILING_DAYS,
         sourceAttribution: 'GlobalPulse investigations',
       },
     },
@@ -2648,6 +2652,10 @@ export const DATA_SAMPLES: Record<string, StudioVariant[]> = {
           { source: 'supplier-a', target: 'site-a', weight: 2 },
           { source: 'supplier-b', target: 'site-b', weight: 1 },
           { source: 'adviser', target: 'holdco', weight: 1 },
+          { source: 'supplier-a', target: 'operator', weight: 2 },
+          { source: 'supplier-b', target: 'operator', weight: 1 },
+          { source: 'site-a', target: 'operator', weight: 1 },
+          { source: 'site-b', target: 'operator', weight: 1 },
         ],
         layout: 'force',
         showLabels: false,

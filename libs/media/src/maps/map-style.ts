@@ -141,17 +141,17 @@ export function buildRasterStyle(basemap: BasemapDefinition): Record<string, unk
  */
 export const TERRAIN_SOURCE = {
   type: 'raster-dem',
-  tiles: ['https://demotiles.maplibre.org/terrain-tiles/{z}/{x}/{y}.png'],
+  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
   encoding: 'terrarium',
   tileSize: 256,
   maxzoom: 15,
-  attribution: 'Terrain © JAXA',
+  attribution: 'Terrain © Mapzen, AWS',
 };
 
 /** The imagery the terrain is drawn over, where the basemap is satellite. */
 export const HILLSHADE_SOURCE = {
   type: 'raster',
-  tiles: ['https://demotiles.maplibre.org/terrain-tiles/{z}/{x}/{y}.png'],
+  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
   tileSize: 256,
   maxzoom: 15,
 };
